@@ -1,0 +1,5 @@
+data:
+  grizli_fit_products: '../../master/data/grizli/MUSE_FRESCO_z5_6_from-Pascal/'
+  phot_cat: '../../master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits'
+
+  MUSE_LAEs: '../../master/data/cats/matched/MUSE_z5_6_FRESCO_1arcsec.fits'
