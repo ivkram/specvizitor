@@ -3,3 +3,13 @@ data:
   phot_cat: '../../master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits'
 
   MUSE_LAEs: '../../master/data/cats/matched/MUSE_z5_6_FRESCO_1arcsec.fits'
+
+gui:
+  cuts_cutout: 2000
+  cuts_spec_2D: 400
+  cuts_spec_2D_model: 400
+
+  cut_cutout1: 0
+  cut_cutout2: 100
+
+  z_slider: 4.6

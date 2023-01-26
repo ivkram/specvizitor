@@ -1,44 +1,153 @@
+import sys
+import logging
+import pathlib
+
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+from astropy import wcs
+from astropy.coordinates import Angle
+from astropy import units as u
 
-from PyQt5.QtWidgets import (QWidget, QPushButton)
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton)
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore
 
 
-from config import read_default_params
+from config import read_yaml
 from loader import load_phot_cat
 
 
 import colormaps as cmaps
+import colors as cl
 from colormaps_fresco import viridis_simple as viridis
 
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
-# reading the configuration file
-config = read_default_params()
+# logging configuration
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+# read the configuration file
+config = read_yaml('config.yml')
 
 
-class MainWindow(QtGui.QWindow):
+def radec_to_pix(ra_coords,dec_coords,header,origin=0):
+    """
+    Converts RA & DEC world coordinates to pixel coordinates.
+
+    In:
+    ---
+    ra_coords ... 1D array of RA in degrees (float)
+    dec_coords ... 1D array of corresponding DEC in degrees (float)
+    header ... an astropy.io.fits header object
+    origin ... output coordinates 0-indexed if 0, or 1-indexed if 1
+               (default: 0)
+
+    Out:
+    ---
+    x_coords, y_coords ... 2-tuple of 1D arrays with pixel coordinates
+    """
+
+    wcs_obj = wcs.WCS(header, relax=False)  # no HST only spec
+                                            # allowed, only WCS
+                                            # standard
+    coords = wcs_obj.wcs_world2pix(ra_coords,dec_coords,origin)
+    x_coords = coords[0]
+    y_coords = coords[1]
+    return x_coords, y_coords
+
+def pix_scale(header):
+    """
+    Prints out averaged pixel scale in arcseconds at reference pixel.
+    Ignores dissortions, but this OK considering our small field of view.
+
+    In:
+    ---
+    header ... an astropy.io.fits header object
+
+    Out:
+    ---
+    pix_scale ... average linear extent of a pixel in arc-seconds
+    """
+
+    wcs_obj = wcs.WCS(header,relax=False)
+    scale_deg_xy = wcs.utils.proj_plane_pixel_scales(wcs_obj)
+    scale_deg = np.sum(scale_deg_xy[:2]) / 2.
+
+    scale_deg = Angle(scale_deg,unit=u.deg)
+    scale_asec = scale_deg.arcsec
+
+    return scale_asec
+
+
+def read_spec_1D(infile):
+
+    hdu = fits.open(infile)
+    header = hdu[1].header
+    data = hdu[1].data
+    hdu.close()
+
+    wave = np.asarray([i[0] for i in data])
+    flux = np.asarray([i[1] for i in data])
+    error = np.asarray([i[2] for i in data])
+
+    infos_dict = {'wave':wave,
+                  'flux':flux,
+                  'error':error}
+
+    return infos_dict, header
+
+
+def write_output(input_cat, comments, new_catalog):
+    # write identifications in fits file
+
+    # make sure that the comments don't get truncated
+    max_len = 0
+    for comment in comments:
+        if len(comment) > max_len:
+            max_len = len(comment)
+    max_len += 1
+
+    columns = []
+    for column in input_cat.colnames:
+        dtype = type(input_cat[column][0])
+
+        if dtype is np.float64:
+            format="D"
+        elif dtype is np.int32:
+            format="J"
+        elif dtype is str:
+            format="20A"
+        else:
+            format="10A"
+        c = fits.Column(name=column, format=format, array=input_cat[column])
+        columns.append(c)
+
+    c = fits.Column(name='comments', format=str(max_len)+"A", array=comments)
+    columns.append(c)
+
+    table_hdu = fits.BinTableHDU.from_columns(columns)
+    table_hdu.writeto(new_catalog,overwrite=True)
+
+
+class MainWindow(QtGui.QMainWindow):
     signal_j = QtCore.pyqtSignal(int)
 
-    def __init__(self):
-        super().__init__(self)
-        self.initUI()
+    def __init__(self, input_cat, j, comments, **kwargs):
+        super().__init__()
 
-    def initUI(self):
         self.j = j
-        self.ID_here = ID[self.j]
+        self.comments = comments
+        self.ID_here = input_cat['id'][self.j]
 
         # status bar
         self.statusBar().showMessage("Message in statusbar.")
 
         if self.j == 0:
-            self.main_GUI = FRESCO(self, self.j, self.statusBar())
+            self.main_GUI = FRESCO(input_cat, self.j, self.statusBar(), **kwargs)
             # self.main_GUI.signal1.connect(self.show_status)
             self.setCentralWidget(self.main_GUI)
             # self.statusBar().showMessage('')
@@ -53,11 +162,11 @@ class MainWindow(QtGui.QWindow):
 
     ####################################################################
 
-    def show_object(self, text):  # Goes to next or previous object
+    def show_object(self, text, input_cat):  # Goes to next or previous object
 
-        max_len = len(ID)
+        max_len = len(input_cat)
 
-        ID_old = ID[self.j]
+        ID_old = input_cat['id'][self.j]
 
         if text == 'next':
             forward_back = 1
@@ -71,15 +180,15 @@ class MainWindow(QtGui.QWindow):
             ID_new = ID_old
             # if we are going back, it's fine, we go back
             if text == 'previous':
-                ID_new = ID[self.j]
+                ID_new = input_cat['id'][self.j]
             # if we are going forward,go to first object
             if text == 'next':
                 print('Went too far!')
                 # self.went_through()
         elif self.j < max_len - 1 and self.j >= 0:
-            ID_new = ID[self.j + forward_back]
+            ID_new = input_cat['id'][self.j + forward_back]
         else:  # if you go back from the first object, to go the last
-            ID_new = ID[0]
+            ID_new = input_cat['id'][0]
 
         self.j += forward_back
 
@@ -88,7 +197,7 @@ class MainWindow(QtGui.QWindow):
         if self.j >= max_len:
             self.went_through()
 
-        self.main_GUI = FRESCO(self, self.j, self.statusBar())
+        self.main_GUI = FRESCO(self.j, self.statusBar())
         self.setCentralWidget(self.main_GUI)
         self.main_GUI.signal_next_previous[str].connect(self.show_object)
         self.signal_j.emit(self.j)
@@ -103,19 +212,16 @@ class FRESCO(QWidget):
 
     # signal_previous = QtCore.pyqtSignal(str)
 
-    def __init__(self, j, status):
+    def __init__(self, input_cat, j, status, **kwargs):
         super().__init__()
         # self.setStyleSheet("background-color: black;")
-        self.initUI(j, status)
-
-    def initUI(self, j, status):
 
         ### initialise
         self.j = j
         self.status = status
         message = 'None'
         self.message = message
-        self.z_slider = z_slider[0]
+        self.z_slider = kwargs['gui']['z_slider']
 
         ### general layout of the window
         grid = QtGui.QGridLayout()
@@ -123,12 +229,12 @@ class FRESCO(QWidget):
         self.setLayout(grid)
 
         ### write ID as title and reset button
-        self.ID_here = ID[self.j]
+        self.ID_here = input_cat['id'][self.j]
         reset_button = QPushButton('ID  ' + str(int(self.ID_here)))
         reset_button.clicked.connect(self.np_obj)
         reset_button.setToolTip('Reset plots')
         grid.addWidget(reset_button, 1, 10, 1, 2)
-        number_objs_label = QtGui.QLabel(' (#' + str(self.j + 1) + ' of ' + str(total_num_obj) + ' objects)', self)
+        number_objs_label = QtGui.QLabel(' (#' + str(self.j + 1) + ' of ' + str(len(input_cat)) + ' objects)', self)
         grid.addWidget(number_objs_label, 1, 12, 1, 1)
 
         ### Close button
@@ -145,13 +251,13 @@ class FRESCO(QWidget):
         self.cutout.setMaximumSize(cutout_size, cutout_size)
         grid.addWidget(self.cutout, 4, 1, 5, 5)
 
-        cutout_title = ('Image:')
+        cutout_title = 'Image:'
         cutout_title_label = QtGui.QLabel(cutout_title, self)
         grid.addWidget(cutout_title_label, 2, 1, 1, 1)
 
         # cuts for the image
-        self.cut_cutout1 = cut_cutout1[0]  # np.round(cut_cutout1[0],6)
-        self.cut_cutout2 = cut_cutout2[0]  # np.round(cut_cutout2[0],6)
+        self.cut_cutout1 = kwargs['gui']['cut_cutout1']  # np.round(cut_cutout1[0],6)
+        self.cut_cutout2 = kwargs['gui']['cut_cutout2']  # np.round(cut_cutout2[0],6)
 
         # enter cuts
         cut_cutout1_comm = QtGui.QLabel('Cut min', self)
@@ -174,19 +280,19 @@ class FRESCO(QWidget):
         self.le_cut_cutout1.setText(str(self.cut_cutout1))
         self.le_cut_cutout2.setText(str(self.cut_cutout2))
 
-        self.show_cutout()
+        self.show_cutout(input_cat, **kwargs)
 
         ### 2D spec
         self.spec_2D = pg.GraphicsLayoutWidget(self)
         spec_2D_size = 500
         grid.addWidget(self.spec_2D, 9, 2, 2, 8)
 
-        spec_2D_show = [True]
-        if spec_2D_show[0]:
-            self.show_spec_2D()
+        spec_2D_show = True
+        if spec_2D_show:
+            self.show_spec_2D(**kwargs)
 
         # set slider to change cuts in 2D spec
-        self.cuts_spec_2D = cuts_spec_2D[0]
+        self.cuts_spec_2D = kwargs['gui']['cuts_spec_2D']
         sld_spec_2D = QtGui.QSlider(QtCore.Qt.Vertical, self)
         grid.addWidget(sld_spec_2D, 9, 1, 2, 1)
         sld_spec_2D.setRange(10, 1000)
@@ -199,13 +305,13 @@ class FRESCO(QWidget):
         self.full_spec = pg.GraphicsLayoutWidget(self)
         self.full_spec.setMinimumWidth(1000)
         grid.addWidget(self.full_spec, 12, 2, 4, 8)
-        self.plot_spec()
+        self.plot_spec(**kwargs)
 
         # set redshift slider
         sld_redshift = QtGui.QSlider(QtCore.Qt.Horizontal, self)
         grid.addWidget(sld_redshift, 18, 1, 1, 8)
-        sld_redshift.setRange(z_slider[0] * 1000, 10000)  # large numbers to allow for smaller steps
-        sld_redshift.setValue(z_slider[0] * 1000)
+        sld_redshift.setRange(int(kwargs['gui']['z_slider'] * 1000), 10000)  # large numbers to allow for smaller steps
+        sld_redshift.setValue(int(kwargs['gui']['z_slider'] * 1000))
         sld_redshift.setSingleStep(1)
         sld_redshift.valueChanged[int].connect(self.changeValue_sld_redshift)
         sld_redshift.setToolTip('Slide to redshift.')
@@ -242,8 +348,8 @@ class FRESCO(QWidget):
         grid.addWidget(self.le_comment, 4, 12, 1, 3)
 
         ### Write position (convert to hour)
-        RA = input_cat_dict['ra'][self.j]
-        DEC = input_cat_dict['dec'][self.j]
+        RA = input_cat['ra'][self.j]
+        DEC = input_cat['dec'][self.j]
         RA_hour = Angle(RA, unit=u.degree).hour
         RA_hour1 = int(RA_hour)
         RA_hour2 = 60 * (RA_hour - RA_hour1)
@@ -270,7 +376,7 @@ class FRESCO(QWidget):
         self.eazy_z_widget = pg.GraphicsLayoutWidget(self)
         grid.addWidget(self.eazy_fig_widget, 7, 12, 5, 10)
         grid.addWidget(self.eazy_z_widget, 12, 12, 5, 7)
-        self.show_eazy_fig()
+        # self.show_eazy_fig()
 
         ### Write eazy results
 
@@ -284,17 +390,17 @@ class FRESCO(QWidget):
         grid.addWidget(eazy_raw_chi2,8,31,1,1)
         '''
 
-        self.z_phot_chi2 = np.round(self.zout['z_phot_chi2'][self.j], 3)
-        eazy_raw_chi2 = QtGui.QLabel('Chi2: ' + str(self.z_phot_chi2), self)
-        grid.addWidget(eazy_raw_chi2, 9, 31, 1, 1)
-
-        self.sfr = np.round(self.zout['sfr'][self.j], 3)
-        eazy_sfr = QtGui.QLabel('SFR: ' + str(self.sfr), self)
-        grid.addWidget(eazy_sfr, 10, 31, 1, 1)
-
-        self.mass = np.round(self.zout['mass'][self.j] / 10 ** 9, 3)
-        eazy_mass = QtGui.QLabel('mass: ' + str(self.mass), self)
-        grid.addWidget(eazy_mass, 11, 31, 1, 1)
+        # self.z_phot_chi2 = np.round(self.zout['z_phot_chi2'][self.j], 3)
+        # eazy_raw_chi2 = QtGui.QLabel('Chi2: ' + str(self.z_phot_chi2), self)
+        # grid.addWidget(eazy_raw_chi2, 9, 31, 1, 1)
+        #
+        # self.sfr = np.round(self.zout['sfr'][self.j], 3)
+        # eazy_sfr = QtGui.QLabel('SFR: ' + str(self.sfr), self)
+        # grid.addWidget(eazy_sfr, 10, 31, 1, 1)
+        #
+        # self.mass = np.round(self.zout['mass'][self.j] / 10 ** 9, 3)
+        # eazy_mass = QtGui.QLabel('mass: ' + str(self.mass), self)
+        # grid.addWidget(eazy_mass, 11, 31, 1, 1)
 
     #############################################################################
     ### functions
@@ -304,54 +410,50 @@ class FRESCO(QWidget):
         print('Well done! :)')
         # self.close()
 
-    def changeValue_cutout_cuts(self, value):
+    def changeValue_cutout_cuts(self, value, input_cat, **kwargs):
         self.cuts_cutout = value
-        cuts_cutout[0] = value
-        self.show_cutout()
+        kwargs['gui']['cuts_cutout'] = value
+        self.show_cutout(input_cat)
 
-    def show_spec_2D(self):
+    def show_spec_2D(self, **kwargs):
 
         self.spec_2D.clear()
-
-        hdu = fits.open(specs_for_Ivan_dir + 'gds-grizli-v5.0_0' + str(self.ID_here) + '.stack.fits')
-        image_header = hdu[0].header
-        header = hdu[1].header
-        image_sci = hdu[1].data
-        hdu.close()
+        
+        image_sci = fits.getdata(pathlib.Path(kwargs['data']['grizli_fit_products']) / ('gds-grizli-v5.1_0' + str(self.ID_here) + '.stack.fits'))
 
         img_spec_2D = pg.ImageItem(border='k')
-        viridis_lookuptable = np.asarray([np.asarray(cmaps.viridis(k)) * 255 for k in range(cuts_spec_2D[0])])
+        viridis_lookuptable = np.asarray([np.asarray(cmaps.viridis(k)) * 255 for k in range(kwargs['gui']['cuts_spec_2D'])])
         img_spec_2D.setLookupTable(viridis_lookuptable)
         img_spec_2D.setImage(np.rot90(image_sci)[::-1])
         self.view_spec_2D = self.spec_2D.addViewBox()
         self.view_spec_2D.addItem(img_spec_2D)
         self.view_spec_2D.setAspectLocked(True)
 
-    def changeValue_spec_2D_cuts(self, value):
+    def changeValue_spec_2D_cuts(self, value, **kwargs):
         self.cuts_spec_2D = value
-        cuts_spec_2D[0] = value
-        self.show_spec_2D()
+        kwargs['gui']['cuts_spec_2D'] = value
+        self.show_spec_2D(**kwargs)
 
-    def changeValue_sld_redshift(self, value):
+    def changeValue_sld_redshift(self, value, input_cat, **kwargs):
         self.z_slider = float(value / 1000)
         # z_slider[0] = value
         self.le_z.setText(str(self.z_slider))
-        self.plot_spec()
+        self.plot_spec(**kwargs)
 
-        input_cat_dict['z_spec'][self.j] = self.z_slider
+        input_cat['z_spec'][self.j] = self.z_slider
 
-    def changeValue_spec_2D_model_cuts(self, value):
+    def changeValue_spec_2D_model_cuts(self, value, **kwargs):
         self.cuts_spec_2D_model = value
-        cuts_spec_2D_model[0] = value
+        kwargs['gui']['cuts_spec_2D_model'] = value
         self.show_spec_2D_model()
 
-    def plot_spec(self):
+    def plot_spec(self, **kwargs):
 
         self.full_spec.clear()
         pfs = self.full_spec.addPlot()
         zline = pg.InfiniteLine(angle=0, movable=False, pen=(50, 100, 100))
 
-        spec1 = specs_for_Ivan_dir + "gds-grizli-v5.0_0" + str(self.ID_here) + ".1D.fits"
+        spec1 = kwargs['data']['grizli_fit_products'] + "gds-grizli-v5.1_0" + str(self.ID_here) + ".1D.fits"
         infos_dict_spec, header = read_spec_1D(spec1)
 
         lines_Pen2 = pg.mkPen(color='r', width=4, alpha=0.7)
@@ -371,10 +473,10 @@ class FRESCO(QWidget):
         # lines for all other lines
         c_otherlines = np.asarray(cl.viridis_more[9]) * 255
         lines_Pen = pg.mkPen(color=c_otherlines, width=1)
-        for j in lbda:
+        for j in kwargs['lambda']:
             vLines_all = pg.InfiniteLine(angle=90, movable=False,
                                          pen=lines_Pen)
-            line_pos = lbda[j] * (self.z_slider + 1)
+            line_pos = kwargs['lambda'][j] * (self.z_slider + 1)
             vLines_all.setPos(line_pos)
             pfs.addItem(vLines_all, ignoreBounds=True)
             line_name_text = j
@@ -383,7 +485,7 @@ class FRESCO(QWidget):
             annotate2.setPos(line_pos, 0.1)
             pfs.addItem(annotate2)
 
-    def np_obj(self, parent):
+    def np_obj(self, **kwargs):
         # go to next or previous object in catalogue
 
         # Save comment
@@ -393,21 +495,21 @@ class FRESCO(QWidget):
 
         self.cut_cutout1 = float(self.le_cut_cutout1.text())
         self.cut_cutout2 = float(self.le_cut_cutout2.text())
-        cut_cutout1[0] = self.cut_cutout1
-        cut_cutout2[0] = self.cut_cutout2
+        kwargs['gui']['cut_cutout1'] = self.cut_cutout1
+        kwargs['gui']['cut_cutout2'] = self.cut_cutout2
 
         self.save_now()
         self.signal_next_previous.emit(self.sender().text())
 
-    def save_now(self):
-        input_cat_dict['SFR'][self.j] = self.sfr
-        input_cat_dict['mass'][self.j] = self.mass
-        input_cat_dict['chi2'][self.j] = self.z_phot_chi2
-        write_output(input_cat_dict, comments, 'test.fits')
+    def save_now(self, input_cat):
+        input_cat['SFR'][self.j] = self.sfr
+        input_cat['mass'][self.j] = self.mass
+        input_cat['chi2'][self.j] = self.z_phot_chi2
+        write_output(input_cat, comments, 'test.fits')
 
-    def show_cutout(self):
+    def show_cutout(self, input_cat, **kwargs):
 
-        cutout_file = specs_for_Ivan_dir + 'gds-grizli-v5.0_0' + str(self.ID_here) + '.beams.fits'
+        cutout_file = kwargs['data']['grizli_fit_products'] + 'gds-grizli-v5.1_0' + str(self.ID_here) + '.beams.fits'
         hdu = fits.open(cutout_file)
         header_band = hdu[1].header
         data_band = hdu[1].data
@@ -433,8 +535,8 @@ class FRESCO(QWidget):
         self.perc10 = np.percentile(data_band, p1)
         self.perc90 = np.percentile(data_band, p2)
 
-        xy_band = radec_to_pix(input_cat_dict['ra'][self.j],
-                               input_cat_dict['dec'][self.j], header_band)
+        xy_band = radec_to_pix(input_cat['ra'][self.j],
+                               input_cat['dec'][self.j], header_band)
 
         x_band = xy_band[0]
         y_band = xy_band[1]
@@ -446,10 +548,10 @@ class FRESCO(QWidget):
 
         self.cut_cutout1 = self.perc10  # float(self.le_cut_cutout1.text()) * 10**-23
         self.cut_cutout2 = self.perc90  # float(self.le_cut_cutout2.text()) * 10**-23
-        cut_cutout1[0] = self.cut_cutout1
-        cut_cutout2[0] = self.cut_cutout2
+        kwargs['gui']['cut_cutout1'] = self.cut_cutout1
+        kwargs['gui']['cut_cutout2'] = self.cut_cutout2
 
-        img_band.setLevels([cut_cutout1[0], cut_cutout2[0]])
+        img_band.setLevels([kwargs['gui']['cut_cutout1'], kwargs['gui']['cut_cutout2']])
         self.view_cutout = self.cutout.addViewBox()
         self.view_cutout.addItem(img_band)
 
@@ -478,10 +580,11 @@ def main():
 
     input_cat = load_phot_cat(ids=ids, **config)
 
+    if input_cat is None:
+        exit()
+
     ID = input_cat['id']
     total_num_obj = len(ID)
-
-    print(total_num_obj)
 
     for key in ('SFR', 'mass', 'chi2'):
         input_cat.add_column(-99., name=key)
@@ -489,16 +592,6 @@ def main():
     # initialise
 
     viridis_lookuptable = np.asarray([np.asarray(cmaps.viridis(k)) * 255 for k in range(200)])
-
-    # initialise values for cuts in images
-    cuts_cutout = [2000]
-    cuts_spec_2D = [400]
-    cuts_spec_2D_model = [400]
-
-    cut_cutout1 = [0]
-    cut_cutout2 = [100]
-
-    z_slider = [4.6]
 
     # initiate lists and variables
 
@@ -515,10 +608,10 @@ def main():
     # set colours
     c_data_crossline = 'r'
 
-    # app = QtWidgets.QApplication(sys.argv)
-    # window = MainWindow()
-    # window.show()
-    # sys.exit(app.exec_())
+    app = QApplication(sys.argv)
+    window = MainWindow(input_cat, j, comments, **config, **read_yaml('lines.yml'))
+    window.show()
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':

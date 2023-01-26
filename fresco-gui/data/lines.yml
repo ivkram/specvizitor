@@ -1,4 +1,4 @@
-lbda_full:
+lambda_full:
   'OIV 1': 1031.93
   'OIV 2': 1037.62
   'Lya': 1215.67
@@ -47,7 +47,7 @@ lbda_full:
   'SII 2': 6732.67
   'ArIII 1': 7136.30
 
-lbda:
+lambda:
   'Lya': 1215.67
   'CIV 1': 1548.195 #'Morton1991tab5'
   'CIV 2': 1550.770 #'Morton1991tab5'
