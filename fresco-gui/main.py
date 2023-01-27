@@ -148,7 +148,7 @@ class FRESCO(QWidget):
         grid.addWidget(self.image_cutout, 2, 1, 8, 4)
 
         # add a widget for the 2D spectrum
-        # self.spec_2D = Spec2D()
+        self.spec_2D = Spec2D()
 
         # add a widget for the 1D spectrum
         # self.spec_1D = Spec1D()
@@ -226,6 +226,7 @@ class FRESCO(QWidget):
 
     def reset_view(self):
         self.image_cutout.reset_view()
+        self.spec_2D.reset_view()
 
     def show_object(self):
         self.reset_button.setText('ID {}'.format(self.id))

@@ -6,14 +6,19 @@ from PyQt5.QtWidgets import QWidget
 from astropy.io import fits
 from pyqtgraph.Qt import QtGui, QtCore
 
+from ..utils import CustomSlider
+from . import colormaps as cmaps
+
 
 class Spec2D(QWidget):
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
+        self.parent = parent
+
         grid = QtGui.QGridLayout()
 
         # add a slider for changing the cuts in the 2D spectrum
-        self.slider = MySlider(self.parent.config['gui']['spec_2D']['slider'], QtCore.Qt.Vertical)
+        self.slider = CustomSlider(self.parent.config['gui']['spec_2D']['slider'], QtCore.Qt.Vertical)
         self.slider.valueChanged[int].connect(self.change_cuts)
         self.slider.setToolTip('Slide to change cuts.')
         grid.addWidget(self.slider, 1, 1, 1, 1)
