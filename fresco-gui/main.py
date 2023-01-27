@@ -1,6 +1,5 @@
 import sys
 import logging
-import pathlib
 from functools import partial
 
 import numpy as np
@@ -13,15 +12,11 @@ from astropy.coordinates import SkyCoord
 
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton)
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtCore
-
+from pyqtgraph.Qt import QtGui
 
 from utils.config import read_yaml
 from loader import load_phot_cat
 from widgets import ImageCutout, Spec2D, Spec1D
-
-
-import colormaps as cmaps
 
 
 pg.setConfigOption('background', 'w')
@@ -297,9 +292,6 @@ def main():
 
     # for key in ('SFR', 'mass', 'chi2'):
     #     input_cat.add_column(-99., name=key)
-
-    # initialise
-    viridis_lookuptable = np.asarray([np.asarray(cmaps.viridis(k)) * 255 for k in range(200)])
 
     # initiate lists and variables
     # comments = np.asarray(['-' for i in range(len(ID))])
