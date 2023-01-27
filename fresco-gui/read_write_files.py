@@ -10,7 +10,7 @@ def read_fits_table2dict(f,hdu):
     '''
     
     hdulist = fits.open(f)
-    tbdata = hdulist[hdu].data
+    tbdata = hdulist[hdu]._data
     tbcols = hdulist[hdu].columns
     hdulist.close()
     info = {}
@@ -166,7 +166,7 @@ def read_image_fits_file(image,hdu):
 
     # open segmentation map
     hdulist = fits.open(image)
-    data = hdulist[hdu].data
+    data = hdulist[hdu]._data
     header = hdulist[hdu].header
     hdulist.close()
 

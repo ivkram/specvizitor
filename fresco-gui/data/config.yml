@@ -1,15 +1,27 @@
 data:
   grizli_fit_products: '../../master/data/grizli/MUSE_FRESCO_z5_6_from-Pascal/'
+  prefix: 'gds-grizli-v5.1'
   phot_cat: '../../master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits'
 
   MUSE_LAEs: '../../master/data/cats/matched/MUSE_z5_6_FRESCO_1arcsec.fits'
 
 gui:
-  cuts_cutout: 2000
-  cuts_spec_2D: 400
-  cuts_spec_2D_model: 400
+  image_cutout:
+    size: [500, 500]
+    cuts: [0, 100]
 
-  cut_cutout1: 0
-  cut_cutout2: 100
+  spec_2D:
+    size: [1000, 0]
+    slider:
+      min: 10
+      max: 1000
+      default_value: 400
 
-  z_slider: 4.6
+  spec_1D:
+    size: [1000, 250]
+    slider:
+      min: 4.6
+      max: 10
+      step: 0.01
+
+  comments: ""
