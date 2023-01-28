@@ -2,14 +2,11 @@ import pathlib
 
 import numpy as np
 import pyqtgraph as pg
-# from PyQt5.QtWidgets import QWidget
 from astropy.io import fits
+from astropy.visualization import ZScaleInterval
 
-from pyqtgraph.Qt import QtWidgets, QtCore
+from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
-
-
-from ..utils import CustomSlider
 
 
 class Spec2D(QtWidgets.QWidget):
@@ -19,10 +16,13 @@ class Spec2D(QtWidgets.QWidget):
 
         grid = QtWidgets.QGridLayout()
 
+        # add a label
+        grid.addWidget(QtWidgets.QLabel('2D spectrum: {}'.format(self._filename.name)), 1, 1)
+
         # add a widget for the spectrum
         self._spec_2d_widget = pg.GraphicsLayoutWidget()
         self._spec_2d_widget.setMinimumSize(*map(int, self._parent.config['gui']['spec_2D']['size']))
-        grid.addWidget(self._spec_2d_widget, 1, 1)
+        grid.addWidget(self._spec_2d_widget, 2, 1)
 
         self.setLayout(grid)
 
@@ -36,9 +36,8 @@ class Spec2D(QtWidgets.QWidget):
         self._view_box.setAspectLocked(True)
         self._view_box.addItem(self._spec_2d)
 
-        # set uo the color bar
-        self._cbar = ColorLegendItem(imageItem=self._spec_2d,
-                                     showHistogram=True, histHeightPercentile=99.0)
+        # set up the color bar
+        self._cbar = ColorLegendItem(imageItem=self._spec_2d, showHistogram=True, histHeightPercentile=99.0)
         self._spec_2d_widget.addItem(self._cbar, 0, 1)
 
         # load the data and plot the spectrum
@@ -55,7 +54,8 @@ class Spec2D(QtWidgets.QWidget):
         return np.rot90(data)[::-1]
 
     def reset_view(self):
-        self._cbar.autoScaleFromImage()
+        # TODO: allow to choose between min/max and zscale?
+        self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
         self._view_box.autoRange()
 
     def load(self):
