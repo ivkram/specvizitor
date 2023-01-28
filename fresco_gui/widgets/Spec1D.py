@@ -1,4 +1,5 @@
 import pathlib
+import logging
 
 import numpy as np
 from astropy.io import fits
@@ -69,9 +70,13 @@ class Spec1D(QtWidgets.QWidget):
 
     @lazyproperty
     def _hdu(self):
-        with fits.open(self._filename) as hdul:
-            header, data = hdul[1].header, hdul[1].data
-        return header, data
+        try:
+            with fits.open(self._filename) as hdul:
+                header, data = hdul[1].header, hdul[1].data
+        except FileNotFoundError:
+            logging.error('File not found: {}'.format(self._filename))
+        else:
+            return header, data
 
     @lazyproperty
     def _default_xrange(self):
@@ -80,6 +85,11 @@ class Spec1D(QtWidgets.QWidget):
     @lazyproperty
     def _default_yrange(self):
         return np.min(self._hdu[1]['flux']), np.max(self._hdu[1]['flux'])
+
+    @lazyproperty
+    def _label_height(self):
+        y_min, y_max = self._default_yrange
+        return y_min + 0.6 * (y_max - y_min)
 
     def _plot(self):
         self._spec_1d.plot(self._hdu[1]['wave'], self._hdu[1]['flux'], pen='k')
@@ -96,7 +106,7 @@ class Spec1D(QtWidgets.QWidget):
         for line_name, line_artist in self._line_artists.items():
             line_wave = self._lines['lambda'][line_name] * (1 + self._redshift_slider.value)
             line_artist['line'].setPos(line_wave)
-            line_artist['label'].setPos(line_wave, 0.1)
+            line_artist['label'].setPos(line_wave, self._label_height)
 
     def _update_from_slider(self, index=None):
         if index:
@@ -125,7 +135,9 @@ class Spec1D(QtWidgets.QWidget):
         del self._hdu
         del self._default_xrange
         del self._default_yrange
+        del self._label_height
         self._spec_1d.clear()
 
-        self._plot()
-        self.reset_view()
+        if self._hdu is not None:
+            self._plot()
+            self.reset_view()

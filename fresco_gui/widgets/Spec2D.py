@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 import numpy as np
@@ -51,8 +52,13 @@ class Spec2D(QtWidgets.QWidget):
 
     @lazyproperty
     def _data(self):
-        data = fits.getdata(self._filename)
-        return np.rot90(data)[::-1]
+        try:
+            data = fits.getdata(self._filename)
+            data = np.rot90(data)[::-1]
+        except FileNotFoundError:
+            logging.error('File not found: {}'.format(self._filename))
+        else:
+            return data
 
     def reset_view(self):
         # TODO: allow to choose between min/max and zscale?
@@ -62,5 +68,8 @@ class Spec2D(QtWidgets.QWidget):
     def load(self):
         del self._data
 
-        self._spec_2d.setImage(self._data)
-        self.reset_view()
+        if self._data is not None:
+            self._spec_2d.setImage(self._data)
+            self.reset_view()
+        else:
+            self._spec_2d.clear()
