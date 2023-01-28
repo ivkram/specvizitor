@@ -4,6 +4,7 @@ import numpy as np
 import pyqtgraph as pg
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
+from astropy.utils.decorators import lazyproperty
 
 from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
@@ -48,7 +49,7 @@ class Spec2D(QtWidgets.QWidget):
         return pathlib.Path(self._parent.config['data']['grizli_fit_products']) / \
             '{}_{:05d}.stack.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
 
-    @property
+    @lazyproperty
     def _data(self):
         data = fits.getdata(self._filename)
         return np.rot90(data)[::-1]
@@ -59,5 +60,7 @@ class Spec2D(QtWidgets.QWidget):
         self._view_box.autoRange()
 
     def load(self):
+        del self._data
+
         self._spec_2d.setImage(self._data)
         self.reset_view()

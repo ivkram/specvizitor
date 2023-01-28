@@ -120,9 +120,6 @@ class FRESCO(QWidget):
         self.spec_1D = Spec1D(self)
         grid.addWidget(self.spec_1D, 3, 1, 1, 2)
 
-        # add a widget for the 1D spectrum
-        # self.spec_1D = Spec1D()
-
         # set buttons for next or previous object
         np_buttons = {'previous': {'shortcut': 'left', 'layout': (2, 3, 1, 2)},
                       'next': {'shortcut': 'right', 'layout': (2, 5, 1, 2)}}

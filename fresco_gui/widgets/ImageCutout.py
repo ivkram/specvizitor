@@ -3,6 +3,7 @@ import pathlib
 from astropy import wcs
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
+from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
@@ -49,7 +50,7 @@ class ImageCutout(QtWidgets.QWidget):
         return pathlib.Path(self._parent.config['data']['grizli_fit_products']) /\
             '{}_{:05d}.beams.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
 
-    @property
+    @lazyproperty
     def _data(self):
         # TODO: get data from other grism exposures?
         data = fits.getdata(self._filename)
@@ -61,6 +62,8 @@ class ImageCutout(QtWidgets.QWidget):
         self._view_box.autoRange()
 
     def load(self):
+        del self._data
+
         self._image.setImage(self._data)
         self.reset_view()
 

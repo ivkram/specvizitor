@@ -2,6 +2,7 @@ import pathlib
 
 import numpy as np
 from astropy.io import fits
+from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore
@@ -66,11 +67,19 @@ class Spec1D(QtWidgets.QWidget):
         return pathlib.Path(self._parent.config['data']['grizli_fit_products']) / \
             '{}_{:05d}.1D.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
 
-    @property
+    @lazyproperty
     def _hdu(self):
         with fits.open(self._filename) as hdul:
             header, data = hdul[1].header, hdul[1].data
         return header, data
+
+    @lazyproperty
+    def _default_xrange(self):
+        return self._hdu[1]['wave'][0], self._hdu[1]['wave'][-1]
+
+    @lazyproperty
+    def _default_yrange(self):
+        return np.min(self._hdu[1]['flux']), np.max(self._hdu[1]['flux'])
 
     def _plot(self):
         self._spec_1d.plot(self._hdu[1]['wave'], self._hdu[1]['flux'], pen='k')
@@ -109,10 +118,14 @@ class Spec1D(QtWidgets.QWidget):
         self._redshift_slider.reset()
         self._update_from_slider()
 
-        self._spec_1d.setXRange(self._hdu[1]['wave'][0], self._hdu[1]['wave'][-1])
-        self._spec_1d.setYRange(np.min(self._hdu[1]['flux']), np.max(self._hdu[1]['flux']))
+        self._spec_1d.setXRange(*self._default_xrange)
+        self._spec_1d.setYRange(*self._default_yrange)
 
     def load(self):
+        del self._hdu
+        del self._default_xrange
+        del self._default_yrange
         self._spec_1d.clear()
+
         self._plot()
         self.reset_view()
