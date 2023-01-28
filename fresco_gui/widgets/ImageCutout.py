@@ -34,7 +34,7 @@ class ImageCutout(QWidget):
         # add a widget for the image
         self._image_widget = pg.GraphicsLayoutWidget()
         self._image_widget.setMinimumSize(*map(int, self._parent.config['gui']['image_cutout']['size']))
-        self._image_widget.setMaximumSize(*map(int, self._parent.config['gui']['image_cutout']['size']))  # freeze the size
+        # self._image_widget.setMaximumSize(*map(int, self._parent.config['gui']['image_cutout']['size']))
         grid.addWidget(self._image_widget, 3, 1, 1, 4)
 
         self.setLayout(grid)
@@ -91,7 +91,7 @@ class ImageCutout(QWidget):
         for i, line_edit in enumerate(self._edits):
             line_edit.setText(str(self._parent.config['gui']['image_cutout']['cuts'][i]))
 
-    def _reset_levels(self):
+    def _update_levels(self):
         p1, p2 = map(float, self._cuts)
         self._image.setLevels([np.percentile(self._data, p1), np.percentile(self._data, p2)])
 
@@ -104,11 +104,11 @@ class ImageCutout(QWidget):
             if not (0 <= float(p1) < float(p2) <= 100):
                 self._reset_cuts()
 
-        self._reset_levels()
+        self._update_levels()
 
     def reset_view(self):
         self._reset_cuts()
-        self._reset_levels()
+        self._update_levels()
         self._view_box.autoRange()
 
     def load(self):

@@ -113,11 +113,11 @@ class FRESCO(QWidget):
 
         # add a widget for the image cutout
         self.image_cutout = ImageCutout(self)
-        grid.addWidget(self.image_cutout, 2, 1, 8, 4)
+        grid.addWidget(self.image_cutout, 2, 1, 4, 4)
 
         # add a widget for the 2D spectrum
         self.spec_2D = Spec2D(self)
-        grid.addWidget(self.spec_2D, 10, 1, 8, 4)
+        grid.addWidget(self.spec_2D, 10, 1, 4, 4)
 
         # add a widget for the 1D spectrum
         # self.spec_1D = Spec1D()
