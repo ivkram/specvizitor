@@ -14,9 +14,9 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton)
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 
-from utils.config import read_yaml
-from loader import load_phot_cat
-from widgets import ImageCutout, Spec2D, Spec1D
+from .utils.config import read_yaml
+from .loader import load_phot_cat
+from .widgets import ImageCutout, Spec2D, Spec1D
 
 
 pg.setConfigOption('background', 'w')
@@ -116,7 +116,8 @@ class FRESCO(QWidget):
         grid.addWidget(self.image_cutout, 2, 1, 8, 4)
 
         # add a widget for the 2D spectrum
-        self.spec_2D = Spec2D()
+        self.spec_2D = Spec2D(self)
+        grid.addWidget(self.spec_2D, 10, 1, 8, 4)
 
         # add a widget for the 1D spectrum
         # self.spec_1D = Spec1D()
@@ -180,7 +181,7 @@ class FRESCO(QWidget):
         # eazy_mass = QtGui.QLabel('mass: ' + str(self.mass), self)
         # grid.addWidget(eazy_mass, 11, 31, 1, 1)
 
-        self.show_object()
+        self.show_info()
 
     @property
     def id(self):
@@ -196,7 +197,7 @@ class FRESCO(QWidget):
         self.image_cutout.reset_view()
         self.spec_2D.reset_view()
 
-    def show_object(self):
+    def show_info(self):
         self.reset_button.setText('ID {}'.format(self.id))
         self.number_of_obj_label.setText('(#{} of {} objects)'.format(self.j + 1, len(self.cat)))
 
@@ -215,10 +216,11 @@ class FRESCO(QWidget):
 
         self.j = self.j % len(self.cat)
 
-        self.comments.clear()
         self.image_cutout.load()
+        self.spec_2D.load()
 
-        self.show_object()
+        self.show_info()
+        self.comments.clear()
 
     def close_prog(self):
         # TODO: save catalogue!

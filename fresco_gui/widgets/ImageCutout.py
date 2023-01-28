@@ -14,12 +14,12 @@ from .colormaps_fresco import viridis_simple as viridis
 class ImageCutout(QWidget):
     def __init__(self, parent):
         super().__init__()
-        self.parent = parent
+        self._parent = parent
 
         grid = QtGui.QGridLayout()
 
         # add a label
-        grid.addWidget(QtGui.QLabel('Image: {}'.format(self._filename.name)), 1, 1, 1, 1)
+        grid.addWidget(QtGui.QLabel('Image: {}'.format(self._filename.name)), 1, 1, 1, 4)
 
         # add two line edits for changing the min and the max cuts
         self._edits = [QtGui.QLineEdit(), QtGui.QLineEdit()]
@@ -33,8 +33,8 @@ class ImageCutout(QWidget):
 
         # add a widget for the image
         self._image_widget = pg.GraphicsLayoutWidget()
-        self._image_widget.setMinimumSize(*map(int, self.parent.config['gui']['image_cutout']['size']))
-        self._image_widget.setMaximumSize(*map(int, self.parent.config['gui']['image_cutout']['size']))  # freeze the size
+        self._image_widget.setMinimumSize(*map(int, self._parent.config['gui']['image_cutout']['size']))
+        self._image_widget.setMaximumSize(*map(int, self._parent.config['gui']['image_cutout']['size']))  # freeze the size
         grid.addWidget(self._image_widget, 3, 1, 1, 4)
 
         self.setLayout(grid)
@@ -52,16 +52,16 @@ class ImageCutout(QWidget):
 
     @property
     def _filename(self):
-        return pathlib.Path(self.parent.config['data']['grizli_fit_products']) /\
-            '{}_{:05d}.beams.fits'.format(self.parent.config['data']['prefix'], self.parent.id)
+        return pathlib.Path(self._parent.config['data']['grizli_fit_products']) /\
+            '{}_{:05d}.beams.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
 
     @property
     def _data(self):
         # TODO: get data from other grism exposures?
         data = fits.getdata(self._filename)
-        data_band_flipped = np.rot90(np.fliplr(data))
+        data_flipped = np.rot90(np.fliplr(data))
 
-        return data_band_flipped
+        return data_flipped
 
     @property
     def _cuts(self):
@@ -89,9 +89,9 @@ class ImageCutout(QWidget):
 
     def _reset_cuts(self):
         for i, line_edit in enumerate(self._edits):
-            line_edit.setText(str(self.parent.config['gui']['image_cutout']['cuts'][i]))
+            line_edit.setText(str(self._parent.config['gui']['image_cutout']['cuts'][i]))
 
-    def _reset_image_levels(self):
+    def _reset_levels(self):
         p1, p2 = map(float, self._cuts)
         self._image.setLevels([np.percentile(self._data, p1), np.percentile(self._data, p2)])
 
@@ -104,11 +104,11 @@ class ImageCutout(QWidget):
             if not (0 <= float(p1) < float(p2) <= 100):
                 self._reset_cuts()
 
-        self._reset_image_levels()
+        self._reset_levels()
 
     def reset_view(self):
         self._reset_cuts()
-        self._reset_image_levels()
+        self._reset_levels()
         self._view_box.autoRange()
 
     def load(self):
