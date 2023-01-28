@@ -73,9 +73,6 @@ class FRESCO(QWidget):
         # load the configuration file
         self.config = read_yaml('config.yml')
 
-        # load the list of spectral lines
-        self.lines = read_yaml('lines.yml')
-
         # load the photometric catalogue
         muse_fresco_cat = Table(fits.getdata(self.config['data']['MUSE_LAEs']))
         ids = muse_fresco_cat['id']
@@ -99,11 +96,11 @@ class FRESCO(QWidget):
         self.reset_button = QPushButton()
         self.reset_button.setToolTip('Reset view')
         self.reset_button.clicked.connect(self.reset_view)
-        grid.addWidget(self.reset_button, 1, 12, 1, 2)
+        grid.addWidget(self.reset_button, 1, 3, 1, 2)
 
         # add a widget displaying the index of the current object and the total number of objects in the catalogue
         self.number_of_obj_label = QtGui.QLabel()
-        grid.addWidget(self.number_of_obj_label, 1, 14, 1, 1)
+        grid.addWidget(self.number_of_obj_label, 1, 5, 1, 1)
 
         # TODO: add a close button
         # close_button = QPushButton('Close')
@@ -113,18 +110,22 @@ class FRESCO(QWidget):
 
         # add a widget for the image cutout
         self.image_cutout = ImageCutout(self)
-        grid.addWidget(self.image_cutout, 2, 1, 4, 4)
+        grid.addWidget(self.image_cutout, 1, 1, 1, 1)
 
         # add a widget for the 2D spectrum
         self.spec_2D = Spec2D(self)
-        grid.addWidget(self.spec_2D, 10, 1, 4, 4)
+        grid.addWidget(self.spec_2D, 2, 1, 1, 2)
+
+        # add a widget for the 1D spectrum
+        self.spec_1D = Spec1D(self)
+        grid.addWidget(self.spec_1D, 3, 1, 1, 2)
 
         # add a widget for the 1D spectrum
         # self.spec_1D = Spec1D()
 
         # set buttons for next or previous object
-        np_buttons = {'previous': {'shortcut': 'left', 'layout': (2, 17, 1, 2)},
-                      'next': {'shortcut': 'right', 'layout': (2, 19, 1, 2)}}
+        np_buttons = {'previous': {'shortcut': 'left', 'layout': (2, 3, 1, 2)},
+                      'next': {'shortcut': 'right', 'layout': (2, 5, 1, 2)}}
 
         for np_text, np_properties in np_buttons.items():
             b = QtGui.QPushButton('', self)
@@ -137,24 +138,24 @@ class FRESCO(QWidget):
 
         # add a multi-line text editor for writing comments
         self.comments = QtGui.QLineEdit(self)
-        grid.addWidget(QtGui.QLabel('Comment:', self), 3, 12, 1, 1)
-        grid.addWidget(self.comments, 4, 12, 1, 3)
+        #grid.addWidget(QtGui.QLabel('Comment:', self), 3, 12, 1, 1)
+        #grid.addWidget(self.comments, 4, 12, 1, 3)
 
         # display RA
         self.ra_label = QtGui.QLabel()
-        grid.addWidget(QtGui.QLabel('RA:'), 4, 17, 1, 1)
-        grid.addWidget(self.ra_label, 4, 18, 1, 3)
+        #grid.addWidget(QtGui.QLabel('RA:'), 4, 17, 1, 1)
+        #grid.addWidget(self.ra_label, 4, 18, 1, 3)
 
         # display Dec
         self.dec_label = QtGui.QLabel()
-        grid.addWidget(QtGui.QLabel('Dec:'), 5, 17, 1, 2)
-        grid.addWidget(self.dec_label, 5, 18, 1, 3)
+        #grid.addWidget(QtGui.QLabel('Dec:'), 5, 17, 1, 2)
+        #grid.addWidget(self.dec_label, 5, 18, 1, 3)
 
         ### eazy results
         self.eazy_fig_widget = pg.GraphicsLayoutWidget(self)
         self.eazy_z_widget = pg.GraphicsLayoutWidget(self)
-        grid.addWidget(self.eazy_fig_widget, 7, 12, 1, 10)
-        grid.addWidget(self.eazy_z_widget, 12, 12, 1, 7)
+        #grid.addWidget(self.eazy_fig_widget, 6, 12, 1, 1)
+        #grid.addWidget(self.eazy_z_widget, 7, 12, 1, 1)
         # self.show_eazy_fig()
 
         ### Write eazy results
@@ -196,6 +197,7 @@ class FRESCO(QWidget):
     def reset_view(self):
         self.image_cutout.reset_view()
         self.spec_2D.reset_view()
+        self.spec_1D.reset_view()
 
     def show_info(self):
         self.reset_button.setText('ID {}'.format(self.id))
@@ -218,6 +220,7 @@ class FRESCO(QWidget):
 
         self.image_cutout.load()
         self.spec_2D.load()
+        self.spec_1D.load()
 
         self.show_info()
         self.comments.clear()

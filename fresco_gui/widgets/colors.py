@@ -6,7 +6,7 @@ import random
 
 
 # make viridis available
-import colormaps as cmaps
+from . import colormaps as cmaps
 
 
 def get_plasma(num):

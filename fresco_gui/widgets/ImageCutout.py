@@ -21,8 +21,8 @@ class ImageCutout(QtWidgets.QWidget):
 
         # add a widget for the image
         self._image_widget = pg.GraphicsLayoutWidget()
-        self._image_widget.setMinimumSize(*map(int, self._parent.config['gui']['image_cutout']['size']))
-        # self._image_widget.setMaximumSize(*map(int, self._parent.config['gui']['image_cutout']['size']))
+        self._image_widget.setMinimumSize(*map(int, self._parent.config['gui']['image_cutout']['min_size']))
+        # self._image_widget.setMaximumSize(*map(int, self._parent.config['gui']['image_cutout']['min_size']))
         grid.addWidget(self._image_widget, 2, 1)
 
         self.setLayout(grid)

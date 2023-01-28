@@ -6,23 +6,34 @@ class CustomSlider(QtGui.QSlider):
     def __init__(self, *args, min_value=0, max_value=1, step=1, default_value=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._min = min_value
-        self._max = max_value
-        self._step = step
-
-        self._n = int((self._max - self._min) / self._step)
-        self._arr = np.linspace(self._min, self._max, self._n + 1)
-
-        self.setRange(0, self._n)
-        self.setSingleStep(1)
+        n = int((max_value - min_value) / step) + 1
+        self._arr = np.linspace(min_value, max_value, n)
 
         if default_value is None:
-            self.default_index = 0
+            self._default_index = 1
         else:
-            self.default_index = np.searchsorted(self._arr, default_value)
+            self._default_index = self._index_from_value(default_value)
 
-        self.index = self.default_index
+        self.setRange(1, n)
+        self.setSingleStep(1)
+        self.setValue(self._default_index)
+
+        self.index = self._default_index
 
     @property
     def value(self):
-        return self._arr[self.index]
+        return self._arr[self.index - 1]
+
+    def _index_from_value(self, value):
+        index = self._arr.searchsorted(value) + 1
+        if index == len(self._arr) + 1:
+            index = len(self._arr)
+        return index
+
+    def update_index(self, value):
+        self.index = self._index_from_value(value)
+        self.setValue(self.index)
+
+    def reset(self):
+        self.index = self._default_index
+        self.setValue(self._default_index)
