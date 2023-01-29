@@ -8,6 +8,7 @@ from astropy.visualization import ZScaleInterval
 from astropy.utils.decorators import lazyproperty
 
 from pyqtgraph.Qt import QtWidgets
+from pyqtgraph.Qt import QtCore
 from pgcolorbar.colorlegend import ColorLegendItem
 
 
@@ -60,16 +61,26 @@ class Spec2D(QtWidgets.QWidget):
         else:
             return data
 
-    def reset_view(self):
+    @QtCore.pyqtSlot()
+    def _reset_view(self):
         # TODO: allow to choose between min/max and zscale?
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
         self._view_box.autoRange()
 
+    @QtCore.pyqtSlot()
     def load(self):
         del self._data
 
         if self._data is not None:
+            self._parent.idClicked.connect(self._reset_view)
+            for widget in self.findChildren(QtWidgets.QWidget):
+                widget.blockSignals(False)
+
             self._spec_2d.setImage(self._data)
-            self.reset_view()
+            self._reset_view()
         else:
             self._spec_2d.clear()
+
+            self._parent.idClicked.disconnect(self._reset_view)
+            for widget in self.findChildren(QtWidgets.QWidget):
+                widget.blockSignals(True)

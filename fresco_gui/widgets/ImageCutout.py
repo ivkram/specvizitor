@@ -7,6 +7,7 @@ from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
+from pyqtgraph.Qt import QtCore
 from pgcolorbar.colorlegend import ColorLegendItem
 
 
@@ -52,20 +53,35 @@ class ImageCutout(QtWidgets.QWidget):
 
     @lazyproperty
     def _data(self):
-        # TODO: get data from other grism exposures?
-        data = fits.getdata(self._filename)
-        data = data * 1e21
-        return data
+        try:
+            # TODO: get data from other grism exposures?
+            data = fits.getdata(self._filename)
+            data = data * 1e21
+        except:
+            pass
+        else:
+            return data
 
-    def reset_view(self):
+    @QtCore.pyqtSlot()
+    def _reset_view(self):
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
         self._view_box.autoRange()
 
+    @QtCore.pyqtSlot()
     def load(self):
         del self._data
 
-        self._image.setImage(self._data)
-        self.reset_view()
+        if self._data is not None:
+            self._parent.idClicked.connect(self._reset_view)
+            for widget in self.findChildren(QtWidgets.QWidget):
+                widget.blockSignals(False)
+
+            self._image.setImage(self._data)
+            self._reset_view()
+        else:
+            self._parent.idClicked.disconnect(self._reset_view)
+            for widget in self.findChildren(QtWidgets.QWidget):
+                widget.blockSignals(True)
 
     @staticmethod
     def radec_to_pix(ra_coords, dec_coords, header, origin=0):

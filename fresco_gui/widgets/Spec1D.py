@@ -6,8 +6,7 @@ from astropy.io import fits
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore
-from pyqtgraph.Qt import QtWidgets
+from pyqtgraph.Qt import QtCore, QtWidgets
 
 from ..utils.config import read_yaml
 from ..utils.CustomSlider import CustomSlider
@@ -80,11 +79,11 @@ class Spec1D(QtWidgets.QWidget):
 
     @lazyproperty
     def _default_xrange(self):
-        return self._hdu[1]['wave'][0], self._hdu[1]['wave'][-1]
+        return np.nanmin(self._hdu[1]['wave']), np.nanmax(self._hdu[1]['wave'])
 
     @lazyproperty
     def _default_yrange(self):
-        return np.min(self._hdu[1]['flux']), np.max(self._hdu[1]['flux'])
+        return np.nanmin(self._hdu[1]['flux']), np.nanmax(self._hdu[1]['flux'])
 
     @lazyproperty
     def _label_height(self):
@@ -124,13 +123,15 @@ class Spec1D(QtWidgets.QWidget):
             self._redshift_editor.setText("{:.4f}".format(self._redshift_slider.value))
             self._update_view()
 
-    def reset_view(self):
+    @QtCore.pyqtSlot()
+    def _reset_view(self):
         self._redshift_slider.reset()
         self._update_from_slider()
 
         self._spec_1d.setXRange(*self._default_xrange)
         self._spec_1d.setYRange(*self._default_yrange)
 
+    @QtCore.pyqtSlot()
     def load(self):
         del self._hdu
         del self._default_xrange
@@ -139,5 +140,13 @@ class Spec1D(QtWidgets.QWidget):
         self._spec_1d.clear()
 
         if self._hdu is not None:
+            self._parent.idClicked.connect(self._reset_view)
+            for widget in self.findChildren(QtWidgets.QWidget):
+                widget.blockSignals(False)
+
             self._plot()
-            self.reset_view()
+            self._reset_view()
+        else:
+            self._parent.idClicked.disconnect(self._reset_view)
+            for widget in self.findChildren(QtWidgets.QWidget):
+                widget.blockSignals(True)

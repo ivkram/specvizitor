@@ -11,6 +11,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 
 from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton)
+from PyQt5.QtCore import pyqtSignal
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 
@@ -69,6 +70,9 @@ class MainWindow(QtGui.QMainWindow):
 
 
 class FRESCO(QWidget):
+    objectChanged = pyqtSignal()
+    idClicked = pyqtSignal()
+
     def __init__(self):
         # load the configuration file
         self.config = read_yaml('config.yml')
@@ -95,7 +99,7 @@ class FRESCO(QWidget):
         # add a reset button
         self.reset_button = QPushButton()
         self.reset_button.setToolTip('Reset view')
-        self.reset_button.clicked.connect(self.reset_view)
+        self.reset_button.clicked.connect(self.idClicked.emit)
         grid.addWidget(self.reset_button, 1, 3, 1, 2)
 
         # add a widget displaying the index of the current object and the total number of objects in the catalogue
@@ -181,6 +185,10 @@ class FRESCO(QWidget):
 
         self.show_info()
 
+        self.objectChanged.connect(self.image_cutout.load)
+        self.objectChanged.connect(self.spec_2D.load)
+        self.objectChanged.connect(self.spec_1D.load)
+
     @property
     def id(self):
         """
@@ -190,11 +198,6 @@ class FRESCO(QWidget):
 
     #############################################################################
     # functions
-
-    def reset_view(self):
-        self.image_cutout.reset_view()
-        self.spec_2D.reset_view()
-        self.spec_1D.reset_view()
 
     def show_info(self):
         self.reset_button.setText('ID {}'.format(self.id))
@@ -215,9 +218,7 @@ class FRESCO(QWidget):
 
         self.j = self.j % len(self.cat)
 
-        self.image_cutout.load()
-        self.spec_2D.load()
-        self.spec_1D.load()
+        self.objectChanged.emit()
 
         self.show_info()
         self.comments.clear()
@@ -226,21 +227,6 @@ class FRESCO(QWidget):
         # TODO: save catalogue!
         logging.info('Well done! :)')
         # self.close()
-
-    def changeValue_cutout_cuts(self, value):
-        self.cuts_cutout = value
-        self.config['gui']['cuts_cutout'] = value
-        self.plot_image_cutout()
-
-    def changeValue_sld_redshift(self, index):
-        self.redshift_slider.index = index
-        self.editors['redshift'].setText("{:.2f}".format(self.redshift_slider.value))
-        self.plot_spec_1d()
-
-    def changeValue_spec_2D_model_cuts(self, value, **kwargs):
-        self.cuts_spec_2D_model = value
-        kwargs['gui']['cuts_spec_2D_model'] = value
-        self.show_spec_2D_model()
 
     def np_obj(self):
         # go to next or previous object in catalogue
