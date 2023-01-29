@@ -85,6 +85,8 @@ class FRESCO(QWidget):
         if not self.cat:
             logging.error("The input catalogue is empty!")
 
+        self.comments = ["" for _ in range(len(self.cat))]
+
         # initialise the widget
         super().__init__()
 
@@ -146,9 +148,9 @@ class FRESCO(QWidget):
         grid.addWidget(self.dec_label, 4, 3, 1, 4)
 
         # add a multi-line text editor for writing comments
-        self.comments = QtGui.QTextEdit(self)
+        self._comments_widget = QtGui.QTextEdit(self)
         grid.addWidget(QtGui.QLabel('Comments:', self), 5, 3, 1, 4)
-        grid.addWidget(self.comments, 6, 3, 1, 4)
+        grid.addWidget(self._comments_widget, 6, 3, 1, 4)
 
         ### eazy results
         self.eazy_fig_widget = pg.GraphicsLayoutWidget(self)
@@ -207,19 +209,20 @@ class FRESCO(QWidget):
         self.dec_label.setText("Dec: {}".format(dec))
 
     def change_object(self, command: str):
+        # saving comments
+        self.comments[self.j] = self._comments_widget.toPlainText()
+
         if command == 'next':
             self.j += 1
         elif command == 'previous':
             self.j -= 1
-        else:
-            return
 
         self.j = self.j % len(self.cat)
 
         self.objectChanged.emit()
 
         self.show_info()
-        self.comments.clear()
+        self._comments_widget.setText(self.comments[self.j])
 
     def close_prog(self):
         # TODO: save catalogue!
@@ -237,14 +240,6 @@ def main():
 
     # for key in ('SFR', 'mass', 'chi2'):
     #     input_cat.add_column(-99., name=key)
-
-    # initiate lists and variables
-    # comments = np.asarray(['-' for i in range(len(ID))])
-    # # This makes sure that if the comments were restricted to some length before,
-    # # this restriction is now lifted
-    # lines_comment_new = ['-' for a in comments]
-    # lines_comment_new[:] = comments
-    # comments = lines_comment_new
 
     width_window = [8.]  # width of the thumbnail cut-out windows in arcsec
 
