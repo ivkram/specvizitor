@@ -185,10 +185,6 @@ class FRESCO(QWidget):
 
         self.show_info()
 
-        self.objectChanged.connect(self.image_cutout.load)
-        self.objectChanged.connect(self.spec_2D.load)
-        self.objectChanged.connect(self.spec_1D.load)
-
     @property
     def id(self):
         """

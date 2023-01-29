@@ -16,6 +16,7 @@ class Spec2D(QtWidgets.QWidget):
     def __init__(self, parent):
         super().__init__()
         self._parent = parent
+        self._parent.objectChanged.connect(self._load)
 
         grid = QtWidgets.QGridLayout()
 
@@ -44,7 +45,7 @@ class Spec2D(QtWidgets.QWidget):
         self._spec_2d_widget.addItem(self._cbar, 0, 1)
 
         # load the data and plot the spectrum
-        self.load()
+        self._load()
 
     @property
     def _filename(self):
@@ -68,7 +69,7 @@ class Spec2D(QtWidgets.QWidget):
         self._view_box.autoRange()
 
     @QtCore.pyqtSlot()
-    def load(self):
+    def _load(self):
         del self._data
 
         if self._data is not None:
