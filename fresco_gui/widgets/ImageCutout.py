@@ -15,7 +15,6 @@ class ImageCutout(QtWidgets.QWidget):
     def __init__(self, parent):
         super().__init__()
         self._parent = parent
-        self._parent.objectChanged.connect(self.load)
 
         grid = QtWidgets.QGridLayout()
 

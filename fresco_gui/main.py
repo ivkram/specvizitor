@@ -98,15 +98,15 @@ class FRESCO(QWidget):
 
         # add a widget for the image cutout
         self.image_cutout = ImageCutout(self)
-        grid.addWidget(self.image_cutout, 1, 1, 1, 1)
+        grid.addWidget(self.image_cutout, 1, 1, 6, 1)
 
         # add a widget for the 2D spectrum
         self.spec_2D = Spec2D(self)
-        grid.addWidget(self.spec_2D, 2, 1, 1, 2)
+        grid.addWidget(self.spec_2D, 7, 1, 1, 2)
 
         # add a widget for the 1D spectrum
         self.spec_1D = Spec1D(self)
-        grid.addWidget(self.spec_1D, 3, 1, 1, 2)
+        grid.addWidget(self.spec_1D, 9, 1, 1, 2)
 
         # add a reset button
         self.reset_button = QPushButton()
@@ -137,26 +137,24 @@ class FRESCO(QWidget):
             b.setShortcut(np_properties['shortcut'])
             grid.addWidget(b, *np_properties['layout'])
 
-        # add a multi-line text editor for writing comments
-        self.comments = QtGui.QLineEdit(self)
-        #grid.addWidget(QtGui.QLabel('Comment:', self), 3, 12, 1, 1)
-        #grid.addWidget(self.comments, 4, 12, 1, 3)
-
         # display RA
         self.ra_label = QtGui.QLabel()
-        #grid.addWidget(QtGui.QLabel('RA:'), 4, 17, 1, 1)
-        #grid.addWidget(self.ra_label, 4, 18, 1, 3)
+        grid.addWidget(self.ra_label, 3, 3, 1, 4)
 
         # display Dec
         self.dec_label = QtGui.QLabel()
-        #grid.addWidget(QtGui.QLabel('Dec:'), 5, 17, 1, 2)
-        #grid.addWidget(self.dec_label, 5, 18, 1, 3)
+        grid.addWidget(self.dec_label, 4, 3, 1, 4)
+
+        # add a multi-line text editor for writing comments
+        self.comments = QtGui.QTextEdit(self)
+        grid.addWidget(QtGui.QLabel('Comments:', self), 5, 3, 1, 4)
+        grid.addWidget(self.comments, 6, 3, 1, 4)
 
         ### eazy results
         self.eazy_fig_widget = pg.GraphicsLayoutWidget(self)
         self.eazy_z_widget = pg.GraphicsLayoutWidget(self)
-        #grid.addWidget(self.eazy_fig_widget, 6, 12, 1, 1)
-        #grid.addWidget(self.eazy_z_widget, 7, 12, 1, 1)
+        grid.addWidget(self.eazy_fig_widget, 7, 3, 2, 4)
+        grid.addWidget(self.eazy_z_widget, 9, 3, 2, 4)
         # self.show_eazy_fig()
 
         ### Write eazy results
@@ -185,6 +183,10 @@ class FRESCO(QWidget):
 
         self.show_info()
 
+        self.objectChanged.connect(self.image_cutout.load)
+        self.objectChanged.connect(self.spec_2D.load)
+        self.objectChanged.connect(self.spec_1D.load)
+
     @property
     def id(self):
         """
@@ -201,8 +203,8 @@ class FRESCO(QWidget):
 
         c = SkyCoord(ra=self.cat['ra'][self.j], dec=self.cat['dec'][self.j], frame='icrs', unit='deg')
         ra, dec = c.to_string('hmsdms').split(' ')
-        self.ra_label.setText(ra)
-        self.dec_label.setText(dec)
+        self.ra_label.setText("RA: {}".format(ra))
+        self.dec_label.setText("Dec: {}".format(dec))
 
     def change_object(self, command: str):
         if command == 'next':
@@ -223,16 +225,6 @@ class FRESCO(QWidget):
         # TODO: save catalogue!
         logging.info('Well done! :)')
         # self.close()
-
-    def np_obj(self):
-        # go to next or previous object in catalogue
-
-        # Save comment
-        comment = self.le_comment.text()
-        if len(comment) != 0:
-            comments[self.j] = comment
-
-        self.save_now()
 
     def save_now(self):
         self.cat['SFR'][self.j] = 0  # self.sfr

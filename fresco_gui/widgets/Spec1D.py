@@ -20,7 +20,6 @@ class Spec1D(QtWidgets.QWidget):
 
         super().__init__()
         self._parent = parent
-        self._parent.objectChanged.connect(self._load)
 
         grid = QtWidgets.QGridLayout()
 
@@ -42,7 +41,7 @@ class Spec1D(QtWidgets.QWidget):
         # add a line edit for changing the redshift
         self._redshift_editor = QtWidgets.QLineEdit(self)
         self._redshift_editor.returnPressed.connect(self._update_from_editor)
-        self._redshift_editor.setMaximumWidth(100)
+        self._redshift_editor.setMaximumWidth(120)
         grid.addWidget(QtWidgets.QLabel('z = ', self), 3, 2, 1, 1)
         grid.addWidget(self._redshift_editor, 3, 3, 1, 1)
 
@@ -63,7 +62,7 @@ class Spec1D(QtWidgets.QWidget):
             self._line_artists[line_name] = {'line': line, 'label': label}
 
         # load the data and plot the spectrum
-        self._load()
+        self.load()
 
     @lazyproperty
     def _filename(self):
@@ -113,7 +112,7 @@ class Spec1D(QtWidgets.QWidget):
     def _update_from_slider(self, index=None):
         if index:
             self._redshift_slider.index = index
-        self._redshift_editor.setText("{:.4f}".format(self._redshift_slider.value))
+        self._redshift_editor.setText("{:.6f}".format(self._redshift_slider.value))
         self._update_view()
 
     def _update_from_editor(self):
@@ -123,7 +122,7 @@ class Spec1D(QtWidgets.QWidget):
             self._redshift_slider.reset()
             self._update_from_slider()
         else:
-            self._redshift_editor.setText("{:.4f}".format(self._redshift_slider.value))
+            self._redshift_editor.setText("{:.6f}".format(self._redshift_slider.value))
             self._update_view()
 
     @QtCore.pyqtSlot()
@@ -135,7 +134,7 @@ class Spec1D(QtWidgets.QWidget):
         self._spec_1d.setYRange(*self._default_yrange)
 
     @QtCore.pyqtSlot()
-    def _load(self):
+    def load(self):
         del self._filename
         del self._hdu
         del self._default_xrange
