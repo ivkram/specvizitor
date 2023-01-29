@@ -96,6 +96,18 @@ class FRESCO(QWidget):
         # initialise the index of the current object
         self.j = 0
 
+        # add a widget for the image cutout
+        self.image_cutout = ImageCutout(self)
+        grid.addWidget(self.image_cutout, 1, 1, 1, 1)
+
+        # add a widget for the 2D spectrum
+        self.spec_2D = Spec2D(self)
+        grid.addWidget(self.spec_2D, 2, 1, 1, 2)
+
+        # add a widget for the 1D spectrum
+        self.spec_1D = Spec1D(self)
+        grid.addWidget(self.spec_1D, 3, 1, 1, 2)
+
         # add a reset button
         self.reset_button = QPushButton()
         self.reset_button.setToolTip('Reset view')
@@ -111,18 +123,6 @@ class FRESCO(QWidget):
         # close_button.clicked.connect(self.close_prog)
         # close_button.setToolTip('Close the program.')
         # grid.addWidget(close_button, 1,31,1,1)
-
-        # add a widget for the image cutout
-        self.image_cutout = ImageCutout(self)
-        grid.addWidget(self.image_cutout, 1, 1, 1, 1)
-
-        # add a widget for the 2D spectrum
-        self.spec_2D = Spec2D(self)
-        grid.addWidget(self.spec_2D, 2, 1, 1, 2)
-
-        # add a widget for the 1D spectrum
-        self.spec_1D = Spec1D(self)
-        grid.addWidget(self.spec_1D, 3, 1, 1, 2)
 
         # set buttons for next or previous object
         np_buttons = {'previous': {'shortcut': 'left', 'layout': (2, 3, 1, 2)},

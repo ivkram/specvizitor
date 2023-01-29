@@ -25,7 +25,8 @@ class Spec1D(QtWidgets.QWidget):
         grid = QtWidgets.QGridLayout()
 
         # add a label
-        grid.addWidget(QtWidgets.QLabel('1D spectrum: {}'.format(self._filename.name)), 1, 1)
+        self._label = QtWidgets.QLabel()
+        grid.addWidget(self._label, 1, 1)
 
         # add a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsLayoutWidget(self)
@@ -64,7 +65,7 @@ class Spec1D(QtWidgets.QWidget):
         # load the data and plot the spectrum
         self._load()
 
-    @property
+    @lazyproperty
     def _filename(self):
         return pathlib.Path(self._parent.config['data']['grizli_fit_products']) / \
             '{}_{:05d}.1D.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
@@ -135,10 +136,12 @@ class Spec1D(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _load(self):
+        del self._filename
         del self._hdu
         del self._default_xrange
         del self._default_yrange
         del self._label_height
+
         self._spec_1d.clear()
 
         if self._hdu is not None:
@@ -146,9 +149,12 @@ class Spec1D(QtWidgets.QWidget):
             for widget in self.findChildren(QtWidgets.QWidget):
                 widget.blockSignals(False)
 
+            self._label.setText("1D spectrum: {}".format(self._filename.name))
             self._plot()
             self._reset_view()
         else:
+            self._label.setText("")
+
             self._parent.idClicked.disconnect(self._reset_view)
             for widget in self.findChildren(QtWidgets.QWidget):
                 widget.blockSignals(True)

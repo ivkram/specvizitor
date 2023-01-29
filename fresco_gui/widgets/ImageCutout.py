@@ -15,12 +15,13 @@ class ImageCutout(QtWidgets.QWidget):
     def __init__(self, parent):
         super().__init__()
         self._parent = parent
-        self._parent.objectChanged.connect(self._load)
+        self._parent.objectChanged.connect(self.load)
 
         grid = QtWidgets.QGridLayout()
 
         # add a label
-        grid.addWidget(QtWidgets.QLabel('Image: {}'.format(self._filename.name)), 1, 1)
+        self._label = QtWidgets.QLabel()
+        grid.addWidget(self._label, 1, 1)
 
         # add a widget for the image
         self._image_widget = pg.GraphicsLayoutWidget()
@@ -45,9 +46,9 @@ class ImageCutout(QtWidgets.QWidget):
         self._image_widget.addItem(self._cbar, 0, 1)
 
         # load the data and plot the image
-        self._load()
+        self.load()
 
-    @property
+    @lazyproperty
     def _filename(self):
         return pathlib.Path(self._parent.config['data']['grizli_fit_products']) /\
             '{}_{:05d}.beams.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
@@ -69,7 +70,8 @@ class ImageCutout(QtWidgets.QWidget):
         self._view_box.autoRange()
 
     @QtCore.pyqtSlot()
-    def _load(self):
+    def load(self):
+        del self._filename
         del self._data
 
         if self._data is not None:
@@ -77,9 +79,12 @@ class ImageCutout(QtWidgets.QWidget):
             for widget in self.findChildren(QtWidgets.QWidget):
                 widget.blockSignals(False)
 
+            self._label.setText("Image: {}".format(self._filename.name))
             self._image.setImage(self._data)
             self._reset_view()
         else:
+            self._label.setText("")
+
             self._parent.idClicked.disconnect(self._reset_view)
             for widget in self.findChildren(QtWidgets.QWidget):
                 widget.blockSignals(True)

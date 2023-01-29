@@ -21,7 +21,8 @@ class Spec2D(QtWidgets.QWidget):
         grid = QtWidgets.QGridLayout()
 
         # add a label
-        grid.addWidget(QtWidgets.QLabel('2D spectrum: {}'.format(self._filename.name)), 1, 1)
+        self._label = QtWidgets.QLabel()
+        grid.addWidget(self._label, 1, 1)
 
         # add a widget for the spectrum
         self._spec_2d_widget = pg.GraphicsLayoutWidget()
@@ -47,7 +48,7 @@ class Spec2D(QtWidgets.QWidget):
         # load the data and plot the spectrum
         self._load()
 
-    @property
+    @lazyproperty
     def _filename(self):
         return pathlib.Path(self._parent.config['data']['grizli_fit_products']) / \
             '{}_{:05d}.stack.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
@@ -70,6 +71,7 @@ class Spec2D(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _load(self):
+        del self._filename
         del self._data
 
         if self._data is not None:
@@ -77,11 +79,14 @@ class Spec2D(QtWidgets.QWidget):
             for widget in self.findChildren(QtWidgets.QWidget):
                 widget.blockSignals(False)
 
+            self._label.setText("2D spectrum: {}".format(self._filename.name))
             self._spec_2d.setImage(self._data)
             self._reset_view()
         else:
+            self._label.setText("")
             self._spec_2d.clear()
 
             self._parent.idClicked.disconnect(self._reset_view)
             for widget in self.findChildren(QtWidgets.QWidget):
                 widget.blockSignals(True)
+
