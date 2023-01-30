@@ -8,7 +8,6 @@ data:
 gui:
   image_cutout:
     min_size: [350, 350]
-    cuts: [0, 100]
 
   spec_2D:
     min_size: [1000, 100]

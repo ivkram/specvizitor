@@ -9,7 +9,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
 from ..utils.config import read_yaml
-from ..utils.CustomSlider import CustomSlider
+from ..utils.widgets import CustomSlider
 from .colors import viridis_more
 
 
