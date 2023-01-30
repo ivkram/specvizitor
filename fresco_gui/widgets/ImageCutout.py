@@ -6,8 +6,7 @@ from astropy.visualization import ZScaleInterval
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtWidgets
-from pyqtgraph.Qt import QtCore
+from pyqtgraph.Qt import QtCore, QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 

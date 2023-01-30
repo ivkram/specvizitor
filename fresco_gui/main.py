@@ -2,18 +2,12 @@ import sys
 import logging
 from functools import partial
 
-import numpy as np
 from astropy.io import fits
 from astropy.table import Table
-from astropy import wcs
-from astropy.coordinates import Angle
-from astropy import units as u
 from astropy.coordinates import SkyCoord
 
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton)
-from PyQt5.QtCore import pyqtSignal
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 from .utils.config import read_yaml
 from .loader import load_phot_cat
@@ -25,30 +19,6 @@ pg.setConfigOption('foreground', 'k')
 
 # logging configuration
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
-
-def pix_scale(header):
-    """
-    Prints out averaged pixel scale in arcseconds at reference pixel.
-    Ignores dissortions, but this OK considering our small field of view.
-
-    In:
-    ---
-    header ... an astropy.io.fits header object
-
-    Out:
-    ---
-    pix_scale ... average linear extent of a pixel in arc-seconds
-    """
-
-    wcs_obj = wcs.WCS(header, relax=False)
-    scale_deg_xy = wcs.utils.proj_plane_pixel_scales(wcs_obj)
-    scale_deg = np.sum(scale_deg_xy[:2]) / 2.
-
-    scale_deg = Angle(scale_deg,unit=u.deg)
-    scale_asec = scale_deg.arcsec
-
-    return scale_asec
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -69,9 +39,9 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.main_GUI)
 
 
-class FRESCO(QWidget):
-    objectChanged = pyqtSignal()
-    idClicked = pyqtSignal()
+class FRESCO(QtWidgets.QWidget):
+    objectChanged = QtCore.pyqtSignal()
+    idClicked = QtCore.pyqtSignal()
 
     def __init__(self):
         # load the configuration file
@@ -111,7 +81,7 @@ class FRESCO(QWidget):
         grid.addWidget(self.spec_1D, 9, 1, 1, 2)
 
         # add a reset button
-        self.reset_button = QPushButton()
+        self.reset_button = QtGui.QPushButton()
         self.reset_button.setToolTip('Reset view')
         self.reset_button.clicked.connect(self.idClicked.emit)
         grid.addWidget(self.reset_button, 1, 3, 1, 2)
@@ -246,7 +216,7 @@ def main():
     # set colours
     c_data_crossline = 'r'
 
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
