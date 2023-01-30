@@ -21,7 +21,7 @@ pg.setConfigOption('foreground', 'k')
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -61,7 +61,7 @@ class FRESCO(QtWidgets.QWidget):
         super().__init__()
 
         # set up the widget layout
-        grid = QtGui.QGridLayout()
+        grid = QtWidgets.QGridLayout()
         grid.setSpacing(10)
         self.setLayout(grid)
 
@@ -81,13 +81,13 @@ class FRESCO(QtWidgets.QWidget):
         grid.addWidget(self.spec_1D, 9, 1, 1, 2)
 
         # add a reset button
-        self.reset_button = QtGui.QPushButton()
+        self.reset_button = QtWidgets.QPushButton()
         self.reset_button.setToolTip('Reset view')
         self.reset_button.clicked.connect(self.idClicked.emit)
         grid.addWidget(self.reset_button, 1, 3, 1, 2)
 
         # add a widget displaying the index of the current object and the total number of objects in the catalogue
-        self.number_of_obj_label = QtGui.QLabel()
+        self.number_of_obj_label = QtWidgets.QLabel()
         grid.addWidget(self.number_of_obj_label, 1, 5, 1, 1)
 
         # TODO: add a close button
@@ -101,7 +101,7 @@ class FRESCO(QtWidgets.QWidget):
                       'next': {'shortcut': 'right', 'layout': (2, 5, 1, 2)}}
 
         for np_text, np_properties in np_buttons.items():
-            b = QtGui.QPushButton('', self)
+            b = QtWidgets.QPushButton('', self)
             b.setIcon(QtGui.QIcon(np_text + '.png'))
             b.setToolTip('Look at the {} object.'.format(np_text))
             b.setText(np_text)
@@ -110,16 +110,16 @@ class FRESCO(QtWidgets.QWidget):
             grid.addWidget(b, *np_properties['layout'])
 
         # display RA
-        self.ra_label = QtGui.QLabel()
+        self.ra_label = QtWidgets.QLabel()
         grid.addWidget(self.ra_label, 3, 3, 1, 4)
 
         # display Dec
-        self.dec_label = QtGui.QLabel()
+        self.dec_label = QtWidgets.QLabel()
         grid.addWidget(self.dec_label, 4, 3, 1, 4)
 
         # add a multi-line text editor for writing comments
-        self._comments_widget = QtGui.QTextEdit(self)
-        grid.addWidget(QtGui.QLabel('Comments:', self), 5, 3, 1, 4)
+        self._comments_widget = QtWidgets.QTextEdit(self)
+        grid.addWidget(QtWidgets.QLabel('Comments:', self), 5, 3, 1, 4)
         grid.addWidget(self._comments_widget, 6, 3, 1, 4)
 
         ### eazy results
@@ -133,24 +133,24 @@ class FRESCO(QtWidgets.QWidget):
 
         '''
         z_raw_chi2 = np.round(self.zout['z_raw_chi2'][self.j],3)
-        eazy_raw_chi2 = QtGui.QLabel('Chi2: '+str(z_raw_chi2), self)
+        eazy_raw_chi2 = QtWidgets.QLabel('Chi2: '+str(z_raw_chi2), self)
         grid.addWidget(eazy_raw_chi2,7,31,1,1)
 
         raw_chi2 = np.round(self.zout['raw_chi2'][self.j],3)
-        eazy_raw_chi2 = QtGui.QLabel('Chi2: '+str(raw_chi2), self)
+        eazy_raw_chi2 = QtWidgets.QLabel('Chi2: '+str(raw_chi2), self)
         grid.addWidget(eazy_raw_chi2,8,31,1,1)
         '''
 
         # self.z_phot_chi2 = np.round(self.zout['z_phot_chi2'][self.j], 3)
-        # eazy_raw_chi2 = QtGui.QLabel('Chi2: ' + str(self.z_phot_chi2), self)
+        # eazy_raw_chi2 = QtWidgets.QLabel('Chi2: ' + str(self.z_phot_chi2), self)
         # grid.addWidget(eazy_raw_chi2, 9, 31, 1, 1)
         #
         # self.sfr = np.round(self.zout['sfr'][self.j], 3)
-        # eazy_sfr = QtGui.QLabel('SFR: ' + str(self.sfr), self)
+        # eazy_sfr = QtWidgets.QLabel('SFR: ' + str(self.sfr), self)
         # grid.addWidget(eazy_sfr, 10, 31, 1, 1)
         #
         # self.mass = np.round(self.zout['mass'][self.j] / 10 ** 9, 3)
-        # eazy_mass = QtGui.QLabel('mass: ' + str(self.mass), self)
+        # eazy_mass = QtWidgets.QLabel('mass: ' + str(self.mass), self)
         # grid.addWidget(eazy_mass, 11, 31, 1, 1)
 
         self.show_info()

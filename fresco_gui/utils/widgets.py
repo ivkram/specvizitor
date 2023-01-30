@@ -1,8 +1,8 @@
 import numpy as np
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtWidgets
 
 
-class CustomSlider(QtGui.QSlider):
+class CustomSlider(QtWidgets.QSlider):
     def __init__(self, *args, min_value=0, max_value=1, step=1, default_value=None, **kwargs):
         super().__init__(*args, **kwargs)
 
