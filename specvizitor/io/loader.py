@@ -6,12 +6,12 @@ from astropy.io import fits
 from astropy.table import Table
 
 
-def load_phot_cat(ids=None, **kwargs) -> [Table, None]:
+def load_phot_cat(*args, **kwargs) -> [Table, None]:
     """
     Read and filter the photometric catalogue.
 
     Filtering is done in two steps. First, objects with no data found among the grizli fit products are excluded from
-    the final catalogue. Second, objects are filtered based on the list of IDs passed to the function (optional).
+    the final catalogue. Second, objects are filtered based on the list(s) of IDs passed to the function (optional).
     @param ids:
         Array of IDs used to additionally filter the catalogue.
     @param kwargs: dict
@@ -29,19 +29,17 @@ def load_phot_cat(ids=None, **kwargs) -> [Table, None]:
     spec_ids = np.unique([int(get_grizli_id(p)) for p in spec_files])
 
     if spec_ids.size == 0:
-        logging.error("No grizli fit products were found")
-        return
+        raise FileNotFoundError("No grizli fit products were found")
 
     # filter objects using the obtained IDs
     cat = cat[np.in1d(cat['id'], spec_ids, assume_unique=True)]
 
     # filter objects using `ids`
-    if ids is not None:
-        cat = cat[np.in1d(cat['id'], ids, assume_unique=True)]
+    for a in args:
+        cat = cat[np.in1d(cat['id'], a, assume_unique=True)]
 
     if not cat:
-        logging.error("The input catalogue is empty")
-        return
+        raise ValueError("The input catalogue is empty")
 
     return cat
 

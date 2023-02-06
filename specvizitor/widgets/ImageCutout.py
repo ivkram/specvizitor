@@ -57,7 +57,7 @@ class ImageCutout(QtWidgets.QWidget):
             # TODO: get data from other grism exposures?
             data = fits.getdata(self._filename)
             data = data * 1e21
-        except:
+        except FileNotFoundError:
             pass
         else:
             return data

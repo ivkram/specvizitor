@@ -154,3 +154,6 @@ cython_debug/
 
 # PyCharm
 .idea/
+
+# EAZY templates and filters
+/templates/

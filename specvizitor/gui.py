@@ -1,5 +1,6 @@
 import sys
 import logging
+import pathlib
 from functools import partial
 
 from astropy.io import fits
@@ -10,8 +11,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 from .utils.config import read_yaml
-from .loader import load_phot_cat
-from .widgets import ImageCutout, Spec2D, Spec1D
+from .io.loader import load_phot_cat
+from .widgets import ImageCutout, Spec2D, Spec1D, Eazy
 
 
 pg.setConfigOption('background', 'w')
@@ -45,7 +46,7 @@ class FRESCO(QtWidgets.QWidget):
 
     def __init__(self):
         # load the configuration file
-        self.config = read_yaml('config.yml')
+        self.config = read_yaml('default_config.yml')
 
         # load the photometric catalogue
         muse_fresco_cat = Table(fits.getdata(self.config['data']['MUSE_LAEs']))
@@ -101,7 +102,7 @@ class FRESCO(QtWidgets.QWidget):
                       'next': {'shortcut': 'right', 'layout': (2, 5, 1, 2)}}
 
         for np_text, np_properties in np_buttons.items():
-            b = QtWidgets.QPushButton('', self)
+            b = QtWidgets.QPushButton('')
             b.setIcon(QtGui.QIcon(np_text + '.png'))
             b.setToolTip('Look at the {} object.'.format(np_text))
             b.setText(np_text)
@@ -118,15 +119,18 @@ class FRESCO(QtWidgets.QWidget):
         grid.addWidget(self.dec_label, 4, 3, 1, 4)
 
         # add a multi-line text editor for writing comments
-        self._comments_widget = QtWidgets.QTextEdit(self)
-        grid.addWidget(QtWidgets.QLabel('Comments:', self), 5, 3, 1, 4)
+        self._comments_widget = QtWidgets.QTextEdit()
+        grid.addWidget(QtWidgets.QLabel('Comments:'), 5, 3, 1, 4)
         grid.addWidget(self._comments_widget, 6, 3, 1, 4)
 
-        ### eazy results
-        self.eazy_fig_widget = pg.GraphicsLayoutWidget(self)
-        self.eazy_z_widget = pg.GraphicsLayoutWidget(self)
-        grid.addWidget(self.eazy_fig_widget, 7, 3, 2, 4)
-        grid.addWidget(self.eazy_z_widget, 9, 3, 2, 4)
+        # add the eazy widget
+        self.eazy = Eazy(self)
+        grid.addWidget(self.eazy, 7, 3, 2, 4)
+
+        # self.eazy_fig_widget = pg.GraphicsLayoutWidget(self)
+        # self.eazy_z_widget = pg.GraphicsLayoutWidget(self)
+        # grid.addWidget(self.eazy_fig_widget, 7, 3, 2, 4)
+        # grid.addWidget(self.eazy_z_widget, 9, 3, 2, 4)
         # self.show_eazy_fig()
 
         ### Write eazy results
@@ -207,7 +211,6 @@ class FRESCO(QtWidgets.QWidget):
 
 
 def main():
-
     # for key in ('SFR', 'mass', 'chi2'):
     #     input_cat.add_column(-99., name=key)
 

@@ -1,9 +1,14 @@
 data:
-  grizli_fit_products: '../master/data/grizli/MUSE_FRESCO_z5_6_from-Pascal/'
-  prefix: 'gds-grizli-v5.1'
+  grizli_fit_products: '../master/data/test/'
+  prefix: 'gds-grizli-v5.0'
   phot_cat: '../master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits'
 
   MUSE_LAEs: '../master/data/cats/matched/MUSE_z5_6_FRESCO_1arcsec.fits'
+
+  eazy:
+    param_file: '../master/data/eazy/gds-grizli-v5.1-fix.eazypy.zphot.param'
+    translate_file: '../master/data/eazy/gds-grizli-v5.1-fix.eazypy.zphot.translate'
+    zeropoint_file: '../master/data/eazy/gds-grizli-v5.1-fix.eazypy.zphot.zeropoint'
 
 gui:
   image_cutout:

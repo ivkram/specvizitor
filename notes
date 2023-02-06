@@ -1,9 +1,0 @@
-* should the GUI run not only for LAEs but for other objects too?
-
-general comments:
-    - pathlib offers useful classes for filesystem paths
-    - "some text".format() is an easy and nice way to format the output
-    - no need to wrap constants in arrays
-    - using astropy Table allows to avoid e.g. input_cat_keys and input_cat_dict
-    - fits.getdata(filename) is a fast way to get data from the first FITS hdu
-    - using astropy SkyCoord for coordinate transormations
