@@ -1,14 +1,9 @@
 data:
-  grizli_fit_products: '../master/data/test/'
+  grizli_fit_products: '/home/rainnfog/Documents/research/master/data/test/'
   prefix: 'gds-grizli-v5.0'
-  phot_cat: '../master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits'
+  phot_cat: '/home/rainnfog/Documents/research/master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits'
 
-  MUSE_LAEs: '../master/data/cats/matched/MUSE_z5_6_FRESCO_1arcsec.fits'
-
-  eazy:
-    param_file: '../master/data/eazy/gds-grizli-v5.1-fix.eazypy.zphot.param'
-    translate_file: '../master/data/eazy/gds-grizli-v5.1-fix.eazypy.zphot.translate'
-    zeropoint_file: '../master/data/eazy/gds-grizli-v5.1-fix.eazypy.zphot.zeropoint'
+  MUSE_LAEs: '/home/rainnfog/Documents/research/master/data/cats/matched/MUSE_z5_6_FRESCO_1arcsec.fits'
 
 gui:
   image_cutout:

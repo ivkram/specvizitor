@@ -12,6 +12,7 @@ from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 from .utils.config import read_yaml
 from .io.loader import load_phot_cat
+from .dialogs import NewFile
 from .widgets import ImageCutout, Spec2D, Spec1D, Eazy
 
 
@@ -23,28 +24,68 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         # size, title and logo
         self.setGeometry(600, 500, 2550, 1450)  # position and size of the window
         self.setWindowTitle('FRESCO')  # title of the window
         self.setWindowIcon(QtGui.QIcon('logo2_2.png'))  # logo in upper left corner
-        self.show()
 
-        # status bar
+        # add a menu
+        self._add_menu()
+
+        # add a status bar
         self.statusBar().showMessage("Message in statusbar.")
 
-        self.main_GUI = FRESCO()
+        # add a central widget
+        self.main_GUI = FRESCO(self)
         # self.main_GUI.signal1.connect(self.show_status)
         self.setCentralWidget(self.main_GUI)
+
+    def _add_menu(self):
+        self._menu = self.menuBar()
+
+        self._file = self._menu.addMenu("&File")
+
+        self._new_file = QtWidgets.QAction("&New...")
+        self._new_file.triggered.connect(self._new_file_action)
+        self._file.addAction(self._new_file)
+
+        self._file.addAction("&Open...")
+        self._file.addAction("&Save")
+        self._file.addAction("Save As...")
+        self._file.addAction("&Export...")
+        self._file.addSeparator()
+
+        self._exit = QtWidgets.QAction("E&xit...")
+        self._exit.triggered.connect(self._exit_action)
+        self._file.addAction(self._exit)
+
+        self._help = self._menu.addMenu("&Help")
+        self._about = QtWidgets.QAction("&About...")
+        self._about.triggered.connect(self._about_action)
+        self._help.addAction(self._about)
+
+    def _new_file_action(self):
+        new_file_dialog = NewFile(self)
+        if new_file_dialog.exec():
+            logging.info('OK!')
+
+    def _exit_action(self):
+        # TODO: save everything before exiting the program
+        logging.info("Exiting the program...")
+        self.close()
+
+    def _about_action(self):
+        QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v0.0.1")
 
 
 class FRESCO(QtWidgets.QWidget):
     objectChanged = QtCore.pyqtSignal()
     idClicked = QtCore.pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, parent=None):
         # load the configuration file
         self.config = read_yaml('default_config.yml')
 
@@ -59,7 +100,7 @@ class FRESCO(QtWidgets.QWidget):
         self.comments = ["" for _ in range(len(self.cat))]
 
         # initialise the widget
-        super().__init__()
+        super().__init__(parent)
 
         # set up the widget layout
         grid = QtWidgets.QGridLayout()
@@ -90,12 +131,6 @@ class FRESCO(QtWidgets.QWidget):
         # add a widget displaying the index of the current object and the total number of objects in the catalogue
         self.number_of_obj_label = QtWidgets.QLabel()
         grid.addWidget(self.number_of_obj_label, 1, 5, 1, 1)
-
-        # TODO: add a close button
-        # close_button = QPushButton('Close')
-        # close_button.clicked.connect(self.close_prog)
-        # close_button.setToolTip('Close the program.')
-        # grid.addWidget(close_button, 1,31,1,1)
 
         # set buttons for next or previous object
         np_buttons = {'previous': {'shortcut': 'left', 'layout': (2, 3, 1, 2)},
@@ -174,6 +209,7 @@ class FRESCO(QtWidgets.QWidget):
     # functions
 
     def show_info(self):
+        # TODO: move to a separate widget
         self.reset_button.setText('ID {}'.format(self.id))
         self.number_of_obj_label.setText('(#{} of {} objects)'.format(self.j + 1, len(self.cat)))
 
@@ -197,11 +233,6 @@ class FRESCO(QtWidgets.QWidget):
 
         self.show_info()
         self._comments_widget.setText(self.comments[self.j])
-
-    def close_prog(self):
-        # TODO: save catalogue!
-        logging.info('Well done! :)')
-        # self.close()
 
     def save_now(self):
         self.cat['SFR'][self.j] = 0  # self.sfr
