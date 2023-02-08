@@ -8,7 +8,7 @@ from astropy.utils.decorators import lazyproperty
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
-from ..utils.params import read_yaml
+from ..utils.user_data import read_yaml
 from ..utils.widgets import CustomSlider
 from .colors import viridis_more
 
@@ -24,7 +24,7 @@ class Spec1D(QtWidgets.QWidget):
         self._cat = None
 
         # load the list of spectral lines
-        self._lines = read_yaml('lines.yml', local=True)
+        self._lines = read_yaml('default_lines.yml', local=True)
 
         super().__init__(parent)
         self.setEnabled(False)

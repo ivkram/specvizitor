@@ -3,7 +3,7 @@ import logging
 from astropy.coordinates import SkyCoord
 
 
-from pyqtgraph.Qt import QtWidgets
+from pyqtgraph.Qt import QtWidgets, QtCore
 
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ class ObjectInfo(QtWidgets.QGroupBox):
         for i in range(len(self._config['gui']['object_info']['items'])):
             label_widget = QtWidgets.QLabel()
             label_widget.setHidden(True)
+            label_widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
             self._labels.append(label_widget)
             grid.addWidget(label_widget, i, 1, 1, 1)
 

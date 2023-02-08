@@ -18,17 +18,24 @@ def read_yaml(filename, local=False) -> dict:
         return yaml.safe_load(yaml_file)
 
 
-def read_config() -> dict:
-    config = read_yaml('config.yml', local=True)
+def save_yaml(filename, data):
+    yaml_path = pathlib.Path(filename).resolve()
 
-    user_config_filename = pathlib.Path(platformdirs.user_config_dir('specvizitor')) / 'config.yml'
+    with open(yaml_path, 'w') as yaml_file:
+        yaml.dump(data, yaml_file, sort_keys=False)
+
+
+def read_config() -> dict:
+    config = read_yaml('default_config.yml', local=True)
+
+    user_config_filename = pathlib.Path(platformdirs.user_config_dir('specvizitor')) / 'specvizitor.yml'
     if user_config_filename.exists():
         try:
             user_config = read_yaml(user_config_filename)
         except yaml.YAMLError:
-            logger.error('Error occurred when parsing `{}`. The configuration file will be overwritten.'
-                          .format(user_config_filename))
-            save_user_config(config)
+            logger.error('Error occurred when parsing `{}`. The configuration file will be overwritten.'.
+                         format(user_config_filename))
+            save_config(config)
             return config
 
         config_diff = diff(config, user_config)
@@ -46,25 +53,44 @@ def read_config() -> dict:
                 else:
                     user_config_upd.append(change)
 
-        patch(swap(user_config_upd), user_config, in_place=True)
-        save_user_config(user_config)
+        if user_config_upd:
+            patch(swap(user_config_upd), user_config, in_place=True)
+            save_config(user_config)
 
         patch(config_upd, config, in_place=True)
 
     return config
 
 
-def save_user_config(config):
+def read_cache() -> dict:
+    cache = {}
+
+    cache_filename = pathlib.Path(platformdirs.user_cache_dir('specvizitor')) / 'specvizitor.yml'
+    if cache_filename.exists():
+        try:
+            cache = read_yaml(cache_filename)
+        except yaml.YAMLError:
+            logger.error('Error occurred when parsing `{}`. The cache file will be erased.'.
+                         format(cache_filename))
+            cache_filename.unlink()
+            return {}
+
+    return cache
+
+
+def save_config(config):
     user_config_dir = pathlib.Path(platformdirs.user_config_dir('specvizitor'))
     if not user_config_dir.exists():
         user_config_dir.mkdir()
 
-    user_config_filename = user_config_dir / 'config.yml'
-    with open(user_config_filename, 'w') as yaml_file:
-        yaml.dump(config, yaml_file, sort_keys=False)
+    save_yaml(user_config_dir / 'specvizitor.yml', config)
+    logger.info('Configuration file updated')
 
 
-def cache():
+def save_cache(cache):
     cache_dir = pathlib.Path(platformdirs.user_cache_dir('specvizitor'))
     if not cache_dir.exists():
         cache_dir.mkdir()
+
+    save_yaml(cache_dir / 'specvizitor.yml', cache)
+    logger.info('Cache file updated')

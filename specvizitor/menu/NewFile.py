@@ -6,7 +6,7 @@ from astropy.table import Table
 from pyqtgraph.Qt import QtWidgets, QtCore
 
 from ..utils.widgets import FileBrowser
-from ..utils.params import save_user_config
+from ..utils.user_data import save_config, save_cache
 from ..io.loader import load_cat
 
 
@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 class NewFile(QtWidgets.QDialog):
     project_created = QtCore.pyqtSignal(str, Table)
 
-    def __init__(self, config: dict, parent=None):
+    def __init__(self, config: dict, cache: dict, parent=None):
         self._config = config
+        self._cache = cache
 
         super().__init__(parent)
         self.setWindowTitle("New Project")
@@ -32,7 +33,8 @@ class NewFile(QtWidgets.QDialog):
         layout.addWidget(self._project_browser)
 
         self._cat_browser = FileBrowser(title='Catalogue:', mode=FileBrowser.OpenFile,
-                                        filename_extensions='FITS Files (*.fits)', parent=self)
+                                        filename_extensions='FITS Files (*.fits)',
+                                        default_path=self._cache.get('last_catalogue'), parent=self)
         layout.addWidget(self._cat_browser)
 
         self._data_browser = FileBrowser(title='Data Folder:', mode=FileBrowser.OpenDirectory,
@@ -50,7 +52,7 @@ class NewFile(QtWidgets.QDialog):
 
         self.setLayout(layout)
 
-        self._cat_browser._line_edit.setText('/home/rainnfog/Documents/research/master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits')
+        # self._cat_browser._line_edit.setText('/home/rainnfog/Documents/research/master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits')
         # self._data_browser._line_edit.setText('/home/rainnfog/Documents/research/master/data/test/')
     
     def accept(self):
@@ -110,7 +112,10 @@ class NewFile(QtWidgets.QDialog):
             return
 
         self._config['data']['dir'] = str(data_dirname)
-        save_user_config(self._config)
+        save_config(self._config)
+
+        self._cache['last_catalogue'] = str(cat_filename)
+        save_cache(self._cache)
 
         self.project_created.emit(str(project_filename), cat)
 

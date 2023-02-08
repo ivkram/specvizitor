@@ -7,7 +7,7 @@ from astropy.table import Table
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
-from .utils.params import read_config
+from .utils.user_data import read_config, read_cache
 from .menu import NewFile
 from .widgets import (ControlPanel, ObjectInfo, ReviewForm,
                       ImageCutout, Spec2D, Spec1D,
@@ -26,6 +26,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         # load the configuration file
         self._config = read_config()
+
+        # read cache
+        self._cache = read_cache()
 
         super().__init__(parent)
 
@@ -68,7 +71,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._help.addAction(self._about)
 
     def _new_project_action(self):
-        new_project_dialog = NewFile(self._config, parent=self)
+        new_project_dialog = NewFile(self._config, self._cache, parent=self)
         new_project_dialog.project_created.connect(self.main_GUI.load_project)
         if new_project_dialog.exec():
             logger.info('Project created')
