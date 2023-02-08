@@ -5,6 +5,9 @@ import platformdirs
 from dictdiffer import diff, patch, swap
 
 
+logger = logging.getLogger(__name__)
+
+
 def read_yaml(filename, local=False) -> dict:
     if local:
         yaml_path = (pathlib.Path(__file__).parent.parent / 'data' / filename).resolve()
@@ -23,7 +26,7 @@ def read_config() -> dict:
         try:
             user_config = read_yaml(user_config_filename)
         except yaml.YAMLError:
-            logging.error('Error occurred when parsing `{}`. The configuration file will be overwritten.'
+            logger.error('Error occurred when parsing `{}`. The configuration file will be overwritten.'
                           .format(user_config_filename))
             save_user_config(config)
             return config
@@ -59,3 +62,9 @@ def save_user_config(config):
     user_config_filename = user_config_dir / 'config.yml'
     with open(user_config_filename, 'w') as yaml_file:
         yaml.dump(config, yaml_file, sort_keys=False)
+
+
+def cache():
+    cache_dir = pathlib.Path(platformdirs.user_cache_dir('specvizitor'))
+    if not cache_dir.exists():
+        cache_dir.mkdir()

@@ -7,7 +7,7 @@ from astropy.table import Table
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
-from .utils.config import read_config
+from .utils.params import read_config
 from .menu import NewFile
 from .widgets import (ControlPanel, ObjectInfo, ReviewForm,
                       ImageCutout, Spec2D, Spec1D,
@@ -19,6 +19,7 @@ pg.setConfigOption('foreground', 'k')
 
 # logging configuration
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -70,11 +71,11 @@ class MainWindow(QtWidgets.QMainWindow):
         new_project_dialog = NewFile(self._config, parent=self)
         new_project_dialog.project_created.connect(self.main_GUI.load_project)
         if new_project_dialog.exec():
-            logging.info('Project created')
+            logger.info('Project created')
 
     def _exit_action(self):
         # TODO: save everything before exiting the program
-        logging.info("Exiting the program...")
+        logger.info("Exiting the program...")
         self.close()
 
     def _about_action(self):

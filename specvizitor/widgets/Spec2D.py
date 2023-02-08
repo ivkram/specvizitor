@@ -11,6 +11,9 @@ from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 
+logger = logging.getLogger(__name__)
+
+
 class Spec2D(QtWidgets.QWidget):
     def __init__(self, config, parent=None):
         self._config = config
@@ -59,7 +62,7 @@ class Spec2D(QtWidgets.QWidget):
             data = fits.getdata(self._filename)
             data = np.rot90(data)[::-1]
         except FileNotFoundError:
-            logging.error('File not found: {}'.format(self._filename))
+            logger.error('File not found: {}'.format(self._filename))
             return
         else:
             return data

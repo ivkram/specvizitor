@@ -6,6 +6,9 @@ from astropy.coordinates import SkyCoord
 from pyqtgraph.Qt import QtWidgets
 
 
+logger = logging.getLogger(__name__)
+
+
 class ObjectInfo(QtWidgets.QGroupBox):
     def __init__(self, config, parent=None):
         self._config = config
@@ -37,7 +40,7 @@ class ObjectInfo(QtWidgets.QGroupBox):
                 self._labels[i].setText(label.format(self._cat[cname][self._j]))
                 self._labels[i].setHidden(False)
             else:
-                logging.warning('`{}` column not found in the catalogue'.format(cname))
+                logger.warning('`{}` column not found in the catalogue'.format(cname))
                 self._labels[i].setHidden(True)
 
         # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:

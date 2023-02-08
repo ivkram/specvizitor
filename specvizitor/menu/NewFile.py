@@ -6,8 +6,11 @@ from astropy.table import Table
 from pyqtgraph.Qt import QtWidgets, QtCore
 
 from ..utils.widgets import FileBrowser
-from ..utils.config import save_user_config
+from ..utils.params import save_user_config
 from ..io.loader import load_cat
+
+
+logger = logging.getLogger(__name__)
 
 
 class NewFile(QtWidgets.QDialog):
@@ -57,7 +60,7 @@ class NewFile(QtWidgets.QDialog):
 
         for i, path in enumerate((project_filename, cat_filename, data_dirname)):
             if not path:
-                logging.error('Field #{} is empty'.format(i + 1))
+                logger.error('Field #{} is empty'.format(i + 1))
                 QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
                                       'Some fields are empty', parent=self).show()
                 return
@@ -67,30 +70,30 @@ class NewFile(QtWidgets.QDialog):
         data_dirname = pathlib.Path(data_dirname).resolve()
 
         if not project_filename.parent.exists():
-            logging.error('Project root directory `{}` not found'.format(project_filename.parent))
+            logger.error('Project root directory `{}` not found'.format(project_filename.parent))
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
                                   'The project root directory does not exist', parent=self).show()
             return
         if not project_filename.suffix == '.svz':
-            logging.error('Project filename extension `{}` is invalid'.format(project_filename.suffix))
+            logger.error('Project filename extension `{}` is invalid'.format(project_filename.suffix))
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
                                   'The project filename extension must be `.svz`', parent=self).show()
             return
 
         if not cat_filename.exists():
-            logging.error('Catalogue `{}` not found'.format(cat_filename))
+            logger.error('Catalogue `{}` not found'.format(cat_filename))
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
                                   'The catalogue does not exist', parent=self).show()
             return
         if cat_filename.suffix not in ('.fits',):
-            logging.error('The catalogue format `{}` is invalid'.format(cat_filename.suffix))
+            logger.error('The catalogue format `{}` is invalid'.format(cat_filename.suffix))
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
                                   'The catalogue format is invalid. Currently supported formats: .fits',
                                   parent=self).show()
             return
 
         if not data_dirname.exists():
-            logging.error('Data folder `{}` not found'.format(data_dirname))
+            logger.error('Data folder `{}` not found'.format(data_dirname))
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
                                   'The data folder does not exist', parent=self).show()
             return

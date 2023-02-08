@@ -8,9 +8,12 @@ from astropy.utils.decorators import lazyproperty
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
-from ..utils.config import read_yaml
+from ..utils.params import read_yaml
 from ..utils.widgets import CustomSlider
 from .colors import viridis_more
+
+
+logger = logging.getLogger(__name__)
 
 
 class Spec1D(QtWidgets.QWidget):
@@ -77,7 +80,7 @@ class Spec1D(QtWidgets.QWidget):
             with fits.open(self._filename) as hdul:
                 header, data = hdul[1].header, hdul[1].data
         except FileNotFoundError:
-            logging.error('File not found: {}'.format(self._filename))
+            logger.error('File not found: {}'.format(self._filename))
             return
         else:
             return header, data

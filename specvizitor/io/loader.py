@@ -6,6 +6,9 @@ from astropy.io import fits
 from astropy.table import Table
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_grizli_id(filename: pathlib.Path) -> str:
     """
     Retrieve a grizli ID from the file name. The file can be any of the grizli fit products.
@@ -30,7 +33,7 @@ def load_cat(filename: pathlib.Path, colnames=None, translate=None,
     try:
         cat = Table(fits.getdata(filename))
     except OSError:
-        logging.error('Could not load the catalogue')
+        logger.error('Could not load the catalogue')
         return
 
     # rename columns
@@ -43,9 +46,9 @@ def load_cat(filename: pathlib.Path, colnames=None, translate=None,
 
     if 'id' not in cat.colnames:
         if translate is None or 'id' not in translate:
-            logging.error('`id` column not found')
+            logger.error('`id` column not found')
         else:
-            logging.error('`id` column or its equivalences ({}) not found'.format(", ".join(translate['id'])))
+            logger.error('`id` column or its equivalences ({}) not found'.format(", ".join(translate['id'])))
         return
 
     # select columns
@@ -62,14 +65,14 @@ def load_cat(filename: pathlib.Path, colnames=None, translate=None,
         spec_ids = np.unique([int(filename_parser(p)) for p in spec_files])
 
         if not spec_ids.size:
-            logging.error('No IDs retrieved from the data folder')
+            logger.error('No IDs retrieved from the data folder')
             return
 
         # filter objects using a list of IDs retrieved from the data folder
         cat = cat[np.in1d(cat['id'], spec_ids, assume_unique=True)]
 
     if len(cat) == 0:
-        logging.error('The processed catalogue is empty')
+        logger.error('The processed catalogue is empty')
         return
 
     return cat
