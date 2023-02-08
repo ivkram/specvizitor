@@ -59,7 +59,8 @@ class FileBrowser(QtWidgets.QWidget):
                                                                         directory=self._default_path,
                                                                         filter=self._filter, options=options)
 
-        self._line_edit.setText(filepath)
+        if filepath:
+            self._line_edit.setText(filepath)
 
     def get_path(self):
         return self._line_edit.text()
