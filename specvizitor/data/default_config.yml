@@ -9,7 +9,6 @@ loader:
 
 data:
   dir: '.'
-  prefix: 'gds-grizli-v5.0'
 
 gui:
   control_panel:
