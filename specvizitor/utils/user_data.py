@@ -25,10 +25,19 @@ def save_yaml(filename, data):
         yaml.dump(data, yaml_file, sort_keys=False)
 
 
+# TODO: create Cache and Config classes
+def get_user_config_filename():
+    return pathlib.Path(platformdirs.user_config_dir('specvizitor')) / 'specvizitor.yml'
+
+
+def get_cache_filename():
+    return pathlib.Path(platformdirs.user_cache_dir('specvizitor')) / 'specvizitor.yml'
+
+
 def read_config() -> dict:
     config = read_yaml('default_config.yml', local=True)
 
-    user_config_filename = pathlib.Path(platformdirs.user_config_dir('specvizitor')) / 'specvizitor.yml'
+    user_config_filename = get_user_config_filename()
     if user_config_filename.exists():
         try:
             user_config = read_yaml(user_config_filename)
@@ -65,7 +74,7 @@ def read_config() -> dict:
 def read_cache() -> dict:
     cache = {}
 
-    cache_filename = pathlib.Path(platformdirs.user_cache_dir('specvizitor')) / 'specvizitor.yml'
+    cache_filename = get_cache_filename()
     if cache_filename.exists():
         try:
             cache = read_yaml(cache_filename)
@@ -79,18 +88,18 @@ def read_cache() -> dict:
 
 
 def save_config(config):
-    user_config_dir = pathlib.Path(platformdirs.user_config_dir('specvizitor'))
-    if not user_config_dir.exists():
-        user_config_dir.mkdir()
+    user_config_filename = get_user_config_filename()
+    if not user_config_filename.parent.exists():
+        user_config_filename.parent.mkdir()
 
-    save_yaml(user_config_dir / 'specvizitor.yml', config)
+    save_yaml(user_config_filename, config)
     logger.info('Configuration file updated')
 
 
 def save_cache(cache):
-    cache_dir = pathlib.Path(platformdirs.user_cache_dir('specvizitor'))
-    if not cache_dir.exists():
-        cache_dir.mkdir()
+    cache_filename = get_cache_filename()
+    if not cache_filename.parent.exists():
+        cache_filename.parent.mkdir()
 
-    save_yaml(cache_dir / 'specvizitor.yml', cache)
+    save_yaml(cache_filename, cache)
     logger.info('Cache file updated')

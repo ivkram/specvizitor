@@ -7,12 +7,11 @@ from astropy.table import Table
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
-from .utils.user_data import read_config, read_cache
+from .utils.user_data import read_config, read_cache, get_user_config_filename, get_cache_filename
 from .menu import NewFile
 from .widgets import (ControlPanel, ObjectInfo, ReviewForm,
                       ImageCutout, Spec2D, Spec1D,
                       Eazy)
-
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -65,6 +64,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._exit.triggered.connect(self._exit_action)
         self._file.addAction(self._exit)
 
+        self._tools = self._menu.addMenu("&Tools")
+        self._settings = QtWidgets.QAction("&Settings...")
+        self._settings.triggered.connect(self._settings_action)
+        self._tools.addAction(self._settings)
+
         self._help = self._menu.addMenu("&Help")
         self._about = QtWidgets.QAction("&About...")
         self._about.triggered.connect(self._about_action)
@@ -80,6 +84,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # TODO: save everything before exiting the program
         logger.info("Exiting the program...")
         self.close()
+
+    def _settings_action(self):
+        QtWidgets.QMessageBox.information(self, "Settings",
+                                          "Location of the configuration file: {}\n\nLocation of cache: {}".
+                                          format(get_user_config_filename(), get_cache_filename()))
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v0.0.1")
