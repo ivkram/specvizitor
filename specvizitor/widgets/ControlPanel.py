@@ -107,13 +107,13 @@ class ControlPanel(QtWidgets.QGroupBox):
         try:
             id_upd = int(text)
         except ValueError:
-            logger.info('Invalid ID')
+            logger.error('Invalid ID')
             return
 
         if id_upd in self._cat['id']:
             self.object_selected.emit(self._cat.loc[id_upd].index)
         else:
-            logger.info('ID not found')
+            logger.error('ID not found')
             return
 
     def go_to_index(self):
@@ -123,13 +123,13 @@ class ControlPanel(QtWidgets.QGroupBox):
         try:
             index_upd = int(text)
         except ValueError:
-            logger.info('Invalid index')
+            logger.error('Invalid index')
             return
 
         if 0 < index_upd <= len(self._cat):
             self.object_selected.emit(index_upd - 1)
         else:
-            logger.info('Index out of range')
+            logger.error('Index out of range')
             return
 
     def load_project(self, cat):
