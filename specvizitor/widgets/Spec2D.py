@@ -41,8 +41,8 @@ class Spec2D(QtWidgets.QWidget):
         self._spec_2d = pg.ImageItem(border='k')
         self._spec_2d.setLookupTable(self._cmap.getLookupTable())
         self._view_box = self._spec_2d_widget.addViewBox(0, 0)
-        self._view_box.setAspectLocked(True)
         self._view_box.addItem(self._spec_2d)
+        self._view_box.setAspectLocked(True)
 
         # set up the color bar
         self._cbar = ColorLegendItem(imageItem=self._spec_2d, showHistogram=True, histHeightPercentile=99.0)
@@ -83,6 +83,7 @@ class Spec2D(QtWidgets.QWidget):
 
             self._label.setText("2D spectrum: {}".format(self._filename.name))
             self._spec_2d.setImage(self._data)
+
             self.reset_view()
         else:
             self._label.setText("")

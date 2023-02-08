@@ -10,14 +10,14 @@ class FileBrowser(QtWidgets.QWidget):
     OpenDirectory = 2
     SaveFile = 3
 
-    def __init__(self, parent=None, title='', mode=OpenFile, filename_extensions='All files (*.*)', default_path='',
-                 button_text='Browse...'):
+    def __init__(self, title=None, mode=OpenFile, filename_extensions='All files (*.*)', default_path=None,
+                 button_text='Browse...', parent=None):
 
         super().__init__(parent=parent)
 
         self._browser_mode = mode
         self._filter = filename_extensions  # example: 'Images (*.png *.xpm *.jpg);;Text files (*.txt)'
-        self._default_path = str(pathlib.Path().resolve()) if not default_path else default_path
+        self._default_path = None if default_path is None else str(pathlib.Path(default_path).resolve())
 
         layout = QtWidgets.QHBoxLayout()
 
@@ -27,7 +27,7 @@ class FileBrowser(QtWidgets.QWidget):
 
         self._line_edit = QtWidgets.QLineEdit(self)
         self._line_edit.setMinimumWidth(700)
-        self._line_edit.setText(default_path)
+        self._line_edit.setText(self._default_path)
         layout.addWidget(self._line_edit)
 
         self._button = QtWidgets.QPushButton(button_text)

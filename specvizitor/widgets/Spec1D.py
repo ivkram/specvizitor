@@ -21,7 +21,7 @@ class Spec1D(QtWidgets.QWidget):
         self._cat = None
 
         # load the list of spectral lines
-        self._lines = read_yaml('lines.yml')
+        self._lines = read_yaml('lines.yml', local=True)
 
         super().__init__(parent)
         self.setEnabled(False)

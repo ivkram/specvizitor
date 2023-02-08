@@ -6,6 +6,7 @@ from astropy.table import Table
 from pyqtgraph.Qt import QtWidgets, QtCore
 
 from ..utils.widgets import FileBrowser
+from ..utils.config import save_user_config
 from ..io.loader import load_cat
 
 
@@ -20,17 +21,19 @@ class NewFile(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout()
 
-        self._project_browser = FileBrowser(self, title='Project:',
+        self._project_browser = FileBrowser(title='Project:',
                                             filename_extensions='SpecVizitor Files (*.svz)',
                                             mode=FileBrowser.SaveFile,
-                                            default_path=str(pathlib.Path().resolve() / 'Untitled.svz'))
+                                            default_path=pathlib.Path().resolve() / 'Untitled.svz',
+                                            parent=self)
         layout.addWidget(self._project_browser)
 
-        self._cat_browser = FileBrowser(self, title='Catalogue:', mode=FileBrowser.OpenFile,
-                                        filename_extensions='FITS Files (*.fits)')
+        self._cat_browser = FileBrowser(title='Catalogue:', mode=FileBrowser.OpenFile,
+                                        filename_extensions='FITS Files (*.fits)', parent=self)
         layout.addWidget(self._cat_browser)
 
-        self._data_browser = FileBrowser(self, title='Data Folder:', mode=FileBrowser.OpenDirectory)
+        self._data_browser = FileBrowser(title='Data Folder:', mode=FileBrowser.OpenDirectory,
+                                         default_path=self._config['data']['dir'], parent=self)
         layout.addWidget(self._data_browser)
 
         self._filter_check_box = QtWidgets.QCheckBox(
@@ -45,7 +48,7 @@ class NewFile(QtWidgets.QDialog):
         self.setLayout(layout)
 
         self._cat_browser._line_edit.setText('/home/rainnfog/Documents/research/master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits')
-        self._data_browser._line_edit.setText('/home/rainnfog/Documents/research/master/data/test/')
+        # self._data_browser._line_edit.setText('/home/rainnfog/Documents/research/master/data/test/')
     
     def accept(self):
         project_filename = self._project_browser.get_path()
@@ -94,9 +97,9 @@ class NewFile(QtWidgets.QDialog):
 
         # loading the catalogue
         if self._filter_check_box.isChecked():
-            cat = load_cat(cat_filename, **self._config['cat'], data_folder=data_dirname)
+            cat = load_cat(cat_filename, **self._config['loader']['cat'], data_folder=data_dirname)
         else:
-            cat = load_cat(cat_filename, **self._config['cat'])
+            cat = load_cat(cat_filename, **self._config['loader']['cat'])
 
         if cat is None:
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
@@ -104,6 +107,8 @@ class NewFile(QtWidgets.QDialog):
             return
 
         self._config['data']['dir'] = str(data_dirname)
+        save_user_config(self._config)
+
         self.project_created.emit(str(project_filename), cat)
 
         # TODO: cache cat_filename

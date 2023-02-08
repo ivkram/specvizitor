@@ -17,7 +17,7 @@ def get_grizli_id(filename: pathlib.Path) -> str:
     return filename.name.split('_')[1].split('.')[0]
 
 
-def load_cat(filename: pathlib.Path, colnames=None, strict_search='all', synonyms=None,
+def load_cat(filename: pathlib.Path, colnames=None, translate=None,
              data_folder=None, filename_parser=get_grizli_id) -> [Table, None]:
     """
     Read and filter the input catalogue.
@@ -33,29 +33,32 @@ def load_cat(filename: pathlib.Path, colnames=None, strict_search='all', synonym
         logging.error('Could not load the catalogue')
         return
 
-    # select columns from the catalogue
+    # rename columns
+    if translate is not None:
+        for cname, cname_synonyms in translate.items():
+            for syn in cname_synonyms:
+                if syn in cat.colnames:
+                    cat.rename_column(syn, cname)
+                    break
+
+    if 'id' not in cat.colnames:
+        if translate is None or 'id' not in translate:
+            logging.error('`id` column not found')
+        else:
+            logging.error('`id` column or its equivalences ({}) not found'.format(", ".join(translate['id'])))
+        return
+
+    # select columns
     if colnames is not None:
-        selected_columns = {}
+        selected_columns = ['id']
         for cname in colnames:
-
             if cname in cat.colnames:
-                selected_columns[cname] = cname
-            elif synonyms is not None and synonyms.get(cname):
-                for cname_synonym in synonyms:
-                    if cname in cat.colnames:
-                        selected_columns[cname] = cname_synonym
-                        break
-
-            if not selected_columns.get(cname) and (strict_search == 'all' or cname in strict_search):
-                logging.error('Column `{}` or its equivalents not found in the catalogue'.format(cname))
-                return
-
-        cat = cat[list(selected_columns.values())]
-        cat.rename_columns(tuple(selected_columns.values()), tuple(selected_columns.keys()))
+                selected_columns.append(cname)
+        cat = cat[selected_columns]
 
     # scan the data folder and retrieve a list of IDs
     if data_folder is not None:
-        spec_files = sorted(pathlib.Path(data_folder).glob('*.fits'))
+        spec_files = sorted(pathlib.Path(data_folder).glob('**/*.fits'))
         spec_ids = np.unique([int(filename_parser(p)) for p in spec_files])
 
         if not spec_ids.size:

@@ -42,8 +42,8 @@ class ImageCutout(QtWidgets.QWidget):
         self._image = pg.ImageItem(border='k')
         self._image.setLookupTable(self._cmap.getLookupTable())
         self._view_box = self._image_widget.addViewBox(0, 0)
-        self._view_box.setAspectLocked(True)
         self._view_box.addItem(self._image)
+        self._view_box.setAspectLocked(True)
 
         # set up the color bar
         self._cbar = ColorLegendItem(imageItem=self._image, showHistogram=True)
@@ -82,12 +82,12 @@ class ImageCutout(QtWidgets.QWidget):
             self.setEnabled(True)
 
             self._label.setText("Image: {}".format(self._filename.name))
-            self._view_box.addItem(self._image)
             self._image.setImage(self._data)
+
             self.reset_view()
         else:
             self._label.setText("")
-            self._view_box.removeItem(self._image)
+            self._image.clear()
             self.setEnabled(False)
 
     def load_project(self, cat):

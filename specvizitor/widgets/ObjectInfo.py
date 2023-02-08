@@ -1,3 +1,5 @@
+import logging
+
 from astropy.coordinates import SkyCoord
 
 
@@ -17,24 +19,32 @@ class ObjectInfo(QtWidgets.QGroupBox):
 
         grid = QtWidgets.QGridLayout()
 
-        # display RA
-        self.ra_label = QtWidgets.QLabel()
-        grid.addWidget(self.ra_label, 1, 1, 1, 1)
-
-        # display Dec
-        self.dec_label = QtWidgets.QLabel()
-        grid.addWidget(self.dec_label, 2, 1, 1, 1)
+        # display information about the object
+        self._labels = []
+        for i in range(len(self._config['gui']['object_info']['items'])):
+            label_widget = QtWidgets.QLabel()
+            label_widget.setHidden(True)
+            self._labels.append(label_widget)
+            grid.addWidget(label_widget, i, 1, 1, 1)
 
         self.setLayout(grid)
 
     def load_object(self, j):
         self._j = j
 
-        if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:
-            c = SkyCoord(ra=self._cat['ra'][self._j], dec=self._cat['dec'][self._j], frame='icrs', unit='deg')
-            ra, dec = c.to_string('hmsdms').split(' ')
-            self.ra_label.setText("RA: {}".format(ra))
-            self.dec_label.setText("Dec: {}".format(dec))
+        for i, (cname, label) in enumerate(self._config['gui']['object_info']['items'].items()):
+            if cname in self._cat.colnames:
+                self._labels[i].setText(label.format(self._cat[cname][self._j]))
+                self._labels[i].setHidden(False)
+            else:
+                logging.warning('`{}` column not found in the catalogue'.format(cname))
+                self._labels[i].setHidden(True)
+
+        # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:
+        #     c = SkyCoord(ra=self._cat['ra'][self._j], dec=self._cat['dec'][self._j], frame='icrs', unit='deg')
+        #     ra, dec = c.to_string('hmsdms').split(' ')
+        #     self.ra_label.setText("RA: {}".format(ra))
+        #     self.dec_label.setText("Dec: {}".format(dec))
 
     def load_project(self, cat):
         self._cat = cat

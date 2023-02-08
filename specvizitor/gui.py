@@ -7,7 +7,7 @@ from astropy.table import Table
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
-from .utils.config import read_yaml
+from .utils.config import read_config
 from .menu import NewFile
 from .widgets import (ControlPanel, ObjectInfo, ReviewForm,
                       ImageCutout, Spec2D, Spec1D,
@@ -24,7 +24,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         # load the configuration file
-        self._config = read_yaml('default_config.yml')
+        self._config = read_config()
 
         super().__init__(parent)
 
@@ -70,7 +70,7 @@ class MainWindow(QtWidgets.QMainWindow):
         new_project_dialog = NewFile(self._config, parent=self)
         new_project_dialog.project_created.connect(self.main_GUI.load_project)
         if new_project_dialog.exec():
-            logging.info('New project created')
+            logging.info('Project created')
 
     def _exit_action(self):
         # TODO: save everything before exiting the program
@@ -118,11 +118,11 @@ class FRESCO(QtWidgets.QWidget):
 
         # add a widget for writing comments
         self.review_form = ReviewForm(config, parent=self)
-        grid.addWidget(self.review_form, 3, 3, 2, 1)
+        grid.addWidget(self.review_form, 3, 3, 3, 1)
 
         # add the Eazy widget
-        self.eazy = Eazy(self)
-        grid.addWidget(self.eazy, 5, 3, 1, 1)
+        # self.eazy = Eazy(self)
+        # grid.addWidget(self.eazy, 6, 3, 1, 1)
 
         # Write eazy results
 

@@ -1,0 +1,37 @@
+loader:
+  cat:
+    colnames: [ra, dec]  # ID is always included; if empty, include all columns
+    translate: {
+      id: [Id, ID],
+      ra: [Ra, RA],
+      dec: [Dec, DEC]
+    }
+
+data:
+  dir: '.'
+  prefix: 'gds-grizli-v5.0'
+
+gui:
+  control_panel:
+    max_width: 300
+    button_width: 110
+
+  object_info:
+    items: {
+      ra: "RA: {}",
+      dec: "Dec: {}"
+    }
+
+  image_cutout:
+    min_size: [350, 350]
+
+  spec_2D:
+    min_size: [1000, 100]
+
+  spec_1D:
+    min_size: [1000, 200]
+    slider:
+      min_value: 0
+      max_value: 10
+      step: 0.000001
+      default_value: 5
