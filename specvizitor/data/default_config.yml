@@ -23,12 +23,15 @@ gui:
     }
 
   image_cutout:
+    search_mask: "*{}.beams.fits"
     min_size: [350, 350]
 
   spec_2D:
+    search_mask: "*{}.stack.fits"
     min_size: [1000, 100]
 
   spec_1D:
+    search_mask: "*{}.1D.fits"
     min_size: [1000, 200]
     slider:
       min_value: 0

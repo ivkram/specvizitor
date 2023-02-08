@@ -10,6 +10,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
+from ..io.loader import get_data_filename
+
 
 logger = logging.getLogger(__name__)
 
@@ -54,16 +56,17 @@ class ImageCutout(QtWidgets.QWidget):
 
     @lazyproperty
     def _filename(self):
-        return pathlib.Path(self._config['data']['dir']) /\
-            '{}_{:05d}.beams.fits'.format(self._config['data']['prefix'], self._cat['id'][self._j])
+        return get_data_filename(self._config['data']['dir'],
+                                 self._config['gui']['image_cutout']['search_mask'],
+                                 self._cat['id'][self._j])
 
     @lazyproperty
     def _data(self):
         try:
             data = fits.getdata(self._filename)
             data = data * 1e21
-        except FileNotFoundError:
-            logger.error('File not found: {}'.format(self._filename))
+        except ValueError:
+            logger.error('Image cutout not found (object ID: {})'.format(self._cat['id'][self._j]))
             return
         else:
             return data

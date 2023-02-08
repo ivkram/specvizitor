@@ -76,3 +76,11 @@ def load_cat(filename: pathlib.Path, colnames=None, translate=None,
         return
 
     return cat
+
+
+def get_data_filename(directory, search_mask, object_id):
+    matched_filenames = list(pathlib.Path(directory).glob(search_mask.format(object_id)))
+    if matched_filenames:
+        return matched_filenames[0]
+    else:
+        return

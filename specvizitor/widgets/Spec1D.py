@@ -8,6 +8,7 @@ from astropy.utils.decorators import lazyproperty
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
+from ..io.loader import get_data_filename
 from ..utils.user_data import read_yaml
 from ..utils.widgets import CustomSlider
 from .colors import viridis_more
@@ -71,16 +72,17 @@ class Spec1D(QtWidgets.QWidget):
 
     @lazyproperty
     def _filename(self):
-        return pathlib.Path(self._config['data']['dir']) / \
-            '{}_{:05d}.1D.fits'.format(self._config['data']['prefix'], self._cat['id'][self._j])
+        return get_data_filename(self._config['data']['dir'],
+                                 self._config['gui']['spec_1D']['search_mask'],
+                                 self._cat['id'][self._j])
 
     @lazyproperty
     def _hdu(self):
         try:
             with fits.open(self._filename) as hdul:
                 header, data = hdul[1].header, hdul[1].data
-        except FileNotFoundError:
-            logger.error('File not found: {}'.format(self._filename))
+        except ValueError:
+            logger.error('1D spectrum not found (object ID: {})'.format(self._cat['id'][self._j]))
             return
         else:
             return header, data
