@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 from astropy import wcs
@@ -6,14 +7,19 @@ from astropy.visualization import ZScaleInterval
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtWidgets
+from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 
 class ImageCutout(QtWidgets.QWidget):
-    def __init__(self, parent):
-        super().__init__()
-        self._parent = parent
+    def __init__(self, config, parent=None):
+        self._config = config
+
+        self._j = None
+        self._cat = None
+
+        super().__init__(parent)
+        self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
 
@@ -23,8 +29,8 @@ class ImageCutout(QtWidgets.QWidget):
 
         # add a widget for the image
         self._image_widget = pg.GraphicsLayoutWidget()
-        self._image_widget.setMinimumSize(*map(int, self._parent.config['gui']['image_cutout']['min_size']))
-        # self._image_widget.setMaximumSize(*map(int, self._parent.config['gui']['image_cutout']['min_size']))
+        self._image_widget.setMinimumSize(*map(int, self._config['gui']['image_cutout']['min_size']))
+        # self._image_widget.setMaximumSize(*map(int, self.config['gui']['image_cutout']['min_size']))
         grid.addWidget(self._image_widget, 2, 1)
 
         self.setLayout(grid)
@@ -43,49 +49,49 @@ class ImageCutout(QtWidgets.QWidget):
         self._cbar = ColorLegendItem(imageItem=self._image, showHistogram=True)
         self._image_widget.addItem(self._cbar, 0, 1)
 
-        # load the data and plot the image
-        self.load()
-
     @lazyproperty
     def _filename(self):
-        return pathlib.Path(self._parent.config['data']['grizli_fit_products']) /\
-            '{}_{:05d}.beams.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
+        return pathlib.Path(self._config['data']['dir']) /\
+            '{}_{:05d}.beams.fits'.format(self._config['data']['prefix'], self._cat['id'][self._j])
 
     @lazyproperty
     def _data(self):
         try:
-            # TODO: get data from other grism exposures?
             data = fits.getdata(self._filename)
             data = data * 1e21
         except FileNotFoundError:
-            pass
+            logging.error('File not found: {}'.format(self._filename))
+            return
         else:
             return data
 
-    @QtCore.pyqtSlot()
-    def _reset_view(self):
+    def reset_view(self):
+        if self._data is None:
+            return
+
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
         self._view_box.autoRange()
 
-    @QtCore.pyqtSlot()
-    def load(self):
+    def load_object(self, j):
         del self._filename
         del self._data
 
+        self._j = j
+
         if self._data is not None:
-            self._parent.idClicked.connect(self._reset_view)
-            for widget in self.findChildren(QtWidgets.QWidget):
-                widget.blockSignals(False)
+            self.setEnabled(True)
 
             self._label.setText("Image: {}".format(self._filename.name))
+            self._view_box.addItem(self._image)
             self._image.setImage(self._data)
-            self._reset_view()
+            self.reset_view()
         else:
             self._label.setText("")
+            self._view_box.removeItem(self._image)
+            self.setEnabled(False)
 
-            self._parent.idClicked.disconnect(self._reset_view)
-            for widget in self.findChildren(QtWidgets.QWidget):
-                widget.blockSignals(True)
+    def load_project(self, cat):
+        self._cat = cat
 
     @staticmethod
     def radec_to_pix(ra_coords, dec_coords, header, origin=0):

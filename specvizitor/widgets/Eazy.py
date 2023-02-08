@@ -5,9 +5,9 @@ from pyqtgraph.Qt import QtCore, QtWidgets
 
 
 class Eazy(QtWidgets.QWidget):
-    def __init__(self, parent):
-        super().__init__()
-        self._parent = parent
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
 

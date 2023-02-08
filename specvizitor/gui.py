@@ -1,19 +1,17 @@
 import sys
 import logging
 import pathlib
-from functools import partial
 
-from astropy.io import fits
 from astropy.table import Table
-from astropy.coordinates import SkyCoord
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 from .utils.config import read_yaml
-from .io.loader import load_phot_cat
-from .dialogs import NewFile
-from .widgets import ImageCutout, Spec2D, Spec1D, Eazy
+from .menu import NewFile
+from .widgets import (ControlPanel, ObjectInfo, ReviewForm,
+                      ImageCutout, Spec2D, Spec1D,
+                      Eazy)
 
 
 pg.setConfigOption('background', 'w')
@@ -25,6 +23,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
+        # load the configuration file
+        self._config = read_yaml('default_config.yml')
+
         super().__init__(parent)
 
         # size, title and logo
@@ -39,7 +40,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusBar().showMessage("Message in statusbar.")
 
         # add a central widget
-        self.main_GUI = FRESCO(self)
+        self.main_GUI = FRESCO(self._config, parent=self)
         # self.main_GUI.signal1.connect(self.show_status)
         self.setCentralWidget(self.main_GUI)
 
@@ -48,13 +49,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file = self._menu.addMenu("&File")
 
-        self._new_file = QtWidgets.QAction("&New...")
-        self._new_file.triggered.connect(self._new_file_action)
-        self._file.addAction(self._new_file)
+        self._new_project = QtWidgets.QAction("&New...")
+        self._new_project.triggered.connect(self._new_project_action)
+        self._file.addAction(self._new_project)
 
         self._file.addAction("&Open...")
-        self._file.addAction("&Save")
-        self._file.addAction("Save As...")
         self._file.addAction("&Export...")
         self._file.addSeparator()
 
@@ -67,10 +66,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
-    def _new_file_action(self):
-        new_file_dialog = NewFile(self)
-        if new_file_dialog.exec():
-            logging.info('OK!')
+    def _new_project_action(self):
+        new_project_dialog = NewFile(self._config, parent=self)
+        new_project_dialog.project_created.connect(self.main_GUI.load_project)
+        if new_project_dialog.exec():
+            logging.info('New project created')
 
     def _exit_action(self):
         # TODO: save everything before exiting the program
@@ -82,22 +82,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class FRESCO(QtWidgets.QWidget):
-    objectChanged = QtCore.pyqtSignal()
-    idClicked = QtCore.pyqtSignal()
+    def __init__(self, config: dict, parent=None):
+        self._config = config
 
-    def __init__(self, parent=None):
-        # load the configuration file
-        self.config = read_yaml('default_config.yml')
-
-        # load the photometric catalogue
-        muse_fresco_cat = Table(fits.getdata(self.config['data']['MUSE_LAEs']))
-        ids = muse_fresco_cat['id']
-        self.cat = load_phot_cat(ids=ids, **self.config)
-
-        if not self.cat:
-            logging.error("The input catalogue is empty!")
-
-        self.comments = ["" for _ in range(len(self.cat))]
+        self._output_file = None
+        self._cat = None
 
         # initialise the widget
         super().__init__(parent)
@@ -107,68 +96,35 @@ class FRESCO(QtWidgets.QWidget):
         grid.setSpacing(10)
         self.setLayout(grid)
 
-        # initialise the index of the current object
-        self.j = 0
-
         # add a widget for the image cutout
-        self.image_cutout = ImageCutout(self)
-        grid.addWidget(self.image_cutout, 1, 1, 6, 1)
+        self.image_cutout = ImageCutout(config, parent=self)
+        grid.addWidget(self.image_cutout, 1, 1, 3, 1)
 
         # add a widget for the 2D spectrum
-        self.spec_2D = Spec2D(self)
-        grid.addWidget(self.spec_2D, 7, 1, 1, 2)
+        self.spec_2D = Spec2D(config, parent=self)
+        grid.addWidget(self.spec_2D, 4, 1, 1, 2)
 
         # add a widget for the 1D spectrum
-        self.spec_1D = Spec1D(self)
-        grid.addWidget(self.spec_1D, 9, 1, 1, 2)
+        self.spec_1D = Spec1D(config, parent=self)
+        grid.addWidget(self.spec_1D, 5, 1, 1, 2)
 
-        # add a reset button
-        self.reset_button = QtWidgets.QPushButton()
-        self.reset_button.setToolTip('Reset view')
-        self.reset_button.clicked.connect(self.idClicked.emit)
-        grid.addWidget(self.reset_button, 1, 3, 1, 2)
+        # add a widget for the control panel
+        self.control_panel = ControlPanel(config, parent=self)
+        grid.addWidget(self.control_panel, 1, 3, 1, 1)
 
-        # add a widget displaying the index of the current object and the total number of objects in the catalogue
-        self.number_of_obj_label = QtWidgets.QLabel()
-        grid.addWidget(self.number_of_obj_label, 1, 5, 1, 1)
+        # add a widget for displaying information about the object
+        self.object_info = ObjectInfo(config, parent=self)
+        grid.addWidget(self.object_info, 2, 3, 1, 1)
 
-        # set buttons for next or previous object
-        np_buttons = {'previous': {'shortcut': 'left', 'layout': (2, 3, 1, 2)},
-                      'next': {'shortcut': 'right', 'layout': (2, 5, 1, 2)}}
+        # add a widget for writing comments
+        self.review_form = ReviewForm(config, parent=self)
+        grid.addWidget(self.review_form, 3, 3, 2, 1)
 
-        for np_text, np_properties in np_buttons.items():
-            b = QtWidgets.QPushButton('')
-            b.setIcon(QtGui.QIcon(np_text + '.png'))
-            b.setToolTip('Look at the {} object.'.format(np_text))
-            b.setText(np_text)
-            b.clicked.connect(partial(self.change_object, np_text))
-            b.setShortcut(np_properties['shortcut'])
-            grid.addWidget(b, *np_properties['layout'])
-
-        # display RA
-        self.ra_label = QtWidgets.QLabel()
-        grid.addWidget(self.ra_label, 3, 3, 1, 4)
-
-        # display Dec
-        self.dec_label = QtWidgets.QLabel()
-        grid.addWidget(self.dec_label, 4, 3, 1, 4)
-
-        # add a multi-line text editor for writing comments
-        self._comments_widget = QtWidgets.QTextEdit()
-        grid.addWidget(QtWidgets.QLabel('Comments:'), 5, 3, 1, 4)
-        grid.addWidget(self._comments_widget, 6, 3, 1, 4)
-
-        # add the eazy widget
+        # add the Eazy widget
         self.eazy = Eazy(self)
-        grid.addWidget(self.eazy, 7, 3, 2, 4)
+        grid.addWidget(self.eazy, 5, 3, 1, 1)
 
-        # self.eazy_fig_widget = pg.GraphicsLayoutWidget(self)
-        # self.eazy_z_widget = pg.GraphicsLayoutWidget(self)
-        # grid.addWidget(self.eazy_fig_widget, 7, 3, 2, 4)
-        # grid.addWidget(self.eazy_z_widget, 9, 3, 2, 4)
-        # self.show_eazy_fig()
-
-        ### Write eazy results
+        # Write eazy results
 
         '''
         z_raw_chi2 = np.round(self.zout['z_raw_chi2'][self.j],3)
@@ -192,64 +148,43 @@ class FRESCO(QtWidgets.QWidget):
         # eazy_mass = QtWidgets.QLabel('mass: ' + str(self.mass), self)
         # grid.addWidget(eazy_mass, 11, 31, 1, 1)
 
-        self.show_info()
+        self.control_panel.reset_button_clicked.connect(self.image_cutout.reset_view)
+        self.control_panel.reset_button_clicked.connect(self.spec_2D.reset_view)
+        self.control_panel.reset_button_clicked.connect(self.spec_1D.reset_view)
 
-        self.objectChanged.connect(self.image_cutout.load)
-        self.objectChanged.connect(self.spec_2D.load)
-        self.objectChanged.connect(self.spec_1D.load)
+        self.control_panel.object_selected.connect(self.control_panel.load_object)
+        self.control_panel.object_selected.connect(self.object_info.load_object)
+        self.control_panel.object_selected.connect(self.review_form.load_object)
 
-    @property
-    def id(self):
-        """
-        @return: ID of the current object.
-        """
-        return self.cat['id'][self.j]
+        self.control_panel.object_selected.connect(self.image_cutout.load_object)
+        self.control_panel.object_selected.connect(self.spec_2D.load_object)
+        self.control_panel.object_selected.connect(self.spec_1D.load_object)
 
     #############################################################################
     # functions
 
-    def show_info(self):
-        # TODO: move to a separate widget
-        self.reset_button.setText('ID {}'.format(self.id))
-        self.number_of_obj_label.setText('(#{} of {} objects)'.format(self.j + 1, len(self.cat)))
+    def load_project(self, output_file: str, cat: Table):
+        self._output_file = output_file
+        self._cat = cat
 
-        c = SkyCoord(ra=self.cat['ra'][self.j], dec=self.cat['dec'][self.j], frame='icrs', unit='deg')
-        ra, dec = c.to_string('hmsdms').split(' ')
-        self.ra_label.setText("RA: {}".format(ra))
-        self.dec_label.setText("Dec: {}".format(dec))
+        self.control_panel.load_project(self._cat)
+        self.object_info.load_project(self._cat)
+        self.review_form.load_project(self._cat)
 
-    def change_object(self, command: str):
-        # saving comments
-        self.comments[self.j] = self._comments_widget.toPlainText()
+        self.image_cutout.load_project(self._cat)
+        self.spec_2D.load_project(self._cat)
+        self.spec_1D.load_project(self._cat)
 
-        if command == 'next':
-            self.j += 1
-        elif command == 'previous':
-            self.j -= 1
-
-        self.j = self.j % len(self.cat)
-
-        self.objectChanged.emit()
-
-        self.show_info()
-        self._comments_widget.setText(self.comments[self.j])
+        self.control_panel.object_selected.emit(0)
 
     def save_now(self):
-        self.cat['SFR'][self.j] = 0  # self.sfr
-        self.cat['mass'][self.j] = 0  # self.mass
-        self.cat['chi2'][self.j] = 0  # self.z_phot_chi2
+        self._cat['SFR'][self._j] = 0  # self.sfr
+        self._cat['mass'][self._j] = 0  # self.mass
+        self._cat['chi2'][self._j] = 0  # self.z_phot_chi2
         # write_output(input_cat, comments, 'test.fits')
 
 
 def main():
-    # for key in ('SFR', 'mass', 'chi2'):
-    #     input_cat.add_column(-99., name=key)
-
-    width_window = [8.]  # width of the thumbnail cut-out windows in arcsec
-
-    # set colours
-    c_data_crossline = 'r'
-
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()

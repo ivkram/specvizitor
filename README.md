@@ -1,4 +1,4 @@
-## Installing `specvizitor` from source
+## Installing `SpecVizitor` from source
     
 1. Clone the public repository:
 
@@ -15,8 +15,8 @@
 
     for developer install.
 
-## Starting `specvizitor`
+## Starting `SpecVizitor`
     
-To start `specvizitor`, run this command in your terminal:    
+To start `SpecVizitor`, run this command in your terminal:    
 
     $ specvizitor

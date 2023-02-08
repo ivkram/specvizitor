@@ -7,14 +7,19 @@ from astropy.io import fits
 from astropy.visualization import ZScaleInterval
 from astropy.utils.decorators import lazyproperty
 
-from pyqtgraph.Qt import QtCore, QtWidgets
+from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 
 class Spec2D(QtWidgets.QWidget):
-    def __init__(self, parent):
-        super().__init__()
-        self._parent = parent
+    def __init__(self, config, parent=None):
+        self._config = config
+
+        self._j = None
+        self._cat = None
+
+        super().__init__(parent)
+        self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
 
@@ -24,7 +29,7 @@ class Spec2D(QtWidgets.QWidget):
 
         # add a widget for the spectrum
         self._spec_2d_widget = pg.GraphicsLayoutWidget()
-        self._spec_2d_widget.setMinimumSize(*map(int, self._parent.config['gui']['spec_2D']['min_size']))
+        self._spec_2d_widget.setMinimumSize(*map(int, self._config['gui']['spec_2D']['min_size']))
         grid.addWidget(self._spec_2d_widget, 2, 1)
 
         self.setLayout(grid)
@@ -43,13 +48,10 @@ class Spec2D(QtWidgets.QWidget):
         self._cbar = ColorLegendItem(imageItem=self._spec_2d, showHistogram=True, histHeightPercentile=99.0)
         self._spec_2d_widget.addItem(self._cbar, 0, 1)
 
-        # load the data and plot the spectrum
-        self.load()
-
     @lazyproperty
     def _filename(self):
-        return pathlib.Path(self._parent.config['data']['grizli_fit_products']) / \
-            '{}_{:05d}.stack.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
+        return pathlib.Path(self._config['data']['dir']) / \
+            '{}_{:05d}.stack.fits'.format(self._config['data']['prefix'], self._cat['id'][self._j])
 
     @lazyproperty
     def _data(self):
@@ -58,33 +60,36 @@ class Spec2D(QtWidgets.QWidget):
             data = np.rot90(data)[::-1]
         except FileNotFoundError:
             logging.error('File not found: {}'.format(self._filename))
+            return
         else:
             return data
 
-    @QtCore.pyqtSlot()
-    def _reset_view(self):
+    def reset_view(self):
+        if self._data is None:
+            return
+
         # TODO: allow to choose between min/max and zscale?
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
         self._view_box.autoRange()
 
-    @QtCore.pyqtSlot()
-    def load(self):
+    def load_object(self, j):
         del self._filename
         del self._data
 
+        self._j = j
+
         if self._data is not None:
-            self._parent.idClicked.connect(self._reset_view)
-            for widget in self.findChildren(QtWidgets.QWidget):
-                widget.blockSignals(False)
+            self.setEnabled(True)
 
             self._label.setText("2D spectrum: {}".format(self._filename.name))
             self._spec_2d.setImage(self._data)
-            self._reset_view()
+            self.reset_view()
         else:
             self._label.setText("")
             self._spec_2d.clear()
 
-            self._parent.idClicked.disconnect(self._reset_view)
-            for widget in self.findChildren(QtWidgets.QWidget):
-                widget.blockSignals(True)
+            self.setEnabled(False)
+
+    def load_project(self, cat):
+        self._cat = cat
 

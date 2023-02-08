@@ -1,26 +1,28 @@
 import pathlib
 
 import numpy as np
-from pyqtgraph.Qt import QtWidgets, QtCore, QtGui
+from pyqtgraph.Qt import QtWidgets
 
 
 class FileBrowser(QtWidgets.QWidget):
     OpenFile = 0
-    OpenFiles = 1
+    # OpenFiles = 1
     OpenDirectory = 2
     SaveFile = 3
 
-    def __init__(self, title, default_path="", button_text="Search...", mode=OpenFile):
-        super().__init__()
+    def __init__(self, parent=None, title='', mode=OpenFile, filename_extensions='All files (*.*)', default_path='',
+                 button_text='Browse...'):
+
+        super().__init__(parent=parent)
 
         self._browser_mode = mode
-        self._filter = 'All files (*.*)'
-        self._default_path = pathlib.Path().resolve() if default_path is None else default_path
+        self._filter = filename_extensions  # example: 'Images (*.png *.xpm *.jpg);;Text files (*.txt)'
+        self._default_path = str(pathlib.Path().resolve()) if not default_path else default_path
 
         layout = QtWidgets.QHBoxLayout()
 
         self._label = QtWidgets.QLabel(title)
-        self._label.setFixedWidth(250)
+        self._label.setFixedWidth(120)
         layout.addWidget(self._label)
 
         self._line_edit = QtWidgets.QLineEdit(self)
@@ -35,43 +37,32 @@ class FileBrowser(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-    # --------------------------------------------------------------------
-    # For example,
-    #    setFileFilter('Images (*.png *.xpm *.jpg)')
-    def _set_file_filter(self, text):
-        self._filter = text
-
     def _get_file(self):
-        self.filepaths = []
+        filepath = ""
 
         if self._browser_mode == FileBrowser.OpenFile:
-            self.filepaths.append(QtWidgets.QFileDialog.getOpenFileName(self, caption='Choose File',
-                                                                        directory=self._default_path,
-                                                                        filter=self._filter)[0])
-        elif self._browser_mode == FileBrowser.OpenFiles:
-            self.filepaths.extend(QtWidgets.QFileDialog.getOpenFileNames(self, caption='Choose Files',
-                                                                         directory=self._default_path,
-                                                                         filter=self._filter)[0])
+            filepath = QtWidgets.QFileDialog.getOpenFileName(self, caption='Choose File',
+                                                             directory=self._default_path,
+                                                             filter=self._filter)[0]
+        # elif self._browser_mode == FileBrowser.OpenFiles:
+        #     self._filepaths.extend(QtWidgets.QFileDialog.getOpenFileNames(self, caption='Choose Files',
+        #                                                                   directory=self._default_path,
+        #                                                                   filter=self._filter)[0])
         elif self._browser_mode == FileBrowser.OpenDirectory:
-            self.filepaths.append(QtWidgets.QFileDialog.getExistingDirectory(self, caption='Choose Directory',
-                                                                             directory=self._default_path))
-        else:
+            filepath = QtWidgets.QFileDialog.getExistingDirectory(self, caption='Choose Directory',
+                                                                  directory=self._default_path)
+        elif self._browser_mode == FileBrowser.SaveFile:
             options = QtWidgets.QFileDialog.Options()
             # if sys.platform == 'darwin':
             #    options |= QtWidgets.QFileDialog.DontUseNativeDialog
-            self.filepaths.append(QtWidgets.QFileDialog.getSaveFileName(self, caption='Save/Save As',
+            filepath, extension = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save/Save As',
                                                                         directory=self._default_path,
-                                                                        filter=self._filter,
-                                                                        options=options)[0])
-        if len(self.filepaths) == 0:
-            return
-        elif len(self.filepaths) == 1:
-            self._line_edit.setText(self.filepaths[0])
-        else:
-            self._line_edit.setText(",".join(self.filepaths))
+                                                                        filter=self._filter, options=options)
 
-    def _get_paths(self):
-        return self.filepaths
+        self._line_edit.setText(filepath)
+
+    def get_path(self):
+        return self._line_edit.text()
 
 
 class CustomSlider(QtWidgets.QSlider):

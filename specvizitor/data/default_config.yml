@@ -1,9 +1,15 @@
-data:
-  grizli_fit_products: '/home/rainnfog/Documents/research/master/data/test/'
-  prefix: 'gds-grizli-v5.0'
-  phot_cat: '/home/rainnfog/Documents/research/master/data/cats/FRESCO/gds-grizli-v5.1-fix_phot_apcorr.fits'
+cat:
+  colnames: [id, ra, dec]
+  strict_search: [id]
+  synonyms: {
+    id: [Id, ID],
+    ra: [Ra, RA],
+    dec: [Dec, DEC]
+  }
 
-  MUSE_LAEs: '/home/rainnfog/Documents/research/master/data/cats/matched/MUSE_z5_6_FRESCO_1arcsec.fits'
+data:
+  dir: '.'
+  prefix: 'gds-grizli-v5.0'
 
 gui:
   image_cutout:
@@ -20,4 +26,6 @@ gui:
       step: 0.000001
       default_value: 5
 
-  comments: ""
+  control_panel:
+    max_width: 300
+    button_width: 110

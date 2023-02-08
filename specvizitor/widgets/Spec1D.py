@@ -14,12 +14,17 @@ from .colors import viridis_more
 
 
 class Spec1D(QtWidgets.QWidget):
-    def __init__(self, parent):
+    def __init__(self, config, parent=None):
+        self._config = config
+
+        self._j = None
+        self._cat = None
+
         # load the list of spectral lines
         self._lines = read_yaml('lines.yml')
 
-        super().__init__()
-        self._parent = parent
+        super().__init__(parent)
+        self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
 
@@ -28,18 +33,18 @@ class Spec1D(QtWidgets.QWidget):
         grid.addWidget(self._label, 1, 1)
 
         # add a widget for the spectrum
-        self._spec_1d_widget = pg.GraphicsLayoutWidget(self)
-        self._spec_1d_widget.setMinimumSize(*map(int, self._parent.config['gui']['spec_1D']['min_size']))
+        self._spec_1d_widget = pg.GraphicsLayoutWidget()
+        self._spec_1d_widget.setMinimumSize(*map(int, self._config['gui']['spec_1D']['min_size']))
         grid.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
 
         # add a redshift slider
-        self._redshift_slider = CustomSlider(QtCore.Qt.Horizontal, **self._parent.config['gui']['spec_1D']['slider'])
+        self._redshift_slider = CustomSlider(QtCore.Qt.Horizontal, **self._config['gui']['spec_1D']['slider'])
         self._redshift_slider.valueChanged[int].connect(self._update_from_slider)
         self._redshift_slider.setToolTip('Slide to redshift.')
         grid.addWidget(self._redshift_slider, 3, 1, 1, 1)
 
         # add a line edit for changing the redshift
-        self._redshift_editor = QtWidgets.QLineEdit(self)
+        self._redshift_editor = QtWidgets.QLineEdit()
         self._redshift_editor.returnPressed.connect(self._update_from_editor)
         self._redshift_editor.setMaximumWidth(120)
         grid.addWidget(QtWidgets.QLabel('z = ', self), 3, 2, 1, 1)
@@ -61,13 +66,10 @@ class Spec1D(QtWidgets.QWidget):
 
             self._line_artists[line_name] = {'line': line, 'label': label}
 
-        # load the data and plot the spectrum
-        self.load()
-
     @lazyproperty
     def _filename(self):
-        return pathlib.Path(self._parent.config['data']['grizli_fit_products']) / \
-            '{}_{:05d}.1D.fits'.format(self._parent.config['data']['prefix'], self._parent.id)
+        return pathlib.Path(self._config['data']['dir']) / \
+            '{}_{:05d}.1D.fits'.format(self._config['data']['prefix'], self._cat['id'][self._j])
 
     @lazyproperty
     def _hdu(self):
@@ -76,6 +78,7 @@ class Spec1D(QtWidgets.QWidget):
                 header, data = hdul[1].header, hdul[1].data
         except FileNotFoundError:
             logging.error('File not found: {}'.format(self._filename))
+            return
         else:
             return header, data
 
@@ -125,35 +128,36 @@ class Spec1D(QtWidgets.QWidget):
             self._redshift_editor.setText("{:.6f}".format(self._redshift_slider.value))
             self._update_view()
 
-    @QtCore.pyqtSlot()
-    def _reset_view(self):
+    def reset_view(self):
+        if self._hdu is None:
+            return
+
         self._redshift_slider.reset()
         self._update_from_slider()
 
         self._spec_1d.setXRange(*self._default_xrange)
         self._spec_1d.setYRange(*self._default_yrange)
 
-    @QtCore.pyqtSlot()
-    def load(self):
+    def load_object(self, j):
         del self._filename
         del self._hdu
         del self._default_xrange
         del self._default_yrange
         del self._label_height
 
-        self._spec_1d.clear()
+        self._j = j
 
+        self._spec_1d.clear()
         if self._hdu is not None:
-            self._parent.idClicked.connect(self._reset_view)
-            for widget in self.findChildren(QtWidgets.QWidget):
-                widget.blockSignals(False)
+            self.setEnabled(True)
 
             self._label.setText("1D spectrum: {}".format(self._filename.name))
             self._plot()
-            self._reset_view()
+            self.reset_view()
         else:
             self._label.setText("")
 
-            self._parent.idClicked.disconnect(self._reset_view)
-            for widget in self.findChildren(QtWidgets.QWidget):
-                widget.blockSignals(True)
+            self.setEnabled(False)
+
+    def load_project(self, cat):
+        self._cat = cat
