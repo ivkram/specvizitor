@@ -156,4 +156,7 @@ cython_debug/
 .idea/
 
 # EAZY templates and filters
-/templates/
+templates/
+
+# Jupyter notebooks
+*.ipynb
