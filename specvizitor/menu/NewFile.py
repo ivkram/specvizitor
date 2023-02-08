@@ -119,6 +119,4 @@ class NewFile(QtWidgets.QDialog):
 
         self.project_created.emit(str(project_filename), cat)
 
-        # TODO: cache cat_filename
-
         super().accept()

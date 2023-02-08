@@ -4,6 +4,9 @@ from functools import partial
 from pyqtgraph.Qt import QtCore, QtWidgets
 
 
+from ..utils.user_data import save_cache
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -11,8 +14,9 @@ class ControlPanel(QtWidgets.QGroupBox):
     reset_button_clicked = QtCore.pyqtSignal()
     object_selected = QtCore.pyqtSignal(int)
 
-    def __init__(self, config, parent=None):
+    def __init__(self, config, cache, parent=None):
         self._config = config
+        self._cache = cache
 
         self._j = None
         self._cat = None
@@ -76,6 +80,9 @@ class ControlPanel(QtWidgets.QGroupBox):
         self.setLayout(grid)
 
     def load_object(self, j):
+        self._cache['last_object_index'] = j
+        save_cache(self._cache)
+
         self._j = j
 
         self._reset_button.setText('ID {}'.format(self._cat['id'][self._j]))

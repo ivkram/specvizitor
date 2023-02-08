@@ -44,7 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusBar().showMessage("Message in statusbar.")
 
         # add a central widget
-        self.main_GUI = FRESCO(self._config, parent=self)
+        self.main_GUI = FRESCO(self._config, self._cache, parent=self)
         # self.main_GUI.signal1.connect(self.show_status)
         self.setCentralWidget(self.main_GUI)
 
@@ -86,8 +86,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class FRESCO(QtWidgets.QWidget):
-    def __init__(self, config: dict, parent=None):
+    def __init__(self, config: dict, cache: dict, parent=None):
         self._config = config
+        self._cache = cache
 
         self._output_file = None
         self._cat = None
@@ -113,7 +114,7 @@ class FRESCO(QtWidgets.QWidget):
         grid.addWidget(self.spec_1D, 5, 1, 1, 2)
 
         # add a widget for the control panel
-        self.control_panel = ControlPanel(config, parent=self)
+        self.control_panel = ControlPanel(config, cache, parent=self)
         grid.addWidget(self.control_panel, 1, 3, 1, 1)
 
         # add a widget for displaying information about the object
@@ -179,7 +180,13 @@ class FRESCO(QtWidgets.QWidget):
         self.spec_2D.load_project(self._cat)
         self.spec_1D.load_project(self._cat)
 
-        self.control_panel.object_selected.emit(0)
+        # TODO: read index from cache when opening an existing project, not when creating a new one
+        j = self._cache.get('last_object_index', 0)
+
+        if j < len(self._cat):
+            self.control_panel.object_selected.emit(int(j))
+        else:
+            self.control_panel.object_selected.emit(0)
 
     def save_now(self):
         self._cat['SFR'][self._j] = 0  # self.sfr
