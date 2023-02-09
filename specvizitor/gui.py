@@ -90,7 +90,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                           format(get_user_config_filename(), get_cache_filename()))
 
     def _about_action(self):
-        QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v0.0.1")
+        QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v0.1.0")
 
 
 class FRESCO(QtWidgets.QWidget):
