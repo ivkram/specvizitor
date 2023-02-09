@@ -1,22 +1,28 @@
-## Installing `SpecVizitor` from source
-    
+## Installation
+
+### Installing `specvizitor` using pip
+
+Set up a local environment and run
+
+        $ pip install specvizitor
+
+### Installing `specvizitor` from source
+
 1. Clone the public repository:
 
         $ git clone https://github.com/ivkram/specvizitor
         $ cd specvizitor
 
 2. Set up a local environment and run
-    
-        $ pip install .
-
-    for regular install, or
 
         $ pip install -e .
 
-    for developer install.
-
-## Starting `SpecVizitor`
+## Starting `specvizitor`
     
-To start `SpecVizitor`, run this command in your terminal:    
+To start `specvizitor`, run this command in your terminal:    
 
     $ specvizitor
+
+## License
+
+`specvizitor` is licensed under a 3-clause BSD style license - see the [LICENSE.txt](LICENSE.txt) file.
