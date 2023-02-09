@@ -1,6 +1,6 @@
 loader:
   cat:
-    filename: null
+    filename:
     translate: {
       id: [Id, ID, NUMBER],
       ra: [Ra, RA],

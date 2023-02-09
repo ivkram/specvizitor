@@ -56,7 +56,7 @@ def read_config() -> dict:
             if change[0] == 'change':
                 config_upd.append(change)
             elif change[0] == 'add' or change[0] == 'remove':
-                if change[1] in ('loader.cat.colnames', 'loader.cat.translate', 'gui.object_info.items')\
+                if change[1] in ('loader.cat.translate', 'gui.object_info.items')\
                         or change[1].split('.')[:-1] in ('loader.cat.translate',):
                     config_upd.append(change)
                 else:
