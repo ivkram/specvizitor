@@ -77,8 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _new_project_action(self):
         new_project_dialog = NewFile(self._config, self._cache, parent=self)
         new_project_dialog.project_created.connect(self.main_GUI.load_project)
-        if new_project_dialog.exec():
-            logger.info('Project created')
+        new_project_dialog.exec()
 
     def _exit_action(self):
         # TODO: save everything before exiting the program

@@ -1,12 +1,11 @@
-loader:
-  cat:
-    colnames: [ra, dec, z]  # ID is always included; if empty, include all columns
-    translate: {
-      id: [Id, ID, NUMBER],
-      ra: [Ra, RA],
-      dec: [Dec, DEC],
-      z: [Z, redshift, Redshift, z_map]
-    }
+cat:
+  filename: null
+  translate: {
+    id: [Id, ID, NUMBER],
+    ra: [Ra, RA],
+    dec: [Dec, DEC],
+    z: [Z, redshift, Redshift, z_map]
+  }
 
 data:
   dir: '.'

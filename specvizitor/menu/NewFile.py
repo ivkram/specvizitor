@@ -6,7 +6,7 @@ from astropy.table import Table
 from pyqtgraph.Qt import QtWidgets, QtCore
 
 from ..utils.widgets import FileBrowser
-from ..utils.params import save_config, save_cache
+from ..utils.params import save_config
 from ..io.loader import load_cat
 
 
@@ -34,7 +34,7 @@ class NewFile(QtWidgets.QDialog):
 
         self._cat_browser = FileBrowser(title='Catalogue:', mode=FileBrowser.OpenFile,
                                         filename_extensions='FITS Files (*.fits)',
-                                        default_path=self._cache.get('last_catalogue'), parent=self)
+                                        default_path=self._config['cat']['filename'], parent=self)
         layout.addWidget(self._cat_browser)
 
         self._data_browser = FileBrowser(title='Data Folder:', mode=FileBrowser.OpenDirectory,
@@ -101,10 +101,11 @@ class NewFile(QtWidgets.QDialog):
             return
 
         # loading the catalogue
+        translate = self._config['cat'].get('translate')
         if self._filter_check_box.isChecked():
-            cat = load_cat(cat_filename, **self._config['loader']['cat'], data_folder=data_dirname)
+            cat = load_cat(cat_filename, translate=translate, data_folder=data_dirname)
         else:
-            cat = load_cat(cat_filename, **self._config['loader']['cat'])
+            cat = load_cat(cat_filename, translate=translate)
 
         if cat is None:
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, 'Specvizitor Message',
@@ -112,11 +113,10 @@ class NewFile(QtWidgets.QDialog):
             return
 
         self._config['data']['dir'] = str(data_dirname)
+        self._config['cat']['filename'] = str(cat_filename)
         save_config(self._config)
 
-        self._cache['last_catalogue'] = str(cat_filename)
-        save_cache(self._cache)
+        logger.info('New project created')
+        super().accept()
 
         self.project_created.emit(str(project_filename), cat)
-
-        super().accept()

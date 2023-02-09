@@ -20,8 +20,7 @@ def get_grizli_id(filename: pathlib.Path) -> str:
     return filename.name.split('_')[1].split('.')[0]
 
 
-def load_cat(filename: pathlib.Path, colnames=None, translate=None,
-             data_folder=None, filename_parser=get_grizli_id) -> [Table, None]:
+def load_cat(filename: pathlib.Path, translate=None, data_folder=None, filename_parser=get_grizli_id) -> [Table, None]:
     """
     Read and filter the input catalogue.
 
@@ -49,14 +48,14 @@ def load_cat(filename: pathlib.Path, colnames=None, translate=None,
         return
 
     # select columns
-    if colnames is not None:
-        selected_columns = ['id']
-        for cname in colnames:
-            if cname in cat.colnames:
-                selected_columns.append(cname)
-            else:
-                logger.warning(column_not_found_message(cname, translate))
-        cat = cat[selected_columns]
+    # if colnames is not None:
+    #     selected_columns = ['id']
+    #     for cname in colnames:
+    #         if cname in cat.colnames:
+    #             selected_columns.append(cname)
+    #         else:
+    #             logger.warning(column_not_found_message(cname, translate))
+    #     cat = cat[selected_columns]
 
     # scan the data folder and retrieve a list of IDs
     if data_folder is not None:
