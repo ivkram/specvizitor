@@ -9,17 +9,19 @@ from astropy.utils.decorators import lazyproperty
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
-from ..io.loader import get_data_filename
 from ..utils.params import read_yaml
 from ..utils.widgets import CustomSlider
 from .colors import viridis_more
+
+from ..io.loader import get_filename
 
 
 logger = logging.getLogger(__name__)
 
 
 class Spec1D(QtWidgets.QWidget):
-    def __init__(self, config, parent=None):
+    def __init__(self, loader, config, parent=None):
+        self._loader = loader
         self._config = config
 
         self._j = None
@@ -39,11 +41,11 @@ class Spec1D(QtWidgets.QWidget):
 
         # add a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsLayoutWidget()
-        self._spec_1d_widget.setMinimumSize(*map(int, self._config['gui']['spec_1D']['min_size']))
+        self._spec_1d_widget.setMinimumSize(*map(int, self._config['min_size']))
         grid.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
 
         # add a redshift slider
-        self._z_slider = CustomSlider(QtCore.Qt.Horizontal, **self._config['gui']['spec_1D']['slider'])
+        self._z_slider = CustomSlider(QtCore.Qt.Horizontal, **self._config['slider'])
         self._z_slider.valueChanged[int].connect(self._update_from_slider)
         self._z_slider.setToolTip('Slide to redshift.')
         grid.addWidget(self._z_slider, 3, 1, 1, 1)
@@ -73,9 +75,7 @@ class Spec1D(QtWidgets.QWidget):
 
     @lazyproperty
     def _filename(self):
-        return get_data_filename(self._config['data']['dir'],
-                                 self._config['gui']['spec_1D']['search_mask'],
-                                 self._cat['id'][self._j])
+        return get_filename(self._loader['data']['dir'], self._config['search_mask'], self._cat['id'][self._j])
 
     @lazyproperty
     def _hdu(self):
@@ -158,8 +158,8 @@ class Spec1D(QtWidgets.QWidget):
             self._label.setText("1D spectrum: {}".format(self._filename.name))
             if 'z' in self._cat.colnames:
                 self._z_slider.default_index = self._z_slider.index_from_value(self._cat['z'][self._j])
-            elif self._config['gui']['spec_1D']['slider'].get('default_value'):
-                self._z_slider.default_index = self._z_slider.index_from_value(self._config['gui']['spec_1D']['slider'].get('default_value'))
+            elif self._config['slider'].get('default_value'):
+                self._z_slider.default_index = self._z_slider.index_from_value(self._config['slider'].get('default_value'))
 
             self._plot()
             self.reset_view()

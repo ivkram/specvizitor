@@ -1,14 +1,15 @@
-cat:
-  filename: null
-  translate: {
-    id: [Id, ID, NUMBER],
-    ra: [Ra, RA],
-    dec: [Dec, DEC],
-    z: [Z, redshift, Redshift, z_map]
-  }
+loader:
+  cat:
+    filename: null
+    translate: {
+      id: [Id, ID, NUMBER],
+      ra: [Ra, RA],
+      dec: [Dec, DEC],
+      z: [Z, redshift, Redshift, z_map]
+    }
 
-data:
-  dir: '.'
+  data:
+    dir: '.'
 
 gui:
   control_panel:
@@ -21,19 +22,20 @@ gui:
       dec: "Dec: {}"
     }
 
-  image_cutout:
-    search_mask: "*{}.beams.fits"
-    min_size: [350, 350]
+  viewer:
+    image_cutout:
+      search_mask: "*{}.beams.fits"
+      min_size: [350, 350]
 
-  spec_2D:
-    search_mask: "*{}.stack.fits"
-    min_size: [1000, 100]
+    spec_2D:
+      search_mask: "*{}.stack.fits"
+      min_size: [1000, 100]
 
-  spec_1D:
-    search_mask: "*{}.1D.fits"
-    min_size: [1000, 200]
-    slider:
-      min_value: 0
-      max_value: 10
-      step: 0.000001
-      default_value: 5  # overwritten if the input catalogue contains a column with redshifts
+    spec_1D:
+      search_mask: "*{}.1D.fits"
+      min_size: [1000, 200]
+      slider:
+        min_value: 0
+        max_value: 10
+        step: 0.000001
+        default_value: 5  # overwritten if the input catalogue contains a column with redshifts

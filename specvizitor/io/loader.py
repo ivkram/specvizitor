@@ -9,6 +9,8 @@ from astropy.table import Table
 logger = logging.getLogger(__name__)
 
 
+# TODO: create FilenameParser class
+
 def get_grizli_id(filename: pathlib.Path) -> str:
     """
     Retrieve a grizli ID from the file name. The file can be any of the grizli fit products.
@@ -76,16 +78,16 @@ def load_cat(filename: pathlib.Path, translate=None, data_folder=None, filename_
     return cat
 
 
-def get_data_filename(directory, search_mask, object_id):
-    matched_filenames = list(pathlib.Path(directory).glob(search_mask.format(object_id)))
-    if matched_filenames:
-        return matched_filenames[0]
-    else:
-        return
-
-
 def column_not_found_message(cname, translate=None):
     if translate is None or cname not in translate:
         return '`{}` column not found'.format(cname)
     else:
         return '`{}` column and its equivalences ({}) not found'.format(cname, ", ".join(translate[cname]))
+
+
+def get_filename(directory, search_mask, object_id):
+    matched_filenames = sorted(list(pathlib.Path(directory).glob(search_mask.format(object_id))))
+    if matched_filenames:
+        return matched_filenames[0]  # if more than one filename is matched to `search_mask`, return the first
+    else:
+        return

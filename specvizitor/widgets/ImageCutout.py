@@ -10,14 +10,15 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
-from ..io.loader import get_data_filename
+from ..io.loader import get_filename
 
 
 logger = logging.getLogger(__name__)
 
 
 class ImageCutout(QtWidgets.QWidget):
-    def __init__(self, config, parent=None):
+    def __init__(self, loader, config, parent=None):
+        self._loader = loader
         self._config = config
 
         self._j = None
@@ -34,8 +35,8 @@ class ImageCutout(QtWidgets.QWidget):
 
         # add a widget for the image
         self._image_widget = pg.GraphicsLayoutWidget()
-        self._image_widget.setMinimumSize(*map(int, self._config['gui']['image_cutout']['min_size']))
-        # self._image_widget.setMaximumSize(*map(int, self.config['gui']['image_cutout']['min_size']))
+        self._image_widget.setMinimumSize(*map(int, self._config['min_size']))
+        # self._image_widget.setMaximumSize(*map(int, self.config['min_size']))
         grid.addWidget(self._image_widget, 2, 1)
 
         self.setLayout(grid)
@@ -56,9 +57,7 @@ class ImageCutout(QtWidgets.QWidget):
 
     @lazyproperty
     def _filename(self):
-        return get_data_filename(self._config['data']['dir'],
-                                 self._config['gui']['image_cutout']['search_mask'],
-                                 self._cat['id'][self._j])
+        return get_filename(self._loader['data']['dir'], self._config['search_mask'], self._cat['id'][self._j])
 
     @lazyproperty
     def _data(self):

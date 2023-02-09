@@ -34,11 +34,11 @@ class NewFile(QtWidgets.QDialog):
 
         self._cat_browser = FileBrowser(title='Catalogue:', mode=FileBrowser.OpenFile,
                                         filename_extensions='FITS Files (*.fits)',
-                                        default_path=self._config['cat']['filename'], parent=self)
+                                        default_path=self._config['loader']['cat']['filename'], parent=self)
         layout.addWidget(self._cat_browser)
 
         self._data_browser = FileBrowser(title='Data Folder:', mode=FileBrowser.OpenDirectory,
-                                         default_path=self._config['data']['dir'], parent=self)
+                                         default_path=self._config['loader']['data']['dir'], parent=self)
         layout.addWidget(self._data_browser)
 
         self._filter_check_box = QtWidgets.QCheckBox(
@@ -101,7 +101,7 @@ class NewFile(QtWidgets.QDialog):
             return
 
         # loading the catalogue
-        translate = self._config['cat'].get('translate')
+        translate = self._config['loader']['cat'].get('translate')
         if self._filter_check_box.isChecked():
             cat = load_cat(cat_filename, translate=translate, data_folder=data_dirname)
         else:
@@ -112,8 +112,8 @@ class NewFile(QtWidgets.QDialog):
                                   'An error occurred when loading the catalogue', parent=self).show()
             return
 
-        self._config['data']['dir'] = str(data_dirname)
-        self._config['cat']['filename'] = str(cat_filename)
+        self._config['loader']['data']['dir'] = str(data_dirname)
+        self._config['loader']['cat']['filename'] = str(cat_filename)
         save_config(self._config)
 
         logger.info('New project created')

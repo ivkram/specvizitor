@@ -23,7 +23,7 @@ class ControlPanel(QtWidgets.QGroupBox):
 
         super().__init__(parent)
         self.setTitle('Control Panel')
-        self.setMaximumWidth(self._config['gui']['control_panel']['max_width'])
+        self.setMaximumWidth(self._config['max_width'])
         self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
@@ -32,7 +32,7 @@ class ControlPanel(QtWidgets.QGroupBox):
         self._reset_button = QtWidgets.QPushButton()
         self._reset_button.setText('ID --')
         self._reset_button.setToolTip('Reset view')
-        self._reset_button.setFixedWidth(self._config['gui']['control_panel']['button_width'])
+        self._reset_button.setFixedWidth(self._config['button_width'])
         self._reset_button.clicked.connect(self.reset_button_clicked.emit)
         grid.addWidget(self._reset_button, 1, 1, 1, 1)
 
@@ -48,7 +48,7 @@ class ControlPanel(QtWidgets.QGroupBox):
             # b.setIcon(QtGui.QIcon(pn_text + '.png'))
             b.setToolTip('Look at the {} object.'.format(pn_text))
             b.setText(pn_text)
-            b.setFixedWidth(self._config['gui']['control_panel']['button_width'])
+            b.setFixedWidth(self._config['button_width'])
             b.clicked.connect(partial(self.previous_next_object, pn_text))
             b.setShortcut(pn_properties['shortcut'])
             grid.addWidget(b, *pn_properties['layout'])
@@ -56,24 +56,24 @@ class ControlPanel(QtWidgets.QGroupBox):
         # add a `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton()
         self._go_to_id_button.setText('Go to ID')
-        self._go_to_id_button.setFixedWidth(self._config['gui']['control_panel']['button_width'])
+        self._go_to_id_button.setFixedWidth(self._config['button_width'])
         self._go_to_id_button.clicked.connect(self.go_to_id)
         grid.addWidget(self._go_to_id_button, 3, 1, 1, 1)
 
         self._id_field = QtWidgets.QLineEdit()
-        self._id_field.setFixedWidth(self._config['gui']['control_panel']['button_width'])
+        self._id_field.setFixedWidth(self._config['button_width'])
         self._id_field.returnPressed.connect(self.go_to_id)
         grid.addWidget(self._id_field, 3, 2, 1, 1)
 
         # add a `Go to index` button
         self._go_to_index_button = QtWidgets.QPushButton()
         self._go_to_index_button.setText('Go to #')
-        self._go_to_index_button.setFixedWidth(self._config['gui']['control_panel']['button_width'])
+        self._go_to_index_button.setFixedWidth(self._config['button_width'])
         self._go_to_index_button.clicked.connect(self.go_to_index)
         grid.addWidget(self._go_to_index_button, 4, 1, 1, 1)
 
         self._index_field = QtWidgets.QLineEdit()
-        self._index_field.setFixedWidth(self._config['gui']['control_panel']['button_width'])
+        self._index_field.setFixedWidth(self._config['button_width'])
         self._index_field.returnPressed.connect(self.go_to_index)
         grid.addWidget(self._index_field, 4, 2, 1, 1)
 

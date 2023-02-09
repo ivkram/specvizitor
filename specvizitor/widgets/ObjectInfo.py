@@ -24,7 +24,7 @@ class ObjectInfo(QtWidgets.QGroupBox):
 
         # display information about the object
         self._labels = []
-        for i in range(len(self._config['gui']['object_info']['items'])):
+        for i in range(len(self._config['items'])):
             label_widget = QtWidgets.QLabel()
             label_widget.setHidden(True)
             label_widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
@@ -36,7 +36,7 @@ class ObjectInfo(QtWidgets.QGroupBox):
     def load_object(self, j):
         self._j = j
 
-        for i, (cname, label) in enumerate(self._config['gui']['object_info']['items'].items()):
+        for i, (cname, label) in enumerate(self._config['items'].items()):
             if cname in self._cat.colnames:
                 self._labels[i].setText(label.format(self._cat[cname][self._j]))
                 self._labels[i].setHidden(False)
