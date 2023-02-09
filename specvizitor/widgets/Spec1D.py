@@ -1,5 +1,6 @@
 import pathlib
 import logging
+import copy
 
 import numpy as np
 from astropy.io import fits
@@ -9,7 +10,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
 from ..io.loader import get_data_filename
-from ..utils.user_data import read_yaml
+from ..utils.params import read_yaml
 from ..utils.widgets import CustomSlider
 from .colors import viridis_more
 
@@ -42,10 +43,10 @@ class Spec1D(QtWidgets.QWidget):
         grid.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
 
         # add a redshift slider
-        self._redshift_slider = CustomSlider(QtCore.Qt.Horizontal, **self._config['gui']['spec_1D']['slider'])
-        self._redshift_slider.valueChanged[int].connect(self._update_from_slider)
-        self._redshift_slider.setToolTip('Slide to redshift.')
-        grid.addWidget(self._redshift_slider, 3, 1, 1, 1)
+        self._z_slider = CustomSlider(QtCore.Qt.Horizontal, **self._config['gui']['spec_1D']['slider'])
+        self._z_slider.valueChanged[int].connect(self._update_from_slider)
+        self._z_slider.setToolTip('Slide to redshift.')
+        grid.addWidget(self._z_slider, 3, 1, 1, 1)
 
         # add a line edit for changing the redshift
         self._redshift_editor = QtWidgets.QLineEdit()
@@ -113,31 +114,29 @@ class Spec1D(QtWidgets.QWidget):
 
     def _update_view(self):
         for line_name, line_artist in self._line_artists.items():
-            line_wave = self._lines['lambda'][line_name] * (1 + self._redshift_slider.value)
+            line_wave = self._lines['lambda'][line_name] * (1 + self._z_slider.value)
             line_artist['line'].setPos(line_wave)
             line_artist['label'].setPos(line_wave, self._label_height)
 
     def _update_from_slider(self, index=None):
-        if index:
-            self._redshift_slider.index = index
-        self._redshift_editor.setText("{:.6f}".format(self._redshift_slider.value))
+        if index is not None:
+            self._z_slider.index = index
+        self._redshift_editor.setText("{:.6f}".format(self._z_slider.value))
         self._update_view()
 
     def _update_from_editor(self):
         try:
-            self._redshift_slider.update_index(float(self._redshift_editor.text()))
+            self._z_slider.index = self._z_slider.index_from_value(float(self._redshift_editor.text()))
         except ValueError:
-            self._redshift_slider.reset()
-            self._update_from_slider()
-        else:
-            self._redshift_editor.setText("{:.6f}".format(self._redshift_slider.value))
-            self._update_view()
+            self._z_slider.reset()
+
+        self._update_from_slider()
 
     def reset_view(self):
         if self._hdu is None:
             return
 
-        self._redshift_slider.reset()
+        self._z_slider.reset()
         self._update_from_slider()
 
         self._spec_1d.setXRange(*self._default_xrange)
@@ -157,10 +156,16 @@ class Spec1D(QtWidgets.QWidget):
             self.setEnabled(True)
 
             self._label.setText("1D spectrum: {}".format(self._filename.name))
+            if 'z' in self._cat.colnames:
+                self._z_slider.default_index = self._z_slider.index_from_value(self._cat['z'][self._j])
+            elif self._config['gui']['spec_1D']['slider'].get('default_value'):
+                self._z_slider.default_index = self._z_slider.index_from_value(self._config['gui']['spec_1D']['slider'].get('default_value'))
+
             self._plot()
             self.reset_view()
         else:
             self._label.setText("")
+            self._redshift_editor.setText("")
 
             self.setEnabled(False)
 

@@ -45,10 +45,7 @@ def load_cat(filename: pathlib.Path, colnames=None, translate=None,
                     break
 
     if 'id' not in cat.colnames:
-        if translate is None or 'id' not in translate:
-            logger.error('`id` column not found')
-        else:
-            logger.error('`id` column or its equivalences ({}) not found'.format(", ".join(translate['id'])))
+        logger.error(column_not_found_message('id', translate))
         return
 
     # select columns
@@ -57,6 +54,8 @@ def load_cat(filename: pathlib.Path, colnames=None, translate=None,
         for cname in colnames:
             if cname in cat.colnames:
                 selected_columns.append(cname)
+            else:
+                logger.warning(column_not_found_message(cname, translate))
         cat = cat[selected_columns]
 
     # scan the data folder and retrieve a list of IDs
@@ -84,3 +83,10 @@ def get_data_filename(directory, search_mask, object_id):
         return matched_filenames[0]
     else:
         return
+
+
+def column_not_found_message(cname, translate=None):
+    if translate is None or cname not in translate:
+        return '`{}` column not found'.format(cname)
+    else:
+        return '`{}` column and its equivalences ({}) not found'.format(cname, ", ".join(translate[cname]))

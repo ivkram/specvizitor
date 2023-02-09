@@ -7,7 +7,7 @@ from astropy.table import Table
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
-from .utils.user_data import read_config, read_cache, get_user_config_filename, get_cache_filename
+from .utils.params import read_config, read_cache, get_user_config_filename, get_cache_filename
 from .menu import NewFile
 from .widgets import (ControlPanel, ObjectInfo, ReviewForm,
                       ImageCutout, Spec2D, Spec1D,

@@ -1,10 +1,11 @@
 loader:
   cat:
-    colnames: [ra, dec]  # ID is always included; if empty, include all columns
+    colnames: [ra, dec, z]  # ID is always included; if empty, include all columns
     translate: {
-      id: [Id, ID],
+      id: [Id, ID, NUMBER],
       ra: [Ra, RA],
-      dec: [Dec, DEC]
+      dec: [Dec, DEC],
+      z: [Z, redshift, Redshift, z_map]
     }
 
 data:
@@ -36,4 +37,4 @@ gui:
       min_value: 0
       max_value: 10
       step: 0.000001
-      default_value: 5
+      default_value: 5  # overwritten if the input catalogue contains a column with redshifts
