@@ -1,3 +1,5 @@
+from importlib.metadata import version
+
 import sys
 import logging
 import pathlib
@@ -90,7 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                           format(get_user_config_filename(), get_cache_filename()))
 
     def _about_action(self):
-        QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v0.1.0")
+        QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
 
 
 class FRESCO(QtWidgets.QWidget):
