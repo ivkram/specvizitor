@@ -20,7 +20,8 @@ pg.setConfigOption('foreground', 'k')
 
 # logging configuration
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger = logging.getLogger('specvizitor')
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -77,7 +78,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._help.addAction(self._about)
 
     def _new_project_action(self):
-        new_project_dialog = NewFile(self._config, self._cache, parent=self)
+        new_project_dialog = NewFile(self._config, parent=self)
         new_project_dialog.project_created.connect(self.main_GUI.load_project)
         new_project_dialog.exec()
 

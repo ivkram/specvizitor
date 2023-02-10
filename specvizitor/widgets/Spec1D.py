@@ -10,13 +10,13 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
 from ..utils.config import read_yaml
-from ..utils.widgets import SmartSlider
+from ..utils import SmartSlider
 from .colors import viridis_more
 
 from ..io.loader import get_filename
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('specvizitor')
 
 
 class Spec1D(QtWidgets.QWidget):

@@ -5,7 +5,7 @@ import platformdirs
 from dictdiffer import diff, patch, swap
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('specvizitor')
 
 
 def read_yaml(filename, local=False) -> dict:

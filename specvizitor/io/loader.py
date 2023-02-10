@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('specvizitor')
 
 
 # TODO: create FilenameParser class
@@ -22,7 +22,7 @@ def get_grizli_id(filename: pathlib.Path) -> str:
     return filename.name.split('_')[1].split('.')[0]
 
 
-def load_cat(filename: pathlib.Path, translate=None, data_folder=None, filename_parser=get_grizli_id) -> [Table, None]:
+def load_cat(filename, translate=None, data_folder=None, filename_parser=get_grizli_id) -> [Table, None]:
     """
     Read and filter the input catalogue.
 
@@ -49,27 +49,17 @@ def load_cat(filename: pathlib.Path, translate=None, data_folder=None, filename_
         logger.error(column_not_found_message('id', translate))
         return
 
-    # select columns
-    # if colnames is not None:
-    #     selected_columns = ['id']
-    #     for cname in colnames:
-    #         if cname in cat.colnames:
-    #             selected_columns.append(cname)
-    #         else:
-    #             logger.warning(column_not_found_message(cname, translate))
-    #     cat = cat[selected_columns]
-
-    # scan the data folder and retrieve a list of IDs
+    # scan the data folder
     if data_folder is not None:
-        spec_files = sorted(pathlib.Path(data_folder).glob('**/*.fits'))
-        spec_ids = np.unique([int(filename_parser(p)) for p in spec_files])
+        data_files = sorted(pathlib.Path(data_folder).glob('**/*.fits'))
+        obj_ids = np.unique([int(filename_parser(p)) for p in data_files])
 
-        if not spec_ids.size:
+        if not obj_ids.size:
             logger.error('No IDs retrieved from the data folder')
             return
 
         # filter objects using a list of IDs retrieved from the data folder
-        cat = cat[np.in1d(cat['id'], spec_ids, assume_unique=True)]
+        cat = cat[np.in1d(cat['id'], obj_ids, assume_unique=True)]
 
     if len(cat) == 0:
         logger.error('The processed catalogue is empty')

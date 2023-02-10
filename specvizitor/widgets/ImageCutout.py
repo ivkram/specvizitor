@@ -13,7 +13,7 @@ from pgcolorbar.colorlegend import ColorLegendItem
 from ..io.loader import get_filename
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('specvizitor')
 
 
 class ImageCutout(QtWidgets.QWidget):
