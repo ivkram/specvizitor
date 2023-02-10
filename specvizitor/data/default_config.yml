@@ -23,7 +23,7 @@ object_info:
   }
 
 review_form:
-  flags: {
+  checkboxes: {
            contamination: "Contamination"
   }
 

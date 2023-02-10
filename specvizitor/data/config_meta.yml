@@ -1,0 +1,4 @@
+dynamic:
+  - loader.cat.translate
+  - object_info.items
+  - review_form.checkboxes

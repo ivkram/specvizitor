@@ -28,7 +28,7 @@ class Spec1D(QtWidgets.QWidget):
         self._cat = None
 
         # load the list of spectral lines
-        self._lines = read_yaml('default_lines.yml', local=True)
+        self._lines = read_yaml('default_lines.yml', in_dist=True)
 
         super().__init__(parent)
         self.setMinimumSize(*map(int, self._config['min_size']))

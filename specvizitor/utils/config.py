@@ -8,8 +8,8 @@ from dictdiffer import diff, patch, swap
 logger = logging.getLogger('specvizitor')
 
 
-def read_yaml(filename, local=False) -> dict:
-    if local:
+def read_yaml(filename, in_dist=False) -> dict:
+    if in_dist:
         yaml_path = (pathlib.Path(__file__).parent.parent / 'data' / filename).resolve()
     else:
         yaml_path = pathlib.Path(filename).resolve()
@@ -35,7 +35,8 @@ def get_cache_filename():
 
 
 def read_config() -> dict:
-    config = read_yaml('default_config.yml', local=True)
+    config = read_yaml('default_config.yml', in_dist=True)
+    config_meta = read_yaml('config_meta.yml', in_dist=True)
 
     user_config_filename = get_user_config_filename()
     if user_config_filename.exists():
@@ -47,23 +48,23 @@ def read_config() -> dict:
             save_config(config)
             return config
 
-        config_diff = diff(config, user_config)
+        config_diff = diff(config, user_config, expand=True)
 
-        user_config_upd = []
+        user_config_revert = []
         config_upd = []
 
         for change in config_diff:
+            print(change)
             if change[0] == 'change':
                 config_upd.append(change)
             elif change[0] == 'add' or change[0] == 'remove':
-                if change[1] in ('loader.cat.translate', 'gui.object_info.items')\
-                        or change[1].split('.')[:-1] in ('loader.cat.translate',):
+                if any(change[1].startswith(key) for key in config_meta['dynamic']):
                     config_upd.append(change)
                 else:
-                    user_config_upd.append(change)
+                    user_config_revert.append(change)
 
-        if user_config_upd:
-            patch(swap(user_config_upd), user_config, in_place=True)
+        if user_config_revert:
+            patch(swap(user_config_revert), user_config, in_place=True)
             save_config(user_config)
 
         patch(config_upd, config, in_place=True)
