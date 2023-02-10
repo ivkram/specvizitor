@@ -102,4 +102,4 @@ def save_cache(cache):
         cache_filename.parent.mkdir()
 
     save_yaml(cache_filename, cache)
-    logger.info('Cache file updated')
+    logger.info('Cache updated')

@@ -29,7 +29,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # load the configuration file
         self._config = read_config()
 
-        # read cache
+        # load cache
         self._cache = read_cache()
 
         super().__init__(parent)
@@ -89,7 +89,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _settings_action(self):
         QtWidgets.QMessageBox.information(self, "Settings",
-                                          "Location of the configuration file: {}\n\nLocation of cache: {}".
+                                          "Configuration file: {}\n\nCache: {}".
                                           format(get_user_config_filename(), get_cache_filename()))
 
     def _about_action(self):
