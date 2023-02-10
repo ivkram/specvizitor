@@ -4,7 +4,7 @@ import pathlib
 from pyqtgraph.Qt import QtWidgets
 
 
-logger = logging.getLogger('specvizitor')
+logger = logging.getLogger(__name__)
 
 
 class FileBrowser(QtWidgets.QWidget):

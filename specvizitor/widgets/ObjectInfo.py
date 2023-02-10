@@ -6,7 +6,7 @@ from astropy.coordinates import SkyCoord
 from pyqtgraph.Qt import QtWidgets, QtCore
 
 
-logger = logging.getLogger('specvizitor')
+logger = logging.getLogger(__name__)
 
 
 class ObjectInfo(QtWidgets.QGroupBox):

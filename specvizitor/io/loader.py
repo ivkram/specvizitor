@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 
-logger = logging.getLogger('specvizitor')
+logger = logging.getLogger(__name__)
 
 
 # TODO: create FilenameParser class
@@ -52,7 +52,12 @@ def load_cat(filename, translate=None, data_folder=None, filename_parser=get_gri
     # scan the data folder
     if data_folder is not None:
         data_files = sorted(pathlib.Path(data_folder).glob('**/*.fits'))
-        obj_ids = np.unique([int(filename_parser(p)) for p in data_files])
+
+        try:
+            obj_ids = np.unique([filename_parser(p) for p in data_files])
+        except IndexError:
+            logger.error('An error occurred when parsing filenames in the data folder')
+            return
 
         if not obj_ids.size:
             logger.error('No IDs retrieved from the data folder')

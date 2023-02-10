@@ -7,7 +7,7 @@ from pyqtgraph.Qt import QtCore, QtWidgets
 from ..utils.config import save_cache
 
 
-logger = logging.getLogger('specvizitor')
+logger = logging.getLogger(__name__)
 
 
 class ControlPanel(QtWidgets.QGroupBox):

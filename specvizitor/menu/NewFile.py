@@ -13,7 +13,7 @@ from ..io.loader import load_cat
 from ..utils.logs import qlog
 
 
-logger = logging.getLogger('specvizitor')
+logger = logging.getLogger(__name__)
 
 
 class NewFile(QtWidgets.QDialog):
@@ -52,7 +52,7 @@ class NewFile(QtWidgets.QDialog):
         self.setLayout(layout)
 
     @qlog
-    def accept(self):
+    def process_input(self):
         # validate the input
         for b in self._browsers.values():
             if not b.filled() or not b.exists():
@@ -62,18 +62,19 @@ class NewFile(QtWidgets.QDialog):
         translate = self._config['loader']['cat'].get('translate')
         data_folder = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
-        cat = load_cat(self._browsers['cat'].path, translate=translate, data_folder=data_folder)
+        return load_cat(self._browsers['cat'].path, translate=translate, data_folder=data_folder)
+
+    def accept(self):
+        cat = self.process_input()
         if cat is None:
             return
-
-        logger.handlers.clear()
 
         # update the user configuration file
         self._config['loader']['data']['dir'] = self._browsers['data'].path
         self._config['loader']['cat']['filename'] = self._browsers['cat'].path
         save_config(self._config)
 
-        logger.info('New project created')
         super().accept()
 
+        logger.info('New project created')
         self.project_created.emit(self._browsers['output'].path, cat)

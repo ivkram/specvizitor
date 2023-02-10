@@ -4,9 +4,6 @@ from functools import wraps
 from pyqtgraph.Qt import QtWidgets
 
 
-logger = logging.getLogger('specvizitor')
-
-
 class QLogHandler(logging.Handler):
     def __init__(self):
         super().__init__()
@@ -29,11 +26,17 @@ class LogMessageBox(QtWidgets.QMessageBox):
         self.show()
 
 
-def qlog(action):
-    @wraps(action)
+def qlog(func):
+    @wraps(func)
     def wrapper(*args):
-        logger.addHandler(QLogHandler())
-        action(*args)
-        logger.handlers.clear()
+        root_logger = logging.getLogger()
+        handler = QLogHandler()
+        root_logger.addHandler(handler)
+
+        res = func(*args)
+
+        root_logger.removeHandler(handler)
+
+        return res
 
     return wrapper

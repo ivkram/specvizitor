@@ -24,7 +24,8 @@ object_info:
 
 review_form:
   checkboxes: {
-           contamination: "Contamination"
+    contamination: "Contamination",
+    extended: "Extended emission"
   }
 
 viewer:

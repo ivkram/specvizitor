@@ -1,19 +1,14 @@
 from pyqtgraph.Qt import QtWidgets
 
-
-class ReviewForm(QtWidgets.QGroupBox):
-    def __init__(self, config, parent=None):
-        self._config = config
-
-        self._j = None
-        self._df = None
-        self._cat = None
+from .AbstractWidget import AbstractWidget
 
 
-        super().__init__(parent)
+class ReviewForm(AbstractWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.setTitle('Review Form')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
-        self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
 
@@ -38,9 +33,9 @@ class ReviewForm(QtWidgets.QGroupBox):
         self._j = j
 
         self._comments_widget.setText(self._df['comment'][self._cat['id'][self._j]])
+        # for i, (cname, widget) in enumerate(self._checkboxes):
+        #     widget.setCheckState()
 
-    def load_project(self, df, cat):
-        self._df = df
-        self._cat = cat
-
+    def load_project(self, *args, **kwargs):
+        super().load_project(*args, **kwargs)
         self.setEnabled(True)

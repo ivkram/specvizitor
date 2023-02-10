@@ -16,7 +16,7 @@ from .colors import viridis_more
 from ..io.loader import get_filename
 
 
-logger = logging.getLogger('specvizitor')
+logger = logging.getLogger(__name__)
 
 
 class Spec1D(QtWidgets.QWidget):

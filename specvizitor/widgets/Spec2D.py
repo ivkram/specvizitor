@@ -13,7 +13,7 @@ from pgcolorbar.colorlegend import ColorLegendItem
 from ..io.loader import get_filename
 
 
-logger = logging.getLogger('specvizitor')
+logger = logging.getLogger(__name__)
 
 
 class Spec2D(QtWidgets.QWidget):
