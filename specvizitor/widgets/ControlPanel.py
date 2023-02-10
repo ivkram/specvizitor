@@ -4,7 +4,7 @@ from functools import partial
 from pyqtgraph.Qt import QtCore, QtWidgets
 
 
-from ..utils.params import save_cache
+from ..utils.config import save_cache
 
 
 logger = logging.getLogger(__name__)

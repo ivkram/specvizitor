@@ -6,7 +6,7 @@ from astropy.table import Table
 from pyqtgraph.Qt import QtWidgets, QtCore
 
 from ..utils.widgets import FileBrowser
-from ..utils.params import save_config
+from ..utils.config import save_config
 from ..io.loader import load_cat
 
 

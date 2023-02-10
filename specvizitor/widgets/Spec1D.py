@@ -9,8 +9,8 @@ from astropy.utils.decorators import lazyproperty
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
-from ..utils.params import read_yaml
-from ..utils.widgets import CustomSlider
+from ..utils.config import read_yaml
+from ..utils.widgets import SmartSlider
 from .colors import viridis_more
 
 from ..io.loader import get_filename
@@ -45,7 +45,7 @@ class Spec1D(QtWidgets.QWidget):
         grid.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
 
         # add a redshift slider
-        self._z_slider = CustomSlider(QtCore.Qt.Horizontal, **self._config['slider'])
+        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **self._config['slider'])
         self._z_slider.valueChanged[int].connect(self._update_from_slider)
         self._z_slider.setToolTip('Slide to redshift.')
         grid.addWidget(self._z_slider, 3, 1, 1, 1)
