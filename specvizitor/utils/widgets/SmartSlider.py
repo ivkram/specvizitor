@@ -9,13 +9,20 @@ class SmartSlider(QtWidgets.QSlider):
         self._n = int((max_value - min_value) / step) + 1
         self._arr = np.linspace(min_value, max_value, self._n)
 
-        self.default_index = self.index_from_value(default_value)
+        self.default_value = default_value
 
         self.setRange(1, self._n)
         self.setSingleStep(1)
         self.setValue(self.default_index)
 
         self._index = self.default_index
+
+    @property
+    def default_index(self):
+        try:
+            return self.index_from_value(self.default_value)
+        except (TypeError, ValueError):
+            return 1
 
     @property
     def index(self):
@@ -31,10 +38,7 @@ class SmartSlider(QtWidgets.QSlider):
         return self._arr[self.index - 1]
 
     def index_from_value(self, value):
-        if value is None:
-            return 1
-        else:
-            return self._arr.searchsorted(value, side='right')
+        return self._arr.searchsorted(value, side='right')
 
     def reset(self):
         self.index = self.default_index

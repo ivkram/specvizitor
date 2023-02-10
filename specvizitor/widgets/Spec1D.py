@@ -128,6 +128,7 @@ class Spec1D(QtWidgets.QWidget):
         try:
             self._z_slider.index = self._z_slider.index_from_value(float(self._redshift_editor.text()))
         except ValueError:
+            logger.error('Invalid redshift value: {}'.format(self._redshift_editor.text()))
             self._z_slider.reset()
 
         self._update_from_slider()
@@ -156,10 +157,11 @@ class Spec1D(QtWidgets.QWidget):
             self.setEnabled(True)
 
             self._label.setText("1D spectrum: {}".format(self._filename.name))
+
             if 'z' in self._cat.colnames:
-                self._z_slider.default_index = self._z_slider.index_from_value(self._cat['z'][self._j])
-            elif self._config['slider'].get('default_value'):
-                self._z_slider.default_index = self._z_slider.index_from_value(self._config['slider'].get('default_value'))
+                self._z_slider.default_value = self._cat['z'][self._j]
+            else:
+                self._z_slider.default_value = self._config['slider'].get('default_value')
 
             self._plot()
             self.reset_view()
