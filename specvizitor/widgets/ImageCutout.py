@@ -25,6 +25,7 @@ class ImageCutout(QtWidgets.QWidget):
         self._cat = None
 
         super().__init__(parent)
+        self.setMinimumSize(*map(int, self._config['min_size']))
         self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
@@ -35,8 +36,6 @@ class ImageCutout(QtWidgets.QWidget):
 
         # add a widget for the image
         self._image_widget = pg.GraphicsLayoutWidget()
-        self._image_widget.setMinimumSize(*map(int, self._config['min_size']))
-        # self._image_widget.setMaximumSize(*map(int, self.config['min_size']))
         grid.addWidget(self._image_widget, 2, 1)
 
         self.setLayout(grid)

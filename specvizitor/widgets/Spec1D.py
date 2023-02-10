@@ -31,6 +31,7 @@ class Spec1D(QtWidgets.QWidget):
         self._lines = read_yaml('default_lines.yml', local=True)
 
         super().__init__(parent)
+        self.setMinimumSize(*map(int, self._config['min_size']))
         self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
@@ -41,7 +42,6 @@ class Spec1D(QtWidgets.QWidget):
 
         # add a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsLayoutWidget()
-        self._spec_1d_widget.setMinimumSize(*map(int, self._config['min_size']))
         grid.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
 
         # add a redshift slider

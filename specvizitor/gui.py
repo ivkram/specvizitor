@@ -114,23 +114,23 @@ class FRESCO(QtWidgets.QWidget):
 
         # TODO: create a DataViewer class
         # add a widget for the image cutout
-        self.image_cutout = ImageCutout(config['loader'], config['gui']['viewer']['image_cutout'], parent=self)
+        self.image_cutout = ImageCutout(config['loader'], config['viewer']['image_cutout'], parent=self)
         grid.addWidget(self.image_cutout, 1, 1, 3, 1)
 
         # add a widget for the 2D spectrum
-        self.spec_2D = Spec2D(config['loader'], config['gui']['viewer']['spec_2D'], parent=self)
+        self.spec_2D = Spec2D(config['loader'], config['viewer']['spec_2D'], parent=self)
         grid.addWidget(self.spec_2D, 4, 1, 1, 2)
 
         # add a widget for the 1D spectrum
-        self.spec_1D = Spec1D(config['loader'], config['gui']['viewer']['spec_1D'], parent=self)
+        self.spec_1D = Spec1D(config['loader'], config['viewer']['spec_1D'], parent=self)
         grid.addWidget(self.spec_1D, 5, 1, 1, 2)
 
         # add a widget for the control panel
-        self.control_panel = ControlPanel(config['gui']['control_panel'], cache, parent=self)
+        self.control_panel = ControlPanel(config['control_panel'], cache, parent=self)
         grid.addWidget(self.control_panel, 1, 3, 1, 1)
 
         # add a widget for displaying information about the object
-        self.object_info = ObjectInfo(config['gui']['object_info'], parent=self)
+        self.object_info = ObjectInfo(config['object_info'], parent=self)
         grid.addWidget(self.object_info, 2, 3, 1, 1)
 
         # add a widget for writing comments

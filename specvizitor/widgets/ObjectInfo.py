@@ -18,6 +18,7 @@ class ObjectInfo(QtWidgets.QGroupBox):
 
         super().__init__(parent)
         self.setTitle('Object Information')
+        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()

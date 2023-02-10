@@ -25,6 +25,7 @@ class Spec2D(QtWidgets.QWidget):
         self._cat = None
 
         super().__init__(parent)
+        self.setMinimumSize(*map(int, self._config['min_size']))
         self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
@@ -35,7 +36,6 @@ class Spec2D(QtWidgets.QWidget):
 
         # add a widget for the spectrum
         self._spec_2d_widget = pg.GraphicsLayoutWidget()
-        self._spec_2d_widget.setMinimumSize(*map(int, self._config['min_size']))
         grid.addWidget(self._spec_2d_widget, 2, 1)
 
         self.setLayout(grid)

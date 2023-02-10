@@ -23,7 +23,7 @@ class ControlPanel(QtWidgets.QGroupBox):
 
         super().__init__(parent)
         self.setTitle('Control Panel')
-        self.setMaximumWidth(self._config['max_width'])
+        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()

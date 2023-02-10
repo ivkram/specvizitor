@@ -11,14 +11,15 @@ class ReviewForm(QtWidgets.QGroupBox):
 
         super().__init__(parent)
         self.setTitle('Review Form')
+        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
 
         # add a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit()
-        grid.addWidget(QtWidgets.QLabel('Comments:'), 5, 3, 1, 4)
-        grid.addWidget(self._comments_widget, 6, 3, 1, 4)
+        grid.addWidget(QtWidgets.QLabel('Comments:'), 1, 1, 1, 1)
+        grid.addWidget(self._comments_widget, 1, 1, 1, 1)
 
         self.setLayout(grid)
 
