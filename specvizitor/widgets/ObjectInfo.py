@@ -30,7 +30,7 @@ class ObjectInfo(QtWidgets.QGroupBox):
             label_widget.setHidden(True)
             label_widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
             self._labels.append(label_widget)
-            grid.addWidget(label_widget, i, 1, 1, 1)
+            grid.addWidget(label_widget, i + 1, 1, 1, 1)
 
         self.setLayout(grid)
 

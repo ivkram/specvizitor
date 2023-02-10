@@ -54,7 +54,6 @@ def read_config() -> dict:
         config_upd = []
 
         for change in config_diff:
-            print(change)
             if change[0] == 'change':
                 config_upd.append(change)
             elif change[0] == 'add' or change[0] == 'remove':

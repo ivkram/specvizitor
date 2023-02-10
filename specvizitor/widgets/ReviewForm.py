@@ -6,8 +6,9 @@ class ReviewForm(QtWidgets.QGroupBox):
         self._config = config
 
         self._j = None
+        self._df = None
         self._cat = None
-        self._comments = None
+
 
         super().__init__(parent)
         self.setTitle('Review Form')
@@ -16,23 +17,30 @@ class ReviewForm(QtWidgets.QGroupBox):
 
         grid = QtWidgets.QGridLayout()
 
+        # add checkboxes
+        self._checkboxes = {}
+        for i, (cname, label) in enumerate(self._config['checkboxes'].items()):
+            checkbox_widget = QtWidgets.QCheckBox(label)
+            self._checkboxes[cname] = checkbox_widget
+            grid.addWidget(checkbox_widget, i + 1, 1, 1, 1)
+
         # add a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit()
-        grid.addWidget(QtWidgets.QLabel('Comments:'), 1, 1, 1, 1)
-        grid.addWidget(self._comments_widget, 1, 1, 1, 1)
+        grid.addWidget(QtWidgets.QLabel('Comments:'), len(self._checkboxes) + 1, 1, 1, 1)
+        grid.addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
 
         self.setLayout(grid)
 
     def load_object(self, j):
         if self._j is not None:
-            self._comments[self._j] = self._comments_widget.toPlainText()
+            self._df['comment'][self._cat['id'][self._j]] = self._comments_widget.toPlainText()
 
         self._j = j
 
-        self._comments_widget.setText(self._comments[self._j])
+        self._comments_widget.setText(self._df['comment'][self._cat['id'][self._j]])
 
-    def load_project(self, cat):
+    def load_project(self, df, cat):
+        self._df = df
         self._cat = cat
-        self._comments = ["" for _ in range(len(self._cat))]
 
         self.setEnabled(True)

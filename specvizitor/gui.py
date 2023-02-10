@@ -5,6 +5,7 @@ import logging
 import pathlib
 
 from astropy.table import Table
+import pandas as pd
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
@@ -60,6 +61,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._file.addAction(self._new_project)
 
         self._file.addAction("&Open...")
+        self._file.addAction("Save As...")
         self._file.addAction("&Export...")
         self._file.addSeparator()
 
@@ -68,7 +70,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._file.addAction(self._exit)
 
         self._tools = self._menu.addMenu("&Tools")
-        self._settings = QtWidgets.QAction("&Settings...")
+        self._settings = QtWidgets.QAction("Se&ttings...")
         self._settings.triggered.connect(self._settings_action)
         self._tools.addAction(self._settings)
 
@@ -101,6 +103,7 @@ class FRESCO(QtWidgets.QWidget):
         self._config = config
         self._cache = cache
 
+        self._df = None
         self._output_file = None
         self._cat = None
 
@@ -134,7 +137,7 @@ class FRESCO(QtWidgets.QWidget):
         grid.addWidget(self.object_info, 2, 3, 1, 1)
 
         # add a widget for writing comments
-        self.review_form = ReviewForm(config, parent=self)
+        self.review_form = ReviewForm(config['review_form'], parent=self)
         grid.addWidget(self.review_form, 3, 3, 3, 1)
 
         # add the Eazy widget
@@ -184,9 +187,12 @@ class FRESCO(QtWidgets.QWidget):
         self._output_file = output_file
         self._cat = cat
 
+        self._df = pd.DataFrame(index=self._cat['id']).sort_index()
+        self._df['comment'] = ''
+
         self.control_panel.load_project(self._cat)
         self.object_info.load_project(self._cat)
-        self.review_form.load_project(self._cat)
+        self.review_form.load_project(self._df, self._cat)
 
         self.image_cutout.load_project(self._cat)
         self.spec_2D.load_project(self._cat)
@@ -199,12 +205,6 @@ class FRESCO(QtWidgets.QWidget):
             self.control_panel.object_selected.emit(int(j))
         else:
             self.control_panel.object_selected.emit(0)
-
-    def save_now(self):
-        self._cat['SFR'][self._j] = 0  # self.sfr
-        self._cat['mass'][self._j] = 0  # self.mass
-        self._cat['chi2'][self._j] = 0  # self.z_phot_chi2
-        # write_output(input_cat, comments, 'test.fits')
 
 
 def main():
