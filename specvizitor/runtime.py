@@ -1,3 +1,4 @@
+import logging
 import pathlib
 from dataclasses import dataclass
 from platformdirs import user_config_dir, user_cache_dir
@@ -6,6 +7,9 @@ import pandas as pd
 from astropy.table import Table
 
 from .utils.params import LocalFile, Config, Cache
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -28,3 +32,8 @@ class RuntimeData:
             return self.cat['id'][self.j]
         except (TypeError, IndexError):
             return
+
+    def save(self):
+        if self.project is not None:
+            self.df.to_csv(self.project, index_label='id')
+            logger.info('Project saved (path: {})'.format(self.project))

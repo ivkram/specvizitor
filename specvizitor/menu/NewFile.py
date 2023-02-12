@@ -72,7 +72,6 @@ class NewFile(QtWidgets.QDialog):
         self.rd.config.loader.cat.filename = self._browsers['cat'].path
 
         self.rd.config.save(self.rd.config_file)
-        self.rd.cache.save(self.rd.cache_file)
 
         super().accept()
 

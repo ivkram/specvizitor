@@ -28,6 +28,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd = RuntimeData()
 
         super().__init__(parent)
+        logger.info("Application started")
 
         # size, title and logo
         self.setGeometry(600, 500, 2550, 1450)  # position and size of the window
@@ -79,9 +80,9 @@ class MainWindow(QtWidgets.QMainWindow):
         new_project_dialog.exec()
 
     def _exit_action(self):
-        # TODO: save everything before exiting the program
-        logger.info("Exiting the program...")
+        self.rd.save()
         self.close()
+        logger.info("Application closed")
 
     def _settings_action(self):
         QtWidgets.QMessageBox.information(self, "Settings",
@@ -90,6 +91,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
+
+    def closeEvent(self, _):
+        self._exit_action()
 
 
 class FRESCO(QtWidgets.QWidget):
@@ -159,6 +163,7 @@ class FRESCO(QtWidgets.QWidget):
         if self.rd.j:
             for widget in self.widgets:
                 widget.dump()
+        self.rd.save()
 
         self.rd.j = j
         self.rd.cache.last_object_index = j
