@@ -14,6 +14,7 @@ from .utils.logs import LogMessageBox
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
+pg.setConfigOption('antialias', True)
 
 # logging configuration
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
