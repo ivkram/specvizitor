@@ -59,16 +59,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self._open_file.triggered.connect(self._open_file_action)
         self._file.addAction(self._open_file)
 
+        self._file.addSeparator()
+
         self._save = QtWidgets.QAction("Save...")
         self._save.triggered.connect(self._save_action)
+        self._save.setEnabled(False)
         self._file.addAction(self._save)
 
         self._save_as = QtWidgets.QAction("Save As...")
         self._save_as.triggered.connect(self._save_as_action)
+        self._save_as.setEnabled(False)
         self._file.addAction(self._save_as)
 
         self._export = QtWidgets.QAction("&Export...")
         self._export.triggered.connect(self._export_action)
+        self._export.setEnabled(False)
         self._file.addAction(self._export)
 
         self._file.addSeparator()
@@ -91,7 +96,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = NewFile(self.rd, parent=self)
         if dialog.exec():
             self.rd.cache.last_object_index = 0
-            self.main_GUI.load_project()
+            self.load_project()
 
     def _open_file_action(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File', filter='CSV Files (*.csv)')[
@@ -103,9 +108,14 @@ class MainWindow(QtWidgets.QMainWindow):
             if pathlib.Path(path).exists():
                 self.rd.output_path = pathlib.Path(path)
                 self.rd.read()
-                self.main_GUI.load_project()
+                self.load_project()
             else:
                 logger.warning('Inspection file not found (path: {})'.format(path))
+
+    def load_project(self):
+        for w in (self._save, self._save_as, self._export):
+            w.setEnabled(True)
+        self.main_GUI.load_project()
 
     def _save_action(self):
         msg = 'The data is saved automatically'
