@@ -44,7 +44,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.main_GUI.signal1.connect(self.show_status)
         self.setCentralWidget(self.main_GUI)
 
-        self.open(self.rd.cache.last_inspection_file)
+        if self.rd.cache.last_inspection_file:
+            self.open(self.rd.cache.last_inspection_file)
 
     def _add_menu(self):
         self._menu = self.menuBar()
@@ -101,16 +102,17 @@ class MainWindow(QtWidgets.QMainWindow):
     def _open_file_action(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File', filter='CSV Files (*.csv)')[
             0]
-        self.open(path)
-
-    def open(self, path):
         if path:
-            if pathlib.Path(path).exists():
-                self.rd.output_path = pathlib.Path(path)
-                self.rd.read()
-                self.load_project()
-            else:
-                logger.warning('Inspection file not found (path: {})'.format(path))
+            self.rd.cache.last_object_index = 0
+            self.open(path)
+
+    def open(self, path: str):
+        if pathlib.Path(path).exists():
+            self.rd.output_path = pathlib.Path(path)
+            self.rd.read()
+            self.load_project()
+        else:
+            logger.warning('Inspection file not found (path: {})'.format(path))
 
     def load_project(self):
         for w in (self._save, self._save_as, self._export):
