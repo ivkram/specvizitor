@@ -28,7 +28,7 @@ class RuntimeData:
     j: int = None  # index of the current object
 
     def __post_init__(self):
-        self.config = Config.read(self.config_file, path_to_default='default_config.yml')
+        self.config = Config.read(self.config_file)
         self.cache = Cache.read(self.cache_file)
 
     @property
@@ -57,6 +57,7 @@ class RuntimeData:
                     checkboxes[cname] = cname.capitalize()
 
             self.config.review_form.checkboxes = checkboxes
+            self.config.save(self.config_file)
 
             self.df = df
 

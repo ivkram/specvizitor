@@ -3,16 +3,14 @@ import sys
 import logging
 from importlib.metadata import version
 
-from astropy.table import Table
-import pandas as pd
-
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtWidgets
 
 from .runtime import RuntimeData
-from .menu import NewFile, OpenFile
+from .menu import NewFile
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
 from .utils.widgets import get_widgets
+from .utils.params import Config
 
 
 pg.setConfigOption('background', 'w')
@@ -184,9 +182,9 @@ class FRESCO(QtWidgets.QWidget):
             widget.load_object()
 
     def load_project(self):
+        # reload the review form
         self.layout.removeWidget(self.review_form)
         self.review_form.setParent(None)
-
         self.review_form = ReviewForm(self.rd, parent=self)
         self.layout.addWidget(self.review_form, 3, 2, 1, 1)
 
