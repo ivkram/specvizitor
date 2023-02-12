@@ -67,6 +67,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self._save.setEnabled(False)
         self._file.addAction(self._save)
 
+        self.shortcut_close = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+S'), self)
+        self.shortcut_close.activated.connect(self._save_action)
+
         self._save_as = QtWidgets.QAction("Save As...")
         self._save_as.triggered.connect(self._save_as_action)
         self._save_as.setEnabled(False)
