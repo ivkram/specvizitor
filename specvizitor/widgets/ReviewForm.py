@@ -16,10 +16,12 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
 
         # add checkboxes
         self._checkboxes = {}
-        for i, (cname, label) in enumerate(self.cfg.checkboxes.items()):
-            checkbox_widget = QtWidgets.QCheckBox(label)
-            self._checkboxes[cname] = checkbox_widget
-            grid.addWidget(checkbox_widget, i + 1, 1, 1, 1)
+
+        if self.cfg.checkboxes:
+            for i, (cname, label) in enumerate(self.cfg.checkboxes.items()):
+                widget = QtWidgets.QCheckBox(label)
+                self._checkboxes[cname] = widget
+                grid.addWidget(widget, i + 1, 1, 1, 1)
 
         # add a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit()
