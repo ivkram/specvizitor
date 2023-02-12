@@ -10,8 +10,7 @@ from .runtime import RuntimeData
 from .menu import NewFile
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
 from .utils.widgets import get_widgets
-from .utils.params import Config
-
+from .utils.logs import LogMessageBox
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -31,7 +30,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # size, title and logo
         self.setGeometry(600, 500, 2550, 1450)  # position and size of the window
-        self.setWindowTitle('FRESCO')  # title of the window
+        self.setWindowTitle('Specvizitor')  # title of the window
         self.setWindowIcon(QtGui.QIcon('logo2_2.png'))  # logo in upper left corner
 
         # add a menu
@@ -45,7 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.main_GUI.signal1.connect(self.show_status)
         self.setCentralWidget(self.main_GUI)
 
-        self.open_file(self.rd.cache.last_inspection_file)
+        self.open(self.rd.cache.last_inspection_file)
 
     def _add_menu(self):
         self._menu = self.menuBar()
@@ -60,8 +59,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self._open_file.triggered.connect(self._open_file_action)
         self._file.addAction(self._open_file)
 
-        self._file.addAction("Save As...")
-        self._file.addAction("&Export...")
+        self._save = QtWidgets.QAction("Save...")
+        self._save.triggered.connect(self._save_action)
+        self._file.addAction(self._save)
+
+        self._save_as = QtWidgets.QAction("Save As...")
+        self._save_as.triggered.connect(self._save_as_action)
+        self._file.addAction(self._save_as)
+
+        self._export = QtWidgets.QAction("&Export...")
+        self._export.triggered.connect(self._export_action)
+        self._file.addAction(self._export)
+
         self._file.addSeparator()
 
         self._exit = QtWidgets.QAction("E&xit...")
@@ -85,10 +94,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.main_GUI.load_project()
 
     def _open_file_action(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File', filter='CSV Files (*.csv)')[0]
-        self.open_file(path)
+        path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File', filter='CSV Files (*.csv)')[
+            0]
+        self.open(path)
 
-    def open_file(self, path):
+    def open(self, path):
         if path:
             if pathlib.Path(path).exists():
                 self.rd.output_path = pathlib.Path(path)
@@ -96,6 +106,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.main_GUI.load_project()
             else:
                 logger.warning('Inspection file not found (path: {})'.format(path))
+
+    def _save_action(self):
+        msg = 'The data is saved automatically'
+        if self.rd.output_path is not None:
+            msg += ' to {}'.format(self.rd.output_path)
+        LogMessageBox(logging.INFO, msg, parent=self)
+
+    def _save_as_action(self):
+        LogMessageBox(logging.INFO, 'Not implemented', parent=self)
+
+    def _export_action(self):
+        LogMessageBox(logging.INFO, 'Not implemented', parent=self)
 
     def _exit_action(self):
         self.rd.save()
