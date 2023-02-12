@@ -1,5 +1,4 @@
 import logging
-import pathlib
 
 import numpy as np
 import pyqtgraph as pg
@@ -10,25 +9,20 @@ from astropy.utils.decorators import lazyproperty
 from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
-from ..io.loader import get_filename
+from .ViewerElement import ViewerElement
+from ..runtime import RuntimeData
 
 
 logger = logging.getLogger(__name__)
 
 
-class Spec2D(QtWidgets.QWidget):
-    def __init__(self, loader, config, parent=None):
-        self._loader = loader
-        self._config = config
-
-        self._j = None
-        self._cat = None
-
-        super().__init__(parent)
-        self.setMinimumSize(*map(int, self._config['min_size']))
-        self.setEnabled(False)
+class Spec2D(ViewerElement):
+    def __init__(self, rd: RuntimeData, parent=None):
+        self.cfg = rd.config.viewer.spec_2d
+        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
         grid = QtWidgets.QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
 
         # add a label
         self._label = QtWidgets.QLabel()
@@ -55,16 +49,12 @@ class Spec2D(QtWidgets.QWidget):
         self._spec_2d_widget.addItem(self._cbar, 0, 1)
 
     @lazyproperty
-    def _filename(self):
-        return get_filename(self._loader['data']['dir'], self._config['search_mask'], self._cat['id'][self._j])
-
-    @lazyproperty
     def _data(self):
         try:
             data = fits.getdata(self._filename)
             data = np.rot90(data)[::-1]
         except ValueError:
-            logger.error('2D spectrum not found (object ID: {})'.format(self._cat['id'][self._j]))
+            logger.error('2D spectrum not found (object ID: {})'.format(self.rd.id))
             return
         else:
             return data
@@ -77,11 +67,10 @@ class Spec2D(QtWidgets.QWidget):
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
         self._view_box.autoRange()
 
-    def load_object(self, j):
-        del self._filename
-        del self._data
+    def load_object(self):
+        super().load_object()
 
-        self._j = j
+        del self._data
 
         if self._data is not None:
             self.setEnabled(True)
@@ -95,7 +84,3 @@ class Spec2D(QtWidgets.QWidget):
             self._spec_2d.clear()
 
             self.setEnabled(False)
-
-    def load_project(self, cat):
-        self._cat = cat
-

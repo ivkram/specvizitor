@@ -1,12 +1,11 @@
 loader:
   cat:
     filename:
-    translate: {
-      id: [Id, ID, NUMBER],
-      ra: [Ra, RA],
-      dec: [Dec, DEC],
+    translate:
+      id: [Id, ID, NUMBER]
+      ra: [Ra, RA]
+      dec: [Dec, DEC]
       z: [Z, redshift, Redshift, z_map]
-    }
 
   data:
     dir: '.'
@@ -17,29 +16,28 @@ control_panel:
   button_width: 120
 
 object_info:
-  items: {
-    ra: "RA: {}",
+  items:
+    ra: "RA: {}"
     dec: "Dec: {}"
-  }
 
 review_form:
-  checkboxes: {
-    contamination: "Contamination",
+  checkboxes:
+    contamination: "Contamination"
     extended: "Extended emission"
-  }
 
 viewer:
   image_cutout:
     search_mask: "*{}.beams.fits"
-    min_size: [350, 350]
+    min_width: 350
+    min_height: 350
 
-  spec_2D:
+  spec_2d:
     search_mask: "*{}.stack.fits"
-    min_size: [1000, 200]
+    min_height: 200
 
-  spec_1D:
+  spec_1d:
     search_mask: "*{}.1D.fits"
-    min_size: [1000, 200]
+    min_height: 300
     slider:
       min_value: 0
       max_value: 10

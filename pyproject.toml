@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "specvizitor"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python GUI application for a visual inspection of astronomical spectroscopic data"
 authors = ["Ivan Kramarenko <im.kramarenko@gmail.com>", "Josephine Kerutt <>"]
 license = "BSD-3-Clause"
@@ -17,6 +17,7 @@ pgcolorbar = "^1.1.3"
 pyqt5 = "^5.15.9"
 matplotlib = "^3.6.3"
 pandas = "^1.5.3"
+dacite = "^1.8.0"
 
 [tool.poetry.scripts]
 specvizitor = 'specvizitor.gui:main'

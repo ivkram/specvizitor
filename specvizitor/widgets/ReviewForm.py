@@ -1,11 +1,13 @@
 from pyqtgraph.Qt import QtWidgets
 
+from ..runtime import RuntimeData
 from .AbstractWidget import AbstractWidget
 
 
-class ReviewForm(AbstractWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
+    def __init__(self, rd: RuntimeData, parent=None):
+        self.cfg = rd.config.review_form
+        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
         self.setTitle('Review Form')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
@@ -14,7 +16,7 @@ class ReviewForm(AbstractWidget):
 
         # add checkboxes
         self._checkboxes = {}
-        for i, (cname, label) in enumerate(self._config['checkboxes'].items()):
+        for i, (cname, label) in enumerate(self.cfg.checkboxes.items()):
             checkbox_widget = QtWidgets.QCheckBox(label)
             self._checkboxes[cname] = checkbox_widget
             grid.addWidget(checkbox_widget, i + 1, 1, 1, 1)
@@ -26,16 +28,10 @@ class ReviewForm(AbstractWidget):
 
         self.setLayout(grid)
 
-    def load_object(self, j):
-        if self._j is not None:
-            self._df['comment'][self._cat['id'][self._j]] = self._comments_widget.toPlainText()
+    def dump(self):
+        self.rd.df['comment'][self.rd.id] = self._comments_widget.toPlainText()
 
-        self._j = j
-
-        self._comments_widget.setText(self._df['comment'][self._cat['id'][self._j]])
+    def load_object(self):
+        self._comments_widget.setText(self.rd.df['comment'][self.rd.id])
         # for i, (cname, widget) in enumerate(self._checkboxes):
         #     widget.setCheckState()
-
-    def load_project(self, *args, **kwargs):
-        super().load_project(*args, **kwargs)
-        self.setEnabled(True)

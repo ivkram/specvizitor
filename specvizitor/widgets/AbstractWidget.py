@@ -1,17 +1,27 @@
 from pyqtgraph.Qt import QtWidgets
 
+from ..runtime import RuntimeData
+from ..utils import params
 
-class AbstractWidget(QtWidgets.QGroupBox):
-    def __init__(self, config, parent=None):
-        self._config = config
 
-        self._j = None
-        self._df = None
-        self._cat = None
+class AbstractWidget(QtWidgets.QWidget):
+    def __init__(self, rd: RuntimeData, cfg: params.AbstractWidget, parent=None):
+        self.rd = rd
 
         super().__init__(parent)
+
+        if cfg.min_width:
+            self.setMinimumWidth(cfg.min_width)
+        if cfg.min_height:
+            self.setMinimumHeight(cfg.min_height)
+
         self.setEnabled(False)
 
-    def load_project(self, df, cat):
-        self._df = df
-        self._cat = cat
+    def dump(self):
+        pass
+
+    def load_object(self):
+        pass
+
+    def load_project(self):
+        self.setEnabled(True)

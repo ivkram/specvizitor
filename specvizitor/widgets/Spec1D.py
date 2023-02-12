@@ -1,6 +1,5 @@
-import pathlib
 import logging
-import copy
+from dataclasses import asdict
 
 import numpy as np
 from astropy.io import fits
@@ -9,32 +8,28 @@ from astropy.utils.decorators import lazyproperty
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtWidgets
 
-from ..utils.config import read_yaml
+from ..utils.params import read_yaml
 from ..utils import SmartSlider
 from .colors import viridis_more
 
-from ..io.loader import get_filename
+from .ViewerElement import ViewerElement
+from ..runtime import RuntimeData
 
 
 logger = logging.getLogger(__name__)
 
 
-class Spec1D(QtWidgets.QWidget):
-    def __init__(self, loader, config, parent=None):
-        self._loader = loader
-        self._config = config
-
-        self._j = None
-        self._cat = None
+class Spec1D(ViewerElement):
+    def __init__(self, rd: RuntimeData, parent=None):
+        self.cfg = rd.config.viewer.spec_1d
+        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
         # load the list of spectral lines
+        # TODO: move to the runtime data
         self._lines = read_yaml('default_lines.yml', in_dist=True)
 
-        super().__init__(parent)
-        self.setMinimumSize(*map(int, self._config['min_size']))
-        self.setEnabled(False)
-
         grid = QtWidgets.QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
 
         # add a label
         self._label = QtWidgets.QLabel()
@@ -45,7 +40,7 @@ class Spec1D(QtWidgets.QWidget):
         grid.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
 
         # add a redshift slider
-        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **self._config['slider'])
+        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.slider))
         self._z_slider.valueChanged[int].connect(self._update_from_slider)
         self._z_slider.setToolTip('Slide to redshift.')
         grid.addWidget(self._z_slider, 3, 1, 1, 1)
@@ -74,16 +69,12 @@ class Spec1D(QtWidgets.QWidget):
             self._line_artists[line_name] = {'line': line, 'label': label}
 
     @lazyproperty
-    def _filename(self):
-        return get_filename(self._loader['data']['dir'], self._config['search_mask'], self._cat['id'][self._j])
-
-    @lazyproperty
     def _hdu(self):
         try:
             with fits.open(self._filename) as hdul:
                 header, data = hdul[1].header, hdul[1].data
         except ValueError:
-            logger.error('1D spectrum not found (object ID: {})'.format(self._cat['id'][self._j]))
+            logger.error('1D spectrum not found (object ID: {})'.format(self.rd.id))
             return
         else:
             return header, data
@@ -143,14 +134,13 @@ class Spec1D(QtWidgets.QWidget):
         self._spec_1d.setXRange(*self._default_xrange)
         self._spec_1d.setYRange(*self._default_yrange)
 
-    def load_object(self, j):
-        del self._filename
+    def load_object(self):
+        super().load_object()
+
         del self._hdu
         del self._default_xrange
         del self._default_yrange
         del self._label_height
-
-        self._j = j
 
         self._spec_1d.clear()
         if self._hdu is not None:
@@ -158,10 +148,10 @@ class Spec1D(QtWidgets.QWidget):
 
             self._label.setText("1D spectrum: {}".format(self._filename.name))
 
-            if 'z' in self._cat.colnames:
-                self._z_slider.default_value = self._cat['z'][self._j]
+            if 'z' in self.rd.cat.colnames:
+                self._z_slider.default_value = self.rd.cat['z'][self.rd.j]
             else:
-                self._z_slider.default_value = self._config['slider'].get('default_value')
+                self._z_slider.default_value = self.cfg.slider.default_value
 
             self._plot()
             self.reset_view()
@@ -170,6 +160,3 @@ class Spec1D(QtWidgets.QWidget):
             self._redshift_editor.setText("")
 
             self.setEnabled(False)
-
-    def load_project(self, cat):
-        self._cat = cat

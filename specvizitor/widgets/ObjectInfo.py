@@ -2,6 +2,9 @@ import logging
 
 from astropy.coordinates import SkyCoord
 
+from ..runtime import RuntimeData
+from .AbstractWidget import AbstractWidget
+
 
 from pyqtgraph.Qt import QtWidgets, QtCore
 
@@ -9,23 +12,19 @@ from pyqtgraph.Qt import QtWidgets, QtCore
 logger = logging.getLogger(__name__)
 
 
-class ObjectInfo(QtWidgets.QGroupBox):
-    def __init__(self, config, parent=None):
-        self._config = config
+class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
+    def __init__(self, rd: RuntimeData, parent=None):
+        self.cfg = rd.config.object_info
+        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
-        self._j = None
-        self._cat = None
-
-        super().__init__(parent)
         self.setTitle('Object Information')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        self.setEnabled(False)
 
         grid = QtWidgets.QGridLayout()
 
         # display information about the object
         self._labels = []
-        for i in range(len(self._config['items'])):
+        for i in range(len(self.cfg.items)):
             label_widget = QtWidgets.QLabel()
             label_widget.setHidden(True)
             label_widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
@@ -34,12 +33,10 @@ class ObjectInfo(QtWidgets.QGroupBox):
 
         self.setLayout(grid)
 
-    def load_object(self, j):
-        self._j = j
-
-        for i, (cname, label) in enumerate(self._config['items'].items()):
-            if cname in self._cat.colnames:
-                self._labels[i].setText(label.format(self._cat[cname][self._j]))
+    def load_object(self):
+        for i, (cname, label) in enumerate(self.cfg.items.items()):
+            if cname in self.rd.cat.colnames:
+                self._labels[i].setText(label.format(self.rd.cat[cname][self.rd.j]))
                 self._labels[i].setHidden(False)
             else:
                 logger.warning('`{}` column not found in the catalogue'.format(cname))
@@ -50,7 +47,3 @@ class ObjectInfo(QtWidgets.QGroupBox):
         #     ra, dec = c.to_string('hmsdms').split(' ')
         #     self.ra_label.setText("RA: {}".format(ra))
         #     self.dec_label.setText("Dec: {}".format(dec))
-
-    def load_project(self, cat):
-        self._cat = cat
-        self.setEnabled(True)

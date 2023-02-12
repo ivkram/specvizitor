@@ -1,5 +1,4 @@
 import logging
-import pathlib
 
 from astropy import wcs
 from astropy.io import fits
@@ -10,25 +9,21 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
-from ..io.loader import get_filename
+from .ViewerElement import ViewerElement
+from ..runtime import RuntimeData
 
 
 logger = logging.getLogger(__name__)
 
 
-class ImageCutout(QtWidgets.QWidget):
-    def __init__(self, loader, config, parent=None):
-        self._loader = loader
-        self._config = config
+class ImageCutout(ViewerElement):
+    def __init__(self, rd: RuntimeData, parent=None):
+        self.cfg = rd.config.viewer.image_cutout
+        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
-        self._j = None
-        self._cat = None
-
-        super().__init__(parent)
-        self.setMinimumSize(*map(int, self._config['min_size']))
-        self.setEnabled(False)
-
+        # TODO: introduce a class attribute `grid` and move it to ViewerElement?
         grid = QtWidgets.QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
 
         # add a label
         self._label = QtWidgets.QLabel()
@@ -55,16 +50,12 @@ class ImageCutout(QtWidgets.QWidget):
         self._image_widget.addItem(self._cbar, 0, 1)
 
     @lazyproperty
-    def _filename(self):
-        return get_filename(self._loader['data']['dir'], self._config['search_mask'], self._cat['id'][self._j])
-
-    @lazyproperty
     def _data(self):
         try:
             data = fits.getdata(self._filename)
             data = data * 1e21
         except ValueError:
-            logger.error('Image cutout not found (object ID: {})'.format(self._cat['id'][self._j]))
+            logger.error('Image cutout not found (object ID: {})'.format(self.rd.id))
             return
         else:
             return data
@@ -76,11 +67,10 @@ class ImageCutout(QtWidgets.QWidget):
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
         self._view_box.autoRange()
 
-    def load_object(self, j):
-        del self._filename
-        del self._data
+    def load_object(self):
+        super().load_object()
 
-        self._j = j
+        del self._data
 
         if self._data is not None:
             self.setEnabled(True)
@@ -93,9 +83,6 @@ class ImageCutout(QtWidgets.QWidget):
             self._label.setText("")
             self._image.clear()
             self.setEnabled(False)
-
-    def load_project(self, cat):
-        self._cat = cat
 
     @staticmethod
     def radec_to_pix(ra_coords, dec_coords, header, origin=0):

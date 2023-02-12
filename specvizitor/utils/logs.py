@@ -5,9 +5,6 @@ from pyqtgraph.Qt import QtWidgets
 
 
 class QLogHandler(logging.Handler):
-    def __init__(self):
-        super().__init__()
-
     def emit(self, record):
         LogMessageBox(record.levelno, record.msg)
 

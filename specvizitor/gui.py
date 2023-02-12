@@ -1,20 +1,18 @@
-from importlib.metadata import version
-
 import sys
 import logging
-import pathlib
+from importlib.metadata import version
 
 from astropy.table import Table
 import pandas as pd
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+from pyqtgraph.Qt import QtGui, QtWidgets
 
-from .utils.config import read_config, read_cache, get_user_config_filename, get_cache_filename
+from .runtime import RuntimeData
 from .menu import NewFile
-from .widgets import (ControlPanel, ObjectInfo, ReviewForm,
-                      ImageCutout, Spec2D, Spec1D,
-                      Eazy)
+from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
+from .utils.widgets import get_widgets
+
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -27,11 +25,7 @@ logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        # load the configuration file
-        self._config = read_config()
-
-        # load cache
-        self._cache = read_cache()
+        self.rd = RuntimeData()
 
         super().__init__(parent)
 
@@ -44,10 +38,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self._add_menu()
 
         # add a status bar
-        self.statusBar().showMessage("Message in statusbar.")
+        # self.statusBar().showMessage("Message in statusbar.")
 
         # add a central widget
-        self.main_GUI = FRESCO(self._config, self._cache, parent=self)
+        self.main_GUI = FRESCO(self.rd, parent=self)
         # self.main_GUI.signal1.connect(self.show_status)
         self.setCentralWidget(self.main_GUI)
 
@@ -80,7 +74,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._help.addAction(self._about)
 
     def _new_project_action(self):
-        new_project_dialog = NewFile(self._config, parent=self)
+        new_project_dialog = NewFile(self.rd, parent=self)
         new_project_dialog.project_created.connect(self.main_GUI.load_project)
         new_project_dialog.exec()
 
@@ -92,22 +86,15 @@ class MainWindow(QtWidgets.QMainWindow):
     def _settings_action(self):
         QtWidgets.QMessageBox.information(self, "Settings",
                                           "Configuration file: {}\n\nCache: {}".
-                                          format(get_user_config_filename(), get_cache_filename()))
+                                          format(self.rd.config_file.path, self.rd.cache_file.path))
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
 
 
 class FRESCO(QtWidgets.QWidget):
-    def __init__(self, config: dict, cache: dict, parent=None):
-        self._config = config
-        self._cache = cache
-
-        self._df = None
-        self._output_file = None
-        self._cat = None
-
-        # initialise the widget
+    def __init__(self, rd: RuntimeData, parent=None):
+        self.rd = rd
         super().__init__(parent)
 
         # set up the widget layout
@@ -115,30 +102,21 @@ class FRESCO(QtWidgets.QWidget):
         grid.setSpacing(10)
         self.setLayout(grid)
 
-        # TODO: create a DataViewer class
-        # add a widget for the image cutout
-        self.image_cutout = ImageCutout(config['loader'], config['viewer']['image_cutout'], parent=self)
-        grid.addWidget(self.image_cutout, 1, 1, 3, 1)
-
-        # add a widget for the 2D spectrum
-        self.spec_2D = Spec2D(config['loader'], config['viewer']['spec_2D'], parent=self)
-        grid.addWidget(self.spec_2D, 4, 1, 1, 2)
-
-        # add a widget for the 1D spectrum
-        self.spec_1D = Spec1D(config['loader'], config['viewer']['spec_1D'], parent=self)
-        grid.addWidget(self.spec_1D, 5, 1, 1, 2)
+        # add a widget for the data viewer
+        self.data_viewer = DataViewer(self.rd, parent=self)
+        grid.addWidget(self.data_viewer, 1, 1, 3, 1)
 
         # add a widget for the control panel
-        self.control_panel = ControlPanel(config['control_panel'], cache, parent=self)
-        grid.addWidget(self.control_panel, 1, 3, 1, 1)
+        self.control_panel = ControlPanel(self.rd, parent=self)
+        grid.addWidget(self.control_panel, 1, 2, 1, 1)
 
         # add a widget for displaying information about the object
-        self.object_info = ObjectInfo(config['object_info'], parent=self)
-        grid.addWidget(self.object_info, 2, 3, 1, 1)
+        self.object_info = ObjectInfo(self.rd, parent=self)
+        grid.addWidget(self.object_info, 2, 2, 1, 1)
 
         # add a widget for writing comments
-        self.review_form = ReviewForm(config['review_form'], parent=self)
-        grid.addWidget(self.review_form, 3, 3, 3, 1)
+        self.review_form = ReviewForm(self.rd, parent=self)
+        grid.addWidget(self.review_form, 3, 2, 1, 1)
 
         # add the Eazy widget
         # self.eazy = Eazy(self)
@@ -168,43 +146,45 @@ class FRESCO(QtWidgets.QWidget):
         # eazy_mass = QtWidgets.QLabel('mass: ' + str(self.mass), self)
         # grid.addWidget(eazy_mass, 11, 31, 1, 1)
 
-        self.control_panel.reset_button_clicked.connect(self.image_cutout.reset_view)
-        self.control_panel.reset_button_clicked.connect(self.spec_2D.reset_view)
-        self.control_panel.reset_button_clicked.connect(self.spec_1D.reset_view)
+        # self.control_panel.reset_button_clicked.connect(self.image_cutout.reset_view)
 
-        self.control_panel.object_selected.connect(self.control_panel.load_object)
-        self.control_panel.object_selected.connect(self.object_info.load_object)
-        self.control_panel.object_selected.connect(self.review_form.load_object)
+        self.control_panel.object_selected.connect(self.load_object)
+        self.control_panel.reset_button_clicked.connect(self.data_viewer.reset_view)
 
-        self.control_panel.object_selected.connect(self.image_cutout.load_object)
-        self.control_panel.object_selected.connect(self.spec_2D.load_object)
-        self.control_panel.object_selected.connect(self.spec_1D.load_object)
+        self.widgets: list[AbstractWidget] = []
+        for w in get_widgets(grid):
+            self.widgets.append(w)
 
-    #############################################################################
-    # functions
+    def load_object(self, j: int):
+        if self.rd.j:
+            for widget in self.widgets:
+                widget.dump()
+
+        self.rd.j = j
+        self.rd.cache.last_object_index = j
+        self.rd.cache.save(self.rd.cache_file)
+
+        for widget in self.widgets:
+            widget.load_object()
 
     def load_project(self, output_file: str, cat: Table):
-        self._output_file = output_file
-        self._cat = cat
+        self.rd.project = output_file
+        self.rd.cat = cat
+        self.rd.cat.add_index('id')
 
-        self._df = pd.DataFrame(index=self._cat['id']).sort_index()
-        self._df['comment'] = ''
+        self.rd.df = pd.DataFrame(index=self.rd.cat['id']).sort_index()
+        self.rd.df['comment'] = ''
 
-        self.control_panel.load_project(self._cat)
-        self.object_info.load_project(self._cat)
-        self.review_form.load_project(self._df, self._cat)
-
-        self.image_cutout.load_project(self._cat)
-        self.spec_2D.load_project(self._cat)
-        self.spec_1D.load_project(self._cat)
+        for w in self.widgets:
+            w.load_project()
 
         # TODO: read index from cache when opening an existing project, not when creating a new one
-        j = self._cache.get('last_object_index', 0)
+        j = self.rd.cache.last_object_index
 
-        if j < len(self._cat):
-            self.control_panel.object_selected.emit(int(j))
+        if j and j < len(self.rd.cat):
+            self.load_object(int(j))
         else:
-            self.control_panel.object_selected.emit(0)
+            self.load_object(0)
 
 
 def main():
