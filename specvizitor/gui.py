@@ -117,6 +117,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def load_project(self):
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
+        self.setWindowTitle('{} – Specvizitor'.format(self.rd.output_path.name))
         self.main_GUI.load_project()
 
     def _save_action(self):
