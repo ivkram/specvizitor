@@ -169,7 +169,7 @@ class FRESCO(QtWidgets.QWidget):
         return get_widgets(self.layout)
 
     def load_object(self, j: int):
-        if self.rd.j:
+        if self.rd.j is not None:
             for widget in self.widgets:
                 widget.dump()
             self.rd.save()
