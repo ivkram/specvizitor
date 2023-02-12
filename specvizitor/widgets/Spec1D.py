@@ -74,7 +74,7 @@ class Spec1D(ViewerElement):
             with fits.open(self._filename) as hdul:
                 header, data = hdul[1].header, hdul[1].data
         except ValueError:
-            logger.error('1D spectrum not found (object ID: {})'.format(self.rd.id))
+            logger.warning('1D spectrum not found (object ID: {})'.format(self.rd.id))
             return
         else:
             return header, data

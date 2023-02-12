@@ -22,13 +22,17 @@ def get_grizli_id(filename: pathlib.Path) -> str:
     return filename.name.split('_')[1].split('.')[0]
 
 
-def load_cat(filename, translate=None, data_folder=None, filename_parser=get_grizli_id) -> [Table, None]:
+def load_cat(filename=None, translate=None, data_folder=None, filename_parser=get_grizli_id) -> [Table, None]:
     """
     Read and filter the input catalogue.
 
     @return:
         The processed catalogue.
     """
+
+    if filename is None:
+        logger.warning('Catalogue filename not specified')
+        return
 
     # read the input catalogue
     try:
@@ -48,6 +52,7 @@ def load_cat(filename, translate=None, data_folder=None, filename_parser=get_gri
     if 'id' not in cat.colnames:
         logger.error(column_not_found_message('id', translate))
         return
+    cat.add_index('id')
 
     # scan the data folder
     if data_folder is not None:

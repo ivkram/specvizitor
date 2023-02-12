@@ -55,7 +55,7 @@ class ImageCutout(ViewerElement):
             data = fits.getdata(self._filename)
             data = data * 1e21
         except ValueError:
-            logger.error('Image cutout not found (object ID: {})'.format(self.rd.id))
+            logger.warning('Image cutout not found (object ID: {})'.format(self.rd.id))
             return
         else:
             return data

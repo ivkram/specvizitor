@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class LocalFile:
     directory: str
     filename: str = "specvizitor.yml"
-    save_msg: str = "Local file {} updated"
+    signature: str = "Local file"
 
     @property
     def path(self) -> pathlib.Path:
@@ -23,8 +23,13 @@ class LocalFile:
         if not self.path.parent.exists():
             self.path.parent.mkdir()
 
+        if self.path.exists():
+            msg = "{} updated (path: {})".format(self.signature, self.path)
+        else:
+            msg = "{} created (path: {})".format(self.signature, self.path)
+
         save_yaml(self.path, data)
-        logger.info(self.save_msg.format(self.path))
+        logger.info(msg)
 
 
 @dataclass
@@ -51,6 +56,8 @@ class Params:
                 return params
             else:
                 return user_params
+        else:
+            cls.save(params, file)
 
         return params
 

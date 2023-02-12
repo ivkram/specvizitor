@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from astropy.table import Table
+import pandas as pd
 
 from pyqtgraph.Qt import QtWidgets, QtCore
 
@@ -15,13 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class NewFile(QtWidgets.QDialog):
-    project_created = QtCore.pyqtSignal(str, Table)
-
     def __init__(self, rd: RuntimeData, parent=None):
         self.rd = rd
 
         super().__init__(parent)
-        self.setWindowTitle("New Project")
+        self.setWindowTitle("Create a New Inspection File")
 
         layout = QtWidgets.QVBoxLayout()
 
@@ -67,13 +65,14 @@ class NewFile(QtWidgets.QDialog):
         if cat is None:
             return
 
+        self.rd.cat = cat
+        self.rd.output_path = pathlib.Path(self._browsers['output'].path)
+
         # update the user configuration file
         self.rd.config.loader.data.dir = self._browsers['data'].path
         self.rd.config.loader.cat.filename = self._browsers['cat'].path
-
         self.rd.config.save(self.rd.config_file)
 
-        super().accept()
+        self.rd.create()
 
-        logger.info('New project created')
-        self.project_created.emit(self._browsers['output'].path, cat)
+        super().accept()

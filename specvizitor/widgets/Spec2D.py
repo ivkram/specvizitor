@@ -54,7 +54,7 @@ class Spec2D(ViewerElement):
             data = fits.getdata(self._filename)
             data = np.rot90(data)[::-1]
         except ValueError:
-            logger.error('2D spectrum not found (object ID: {})'.format(self.rd.id))
+            logger.warning('2D spectrum not found (object ID: {})'.format(self.rd.id))
             return
         else:
             return data

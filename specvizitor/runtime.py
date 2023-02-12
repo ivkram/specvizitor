@@ -7,6 +7,7 @@ import pandas as pd
 from astropy.table import Table
 
 from .utils.params import LocalFile, Config, Cache
+from .io import loader, writer
 
 
 logger = logging.getLogger(__name__)
@@ -14,17 +15,21 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RuntimeData:
-    config_file: LocalFile = LocalFile(user_config_dir('specvizitor'), save_msg='Configuration file updated')
-    cache_file: LocalFile = LocalFile(user_cache_dir('specvizitor'), save_msg='Cache file updated')
+    config_file: LocalFile = LocalFile(user_config_dir('specvizitor'), signature='Configuration file')
+    cache_file: LocalFile = LocalFile(user_cache_dir('specvizitor'), signature='Cache')
 
-    config: Config = Config.read(config_file, path_to_default='default_config.yml')
-    cache: Cache = Cache.read(cache_file)
+    config: Config = None
+    cache: Cache = None
 
-    project: pathlib.Path = None  # path to the output file
+    output_path: pathlib.Path = None
     cat: Table = None  # catalogue
     df: pd.DataFrame = None  # output data
 
     j: int = None  # index of the current object
+
+    def __post_init__(self):
+        self.config = Config.read(self.config_file, path_to_default='default_config.yml')
+        self.cache = Cache.read(self.cache_file)
 
     @property
     def id(self) -> int | None:
@@ -33,7 +38,40 @@ class RuntimeData:
         except (TypeError, IndexError):
             return
 
+    def create(self):
+        df = pd.DataFrame(index=self.cat['id']).sort_index()
+        df['comment'] = ''
+        for i, cname in enumerate(self.config.review_form.checkboxes.keys()):
+            df[cname] = False
+
+        self.df = df
+
+    def read(self):
+        if self.output_path is not None:
+            df = pd.read_csv(self.output_path, index_col='id')
+            df['comment'] = df['comment'].fillna('')
+
+            checkboxes = {key: value for key, value in self.config.review_form.checkboxes.items() if key in df.columns}
+            for cname in df.columns:
+                if pd.api.types.is_bool_dtype(df[cname]) and cname not in checkboxes.keys():
+                    checkboxes[cname] = cname.capitalize()
+
+            self.config.review_form.checkboxes = checkboxes
+
+            self.df = df
+
+            cat = loader.load_cat(self.config.loader.cat.filename,
+                                  translate=self.config.loader.cat.translate,
+                                  data_folder=self.config.loader.data.dir)
+
+            if cat is None:
+                # init a catalogue with a single column of IDs
+                cat = Table([self.df.index.values], names=('id',))
+                cat.add_index('id')
+
+            self.cat = cat
+
     def save(self):
-        if self.project is not None:
-            self.df.to_csv(self.project, index_label='id')
-            logger.info('Project saved (path: {})'.format(self.project))
+        if self.output_path is not None:
+            writer.save(self.df, self.output_path)
+            logger.info('Project saved (path: {})'.format(self.output_path))

@@ -1,3 +1,4 @@
+import pathlib
 import sys
 import logging
 from importlib.metadata import version
@@ -9,7 +10,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtWidgets
 
 from .runtime import RuntimeData
-from .menu import NewFile
+from .menu import NewFile, OpenFile
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
 from .utils.widgets import get_widgets
 
@@ -25,10 +26,10 @@ logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        self.rd = RuntimeData()
-
         super().__init__(parent)
         logger.info("Application started")
+
+        self.rd = RuntimeData()
 
         # size, title and logo
         self.setGeometry(600, 500, 2550, 1450)  # position and size of the window
@@ -51,11 +52,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file = self._menu.addMenu("&File")
 
-        self._new_project = QtWidgets.QAction("&New...")
-        self._new_project.triggered.connect(self._new_project_action)
-        self._file.addAction(self._new_project)
+        self._new_file = QtWidgets.QAction("&New...")
+        self._new_file.triggered.connect(self._new_file_action)
+        self._file.addAction(self._new_file)
 
-        self._file.addAction("&Open...")
+        self._open_file = QtWidgets.QAction("&Open...")
+        self._open_file.triggered.connect(self._open_file_action)
+        self._file.addAction(self._open_file)
+
         self._file.addAction("Save As...")
         self._file.addAction("&Export...")
         self._file.addSeparator()
@@ -74,10 +78,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
-    def _new_project_action(self):
-        new_project_dialog = NewFile(self.rd, parent=self)
-        new_project_dialog.project_created.connect(self.main_GUI.load_project)
-        new_project_dialog.exec()
+    def _new_file_action(self):
+        dialog = NewFile(self.rd, parent=self)
+        if dialog.exec():
+            self.main_GUI.load_project()
+
+    def _open_file_action(self):
+        path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File', filter='CSV Files (*.csv)')[0]
+        if path:
+            self.rd.output_path = pathlib.Path(path)
+            self.rd.read()
+            self.main_GUI.load_project()
 
     def _exit_action(self):
         self.rd.save()
@@ -102,25 +113,25 @@ class FRESCO(QtWidgets.QWidget):
         super().__init__(parent)
 
         # set up the widget layout
-        grid = QtWidgets.QGridLayout()
-        grid.setSpacing(10)
-        self.setLayout(grid)
+        self.layout = QtWidgets.QGridLayout()
+        self.layout.setSpacing(10)
+        self.setLayout(self.layout)
 
         # add a widget for the data viewer
         self.data_viewer = DataViewer(self.rd, parent=self)
-        grid.addWidget(self.data_viewer, 1, 1, 3, 1)
+        self.layout.addWidget(self.data_viewer, 1, 1, 3, 1)
 
         # add a widget for the control panel
         self.control_panel = ControlPanel(self.rd, parent=self)
-        grid.addWidget(self.control_panel, 1, 2, 1, 1)
+        self.layout.addWidget(self.control_panel, 1, 2, 1, 1)
 
         # add a widget for displaying information about the object
         self.object_info = ObjectInfo(self.rd, parent=self)
-        grid.addWidget(self.object_info, 2, 2, 1, 1)
+        self.layout.addWidget(self.object_info, 2, 2, 1, 1)
 
         # add a widget for writing comments
         self.review_form = ReviewForm(self.rd, parent=self)
-        grid.addWidget(self.review_form, 3, 2, 1, 1)
+        self.layout.addWidget(self.review_form, 3, 2, 1, 1)
 
         # add the Eazy widget
         # self.eazy = Eazy(self)
@@ -155,15 +166,15 @@ class FRESCO(QtWidgets.QWidget):
         self.control_panel.object_selected.connect(self.load_object)
         self.control_panel.reset_button_clicked.connect(self.data_viewer.reset_view)
 
-        self.widgets: list[AbstractWidget] = []
-        for w in get_widgets(grid):
-            self.widgets.append(w)
+    @property
+    def widgets(self) -> list[AbstractWidget]:
+        return get_widgets(self.layout)
 
     def load_object(self, j: int):
         if self.rd.j:
             for widget in self.widgets:
                 widget.dump()
-        self.rd.save()
+            self.rd.save()
 
         self.rd.j = j
         self.rd.cache.last_object_index = j
@@ -172,15 +183,12 @@ class FRESCO(QtWidgets.QWidget):
         for widget in self.widgets:
             widget.load_object()
 
-    def load_project(self, output_file: str, cat: Table):
-        self.rd.project = output_file
-        self.rd.cat = cat
-        self.rd.cat.add_index('id')
+    def load_project(self):
+        self.layout.removeWidget(self.review_form)
+        self.review_form.setParent(None)
 
-        self.rd.df = pd.DataFrame(index=self.rd.cat['id']).sort_index()
-        self.rd.df['comment'] = ''
-        for i, cname in enumerate(self.rd.config.review_form.checkboxes.keys()):
-            self.rd.df[cname] = False
+        self.review_form = ReviewForm(self.rd, parent=self)
+        self.layout.addWidget(self.review_form, 3, 2, 1, 1)
 
         for w in self.widgets:
             w.load_project()
