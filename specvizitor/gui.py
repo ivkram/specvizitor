@@ -45,6 +45,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.main_GUI.signal1.connect(self.show_status)
         self.setCentralWidget(self.main_GUI)
 
+        self.open_file(self.rd.cache.last_inspection_file)
+
     def _add_menu(self):
         self._menu = self.menuBar()
 
@@ -79,14 +81,21 @@ class MainWindow(QtWidgets.QMainWindow):
     def _new_file_action(self):
         dialog = NewFile(self.rd, parent=self)
         if dialog.exec():
+            self.rd.cache.last_object_index = 0
             self.main_GUI.load_project()
 
     def _open_file_action(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File', filter='CSV Files (*.csv)')[0]
+        self.open_file(path)
+
+    def open_file(self, path):
         if path:
-            self.rd.output_path = pathlib.Path(path)
-            self.rd.read()
-            self.main_GUI.load_project()
+            if pathlib.Path(path).exists():
+                self.rd.output_path = pathlib.Path(path)
+                self.rd.read()
+                self.main_GUI.load_project()
+            else:
+                logger.warning('Inspection file not found (path: {})'.format(path))
 
     def _exit_action(self):
         self.rd.save()
@@ -182,6 +191,9 @@ class FRESCO(QtWidgets.QWidget):
             widget.load_object()
 
     def load_project(self):
+        self.rd.cache.last_inspection_file = str(self.rd.output_path)
+        self.rd.cache.save(self.rd.cache_file)
+
         # reload the review form
         self.layout.removeWidget(self.review_form)
         self.review_form.setParent(None)
@@ -191,7 +203,6 @@ class FRESCO(QtWidgets.QWidget):
         for w in self.widgets:
             w.load_project()
 
-        # TODO: read index from cache when opening an existing project, not when creating a new one
         j = self.rd.cache.last_object_index
 
         if j and j < len(self.rd.cat):

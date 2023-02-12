@@ -149,6 +149,7 @@ class Config(Params):
 
 @dataclass
 class Cache(Params):
+    last_inspection_file: str | None
     last_object_index: int | None
 
 
