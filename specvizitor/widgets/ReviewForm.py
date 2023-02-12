@@ -31,11 +31,11 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         self.setLayout(grid)
 
     def dump(self):
-        self.rd.df['comment'][self.rd.id] = self._comments_widget.toPlainText()
+        self.rd.df.at[self.rd.id, 'comment'] = self._comments_widget.toPlainText()
         for cname, widget in self._checkboxes.items():
-            self.rd.df[cname][self.rd.id] = widget.isChecked()
+            self.rd.df.at[self.rd.id, cname] = widget.isChecked()
 
     def load_object(self):
-        self._comments_widget.setText(self.rd.df['comment'][self.rd.id])
+        self._comments_widget.setText(self.rd.df.at[self.rd.id, 'comment'])
         for cname, widget in self._checkboxes.items():
-            widget.setChecked(self.rd.df[cname][self.rd.id])
+            widget.setChecked(self.rd.df.at[self.rd.id, cname])
