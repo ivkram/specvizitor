@@ -174,6 +174,8 @@ class FRESCO(QtWidgets.QWidget):
 
         self.rd.df = pd.DataFrame(index=self.rd.cat['id']).sort_index()
         self.rd.df['comment'] = ''
+        for i, cname in enumerate(self.rd.config.review_form.checkboxes.keys()):
+            self.rd.df[cname] = False
 
         for w in self.widgets:
             w.load_project()

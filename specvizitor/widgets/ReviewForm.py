@@ -32,8 +32,10 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
 
     def dump(self):
         self.rd.df['comment'][self.rd.id] = self._comments_widget.toPlainText()
+        for cname, widget in self._checkboxes.items():
+            self.rd.df[cname][self.rd.id] = widget.isChecked()
 
     def load_object(self):
         self._comments_widget.setText(self.rd.df['comment'][self.rd.id])
-        # for i, (cname, widget) in enumerate(self._checkboxes):
-        #     widget.setCheckState()
+        for cname, widget in self._checkboxes.items():
+            widget.setChecked(self.rd.df[cname][self.rd.id])
