@@ -23,24 +23,27 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
         grid = QtWidgets.QGridLayout()
 
         # display information about the object
-        self._labels = []
-        for i in range(len(self.cfg.items)):
-            label_widget = QtWidgets.QLabel()
-            label_widget.setHidden(True)
-            label_widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
-            self._labels.append(label_widget)
-            grid.addWidget(label_widget, i + 1, 1, 1, 1)
+        self._labels = {}
+
+        if self.cfg.items:
+            for i, (cname, label) in enumerate(self.cfg.items.items()):
+                widget = QtWidgets.QLabel()
+                widget.setText(label)
+                widget.setHidden(True)
+                widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+                self._labels[cname] = widget
+                grid.addWidget(widget, i + 1, 1, 1, 1)
 
         self.setLayout(grid)
 
     def load_object(self):
-        for i, (cname, label) in enumerate(self.cfg.items.items()):
+        for cname, widget in self._labels.items():
             if cname in self.rd.cat.colnames:
-                self._labels[i].setText(label.format(self.rd.cat[cname][self.rd.j]))
-                self._labels[i].setHidden(False)
+                widget.setText(self.cfg.items[cname].format(self.rd.cat[cname][self.rd.j]))
+                widget.setHidden(False)
             else:
                 logger.warning('`{}` column not found in the catalogue'.format(cname))
-                self._labels[i].setHidden(True)
+                widget.setHidden(True)
 
         # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:
         #     c = SkyCoord(ra=self._cat['ra'][self._j], dec=self._cat['dec'][self._j], frame='icrs', unit='deg')
