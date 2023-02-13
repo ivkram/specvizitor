@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from ..utils.params import read_yaml
 from ..utils import SmartSlider

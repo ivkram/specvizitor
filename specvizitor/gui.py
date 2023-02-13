@@ -5,7 +5,7 @@ import logging
 from importlib.metadata import version
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets
 
 from .runtime import RuntimeData
 from .menu import NewFile

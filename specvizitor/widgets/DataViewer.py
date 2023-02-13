@@ -1,4 +1,4 @@
-from pyqtgraph.Qt import QtWidgets
+from PyQt5 import QtWidgets
 
 from .AbstractWidget import AbstractWidget
 from .ViewerElement import ViewerElement

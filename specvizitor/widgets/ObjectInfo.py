@@ -1,12 +1,12 @@
 import logging
 
-from astropy.coordinates import SkyCoord
+# from astropy.coordinates import SkyCoord
 
 from ..runtime import RuntimeData
 from .AbstractWidget import AbstractWidget
 
 
-from pyqtgraph.Qt import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore
 
 
 logger = logging.getLogger(__name__)

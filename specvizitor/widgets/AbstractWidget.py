@@ -1,4 +1,4 @@
-from pyqtgraph.Qt import QtWidgets
+from PyQt5 import QtWidgets
 
 from ..runtime import RuntimeData
 from ..utils import params

@@ -1,13 +1,11 @@
 import logging
 from functools import partial
 
-from pyqtgraph.Qt import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
 from ..runtime import RuntimeData
 from .AbstractWidget import AbstractWidget
-
-from ..utils.logs import qlog
 
 
 logger = logging.getLogger(__name__)

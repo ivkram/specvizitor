@@ -1,4 +1,4 @@
-from pyqtgraph.Qt import QtWidgets
+from PyQt5 import QtWidgets
 
 
 def get_widgets(layout: QtWidgets.QLayout):

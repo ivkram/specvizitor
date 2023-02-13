@@ -1,7 +1,5 @@
 from astropy.utils.decorators import lazyproperty
 
-from pyqtgraph.Qt import QtWidgets
-
 from .AbstractWidget import AbstractWidget
 
 from ..runtime import RuntimeData

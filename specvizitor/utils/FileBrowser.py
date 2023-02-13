@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from pyqtgraph.Qt import QtWidgets
+from PyQt5 import QtWidgets
 
 
 logger = logging.getLogger(__name__)

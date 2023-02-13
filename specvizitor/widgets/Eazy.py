@@ -1,7 +1,6 @@
 # import eazy
 
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtWidgets
+from PyQt5 import QtWidgets
 
 
 class Eazy(QtWidgets.QWidget):

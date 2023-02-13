@@ -1,7 +1,7 @@
 import logging
 import pathlib
 import yaml
-from dictdiffer import diff, patch, swap
+# from dictdiffer import diff, patch, swap
 from dataclasses import dataclass, asdict
 import dacite
 from dacite.exceptions import WrongTypeError, MissingValueError

@@ -6,7 +6,7 @@ from astropy.visualization import ZScaleInterval
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtWidgets
+from PyQt5 import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 from .ViewerElement import ViewerElement
@@ -117,8 +117,7 @@ class ImageCutout(ViewerElement):
         #                                     width_window_pix,
         #                                     width_window_pix))
 
-
-        ### TODO: position of lines seems shifted and doesn't match with catalogue
+        # TODO: position of lines seems shifted and doesn't match with catalogue
 
         # test_line = pg.InfiniteLine(angle=90,movable=False,
         #                            pen=pg.mkPen(color=c_data_crossline, width = 1))

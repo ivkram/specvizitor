@@ -1,9 +1,7 @@
 import logging
 import pathlib
 
-import pandas as pd
-
-from pyqtgraph.Qt import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 
 from ..runtime import RuntimeData
 from ..utils import FileBrowser
