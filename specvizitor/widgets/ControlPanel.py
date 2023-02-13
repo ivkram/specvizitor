@@ -103,8 +103,8 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
             logger.error('Invalid ID')
             return
 
-        if id_upd in self.rd.df['id']:
-            self.object_selected.emit(self.rd.cat.loc[id_upd].index)
+        if id_upd in self.rd.df.index:
+            self.object_selected.emit(self.rd.df.index.get_loc(id_upd))
         else:
             logger.error('ID not found')
             return
