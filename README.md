@@ -1,3 +1,5 @@
+![Specvizitor GUI](docs/screenshots/specvizitor_gui.png?raw=true "Specvizitor GUI")
+
 ## Installation
 
 ### Installing `specvizitor` using pip
