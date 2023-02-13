@@ -10,7 +10,6 @@ from pyqtgraph.Qt import QtCore, QtWidgets
 
 from ..utils.params import read_yaml
 from ..utils import SmartSlider
-from .colors import viridis_more
 
 from .ViewerElement import ViewerElement
 from ..runtime import RuntimeData
@@ -60,7 +59,8 @@ class Spec1D(ViewerElement):
 
         # set up the spectral lines
         self._line_artists = {}
-        line_color = np.array(viridis_more[9]) * 255
+        # TODO: store colors in config
+        line_color = (175.68072, 220.68924, 46.59488)
         line_pen = pg.mkPen(color=line_color, width=1)
         for line_name, lambda0 in self._lines['lambda'].items():
             line = pg.InfiniteLine(angle=90, movable=False, pen=line_pen)
