@@ -148,9 +148,9 @@ class Spec1D(ViewerElement):
 
             self._label.setText("1D spectrum: {}".format(self._filename.name))
 
-            if 'z' in self.rd.cat.colnames:
-                self._z_slider.default_value = self.rd.cat['z'][self.rd.j]
-            else:
+            try:
+                self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
+            except KeyError:
                 self._z_slider.default_value = self.cfg.slider.default_value
 
             self._plot()
