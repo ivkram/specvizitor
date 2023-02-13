@@ -62,8 +62,7 @@ class RuntimeData:
             self.df = df
 
             cat = loader.load_cat(self.config.loader.cat.filename,
-                                  translate=self.config.loader.cat.translate,
-                                  data_folder=self.config.loader.data.dir)
+                                  translate=self.config.loader.cat.translate)
 
             if cat is None:
                 # init a catalogue with a single column of IDs
