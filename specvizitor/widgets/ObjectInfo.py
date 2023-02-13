@@ -38,12 +38,16 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
 
     def load_object(self):
         for cname, widget in self._labels.items():
-            if cname in self.rd.cat.colnames:
-                widget.setText(self.cfg.items[cname].format(self.rd.cat[cname][self.rd.j]))
-                widget.setHidden(False)
-            else:
-                logger.warning('`{}` column not found in the catalogue'.format(cname))
+            try:
+                widget.setText(self.cfg.items[cname].format(self.rd.cat.loc[self.rd.id][cname]))
+            except KeyError:
+                if cname in self.rd.cat.colnames:
+                    logger.warning('Object not found in the catalogue (ID: {})'.format(self.rd.id))
+                else:
+                    logger.warning('`{}` column not found in the catalogue'.format(cname))
                 widget.setHidden(True)
+            else:
+                widget.setHidden(False)
 
         # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:
         #     c = SkyCoord(ra=self._cat['ra'][self._j], dec=self._cat['dec'][self._j], frame='icrs', unit='deg')
