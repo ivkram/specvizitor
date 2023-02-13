@@ -79,7 +79,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
 
     def load_object(self):
         self._reset_button.setText('ID {}'.format(self.rd.id))
-        self._number_of_obj_label.setText('(#{} / {})'.format(self.rd.j + 1, len(self.rd.cat)))
+        self._number_of_obj_label.setText('(#{} / {})'.format(self.rd.j + 1, self.rd.n_objects))
 
     def previous_next_object(self, command: str):
         j_upd = self.rd.j
@@ -89,7 +89,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         elif command == 'previous':
             j_upd -= 1
 
-        j_upd = j_upd % len(self.rd.cat)
+        j_upd = j_upd % self.rd.n_objects
 
         self.object_selected.emit(j_upd)
 
@@ -103,7 +103,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
             logger.error('Invalid ID')
             return
 
-        if id_upd in self.rd.cat['id']:
+        if id_upd in self.rd.df['id']:
             self.object_selected.emit(self.rd.cat.loc[id_upd].index)
         else:
             logger.error('ID not found')
@@ -119,7 +119,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
             logger.error('Invalid index')
             return
 
-        if 0 < index_upd <= len(self.rd.cat):
+        if 0 < index_upd <= self.rd.n_objects:
             self.object_selected.emit(index_upd - 1)
         else:
             logger.error('Index out of range')

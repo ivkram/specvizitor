@@ -243,7 +243,7 @@ class FRESCO(QtWidgets.QWidget):
 
         j = self.rd.cache.last_object_index
 
-        if j and j < len(self.rd.cat):
+        if j and j < self.rd.n_objects:
             self.load_object(int(j))
         else:
             self.load_object(0)

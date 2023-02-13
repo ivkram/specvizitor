@@ -34,9 +34,13 @@ class RuntimeData:
     @property
     def id(self) -> int | None:
         try:
-            return self.cat['id'][self.j]
+            return self.df.index[self.j]
         except (TypeError, IndexError):
             return
+
+    @property
+    def n_objects(self):
+        return len(self.df)
 
     def create(self):
         df = pd.DataFrame(index=self.cat['id']).sort_index()
