@@ -29,7 +29,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         # add a reset button
         self._reset_button = QtWidgets.QPushButton()
         self._reset_button.setText('ID --')
-        self._reset_button.setToolTip('Reset view')
+        self._reset_button.setToolTip('Reset the view')
         self._reset_button.setFixedWidth(self.cfg.button_width)
         self._reset_button.clicked.connect(self.reset_button_clicked.emit)
         grid.addWidget(self._reset_button, 1, 1, 1, 1)
@@ -44,7 +44,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         for pn_text, pn_properties in pn_buttons_params.items():
             b = QtWidgets.QPushButton('')
             # b.setIcon(QtGui.QIcon(pn_text + '.png'))
-            b.setToolTip('Look at the {} object.'.format(pn_text))
+            b.setToolTip('Look at the {} object'.format(pn_text))
             b.setText(pn_text)
             b.setFixedWidth(self.cfg.button_width)
             b.clicked.connect(partial(self.previous_next_object, pn_text))
