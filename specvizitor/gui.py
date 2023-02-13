@@ -62,7 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file.addSeparator()
 
-        self._save = QtWidgets.QAction("Save...")
+        self._save = QtWidgets.QAction("&Save...")
         self._save.triggered.connect(self._save_action)
         self._save.setEnabled(False)
         self._file.addAction(self._save)
