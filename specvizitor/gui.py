@@ -1,4 +1,5 @@
 import pathlib
+import argparse
 import sys
 import logging
 from importlib.metadata import version
@@ -16,8 +17,6 @@ pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 pg.setConfigOption('antialias', True)
 
-# logging configuration
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -251,6 +250,18 @@ class FRESCO(QtWidgets.QWidget):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+
+    # logging configuration
+    parser.add_argument('-v', '--verbose', action='store_true')
+    args = parser.parse_args()
+
+    if args.verbose:
+        level = logging.DEBUG
+    else:
+        level = logging.WARNING
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
+
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()

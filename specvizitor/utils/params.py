@@ -29,7 +29,7 @@ class LocalFile:
             msg = "{} created (path: {})".format(self.signature, self.path)
 
         save_yaml(self.path, data)
-        logger.info(msg)
+        logger.debug(msg)
 
 
 @dataclass
