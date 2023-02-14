@@ -10,6 +10,8 @@ class QLogHandler(logging.Handler):
 
 
 class LogMessageBox(QtWidgets.QMessageBox):
+    PACKAGE = __package__.split('.')[0].capitalize()  # the name of the top-level package
+
     LOGGING_LEVELS = {
         logging.INFO: QtWidgets.QMessageBox.Information,
         logging.WARNING: QtWidgets.QMessageBox.Warning,
@@ -18,18 +20,18 @@ class LogMessageBox(QtWidgets.QMessageBox):
     }
 
     def __init__(self, level: int, message: str, parent=None):
-        super().__init__(LogMessageBox.LOGGING_LEVELS[level], 'Specvizitor Message', message, parent=parent)
+        super().__init__(LogMessageBox.LOGGING_LEVELS[level], '{} Message'.format(self.PACKAGE), message, parent=parent)
         self.show()
 
 
 def qlog(func):
     @wraps(func)
-    def wrapper(*args):
+    def wrapper(*args, **kwargs):
         root_logger = logging.getLogger()
         handler = QLogHandler()
         root_logger.addHandler(handler)
 
-        res = func(*args)
+        res = func(*args, **kwargs)
 
         root_logger.removeHandler(handler)
 
