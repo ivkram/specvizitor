@@ -1,14 +1,14 @@
-from astropy.utils.decorators import lazyproperty
+from astropy.utils import lazyproperty
 
 from .AbstractWidget import AbstractWidget
 
-from ..runtime import RuntimeData
-from ..utils import params
+from ..appdata.runtime import RuntimeData
+from ..appdata import config
 from ..io.viewer_data import get_filename
 
 
 class ViewerElement(AbstractWidget):
-    def __init__(self, rd: RuntimeData, cfg: params.ViewerElement, parent=None):
+    def __init__(self, rd: RuntimeData, cfg: config.ViewerElement, parent=None):
         super().__init__(rd=rd, cfg=cfg, parent=parent)
 
     @lazyproperty

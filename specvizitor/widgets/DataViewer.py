@@ -6,7 +6,7 @@ from .ImageCutout import ImageCutout
 from .Spec2D import Spec2D
 from .Spec1D import Spec1D
 
-from ..runtime import RuntimeData
+from ..appdata.runtime import RuntimeData
 from ..utils.widgets import get_widgets
 
 

@@ -10,7 +10,7 @@ from qtpy import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 from .ViewerElement import ViewerElement
-from ..runtime import RuntimeData
+from ..appdata.runtime import RuntimeData
 
 
 logger = logging.getLogger(__name__)

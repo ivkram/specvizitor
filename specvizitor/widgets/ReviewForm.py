@@ -1,6 +1,6 @@
 from qtpy import QtWidgets
 
-from ..runtime import RuntimeData
+from ..appdata.runtime import RuntimeData
 from .AbstractWidget import AbstractWidget
 
 

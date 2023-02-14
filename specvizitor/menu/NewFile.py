@@ -3,7 +3,7 @@ import pathlib
 
 from qtpy import QtWidgets
 
-from ..runtime import RuntimeData
+from ..appdata.runtime import RuntimeData
 from ..utils import FileBrowser
 from ..io.catalogue import load_cat
 from ..utils.logs import qlog

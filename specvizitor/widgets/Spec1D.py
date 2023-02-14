@@ -12,7 +12,7 @@ from ..utils.params import read_yaml
 from ..utils import SmartSlider
 
 from .ViewerElement import ViewerElement
-from ..runtime import RuntimeData
+from ..appdata.runtime import RuntimeData
 
 
 logger = logging.getLogger(__name__)

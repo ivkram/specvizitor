@@ -3,8 +3,7 @@ from functools import partial
 
 from qtpy import QtCore, QtWidgets
 
-
-from ..runtime import RuntimeData
+from ..appdata.runtime import RuntimeData
 from .AbstractWidget import AbstractWidget
 
 

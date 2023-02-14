@@ -2,7 +2,7 @@ import logging
 
 # from astropy.coordinates import SkyCoord
 
-from ..runtime import RuntimeData
+from ..appdata.runtime import RuntimeData
 from .AbstractWidget import AbstractWidget
 
 

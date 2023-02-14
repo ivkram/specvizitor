@@ -6,8 +6,10 @@ from platformdirs import user_config_dir, user_cache_dir
 import pandas as pd
 from astropy.table import Table
 
-from .utils.params import LocalFile, Config, Cache
-from .io import catalogue, output
+from ..utils.params import LocalFile
+from .config import Config
+from .cache import Cache
+from ..io import catalogue, output
 
 
 logger = logging.getLogger(__name__)
