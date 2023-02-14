@@ -5,7 +5,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
-from specvizitor.io.viewer_data import get_grizli_id
+from .viewer_data import get_grizli_id
 
 logger = logging.getLogger(__name__)
 
