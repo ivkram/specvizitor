@@ -7,6 +7,7 @@ from importlib.metadata import version
 import pyqtgraph as pg
 import qtpy.compat
 from qtpy import QtGui, QtWidgets
+from qtpy.QtCore import pyqtSignal, pyqtSlot
 
 from .runtime import RuntimeData
 from .menu import NewFile
@@ -19,32 +20,33 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
+    project_loaded = pyqtSignal()
+
     def __init__(self, runtime_data: RuntimeData, parent=None):
         self.rd = runtime_data
 
         super().__init__(parent)
 
-        # size, title and logo
-        self.setGeometry(600, 500, 2550, 1450)  # set the position and the size of the window
-        self.setWindowTitle('Specvizitor')  # set the title of the window
+        self.setGeometry(600, 500, 2550, 1450)  # set the position and the size of the main window
+        self.setWindowTitle('Specvizitor')      # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
         # add a menu bar
-        self._add_menu()
+        self._init_menu()
 
         # add a status bar
         # self.statusBar().showMessage("Message in statusbar.")
 
-        # initialize the central widget
-        self.main_GUI = FRESCO(self.rd, parent=self)
-        self.setCentralWidget(self.main_GUI)
-        # self.main_GUI.signal1.connect(self.show_status)
+        # create the central widget
+        self.central_widget = CentralWidget(self.rd, parent=self)
+        self.project_loaded.connect(self.central_widget.init_ui)
+        self.setCentralWidget(self.central_widget)
 
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
-            self.open(self.rd.cache.last_inspection_file)
+            self.load_project(self.rd.cache.last_inspection_file)
 
-    def _add_menu(self):
+    def _init_menu(self):
         self._menu = self.menuBar()
 
         self._file = self._menu.addMenu("&File")
@@ -94,12 +96,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._help.addAction(self._about)
 
     def _new_file_action(self):
-        """ Create a new inspection file.
+        """ Create a new inspection file via the NewFile dialog.
         """
         dialog = NewFile(self.rd, parent=self)
         if dialog.exec():
             self.rd.cache.last_object_index = 0
-            self.load_project()
+            self.init_ui()
 
     def _open_file_action(self):
         """ Open an existing inspection file via QFileDialog.
@@ -107,28 +109,29 @@ class MainWindow(QtWidgets.QMainWindow):
         path = qtpy.compat.getopenfilename(self, caption='Open Inspection File', filters='CSV Files (*.csv)')[0]
         if path:
             self.rd.cache.last_object_index = 0
-            self.open(path)
+            self.load_project(path)
 
-    def open(self, path: str):
-        """ Open an existing inspection file.
+    def load_project(self, path: str):
+        """ Load inspection data from an existing inspection file.
+        @param path: path to the inspection file
         """
         if pathlib.Path(path).exists():
             self.rd.output_path = pathlib.Path(path)
             self.rd.read()
-            self.load_project()
+            self.init_ui()
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
 
-    def load_project(self):
-        """ Update the main window state and load inspection results to the GUI.
+    def init_ui(self):
+        """ Update the state of the main window and activate the central widget after loading inspection data.
         """
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
         self.setWindowTitle('{} – Specvizitor'.format(self.rd.output_path.name))
-        self.main_GUI.load_project()
+        self.project_loaded.emit()
 
     def _save_action(self):
-        """ Instead of saving the inspection results, display a message saying that the auto-save mode is enabled.
+        """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
         """
         msg = 'The data is saved automatically'
         if self.rd.output_path is not None:
@@ -158,7 +161,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._exit_action()
 
 
-class FRESCO(QtWidgets.QWidget):
+class CentralWidget(QtWidgets.QWidget):
     def __init__(self, rd: RuntimeData, parent=None):
         self.rd = rd
         super().__init__(parent)
@@ -184,24 +187,24 @@ class FRESCO(QtWidgets.QWidget):
         self.review_form = ReviewForm(self.rd, parent=self)
         self.layout.addWidget(self.review_form, 3, 2, 1, 1)
 
-        # connect signals from the control panel to the GUI slots
-        self.control_panel.object_selected.connect(self.load_object)
+        # connect signals from the control panel to the slots of the central widget
+        self.control_panel.object_selected.connect(self.display_object)
         self.control_panel.reset_button_clicked.connect(self.data_viewer.reset_view)
 
     @property
     def widgets(self) -> list[AbstractWidget]:
         """
-        @return: a list of widgets added to the GUI.
+        @return: a list of widgets added to the central widget.
         """
         return get_widgets(self.layout)
 
-    def load_object(self, j: int):
-        """ Load a new object to the GUI.
-        @param j: the index of the object to load
-        @return: None
+    @pyqtSlot
+    def display_object(self, j: int):
+        """ Display a new object in the central widget.
+        @param j: the index of the object to display
         """
         if self.rd.j is not None:
-            # update runtime data from widgets
+            # update the runtime data from widgets
             for widget in self.widgets:
                 widget.dump()
 
@@ -209,22 +212,18 @@ class FRESCO(QtWidgets.QWidget):
 
         self.rd.j = j
 
-        # cache the object index
+        for widget in self.widgets:
+            widget.load_object()
+
+        # cache the index of the object
         # TODO: cache the ID instead of the index
         self.rd.cache.last_object_index = j
         self.rd.cache.save(self.rd.cache_file)
 
-        for widget in self.widgets:
-            widget.load_object()
-
-    def load_project(self):
-        """ Load inspection results to the GUI.
-        @return: None
+    @pyqtSlot
+    def init_ui(self):
+        """ Initialize the UI of the central widget.
         """
-        # cache the inspection file name
-        self.rd.cache.last_inspection_file = str(self.rd.output_path)
-        self.rd.cache.save(self.rd.cache_file)
-
         # reload the review form
         # TODO: move this to a separate function
         self.layout.removeWidget(self.review_form)
@@ -232,15 +231,19 @@ class FRESCO(QtWidgets.QWidget):
         self.review_form = ReviewForm(self.rd, parent=self)
         self.layout.addWidget(self.review_form, 3, 2, 1, 1)
 
-        for w in self.widgets:
-            w.load_project()
+        for widget in self.widgets:
+            widget.load_project()
 
-        # try to load the object with an index stored in cache
+        # cache the inspection file name
+        self.rd.cache.last_inspection_file = str(self.rd.output_path)
+        self.rd.cache.save(self.rd.cache_file)
+
+        # try to display the object with an index stored in cache
         j = self.rd.cache.last_object_index
         if j and j < self.rd.n_objects:
-            self.load_object(int(j))
+            self.display_object(int(j))
         else:
-            self.load_object(0)
+            self.display_object(0)
 
 
 def main():
@@ -256,7 +259,7 @@ def main():
     # initialize the runtime data
     runtime_data = RuntimeData()
 
-    # configure pyqtgraph
+    # pyqtgraph configuration
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
     pg.setConfigOption('antialias', runtime_data.config.gui.antialiasing)

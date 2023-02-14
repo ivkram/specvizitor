@@ -47,9 +47,9 @@ class RuntimeData:
     def create(self):
         """
         Create a new dataframe containing:
-            - a column of IDs
-            - a column for user comments
-            - one column per each checkbox
+            - a column of IDs;
+            - a column for user comments;
+            - one column per each checkbox.
         """
         df = pd.DataFrame(index=self.cat['id']).sort_index()
         df['comment'] = ''
@@ -59,8 +59,9 @@ class RuntimeData:
         self.df = df
 
     def read(self):
-        """ Read the inspection file, load inspection results to the dataframe and load the catalogue if necessary.
-        TODO: create a separate function in io/loader.py
+        """ Read the inspection file and store inspection data to the dataframe. If the catalogue hasn't been already
+        initialized, load it from the disk. If unsuccessful, create a new catalogue with a single column of IDs given
+        by the inspection file.
         """
         if self.output_path is not None:
             # TODO: validate the input
