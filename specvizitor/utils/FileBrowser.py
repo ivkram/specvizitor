@@ -1,8 +1,8 @@
 import logging
 import pathlib
 
+import qtpy.compat
 from qtpy import QtWidgets
-
 
 logger = logging.getLogger(__name__)
 
@@ -77,23 +77,23 @@ class FileBrowser(QtWidgets.QWidget):
         path = None
 
         if self._browser_mode == FileBrowser.OpenFile:
-            path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Choose File',
-                                                         directory=self._default_path,
-                                                         filter=self._filter)[0]
+            path = qtpy.compat.getopenfilename(self, caption='Choose File', basedir=self._default_path,
+                                               filters=self._filter)[0]
+
         # elif self._browser_mode == FileBrowser.OpenFiles:
-        #     self._filepaths.extend(QtWidgets.QFileDialog.getOpenFileNames(self, caption='Choose Files',
-        #                                                                   directory=self._default_path,
-        #                                                                   filter=self._filter)[0])
+        #     self._filepaths.extend(qtpy.compat.getopenfilenames(self, caption='Choose Files',
+        #                                                                   basedir=self._default_path,
+        #                                                                   filters=self._filter)[0])
+
         elif self._browser_mode == FileBrowser.OpenDirectory:
-            path = QtWidgets.QFileDialog.getExistingDirectory(self, caption='Choose Directory',
-                                                              directory=self._default_path)
+            path = qtpy.compat.getexistingdirectory(self, caption='Choose Directory', basedir=self._default_path)
+
         elif self._browser_mode == FileBrowser.SaveFile:
             options = QtWidgets.QFileDialog.Options()
             # if sys.platform == 'darwin':
             #    options |= QtWidgets.QFileDialog.DontUseNativeDialog
-            path, extension = QtWidgets.QFileDialog.getSaveFileName(self, caption='Save/Save As',
-                                                                    directory=self._default_path,
-                                                                    filter=self._filter, options=options)
+            path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=self._default_path,
+                                                          filters=self._filter, options=options)
 
         if path:
             self._line_edit.setText(path)

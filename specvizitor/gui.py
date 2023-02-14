@@ -5,6 +5,7 @@ import logging
 from importlib.metadata import version
 
 import pyqtgraph as pg
+import qtpy.compat
 from qtpy import QtGui, QtWidgets
 
 from .runtime import RuntimeData
@@ -103,8 +104,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _open_file_action(self):
         """ Open an existing inspection file via QFileDialog.
         """
-        path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File',
-                                                     filter='CSV Files (*.csv)')[0]
+        path = qtpy.compat.getopenfilename(self, caption='Open Inspection File', filters='CSV Files (*.csv)')[0]
         if path:
             self.rd.cache.last_object_index = 0
             self.open(path)
