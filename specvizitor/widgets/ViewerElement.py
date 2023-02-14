@@ -4,7 +4,7 @@ from .AbstractWidget import AbstractWidget
 
 from ..runtime import RuntimeData
 from ..utils import params
-from ..io.loader import get_filename
+from ..io.viewer_data import get_filename
 
 
 class ViewerElement(AbstractWidget):

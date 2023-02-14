@@ -5,7 +5,7 @@ from qtpy import QtWidgets
 
 from ..runtime import RuntimeData
 from ..utils import FileBrowser
-from ..io.loader import load_cat
+from ..io.catalogue import load_cat
 from ..utils.logs import qlog
 
 
