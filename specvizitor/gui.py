@@ -13,20 +13,15 @@ from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, Revi
 from .utils.widgets import get_widgets
 from .utils.logs import LogMessageBox
 
-pg.setConfigOption('background', 'w')
-pg.setConfigOption('foreground', 'k')
-pg.setConfigOption('antialias', True)
-
 
 logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, runtime_data: RuntimeData, parent=None):
+        self.rd = runtime_data
 
-        # init the runtime data
-        self.rd = RuntimeData()
+        super().__init__(parent)
 
         # size, title and logo
         self.setGeometry(600, 500, 2550, 1450)  # set the position and the size of the window
@@ -255,18 +250,23 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
 
-    if args.verbose:
-        level = logging.DEBUG
-    else:
-        level = logging.WARNING
+    level = logging.DEBUG if args.verbose else logging.WARNING
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
+
+    # initialize the runtime data
+    runtime_data = RuntimeData()
+
+    # configure pyqtgraph
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+    pg.setConfigOption('antialias', runtime_data.config.gui.antialiasing)
 
     # start the application
     app = QtWidgets.QApplication(sys.argv)
     logger.info("Application started")
 
     # initialize the main window
-    window = MainWindow()
+    window = MainWindow(runtime_data=runtime_data)
     window.show()
     sys.exit(app.exec_())
 

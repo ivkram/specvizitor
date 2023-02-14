@@ -83,6 +83,11 @@ class Loader:
 
 
 @dataclass
+class GUI:
+    antialiasing: bool = False
+
+
+@dataclass
 class Geometry:
     min_width: int | None
     min_height: int | None
@@ -137,6 +142,7 @@ class Viewer(AbstractWidget):
 class Config(Params):
     loader: Loader
     writer: None
+    gui: GUI
     control_panel: ControlPanel
     object_info: ObjectInfo
     review_form: ReviewForm

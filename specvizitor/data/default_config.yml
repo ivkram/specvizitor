@@ -12,6 +12,9 @@ loader:
 
 writer:
 
+gui:
+  antialiasing: False
+
 control_panel:
   button_width: 120
 
