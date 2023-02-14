@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 
 class SmartSlider(QtWidgets.QSlider):

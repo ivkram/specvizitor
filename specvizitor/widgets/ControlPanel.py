@@ -1,7 +1,7 @@
 import logging
 from functools import partial
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 
 from ..runtime import RuntimeData
@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
-    reset_button_clicked = QtCore.pyqtSignal()
-    object_selected = QtCore.pyqtSignal(int)
+    reset_button_clicked = QtCore.Signal()
+    object_selected = QtCore.Signal(int)
 
     def __init__(self, rd: RuntimeData, parent=None):
         self.cfg = rd.config.control_panel

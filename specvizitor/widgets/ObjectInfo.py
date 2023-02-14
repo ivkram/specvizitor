@@ -6,7 +6,7 @@ from ..runtime import RuntimeData
 from .AbstractWidget import AbstractWidget
 
 
-from PyQt5 import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 
 logger = logging.getLogger(__name__)

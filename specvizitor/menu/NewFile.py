@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 from ..runtime import RuntimeData
 from ..utils import FileBrowser
@@ -35,7 +35,8 @@ class NewFile(QtWidgets.QDialog):
             layout.addWidget(b)
 
         self._filter_check_box = QtWidgets.QCheckBox(
-            'Filter the input catalogue based on a list of IDs retrieved from the data folder', checked=True)
+            'Filter the input catalogue based on a list of IDs retrieved from the data folder')
+        self._filter_check_box.setChecked(True)
         layout.addWidget(self._filter_check_box)
 
         self._button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)

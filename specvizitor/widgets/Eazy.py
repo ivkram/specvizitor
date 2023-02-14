@@ -1,6 +1,6 @@
 # import eazy
 
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 
 class Eazy(QtWidgets.QWidget):

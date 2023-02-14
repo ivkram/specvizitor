@@ -5,7 +5,7 @@ import logging
 from importlib.metadata import version
 
 import pyqtgraph as pg
-from PyQt5 import QtGui, QtWidgets
+from qtpy import QtGui, QtWidgets
 
 from .runtime import RuntimeData
 from .menu import NewFile
@@ -98,8 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._help.addAction(self._about)
 
     def _new_file_action(self):
-        """
-        Create a new inspection file.
+        """ Create a new inspection file.
         """
         dialog = NewFile(self.rd, parent=self)
         if dialog.exec():
@@ -107,8 +106,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.load_project()
 
     def _open_file_action(self):
-        """
-        Open an existing inspection file via QFileDialog.
+        """ Open an existing inspection file via QFileDialog.
         """
         path = QtWidgets.QFileDialog.getOpenFileName(self, caption='Open Inspection File',
                                                      filter='CSV Files (*.csv)')[0]
@@ -117,8 +115,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.open(path)
 
     def open(self, path: str):
-        """
-        Open an existing inspection file.
+        """ Open an existing inspection file.
         """
         if pathlib.Path(path).exists():
             self.rd.output_path = pathlib.Path(path)
@@ -128,8 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
             logger.warning('Inspection file not found (path: {})'.format(path))
 
     def load_project(self):
-        """
-        Update the main window state and load inspection results to the GUI.
+        """ Update the main window state and load inspection results to the GUI.
         """
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
@@ -137,8 +133,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_GUI.load_project()
 
     def _save_action(self):
-        """
-        Instead of saving the inspection results, display a message saying that the auto-save mode is enabled.
+        """ Instead of saving the inspection results, display a message saying that the auto-save mode is enabled.
         """
         msg = 'The data is saved automatically'
         if self.rd.output_path is not None:
@@ -206,8 +201,7 @@ class FRESCO(QtWidgets.QWidget):
         return get_widgets(self.layout)
 
     def load_object(self, j: int):
-        """
-        Load a new object to the GUI.
+        """ Load a new object to the GUI.
         @param j: the index of the object to load
         @return: None
         """
@@ -229,8 +223,7 @@ class FRESCO(QtWidgets.QWidget):
             widget.load_object()
 
     def load_project(self):
-        """
-        Load inspection results to the GUI.
+        """ Load inspection results to the GUI.
         @return: None
         """
         # cache the inspection file name

@@ -18,18 +18,14 @@ class RuntimeData:
     config_file: LocalFile = LocalFile(user_config_dir('specvizitor'), signature='Configuration file')
     cache_file: LocalFile = LocalFile(user_cache_dir('specvizitor'), signature='Cache')
 
-    config: Config = None
-    cache: Cache = None
+    config: Config = Config.read(config_file)
+    cache: Cache = Cache.read(cache_file)
 
-    output_path: pathlib.Path = None  # the path to the output (a.k.a. inspection) file
-    cat: Table = None  # the catalogue
-    df: pd.DataFrame = None  # the inspection results
+    output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
+    cat: Table | None = None                 # the catalogue
+    df: pd.DataFrame | None = None           # inspection results
 
     j: int = None  # the index of the current object
-
-    def __post_init__(self):
-        self.config = Config.read(self.config_file)
-        self.cache = Cache.read(self.cache_file)
 
     @property
     def id(self) -> int | None:
@@ -42,7 +38,7 @@ class RuntimeData:
             return
 
     @property
-    def n_objects(self):
+    def n_objects(self) -> int | None:
         """
         @return: the total number of objects loaded to the GUI.
         """
@@ -51,10 +47,9 @@ class RuntimeData:
     def create(self):
         """
         Create a new dataframe containing:
-            - column of IDs
-            - column for user comments
+            - a column of IDs
+            - a column for user comments
             - one column per each checkbox
-        @return: None
         """
         df = pd.DataFrame(index=self.cat['id']).sort_index()
         df['comment'] = ''
@@ -64,10 +59,8 @@ class RuntimeData:
         self.df = df
 
     def read(self):
-        """
-        Read the inspection file, load the inspection results to the dataframe and load the catalogue if necessary.
+        """ Read the inspection file, load inspection results to the dataframe and load the catalogue if necessary.
         TODO: create a separate function in io/loader.py
-        @return: None
         """
         if self.output_path is not None:
             # TODO: validate the input
@@ -98,9 +91,7 @@ class RuntimeData:
                 self.cat = cat
 
     def save(self):
-        """
-        Save the inspection results to the output file.
-        @return: None
+        """ Save the inspection results to the output file.
         """
         if self.output_path is not None:
             writer.save(self.df, self.output_path)

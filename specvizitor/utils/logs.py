@@ -1,7 +1,7 @@
 import logging
 from functools import wraps
 
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 
 class QLogHandler(logging.Handler):

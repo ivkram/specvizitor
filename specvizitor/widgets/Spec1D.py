@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from ..utils.params import read_yaml
 from ..utils import SmartSlider
@@ -107,7 +107,7 @@ class Spec1D(ViewerElement):
         for line_name, line_artist in self._line_artists.items():
             line_wave = self._lines['lambda'][line_name] * (1 + self._z_slider.value)
             line_artist['line'].setPos(line_wave)
-            line_artist['label'].setPos(line_wave, self._label_height)
+            line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
 
     def _update_from_slider(self, index=None):
         if index is not None:

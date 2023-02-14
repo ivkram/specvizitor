@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 
 logger = logging.getLogger(__name__)
