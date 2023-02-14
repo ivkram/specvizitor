@@ -7,7 +7,7 @@ from importlib.metadata import version
 import pyqtgraph as pg
 import qtpy.compat
 from qtpy import QtGui, QtWidgets
-from qtpy.QtCore import pyqtSignal, pyqtSlot
+from qtpy.QtCore import Signal, Slot
 
 from .runtime import RuntimeData
 from .menu import NewFile
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    project_loaded = pyqtSignal()
+    project_loaded = Signal()
 
     def __init__(self, runtime_data: RuntimeData, parent=None):
         self.rd = runtime_data
@@ -198,7 +198,7 @@ class CentralWidget(QtWidgets.QWidget):
         """
         return get_widgets(self.layout)
 
-    @pyqtSlot
+    @Slot(int)
     def display_object(self, j: int):
         """ Display a new object in the central widget.
         @param j: the index of the object to display
@@ -220,7 +220,7 @@ class CentralWidget(QtWidgets.QWidget):
         self.rd.cache.last_object_index = j
         self.rd.cache.save(self.rd.cache_file)
 
-    @pyqtSlot
+    @Slot()
     def init_ui(self):
         """ Initialize the UI of the central widget.
         """
