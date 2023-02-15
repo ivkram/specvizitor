@@ -1,3 +1,5 @@
+from qtpy import QtGui
+
 from .AbstractWidget import AbstractWidget
 from .ViewerElement import ViewerElement
 from .ImageCutout import ImageCutout
@@ -20,17 +22,19 @@ class DataViewer(AbstractWidget):
         self.image_cutout = ImageCutout(self.rd, parent=self)
 
         # create a widget for the 2D spectrum
-        self.spec_2D = Spec2D(self.rd, parent=self)
+        self.spec_2d = Spec2D(self.rd, parent=self)
 
         # create a widget for the 1D spectrum
-        self.spec_1D = Spec1D(self.rd, parent=self)
+        self.spec_1d = Spec1D(self.rd, parent=self)
+
+        self.spec_2d._spec_2d_plot.setXLink(self.spec_1d.title)  # link the x-axis range
 
         self.init_ui()
 
     def init_ui(self):
         self.layout.addWidget(self.image_cutout, 1, 1, 1, 1)
-        self.layout.addWidget(self.spec_2D, 2, 1, 1, 1)
-        self.layout.addWidget(self.spec_1D, 3, 1, 1, 1)
+        self.layout.addWidget(self.spec_2d, 2, 1, 1, 1)
+        self.layout.addWidget(self.spec_1d, 3, 1, 1, 1)
 
     @property
     def widgets(self) -> list[ViewerElement]:
@@ -42,6 +46,15 @@ class DataViewer(AbstractWidget):
     def load_object(self):
         for w in self.widgets:
             w.load_object()
+
+        if self.spec_1d._data is not None and self.spec_1d._data is not None:
+            # set x-axis transformation for the 2D spectrum plot
+            xmin, xmax = self.spec_1d.default_xrange
+            qtransform = QtGui.QTransform((xmax - xmin) / self.spec_2d._hdu.header['NAXIS1'], 0, 0,
+                                          0, 1, 0,
+                                          xmin, 0, 1)
+            self.spec_2d._spec_2d.setTransform(qtransform)
+            self.reset_view()
 
     def reset_view(self):
         for w in self.widgets:

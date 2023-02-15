@@ -21,6 +21,8 @@ class ImageCutout(ViewerElement):
         self.cfg = rd.config.viewer.image_cutout
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
+        self.title = "Image Cutout"
+
         # create a label
         self._label = QtWidgets.QLabel()
 
@@ -49,14 +51,10 @@ class ImageCutout(ViewerElement):
 
     @lazyproperty
     def _data(self):
-        try:
-            data = fits.getdata(self._filename)
-            data = data * 1e21
-        except ValueError:
-            logger.warning('Image cutout not found (object ID: {})'.format(self.rd.id))
-            return
-        else:
-            return data
+        data = super()._data
+        if data is not None:
+            return data * 1e21
+        return
 
     def reset_view(self):
         if self._data is None:
@@ -68,12 +66,10 @@ class ImageCutout(ViewerElement):
     def load_object(self):
         super().load_object()
 
-        del self._data
-
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("Image: {}".format(self._filename.name))
+            self._label.setText("{}: {}".format(self.title, self._filename.name))
             self._image.setImage(self._data)
 
             self.reset_view()

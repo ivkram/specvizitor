@@ -1,6 +1,8 @@
 import logging
 from dataclasses import asdict
 
+from qtpy.QtCore import Signal
+
 import numpy as np
 from astropy.io import fits
 from astropy.utils.decorators import lazyproperty
@@ -23,6 +25,8 @@ class Spec1D(ViewerElement):
         self.cfg = rd.config.viewer.spec_1d
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
+        self.title = "1D Spectrum"
+
         # load the list of spectral lines
         # TODO: move to the application data
         self._lines = read_yaml('default_lines.yml', in_dist=True)
@@ -44,7 +48,7 @@ class Spec1D(ViewerElement):
         self._redshift_editor.setMaximumWidth(120)
 
         # set up the plot
-        self._spec_1d = self._spec_1d_widget.addPlot()
+        self._spec_1d = self._spec_1d_widget.addPlot(name=self.title)
         self._label_style = {'color': 'r', 'font-size': '20px'}
 
         # set up the spectral lines
@@ -68,39 +72,28 @@ class Spec1D(ViewerElement):
         self.layout.addWidget(self._redshift_editor, 3, 3, 1, 1)
 
     @lazyproperty
-    def _hdu(self):
-        try:
-            with fits.open(self._filename) as hdul:
-                header, data = hdul[1].header, hdul[1].data
-        except ValueError:
-            logger.warning('1D spectrum not found (object ID: {})'.format(self.rd.id))
-            return
-        else:
-            return header, data
+    def default_xrange(self):
+        return np.nanmin(self._data['wave']), np.nanmax(self._data['wave'])
 
     @lazyproperty
-    def _default_xrange(self):
-        return np.nanmin(self._hdu[1]['wave']), np.nanmax(self._hdu[1]['wave'])
-
-    @lazyproperty
-    def _default_yrange(self):
-        return np.nanmin(self._hdu[1]['flux']), np.nanmax(self._hdu[1]['flux'])
+    def default_yrange(self):
+        return np.nanmin(self._data['flux']), np.nanmax(self._data['flux'])
 
     @lazyproperty
     def _label_height(self):
-        y_min, y_max = self._default_yrange
+        y_min, y_max = self.default_yrange
         return y_min + 0.6 * (y_max - y_min)
 
     def _plot(self):
-        self._spec_1d.plot(self._hdu[1]['wave'], self._hdu[1]['flux'], pen='k')
-        self._spec_1d.plot(self._hdu[1]['wave'], self._hdu[1]['err'], pen='r')
+        self._spec_1d.plot(self._data['wave'], self._data['flux'], pen='k')
+        self._spec_1d.plot(self._data['wave'], self._data['err'], pen='r')
 
         for line_name, line_artist in self._line_artists.items():
             self._spec_1d.addItem(line_artist['line'], ignoreBounds=True)
             self._spec_1d.addItem(line_artist['label'])
 
-        self._spec_1d.setLabel('bottom', self._hdu[0]['TUNIT1'], **self._label_style)
-        self._spec_1d.setLabel('left', self._hdu[0]['TUNIT2'], **self._label_style)
+        self._spec_1d.setLabel('bottom', self._hdu.header['TUNIT1'], **self._label_style)
+        self._spec_1d.setLabel('left', self._hdu.header['TUNIT2'], **self._label_style)
 
     def _update_view(self):
         for line_name, line_artist in self._line_artists.items():
@@ -124,28 +117,27 @@ class Spec1D(ViewerElement):
         self._update_from_slider()
 
     def reset_view(self):
-        if self._hdu is None:
+        if self._data is None:
             return
 
         self._z_slider.reset()
         self._update_from_slider()
 
-        self._spec_1d.setXRange(*self._default_xrange)
-        self._spec_1d.setYRange(*self._default_yrange)
+        self._spec_1d.setXRange(*self.default_xrange)
+        self._spec_1d.setYRange(*self.default_yrange)
 
     def load_object(self):
         super().load_object()
 
-        del self._hdu
-        del self._default_xrange
-        del self._default_yrange
+        del self.default_xrange
+        del self.default_yrange
         del self._label_height
 
         self._spec_1d.clear()
-        if self._hdu is not None:
+        if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("1D spectrum: {}".format(self._filename.name))
+            self._label.setText("{}: {}".format(self.title, self._filename.name))
 
             try:
                 self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']

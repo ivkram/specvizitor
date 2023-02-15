@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
-from astropy.io import fits
 from astropy.visualization import ZScaleInterval
 from astropy.utils.decorators import lazyproperty
 
@@ -21,6 +20,8 @@ class Spec2D(ViewerElement):
         self.cfg = rd.config.viewer.spec_2d
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
+        self.title = '2D Spectrum'
+
         # add a label
         self._label = QtWidgets.QLabel()
 
@@ -31,11 +32,11 @@ class Spec2D(ViewerElement):
         self._cmap = pg.colormap.get('viridis')
 
         # set up the image and the view box
+        self._spec_2d_plot = self._spec_2d_widget.addPlot(name=self.title)
+
         self._spec_2d = pg.ImageItem(border='k')
         self._spec_2d.setLookupTable(self._cmap.getLookupTable())
-        self._view_box = self._spec_2d_widget.addViewBox(0, 0)
-        self._view_box.addItem(self._spec_2d)
-        self._view_box.setAspectLocked(True)
+        self._spec_2d_plot.addItem(self._spec_2d)
 
         # set up the color bar
         self._cbar = ColorLegendItem(imageItem=self._spec_2d, showHistogram=True, histHeightPercentile=99.0)
@@ -47,16 +48,16 @@ class Spec2D(ViewerElement):
         self.layout.addWidget(self._label, 1, 1)
         self.layout.addWidget(self._spec_2d_widget, 2, 1)
 
+    @property
+    def _default_xrange(self):
+        return 30000, 40000
+
     @lazyproperty
     def _data(self):
-        try:
-            data = fits.getdata(self._filename)
-            data = np.rot90(data)[::-1]
-        except ValueError:
-            logger.warning('2D spectrum not found (object ID: {})'.format(self.rd.id))
-            return
-        else:
-            return data
+        data = super()._data
+        if data is not None:
+            return np.rot90(data)[::-1]
+        return
 
     def reset_view(self):
         if self._data is None:
@@ -64,17 +65,15 @@ class Spec2D(ViewerElement):
 
         # TODO: allow to choose between min/max and zscale?
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
-        self._view_box.autoRange()
+        self._spec_2d_plot.autoRange()
 
     def load_object(self):
         super().load_object()
 
-        del self._data
-
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("2D spectrum: {}".format(self._filename.name))
+            self._label.setText("{}: {}".format(self.title, self._filename.name))
             self._spec_2d.setImage(self._data)
 
             self.reset_view()
