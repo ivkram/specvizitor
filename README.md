@@ -1,4 +1,4 @@
-![Specvizitor GUI](docs/screenshots/specvizitor_gui.png?raw=true "Specvizitor GUI")
+![Specvizitor GUI](https://github.com/ivkram/specvizitor/blob/main/docs/screenshots/specvizitor_gui.png?raw=true "Specvizitor GUI")
 
 ## Installation
 
@@ -27,4 +27,4 @@ To start `specvizitor`, run this command in your terminal:
 
 ## License
 
-`specvizitor` is licensed under a 3-clause BSD style license - see the [LICENSE.txt](LICENSE.txt) file.
+`specvizitor` is licensed under a 3-clause BSD style license - see the [LICENSE.txt](https://github.com/ivkram/specvizitor/blob/main/LICENSE.txt) file.
