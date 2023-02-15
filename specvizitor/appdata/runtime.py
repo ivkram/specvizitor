@@ -49,52 +49,54 @@ class RuntimeData:
     def create(self):
         """ Create a dataframe for storing inspection results.
         """
-        if self.cat is not None:
-            self.df = output.create(self.cat['id'], self.config.review_form.checkboxes)
-        else:
+        if self.cat is None:
             logger.error("Failed to create a new dataframe for storing inspection results: the catalogue is not loaded"
                          "to the memory")
+            return
+
+        self.df = output.create(self.cat['id'], self.config.review_form.checkboxes)
 
     def read(self):
         """ Read the inspection file and load inspection data to the dataframe. If the catalogue hasn't been already
         initialized, load it from the disk. If unsuccessful, create a new catalogue with a single column of IDs given
         by the inspection file.
         """
-
-        if self.output_path is not None:
-            # TODO: validate the input
-            df = pd.read_csv(self.output_path, index_col='id')
-            df['comment'] = df['comment'].fillna('')
-
-            # update the checkboxes
-            checkboxes = {key: value for key, value in self.config.review_form.checkboxes.items() if key in df.columns}
-            for cname in df.columns:
-                if pd.api.types.is_bool_dtype(df[cname]) and cname not in checkboxes.keys():
-                    checkboxes[cname] = cname.capitalize()
-
-            self.config.review_form.checkboxes = checkboxes
-            self.config.save(self.config_file)
-
-            self.df = df
-
-            if self.cat is None:
-                # load the catalogue
-                cat = catalogue.load_cat(self.config.loader.cat.filename, translate=self.config.loader.cat.translate)
-
-                # create a catalogue with a single column of IDs
-                if cat is None:
-                    cat = Table([self.df.index.values], names=('id',))
-                    cat.add_index('id')
-
-                self.cat = cat
-        else:
+        if self.output_path is None:
             logger.error("Failed to read the inspection file: the file path is not specified")
+            return
+
+        # TODO: validate the input
+        df = pd.read_csv(self.output_path, index_col='id')
+        df['comment'] = df['comment'].fillna('')
+
+        # update the checkboxes
+        checkboxes = {key: value for key, value in self.config.review_form.checkboxes.items() if key in df.columns}
+        for cname in df.columns:
+            if pd.api.types.is_bool_dtype(df[cname]) and cname not in checkboxes.keys():
+                checkboxes[cname] = cname.capitalize()
+
+        self.config.review_form.checkboxes = checkboxes
+        self.config.save(self.config_file)
+
+        self.df = df
+
+        if self.cat is None:
+            # load the catalogue
+            cat = catalogue.load_cat(self.config.loader.cat.filename, translate=self.config.loader.cat.translate)
+
+            # create a catalogue with a single column of IDs
+            if cat is None:
+                cat = Table([self.df.index.values], names=('id',))
+                cat.add_index('id')
+
+            self.cat = cat
 
     def save(self):
         """ Save inspection results to the output file.
         """
-        if self.output_path is not None:
-            output.save(self.df, self.output_path)
-            logger.info('Project saved (path: {})'.format(self.output_path))
-        else:
+        if self.output_path is None:
             logger.error("Failed to save the inspection results: the output path is not specified")
+            return
+
+        output.save(self.df, self.output_path)
+        logger.info('Project saved (path: {})'.format(self.output_path))
