@@ -204,7 +204,7 @@ class CentralWidget(QtWidgets.QWidget):
         @param j: the index of the object to display
         """
         if self.rd.j is not None:
-            # update the runtime data from widgets
+            # update the application data from widgets
             for widget in self.widgets:
                 widget.dump()
 
@@ -249,7 +249,7 @@ def main():
     level = logging.DEBUG if args.verbose else logging.WARNING
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
-    # initialize the runtime data
+    # initialize the application data
     runtime = AppData()
 
     # pyqtgraph configuration

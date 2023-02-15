@@ -24,7 +24,7 @@ class Spec1D(ViewerElement):
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
         # load the list of spectral lines
-        # TODO: move to the runtime data
+        # TODO: move to the application data
         self._lines = read_yaml('default_lines.yml', in_dist=True)
 
         # create a label
