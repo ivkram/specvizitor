@@ -52,13 +52,10 @@ class FileBrowser(QtWidgets.QWidget):
         return True
 
     def exists(self):
-        path_to_check = pathlib.Path(self.path)
-        if self._browser_mode == FileBrowser.SaveFile and path_to_check.exists():
-            logger.error('The file `{}` already exists'.format(path_to_check))
-            return False
-
         if self._browser_mode == FileBrowser.SaveFile:
-            path_to_check = path_to_check.parent
+            path_to_check = pathlib.Path(self.path).parent
+        else:
+            path_to_check = pathlib.Path(self.path)
 
         if not path_to_check.exists():
             if self._browser_mode == FileBrowser.OpenFile:
