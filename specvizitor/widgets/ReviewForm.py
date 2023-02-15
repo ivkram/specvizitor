@@ -13,9 +13,6 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         self.setTitle('Review Form')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
 
-        self.layout = QtWidgets.QGridLayout()
-        self.setLayout(self.layout)
-
         # create checkboxes
         self._checkboxes = self.create_checkbox_widgets(self.cfg.checkboxes)
 
@@ -26,15 +23,16 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
 
     @staticmethod
     def create_checkbox_widgets(checkboxes: dict[str, str] | None) -> dict[str, QtWidgets.QCheckBox]:
+        if checkboxes is None:
+            return {}
+
         checkbox_widgets = {}
-        if checkboxes is not None:
-            for i, (cname, label) in enumerate(checkboxes.items()):
-                checkbox_widgets[cname] = QtWidgets.QCheckBox(label)
+        for i, (cname, label) in enumerate(checkboxes.items()):
+            checkbox_widgets[cname] = QtWidgets.QCheckBox(label)
+
         return checkbox_widgets
 
     def init_ui(self):
-        super().init_ui()
-
         for i, widget in enumerate(self._checkboxes.values()):
             self.layout.addWidget(widget, i + 1, 1, 1, 1)
 
@@ -52,8 +50,6 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
             widget.setChecked(self.rd.df.at[self.rd.id, cname])
 
     def load_project(self):
-        super().load_project()
-
         self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.checkboxes))
 
-        self.init_ui()
+        super().load_project()

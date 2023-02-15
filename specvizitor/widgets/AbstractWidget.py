@@ -16,6 +16,9 @@ class AbstractWidget(QtWidgets.QWidget):
         if cfg.min_height:
             self.setMinimumHeight(cfg.min_height)
 
+        self.layout = QtWidgets.QGridLayout()
+        self.setLayout(self.layout)
+
         self.setEnabled(False)
 
     @property
@@ -25,10 +28,13 @@ class AbstractWidget(QtWidgets.QWidget):
         """
         return get_widgets(self.layout)
 
-    def init_ui(self):
+    def clear_layout(self):
         for widget in self.widgets:
             self.layout.removeWidget(widget)
             widget.destroy()
+
+    def init_ui(self):
+        pass
 
     def dump(self):
         pass
@@ -37,4 +43,6 @@ class AbstractWidget(QtWidgets.QWidget):
         pass
 
     def load_project(self):
+        self.clear_layout()
+        self.init_ui()
         self.setEnabled(True)

@@ -27,31 +27,21 @@ class Spec1D(ViewerElement):
         # TODO: move to the runtime data
         self._lines = read_yaml('default_lines.yml', in_dist=True)
 
-        grid = QtWidgets.QGridLayout()
-        grid.setContentsMargins(0, 0, 0, 0)
-
-        # add a label
+        # create a label
         self._label = QtWidgets.QLabel()
-        grid.addWidget(self._label, 1, 1)
 
-        # add a widget for the spectrum
+        # create a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsLayoutWidget()
-        grid.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
 
-        # add a redshift slider
+        # create a redshift slider
         self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.slider))
         self._z_slider.valueChanged[int].connect(self._update_from_slider)
         self._z_slider.setToolTip('Slide to redshift.')
-        grid.addWidget(self._z_slider, 3, 1, 1, 1)
 
-        # add a line edit for changing the redshift
+        # create a line edit for changing the redshift
         self._redshift_editor = QtWidgets.QLineEdit()
         self._redshift_editor.returnPressed.connect(self._update_from_editor)
         self._redshift_editor.setMaximumWidth(120)
-        grid.addWidget(QtWidgets.QLabel('z = ', self), 3, 2, 1, 1)
-        grid.addWidget(self._redshift_editor, 3, 3, 1, 1)
-
-        self.setLayout(grid)
 
         # set up the plot
         self._spec_1d = self._spec_1d_widget.addPlot()
@@ -67,6 +57,15 @@ class Spec1D(ViewerElement):
             label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
 
             self._line_artists[line_name] = {'line': line, 'label': label}
+
+        self.init_ui()
+
+    def init_ui(self):
+        self.layout.addWidget(self._label, 1, 1)
+        self.layout.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
+        self.layout.addWidget(self._z_slider, 3, 1, 1, 1)
+        self.layout.addWidget(QtWidgets.QLabel('z = ', self), 3, 2, 1, 1)
+        self.layout.addWidget(self._redshift_editor, 3, 3, 1, 1)
 
     @lazyproperty
     def _hdu(self):

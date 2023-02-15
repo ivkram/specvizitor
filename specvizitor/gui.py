@@ -39,7 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # create the central widget
         self.central_widget = CentralWidget(self.rd, parent=self)
-        self.project_loaded.connect(self.central_widget.init_ui)
+        self.project_loaded.connect(self.central_widget.activate)
         self.setCentralWidget(self.central_widget)
 
         # read cache and try to load the last active project
@@ -101,7 +101,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = NewFile(self.rd, parent=self)
         if dialog.exec():
             self.rd.cache.last_object_index = 0
-            self.init_ui()
+            self.activate()
 
     def _open_file_action(self):
         """ Open an existing inspection file via QFileDialog.
@@ -118,11 +118,11 @@ class MainWindow(QtWidgets.QMainWindow):
         if pathlib.Path(path).exists():
             self.rd.output_path = pathlib.Path(path)
             self.rd.read()
-            self.init_ui()
+            self.activate()
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
 
-    def init_ui(self):
+    def activate(self):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
         for w in (self._save, self._save_as, self._export):
@@ -188,7 +188,7 @@ class CentralWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.review_form, 3, 2, 1, 1)
 
         # connect signals from the control panel to the slots of the central widget
-        self.control_panel.object_selected.connect(self.display_object)
+        self.control_panel.object_selected.connect(self.load_object)
         self.control_panel.reset_button_clicked.connect(self.data_viewer.reset_view)
 
     @property
@@ -199,8 +199,8 @@ class CentralWidget(QtWidgets.QWidget):
         return get_widgets(self.layout)
 
     @Slot(int)
-    def display_object(self, j: int):
-        """ Display a new object in the central widget.
+    def load_object(self, j: int):
+        """ Load a new object to the central widget.
         @param j: the index of the object to display
         """
         if self.rd.j is not None:
@@ -221,8 +221,8 @@ class CentralWidget(QtWidgets.QWidget):
         self.rd.cache.save(self.rd.cache_file)
 
     @Slot()
-    def init_ui(self):
-        """ Initialize the UI of the central widget.
+    def activate(self):
+        """ Load a project to the central widget.
         """
         for widget in self.widgets:
             widget.load_project()
@@ -234,9 +234,9 @@ class CentralWidget(QtWidgets.QWidget):
         # try to display the object with an index stored in cache
         j = self.rd.cache.last_object_index
         if j and j < self.rd.n_objects:
-            self.display_object(int(j))
+            self.load_object(int(j))
         else:
-            self.display_object(0)
+            self.load_object(0)
 
 
 def main():

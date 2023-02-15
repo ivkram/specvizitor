@@ -11,6 +11,8 @@ class ViewerElement(AbstractWidget):
     def __init__(self, rd: RuntimeData, cfg: config.ViewerElement, parent=None):
         super().__init__(rd=rd, cfg=cfg, parent=parent)
 
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
     @lazyproperty
     def _filename(self):
         return get_filename(self.rd.config.loader.data.dir, self.cfg.search_mask, self.rd.id)

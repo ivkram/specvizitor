@@ -21,58 +21,70 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.setTitle('Control Panel')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        grid = QtWidgets.QGridLayout()
-
-        # add a reset button
+        # create a reset button
         self._reset_button = QtWidgets.QPushButton()
         self._reset_button.setText('ID --')
         self._reset_button.setToolTip('Reset the view')
         self._reset_button.setFixedWidth(self.cfg.button_width)
         self._reset_button.clicked.connect(self.reset_button_clicked.emit)
-        grid.addWidget(self._reset_button, 1, 1, 1, 1)
 
-        # add a widget displaying the index of the current object and the total number of objects in the catalogue
+        # create a widget displaying the index of the current object and the total number of objects in the catalogue
         self._number_of_obj_label = QtWidgets.QLabel()
-        grid.addWidget(self._number_of_obj_label, 1, 2, 1, 1)
 
-        # set buttons for next or previous object
-        pn_buttons_params = {'previous': {'shortcut': 'left', 'layout': (2, 1, 1, 1)},
-                             'next': {'shortcut': 'right', 'layout': (2, 2, 1, 1)}}
-        for pn_text, pn_properties in pn_buttons_params.items():
-            b = QtWidgets.QPushButton('')
-            # b.setIcon(QtGui.QIcon(pn_text + '.png'))
-            b.setToolTip('Look at the {} object'.format(pn_text))
-            b.setText(pn_text)
-            b.setFixedWidth(self.cfg.button_width)
-            b.clicked.connect(partial(self.previous_next_object, pn_text))
-            b.setShortcut(pn_properties['shortcut'])
-            grid.addWidget(b, *pn_properties['layout'])
+        # create buttons for switching to the next or previous object
+        self._pn_buttons = self.create_pn_buttons()
 
-        # add a `Go to ID` button
+        # create a `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton()
         self._go_to_id_button.setText('Go to ID')
         self._go_to_id_button.setFixedWidth(self.cfg.button_width)
         self._go_to_id_button.clicked.connect(self.go_to_id)
-        grid.addWidget(self._go_to_id_button, 3, 1, 1, 1)
 
         self._id_field = QtWidgets.QLineEdit()
         self._id_field.setFixedWidth(self.cfg.button_width)
         self._id_field.returnPressed.connect(self.go_to_id)
-        grid.addWidget(self._id_field, 3, 2, 1, 1)
 
-        # add a `Go to index` button
+        # create a `Go to index` button
         self._go_to_index_button = QtWidgets.QPushButton()
         self._go_to_index_button.setText('Go to #')
         self._go_to_index_button.setFixedWidth(self.cfg.button_width)
         self._go_to_index_button.clicked.connect(self.go_to_index)
-        grid.addWidget(self._go_to_index_button, 4, 1, 1, 1)
 
         self._index_field = QtWidgets.QLineEdit()
         self._index_field.setFixedWidth(self.cfg.button_width)
         self._index_field.returnPressed.connect(self.go_to_index)
-        grid.addWidget(self._index_field, 4, 2, 1, 1)
 
-        self.setLayout(grid)
+        self.init_ui()
+
+    def create_pn_buttons(self) -> dict[str, QtWidgets.QPushButton]:
+        pn_buttons_params = {'previous': {'shortcut': 'left'},
+                             'next': {'shortcut': 'right'}}
+
+        pn_buttons = {}
+        for pn_text, pn_properties in pn_buttons_params.items():
+            button = QtWidgets.QPushButton('')
+            # button.setIcon(QtGui.QIcon(pn_text + '.png'))
+            button.setToolTip('Look at the {} object'.format(pn_text))
+            button.setText(pn_text)
+            button.setFixedWidth(self.cfg.button_width)
+            button.clicked.connect(partial(self.previous_next_object, pn_text))
+            button.setShortcut(pn_properties['shortcut'])
+
+            pn_buttons[pn_text] = button
+
+        return pn_buttons
+
+    def init_ui(self):
+        self.layout.addWidget(self._reset_button, 1, 1, 1, 1)
+        self.layout.addWidget(self._number_of_obj_label, 1, 2, 1, 1)
+
+        self.layout.addWidget(self._pn_buttons['previous'], 2, 1, 1, 1)
+        self.layout.addWidget(self._pn_buttons['next'], 2, 2, 1, 1)
+
+        self.layout.addWidget(self._go_to_id_button, 3, 1, 1, 1)
+        self.layout.addWidget(self._id_field, 3, 2, 1, 1)
+        self.layout.addWidget(self._go_to_index_button, 4, 1, 1, 1)
+        self.layout.addWidget(self._index_field, 4, 2, 1, 1)
 
     def load_object(self):
         self._reset_button.setText('ID {}'.format(self.rd.id))

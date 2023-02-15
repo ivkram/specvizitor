@@ -20,21 +20,30 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
         self.setTitle('Object Information')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        grid = QtWidgets.QGridLayout()
-
         # display information about the object
-        self._labels = {}
+        self._labels = self.create_info_widgets(self.cfg.items.items())
 
-        if self.cfg.items:
-            for i, (cname, label) in enumerate(self.cfg.items.items()):
-                widget = QtWidgets.QLabel()
-                widget.setText(label)
-                widget.setHidden(True)
-                widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
-                self._labels[cname] = widget
-                grid.addWidget(widget, i + 1, 1, 1, 1)
+        self.init_ui()
 
-        self.setLayout(grid)
+    @staticmethod
+    def create_info_widgets(items) -> dict[str, QtWidgets.QLabel]:
+        if items is None:
+            return {}
+
+        info_widgets = {}
+        for i, (cname, label) in enumerate(items):
+            widget = QtWidgets.QLabel()
+            widget.setText(label)
+            widget.setHidden(True)
+            widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+
+            info_widgets[cname] = widget
+
+        return info_widgets
+
+    def init_ui(self):
+        for i, widget in enumerate(self._labels.values()):
+            self.layout.addWidget(widget, i + 1, 1, 1, 1)
 
     def load_object(self):
         for cname, widget in self._labels.items():
