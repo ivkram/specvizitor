@@ -1,6 +1,7 @@
 from qtpy import QtWidgets
 
 from ..appdata.runtime import RuntimeData
+from ..io.output import get_checkboxes
 from .AbstractWidget import AbstractWidget
 
 
@@ -12,23 +13,33 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         self.setTitle('Review Form')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
 
-        grid = QtWidgets.QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
+        self.setLayout(self.layout)
 
-        # add checkboxes
-        self._checkboxes = {}
+        # create checkboxes
+        self._checkboxes = self.create_checkbox_widgets(self.cfg.checkboxes)
 
-        if self.cfg.checkboxes:
-            for i, (cname, label) in enumerate(self.cfg.checkboxes.items()):
-                widget = QtWidgets.QCheckBox(label)
-                self._checkboxes[cname] = widget
-                grid.addWidget(widget, i + 1, 1, 1, 1)
-
-        # add a multi-line text editor for writing comments
+        # create a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit()
-        grid.addWidget(QtWidgets.QLabel('Comments:'), len(self._checkboxes) + 1, 1, 1, 1)
-        grid.addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
 
-        self.setLayout(grid)
+        self.init_ui()
+
+    @staticmethod
+    def create_checkbox_widgets(checkboxes: dict[str, str] | None) -> dict[str, QtWidgets.QCheckBox]:
+        checkbox_widgets = {}
+        if checkboxes is not None:
+            for i, (cname, label) in enumerate(checkboxes.items()):
+                checkbox_widgets[cname] = QtWidgets.QCheckBox(label)
+        return checkbox_widgets
+
+    def init_ui(self):
+        super().init_ui()
+
+        for i, widget in enumerate(self._checkboxes.values()):
+            self.layout.addWidget(widget, i + 1, 1, 1, 1)
+
+        self.layout.addWidget(QtWidgets.QLabel('Comments:'), len(self._checkboxes) + 1, 1, 1, 1)
+        self.layout.addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
 
     def dump(self):
         self.rd.df.at[self.rd.id, 'comment'] = self._comments_widget.toPlainText()
@@ -39,3 +50,10 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         self._comments_widget.setText(self.rd.df.at[self.rd.id, 'comment'])
         for cname, widget in self._checkboxes.items():
             widget.setChecked(self.rd.df.at[self.rd.id, cname])
+
+    def load_project(self):
+        super().load_project()
+
+        self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.checkboxes))
+
+        self.init_ui()

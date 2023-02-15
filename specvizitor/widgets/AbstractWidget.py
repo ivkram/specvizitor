@@ -2,6 +2,7 @@ from qtpy import QtWidgets
 
 from ..appdata.runtime import RuntimeData
 from ..appdata import config
+from ..utils.widgets import get_widgets
 
 
 class AbstractWidget(QtWidgets.QWidget):
@@ -16,6 +17,18 @@ class AbstractWidget(QtWidgets.QWidget):
             self.setMinimumHeight(cfg.min_height)
 
         self.setEnabled(False)
+
+    @property
+    def widgets(self) -> list[QtWidgets.QWidget]:
+        """
+        @return: a list of widgets added to the instance of the AbstractWidget class.
+        """
+        return get_widgets(self.layout)
+
+    def init_ui(self):
+        for widget in self.widgets:
+            self.layout.removeWidget(widget)
+            widget.destroy()
 
     def dump(self):
         pass

@@ -224,13 +224,6 @@ class CentralWidget(QtWidgets.QWidget):
     def init_ui(self):
         """ Initialize the UI of the central widget.
         """
-        # reload the review form
-        # TODO: move this to a separate function
-        self.layout.removeWidget(self.review_form)
-        self.review_form.destroy()
-        self.review_form = ReviewForm(self.rd, parent=self)
-        self.layout.addWidget(self.review_form, 3, 2, 1, 1)
-
         for widget in self.widgets:
             widget.load_project()
 

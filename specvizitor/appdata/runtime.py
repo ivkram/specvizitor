@@ -69,15 +69,6 @@ class RuntimeData:
         df = pd.read_csv(self.output_path, index_col='id')
         df['comment'] = df['comment'].fillna('')
 
-        # update the checkboxes
-        checkboxes = {key: value for key, value in self.config.review_form.checkboxes.items() if key in df.columns}
-        for cname in df.columns:
-            if pd.api.types.is_bool_dtype(df[cname]) and cname not in checkboxes.keys():
-                checkboxes[cname] = cname.capitalize()
-
-        self.config.review_form.checkboxes = checkboxes
-        self.config.save(self.config_file)
-
         self.df = df
 
         if self.cat is None:

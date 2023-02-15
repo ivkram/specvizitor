@@ -32,9 +32,12 @@ class DataViewer(AbstractWidget):
 
         self.setLayout(grid)
 
-        self.widgets: list[ViewerElement] = []
-        for w in get_widgets(grid):
-            self.widgets.append(w)
+    @property
+    def widgets(self) -> list[ViewerElement]:
+        """
+        @return: a list of widgets added to the data viewer.
+        """
+        return get_widgets(self.layout())
 
     def load_object(self):
         for w in self.widgets:
