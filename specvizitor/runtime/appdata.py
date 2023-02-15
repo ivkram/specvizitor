@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class RuntimeData:
+class AppData:
     config_file: LocalFile = LocalFile(user_config_dir('specvizitor'), signature='Configuration file')
     cache_file: LocalFile = LocalFile(user_cache_dir('specvizitor'), signature='Cache')
 

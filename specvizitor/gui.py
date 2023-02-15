@@ -9,7 +9,7 @@ import qtpy.compat
 from qtpy import QtGui, QtWidgets
 from qtpy.QtCore import Signal, Slot
 
-from .appdata.runtime import RuntimeData
+from .runtime.appdata import AppData
 from .menu import NewFile
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
 from .utils.widgets import get_widgets
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = Signal()
 
-    def __init__(self, runtime: RuntimeData, parent=None):
+    def __init__(self, runtime: AppData, parent=None):
         self.rd = runtime
 
         super().__init__(parent)
@@ -162,7 +162,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class CentralWidget(QtWidgets.QWidget):
-    def __init__(self, rd: RuntimeData, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         self.rd = rd
         super().__init__(parent)
 
@@ -250,7 +250,7 @@ def main():
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
     # initialize the runtime data
-    runtime = RuntimeData()
+    runtime = AppData()
 
     # pyqtgraph configuration
     pg.setConfigOption('background', 'w')

@@ -4,12 +4,12 @@ from .ImageCutout import ImageCutout
 from .Spec2D import Spec2D
 from .Spec1D import Spec1D
 
-from ..appdata.runtime import RuntimeData
+from ..runtime.appdata import AppData
 from ..utils.widgets import get_widgets
 
 
 class DataViewer(AbstractWidget):
-    def __init__(self, rd: RuntimeData, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         self.cfg = rd.config.viewer
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 

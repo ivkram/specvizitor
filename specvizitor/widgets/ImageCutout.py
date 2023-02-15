@@ -10,14 +10,14 @@ from qtpy import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 from .ViewerElement import ViewerElement
-from ..appdata.runtime import RuntimeData
+from ..runtime.appdata import AppData
 
 
 logger = logging.getLogger(__name__)
 
 
 class ImageCutout(ViewerElement):
-    def __init__(self, rd: RuntimeData, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         self.cfg = rd.config.viewer.image_cutout
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 

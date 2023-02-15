@@ -12,14 +12,14 @@ from ..utils.params import read_yaml
 from ..utils import SmartSlider
 
 from .ViewerElement import ViewerElement
-from ..appdata.runtime import RuntimeData
+from ..runtime.appdata import AppData
 
 
 logger = logging.getLogger(__name__)
 
 
 class Spec1D(ViewerElement):
-    def __init__(self, rd: RuntimeData, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         self.cfg = rd.config.viewer.spec_1d
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 

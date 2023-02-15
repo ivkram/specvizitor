@@ -3,7 +3,7 @@ import pathlib
 
 from qtpy import QtWidgets
 
-from ..appdata.runtime import RuntimeData
+from ..runtime.appdata import AppData
 from ..utils import FileBrowser
 from ..io.catalogue import load_cat
 from ..utils.logs import qlog
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class NewFile(QtWidgets.QDialog):
-    def __init__(self, rd: RuntimeData, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         self.rd = rd
 
         super().__init__(parent)

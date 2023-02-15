@@ -1,12 +1,12 @@
 from qtpy import QtWidgets
 
-from ..appdata.runtime import RuntimeData
-from ..appdata import config
+from ..runtime.appdata import AppData
+from ..runtime import config
 from ..utils.widgets import get_widgets
 
 
 class AbstractWidget(QtWidgets.QWidget):
-    def __init__(self, rd: RuntimeData, cfg: config.AbstractWidget, parent=None):
+    def __init__(self, rd: AppData, cfg: config.AbstractWidget, parent=None):
         self.rd = rd
 
         super().__init__(parent)

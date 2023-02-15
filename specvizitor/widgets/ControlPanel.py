@@ -3,7 +3,7 @@ from functools import partial
 
 from qtpy import QtCore, QtWidgets
 
-from ..appdata.runtime import RuntimeData
+from ..runtime.appdata import AppData
 from .AbstractWidget import AbstractWidget
 
 
@@ -14,7 +14,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
     reset_button_clicked = QtCore.Signal()
     object_selected = QtCore.Signal(int)
 
-    def __init__(self, rd: RuntimeData, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         self.cfg = rd.config.control_panel
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 

@@ -2,13 +2,13 @@ from astropy.utils import lazyproperty
 
 from .AbstractWidget import AbstractWidget
 
-from ..appdata.runtime import RuntimeData
-from ..appdata import config
+from ..runtime.appdata import AppData
+from ..runtime import config
 from ..io.viewer_data import get_filename
 
 
 class ViewerElement(AbstractWidget):
-    def __init__(self, rd: RuntimeData, cfg: config.ViewerElement, parent=None):
+    def __init__(self, rd: AppData, cfg: config.ViewerElement, parent=None):
         super().__init__(rd=rd, cfg=cfg, parent=parent)
 
         self.layout.setContentsMargins(0, 0, 0, 0)
