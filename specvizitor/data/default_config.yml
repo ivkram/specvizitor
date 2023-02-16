@@ -30,15 +30,19 @@ review_form:
 
 viewer:
   image_cutout:
+    title: "Image"
     search_mask: "*{}.beams.fits"
     min_width: 350
     min_height: 350
 
   spec_2d:
+    title: "Spectrum 2D"
+    link: "Spectrum 1D"
     search_mask: "*{}.stack.fits"
     min_height: 200
 
   spec_1d:
+    title: "Spectrum 1D"
     search_mask: "*{}.1D.fits"
     min_height: 300
     slider:

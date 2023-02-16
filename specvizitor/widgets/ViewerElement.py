@@ -17,7 +17,6 @@ class ViewerElement(AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ViewerElement, parent=None):
         super().__init__(rd=rd, cfg=cfg, parent=parent)
 
-        self.title = "Viewer element"
         self.layout.setContentsMargins(0, 0, 0, 0)
 
     @lazyproperty

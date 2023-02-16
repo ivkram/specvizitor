@@ -20,8 +20,6 @@ class Spec2D(ViewerElement):
         self.cfg = rd.config.viewer.spec_2d
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
-        self.title = '2D Spectrum'
-
         # add a label
         self._label = QtWidgets.QLabel()
 
@@ -32,7 +30,7 @@ class Spec2D(ViewerElement):
         self._cmap = pg.colormap.get('viridis')
 
         # set up the image and the view box
-        self._spec_2d_plot = self._spec_2d_widget.addPlot(name=self.title)
+        self._spec_2d_plot = self._spec_2d_widget.addPlot(name=self.cfg.title)
 
         self._spec_2d = pg.ImageItem(border='k')
         self._spec_2d.setLookupTable(self._cmap.getLookupTable())
@@ -65,6 +63,7 @@ class Spec2D(ViewerElement):
 
         # TODO: allow to choose between min/max and zscale?
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
+
         self._spec_2d_plot.autoRange()
 
     def load_object(self):
@@ -73,7 +72,7 @@ class Spec2D(ViewerElement):
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("{}: {}".format(self.title, self._filename.name))
+            self._label.setText("{}: {}".format(self.cfg.title, self._filename.name))
             self._spec_2d.setImage(self._data)
 
             self.reset_view()

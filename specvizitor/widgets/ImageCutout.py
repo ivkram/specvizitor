@@ -21,8 +21,6 @@ class ImageCutout(ViewerElement):
         self.cfg = rd.config.viewer.image_cutout
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
-        self.title = "Image Cutout"
-
         # create a label
         self._label = QtWidgets.QLabel()
 
@@ -69,7 +67,7 @@ class ImageCutout(ViewerElement):
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("{}: {}".format(self.title, self._filename.name))
+            self._label.setText("{}: {}".format(self.cfg.title, self._filename.name))
             self._image.setImage(self._data)
 
             self.reset_view()

@@ -25,8 +25,6 @@ class Spec1D(ViewerElement):
         self.cfg = rd.config.viewer.spec_1d
         super().__init__(rd=rd, cfg=self.cfg, parent=parent)
 
-        self.title = "1D Spectrum"
-
         # load the list of spectral lines
         # TODO: move to the application data
         self._lines = read_yaml('default_lines.yml', in_dist=True)
@@ -48,7 +46,7 @@ class Spec1D(ViewerElement):
         self._redshift_editor.setMaximumWidth(120)
 
         # set up the plot
-        self._spec_1d = self._spec_1d_widget.addPlot(name=self.title)
+        self._spec_1d = self._spec_1d_widget.addPlot(name=self.cfg.title)
         self._label_style = {'color': 'r', 'font-size': '20px'}
 
         # set up the spectral lines
@@ -93,7 +91,7 @@ class Spec1D(ViewerElement):
             self._spec_1d.addItem(line_artist['label'])
 
         self._spec_1d.setLabel('bottom', self._hdu.header['TUNIT1'], **self._label_style)
-        self._spec_1d.setLabel('left', self._hdu.header['TUNIT2'], **self._label_style)
+        # self._spec_1d.setLabel('left', self._hdu.header['TUNIT2'], **self._label_style)
 
     def _update_view(self):
         for line_name, line_artist in self._line_artists.items():
@@ -137,7 +135,7 @@ class Spec1D(ViewerElement):
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("{}: {}".format(self.title, self._filename.name))
+            self._label.setText("{}: {}".format(self.cfg.title, self._filename.name))
 
             try:
                 self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
