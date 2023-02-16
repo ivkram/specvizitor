@@ -28,7 +28,7 @@ class ViewerElement(AbstractWidget):
         try:
             hdul = fits.open(self._filename)
         except ValueError:
-            logger.warning('{} not found (object ID: {})'.format(self.title, self.rd.id))
+            logger.warning('{} not found (object ID: {})'.format(self.cfg.title, self.rd.id))
             return
         else:
             return hdul
