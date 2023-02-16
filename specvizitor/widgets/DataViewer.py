@@ -27,8 +27,6 @@ class DataViewer(AbstractWidget):
         # create a widget for the 1D spectrum
         self.spec_1d = Spec1D(self.rd, parent=self)
 
-        self.spec_2d._spec_2d_plot.setXLink(self.spec_1d.title)  # link the x-axis range
-
         self.init_ui()
 
     def init_ui(self):
@@ -55,7 +53,7 @@ class DataViewer(AbstractWidget):
                                           xmin, 0, 1)
             self.spec_2d._spec_2d.setTransform(qtransform)
 
-            self.reset_view()
+            self.spec_2d._spec_2d_plot.setXLink(self.spec_1d.title)  # link the x-axis range
 
     def reset_view(self):
         for w in self.widgets:
