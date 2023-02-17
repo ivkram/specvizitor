@@ -60,6 +60,7 @@ class ViewerElement(AbstractWidget):
 @dataclass
 class Image(ViewerElement):
     rotate: int | None
+    scale: float | None
 
 
 @dataclass

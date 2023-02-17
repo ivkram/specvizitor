@@ -50,10 +50,16 @@ class Image2D(ViewerElement):
     @lazyproperty
     def _data(self):
         data = super()._data
+        if data is None:
+            return
 
         # rotate the image
         if self.cfg.rotate is not None:
             data = np.rot90(data, k=self.cfg.rotate // 90)
+
+        # scale the data points
+        if self.cfg.scale is not None:
+            data *= self.cfg.scale
 
         return data
 

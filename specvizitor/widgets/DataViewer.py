@@ -44,6 +44,7 @@ class DataViewer(AbstractWidget):
         for w in self.widgets:
             w.load_object()
 
+        DLAM = 1
         if all(x is not None for x in (self.spec_2d.cfg.link, self.spec_1d._data, self.spec_1d._data)):
             # set x-axis transformation for the 2D spectrum plot
             DLAM = self.spec_2d._hdu.header['CD1_1'] * 1e4
@@ -55,6 +56,9 @@ class DataViewer(AbstractWidget):
             self.spec_2d._image_2d.setTransform(qtransform)
 
             self.spec_2d._image_2d_plot.setXLink(self.spec_2d.cfg.link)  # link the x-axis range
+
+        self.spec_2d._image_2d_plot.setAspectLocked(True, 1 / DLAM)
+        self.image_cutout._image_2d_plot.setAspectLocked(True)
 
     def reset_view(self):
         for w in self.widgets:
