@@ -227,10 +227,10 @@ class CentralWidget(QtWidgets.QWidget):
 
     @Slot()
     def activate(self):
-        """ Load a project to the central widget.
+        """ Activate the central widget.
         """
         for widget in self.widgets:
-            widget.load_project()
+            widget.activate()
 
         # cache the inspection file name
         self.rd.cache.last_inspection_file = str(self.rd.output_path)

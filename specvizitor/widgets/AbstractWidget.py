@@ -18,18 +18,6 @@ class AbstractWidget(QtWidgets.QWidget):
 
         self.setEnabled(False)
 
-    @property
-    def widgets(self) -> list[QtWidgets.QWidget]:
-        """
-        @return: a list of widgets added to the instance of the AbstractWidget class.
-        """
-        return get_widgets(self.layout)
-
-    def clear_layout(self):
-        for widget in self.widgets:
-            self.layout.removeWidget(widget)
-            widget.destroy()
-
     def init_ui(self):
         pass
 
@@ -39,7 +27,11 @@ class AbstractWidget(QtWidgets.QWidget):
     def load_object(self):
         pass
 
-    def load_project(self):
-        self.clear_layout()
+    def reset_layout(self):
+        for widget in get_widgets(self.layout):
+            self.layout.removeWidget(widget)
+            widget.destroy()
         self.init_ui()
+
+    def activate(self):
         self.setEnabled(True)

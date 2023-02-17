@@ -50,7 +50,8 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         for cname, widget in self._checkboxes.items():
             widget.setChecked(self.rd.df.at[self.rd.id, cname])
 
-    def load_project(self):
+    def activate(self):
         self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.checkboxes))
+        self.reset_layout()
 
-        super().load_project()
+        super().activate()

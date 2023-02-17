@@ -1,7 +1,7 @@
 from qtpy import QtWidgets
 
 
-def get_widgets(layout: QtWidgets.QLayout):
+def get_widgets(layout: QtWidgets.QLayout) -> list[QtWidgets.QWidget]:
     widgets = []
 
     index = layout.count() - 1
