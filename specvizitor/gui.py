@@ -210,8 +210,7 @@ class CentralWidget(QtWidgets.QWidget):
         """
         if self.rd.j is not None:
             # update the application data from widgets
-            for widget in self.widgets:
-                widget.dump()
+            self.review_form.dump()
 
             self.rd.save()  # auto-save
 

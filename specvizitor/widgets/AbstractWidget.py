@@ -1,10 +1,17 @@
+import abc
+from abc import ABC
+
 from qtpy import QtWidgets
 
 from ..runtime import config
 from ..utils.widgets import get_widgets
 
 
-class AbstractWidget(QtWidgets.QWidget):
+class QtAbcMeta(type(QtWidgets.QWidget), type(ABC)):
+    pass
+
+
+class AbstractWidget(QtWidgets.QWidget, ABC, metaclass=QtAbcMeta):
     def __init__(self, cfg: config.AbstractWidget, parent=None):
         super().__init__(parent)
 
@@ -18,12 +25,11 @@ class AbstractWidget(QtWidgets.QWidget):
 
         self.setEnabled(False)
 
+    @abc.abstractmethod
     def init_ui(self):
         pass
 
-    def dump(self):
-        pass
-
+    @abc.abstractmethod
     def load_object(self):
         pass
 
