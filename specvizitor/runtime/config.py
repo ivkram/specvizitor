@@ -53,10 +53,13 @@ class ReviewForm(AbstractWidget):
 
 @dataclass
 class ViewerElement(AbstractWidget):
-    title: str
     search_mask: str
-    rotate: int | None
     link: str | None
+
+
+@dataclass
+class Image(ViewerElement):
+    rotate: int | None
 
 
 @dataclass
@@ -68,15 +71,14 @@ class Slider:
 
 
 @dataclass
-class Spec1D(ViewerElement):
+class Spectrum(ViewerElement):
     slider: Slider
 
 
 @dataclass
 class Viewer(AbstractWidget):
-    image_cutout: ViewerElement
-    spec_2d: ViewerElement
-    spec_1d: Spec1D
+    images: dict[str, Image]
+    spectra: dict[str, Spectrum]
 
 
 @dataclass

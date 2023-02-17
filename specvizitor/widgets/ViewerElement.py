@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(AbstractWidget):
-    def __init__(self, rd: AppData, cfg: config.ViewerElement, parent=None):
+    def __init__(self, rd: AppData, name: str, cfg: config.ViewerElement, parent=None):
+        self.name = name
         self.cfg = cfg
 
         super().__init__(rd=rd, cfg=cfg, parent=parent)
@@ -30,7 +31,7 @@ class ViewerElement(AbstractWidget):
         try:
             hdul = fits.open(self._filename)
         except ValueError:
-            logger.warning('{} not found (object ID: {})'.format(self.cfg.title, self.rd.id))
+            logger.warning('{} not found (object ID: {})'.format(self.name, self.rd.id))
             return
         else:
             return hdul
@@ -41,16 +42,7 @@ class ViewerElement(AbstractWidget):
 
     @lazyproperty
     def _data(self):
-        if self._hdu is None:
-            return
-
-        data = self._hdu.data
-
-        # rotate the image
-        if self.cfg.rotate is not None:
-            data = np.rot90(data, k=self.cfg.rotate // 90)
-
-        return data
+        return self._hdu.data if self._hdu is not None else None
 
     def reset_view(self):
         pass

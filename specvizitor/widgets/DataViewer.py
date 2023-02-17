@@ -2,8 +2,7 @@ from qtpy import QtGui
 
 from .AbstractWidget import AbstractWidget
 from .ViewerElement import ViewerElement
-from .ImageCutout import ImageCutout
-from .Spec2D import Spec2D
+from .Image2D import Image2D
 from .Spec1D import Spec1D
 
 from ..runtime.appdata import AppData
@@ -19,13 +18,13 @@ class DataViewer(AbstractWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         # create a widget for the image cutout
-        self.image_cutout = ImageCutout(self.rd, parent=self)
+        self.image_cutout = Image2D(rd=self.rd, name='Image', parent=self)
 
         # create a widget for the 2D spectrum
-        self.spec_2d = Spec2D(self.rd, parent=self)
+        self.spec_2d = Image2D(rd=self.rd, name='Spectrum 2D', parent=self)
 
         # create a widget for the 1D spectrum
-        self.spec_1d = Spec1D(self.rd, parent=self)
+        self.spec_1d = Spec1D(rd=self.rd, name='Spectrum 1D', parent=self)
 
         self.init_ui()
 
@@ -47,15 +46,15 @@ class DataViewer(AbstractWidget):
 
         if all(x is not None for x in (self.spec_2d.cfg.link, self.spec_1d._data, self.spec_1d._data)):
             # set x-axis transformation for the 2D spectrum plot
-            DLAM = self.spec_2d._hdu.header['DLAM']
+            DLAM = self.spec_2d._hdu.header['CD1_1'] * 1e4
             CRVAL = self.spec_2d._hdu.header['CRVAL1'] * 1e4
             CRPIX = self.spec_2d._hdu.header['CRPIX1']
             qtransform = QtGui.QTransform(DLAM, 0, 0,
                                           0, 1, 0,
                                           CRVAL - DLAM * CRPIX, 0, 1)
-            self.spec_2d._spec_2d.setTransform(qtransform)
+            self.spec_2d._image_2d.setTransform(qtransform)
 
-            self.spec_2d._spec_2d_plot.setXLink(self.spec_2d.cfg.link)  # link the x-axis range
+            self.spec_2d._image_2d_plot.setXLink(self.spec_2d.cfg.link)  # link the x-axis range
 
     def reset_view(self):
         for w in self.widgets:

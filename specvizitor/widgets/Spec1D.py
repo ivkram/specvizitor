@@ -15,15 +15,17 @@ from ..utils import SmartSlider
 
 from .ViewerElement import ViewerElement
 from ..runtime.appdata import AppData
+from ..runtime import config
 
 
 logger = logging.getLogger(__name__)
 
 
 class Spec1D(ViewerElement):
-    def __init__(self, rd: AppData, parent=None):
-        self.cfg = rd.config.viewer.spec_1d
-        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
+    def __init__(self, rd: AppData, name: str, parent=None):
+        self.name = name
+        self.cfg = rd.config.viewer.spectra[name]
+        super().__init__(rd=rd, name=name, cfg=self.cfg, parent=parent)
 
         # load the list of spectral lines
         # TODO: move to the application data
@@ -46,7 +48,7 @@ class Spec1D(ViewerElement):
         self._redshift_editor.setMaximumWidth(120)
 
         # set up the plot
-        self._spec_1d = self._spec_1d_widget.addPlot(name=self.cfg.title)
+        self._spec_1d = self._spec_1d_widget.addPlot(name=self.name)
         self._label_style = {'color': 'r', 'font-size': '20px'}
 
         # set up the spectral lines
@@ -135,7 +137,7 @@ class Spec1D(ViewerElement):
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("{}: {}".format(self.cfg.title, self._filename.name))
+            self._label.setText("{}: {}".format(self.name, self._filename.name))
 
             try:
                 self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']

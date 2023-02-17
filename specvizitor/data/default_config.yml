@@ -29,25 +29,24 @@ review_form:
     extended: "Extended emission"
 
 viewer:
-  image_cutout:
-    title: "Image"
-    search_mask: "*{}.beams.fits"
-    min_width: 350
-    min_height: 350
+  images:
+    Image:
+      search_mask: "*{}.beams.fits"
+      min_width: 350
+      min_height: 350
 
-  spec_2d:
-    title: "Spectrum 2D"
-    search_mask: "*{}.stack.fits"
-    rotate: 270
-    link: "Spectrum 1D"
-    min_height: 200
+    Spectrum 2D:
+      search_mask: "*{}.stack.fits"
+      rotate: 270
+      link: "Spectrum 1D"
+      min_height: 200
 
-  spec_1d:
-    title: "Spectrum 1D"
-    search_mask: "*{}.1D.fits"
-    min_height: 300
-    slider:
-      min_value: 0
-      max_value: 10
-      step: 0.000001
-      default_value: 5  # overwritten if the input catalogue contains a column with redshifts
+  spectra:
+    Spectrum 1D:
+      search_mask: "*{}.1D.fits"
+      min_height: 300
+      slider:
+        min_value: 0
+        max_value: 10
+        step: 0.000001
+        default_value: 5  # overwritten if the input catalogue contains a column with redshifts
