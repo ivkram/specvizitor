@@ -4,6 +4,7 @@ from functools import partial
 from qtpy import QtCore, QtWidgets
 
 from ..runtime.appdata import AppData
+from ..runtime import config
 from .AbstractWidget import AbstractWidget
 
 
@@ -14,9 +15,11 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
     reset_button_clicked = QtCore.Signal()
     object_selected = QtCore.Signal(int)
 
-    def __init__(self, rd: AppData, parent=None):
-        self.cfg = rd.config.control_panel
-        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
+    def __init__(self, rd: AppData, cfg: config.ControlPanel, parent=None):
+        super().__init__(cfg=cfg, parent=parent)
+
+        self.rd = rd
+        self.cfg = cfg
 
         self.setTitle('Control Panel')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)

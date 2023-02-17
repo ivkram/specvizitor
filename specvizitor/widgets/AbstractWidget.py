@@ -1,14 +1,11 @@
 from qtpy import QtWidgets
 
-from ..runtime.appdata import AppData
 from ..runtime import config
 from ..utils.widgets import get_widgets
 
 
 class AbstractWidget(QtWidgets.QWidget):
-    def __init__(self, rd: AppData, cfg: config.AbstractWidget, parent=None):
-        self.rd = rd
-
+    def __init__(self, cfg: config.AbstractWidget, parent=None):
         super().__init__(parent)
 
         if cfg.min_width:

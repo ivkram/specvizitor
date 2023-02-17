@@ -22,10 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 class Spec1D(ViewerElement):
-    def __init__(self, rd: AppData, name: str, parent=None):
+    def __init__(self, rd: AppData, cfg: config.Spectrum, name: str, parent=None):
+        super().__init__(rd=rd, cfg=cfg, name=name, parent=parent)
+
+        self.cfg = cfg
         self.name = name
-        self.cfg = rd.config.viewer.spectra[name]
-        super().__init__(rd=rd, name=name, cfg=self.cfg, parent=parent)
 
         # load the list of spectral lines
         # TODO: move to the application data

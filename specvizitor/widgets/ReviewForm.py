@@ -1,14 +1,17 @@
 from qtpy import QtWidgets
 
 from ..runtime.appdata import AppData
+from ..runtime import config
 from ..io.output import get_checkboxes
 from .AbstractWidget import AbstractWidget
 
 
 class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
-    def __init__(self, rd: AppData, parent=None):
-        self.cfg = rd.config.review_form
-        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
+    def __init__(self, rd: AppData, cfg: config.ReviewForm, parent=None):
+        super().__init__(cfg=cfg, parent=parent)
+
+        self.rd = rd
+        self.cfg = cfg
 
         self.setTitle('Review Form')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)

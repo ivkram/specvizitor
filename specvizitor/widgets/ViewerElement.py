@@ -15,11 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(AbstractWidget):
-    def __init__(self, rd: AppData, name: str, cfg: config.ViewerElement, parent=None):
-        self.name = name
-        self.cfg = cfg
+    def __init__(self, rd: AppData, cfg: config.ViewerElement, name: str, parent=None):
+        super().__init__(cfg=cfg, parent=parent)
 
-        super().__init__(rd=rd, cfg=cfg, parent=parent)
+        self.rd = rd
+        self.cfg = cfg
+        self.name = name
+
         self.layout.setContentsMargins(0, 0, 0, 0)
 
     @lazyproperty

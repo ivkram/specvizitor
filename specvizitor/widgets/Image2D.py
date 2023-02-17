@@ -17,9 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class Image2D(ViewerElement):
-    def __init__(self, rd: AppData, name: str, parent=None):
-        self.cfg = rd.config.viewer.images[name]
-        super().__init__(rd=rd, name=name, cfg=self.cfg, parent=parent)
+    def __init__(self, rd: AppData, cfg: config.Image, name: str, parent=None):
+        super().__init__(rd=rd, cfg=cfg, name=name, parent=parent)
+
+        self.cfg = cfg
+        self.name = name
 
         # add a label
         self._label = QtWidgets.QLabel()

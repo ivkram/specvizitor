@@ -172,19 +172,19 @@ class CentralWidget(QtWidgets.QWidget):
         self.setLayout(self.layout)
 
         # add a widget for the data viewer
-        self.data_viewer = DataViewer(self.rd, parent=self)
+        self.data_viewer = DataViewer(self.rd, cfg=self.rd.config.viewer, parent=self)
         self.layout.addWidget(self.data_viewer, 1, 1, 3, 1)
 
         # add a widget for the control panel
-        self.control_panel = ControlPanel(self.rd, parent=self)
+        self.control_panel = ControlPanel(self.rd, cfg=self.rd.config.control_panel, parent=self)
         self.layout.addWidget(self.control_panel, 1, 2, 1, 1)
 
         # add a widget for displaying information about the object
-        self.object_info = ObjectInfo(self.rd, parent=self)
+        self.object_info = ObjectInfo(self.rd, cfg=self.rd.config.object_info, parent=self)
         self.layout.addWidget(self.object_info, 2, 2, 1, 1)
 
         # add a widget for writing comments
-        self.review_form = ReviewForm(self.rd, parent=self)
+        self.review_form = ReviewForm(self.rd, cfg=self.rd.config.review_form, parent=self)
         self.layout.addWidget(self.review_form, 3, 2, 1, 1)
 
         # connect signals from the control panel to the slots of the central widget

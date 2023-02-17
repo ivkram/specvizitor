@@ -6,26 +6,26 @@ from .Image2D import Image2D
 from .Spec1D import Spec1D
 
 from ..runtime.appdata import AppData
+from ..runtime import config
 from ..utils.widgets import get_widgets
 
 
 class DataViewer(AbstractWidget):
-    def __init__(self, rd: AppData, parent=None):
-        self.cfg = rd.config.viewer
-        super().__init__(rd=rd, cfg=self.cfg, parent=parent)
+    def __init__(self, rd: AppData, cfg: config.Viewer, parent=None):
+        super().__init__(cfg=cfg, parent=parent)
 
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         # create widgets for images (image cutout, 2D spectrum, etc.)
         self.images = {}
-        for name in self.rd.config.viewer.images:
-            self.images[name] = Image2D(rd=self.rd, name=name, parent=self)
+        for name, image_cfg in cfg.images.items():
+            self.images[name] = Image2D(rd=rd, cfg=image_cfg, name=name, parent=self)
 
         # create widgets for 1D spectra
         self.spectra = {}
-        for name in self.rd.config.viewer.spectra:
-            self.spectra[name] = Spec1D(rd=self.rd, name=name, parent=self)
+        for name, spec_cfg in cfg.spectra.items():
+            self.spectra[name] = Spec1D(rd=rd, cfg=spec_cfg, name=name, parent=self)
 
         self.init_ui()
 
