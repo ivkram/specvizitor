@@ -47,10 +47,12 @@ class DataViewer(AbstractWidget):
 
         if all(x is not None for x in (self.spec_2d.cfg.link, self.spec_1d._data, self.spec_1d._data)):
             # set x-axis transformation for the 2D spectrum plot
-            xmin, xmax = self.spec_1d.default_xrange
-            qtransform = QtGui.QTransform((xmax - xmin) / self.spec_2d._hdu.header['NAXIS1'], 0, 0,
+            DLAM = self.spec_2d._hdu.header['DLAM']
+            CRVAL = self.spec_2d._hdu.header['CRVAL1'] * 1e4
+            CRPIX = self.spec_2d._hdu.header['CRPIX1']
+            qtransform = QtGui.QTransform(DLAM, 0, 0,
                                           0, 1, 0,
-                                          xmin, 0, 1)
+                                          CRVAL - DLAM * CRPIX, 0, 1)
             self.spec_2d._spec_2d.setTransform(qtransform)
 
             self.spec_2d._spec_2d_plot.setXLink(self.spec_2d.cfg.link)  # link the x-axis range
