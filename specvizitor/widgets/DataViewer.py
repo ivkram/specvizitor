@@ -17,21 +17,24 @@ class DataViewer(AbstractWidget):
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        # create a widget for the image cutout
-        self.image_cutout = Image2D(rd=self.rd, name='Image', parent=self)
+        # create widgets for images (image cutout, 2D spectrum, etc.)
+        self.images = {}
+        for name in self.rd.config.viewer.images:
+            self.images[name] = Image2D(rd=self.rd, name=name, parent=self)
 
-        # create a widget for the 2D spectrum
-        self.spec_2d = Image2D(rd=self.rd, name='Spectrum 2D', parent=self)
-
-        # create a widget for the 1D spectrum
-        self.spec_1d = Spec1D(rd=self.rd, name='Spectrum 1D', parent=self)
+        # create widgets for 1D spectra
+        self.spectra = {}
+        for name in self.rd.config.viewer.spectra:
+            self.spectra[name] = Spec1D(rd=self.rd, name=name, parent=self)
 
         self.init_ui()
 
     def init_ui(self):
-        self.layout.addWidget(self.image_cutout, 1, 1, 1, 1)
-        self.layout.addWidget(self.spec_2d, 2, 1, 1, 1)
-        self.layout.addWidget(self.spec_1d, 3, 1, 1, 1)
+        for i, image in enumerate(self.images.values()):
+            self.layout.addWidget(image, i + 1, 1, 1, 1)
+
+        for i, spectrum in enumerate(self.spectra.values()):
+            self.layout.addWidget(spectrum, i + len(self.images) + 1, 1, 1, 1)
 
     @property
     def widgets(self) -> list[ViewerElement]:
@@ -44,21 +47,23 @@ class DataViewer(AbstractWidget):
         for w in self.widgets:
             w.load_object()
 
-        DLAM = 1
-        if all(x is not None for x in (self.spec_2d.cfg.link, self.spec_1d._data, self.spec_1d._data)):
-            # set x-axis transformation for the 2D spectrum plot
-            DLAM = self.spec_2d._hdu.header['CD1_1'] * 1e4
-            CRVAL = self.spec_2d._hdu.header['CRVAL1'] * 1e4
-            CRPIX = self.spec_2d._hdu.header['CRPIX1']
-            qtransform = QtGui.QTransform(DLAM, 0, 0,
-                                          0, 1, 0,
-                                          CRVAL - DLAM * CRPIX, 0, 1)
-            self.spec_2d._image_2d.setTransform(qtransform)
+        # DLAM = 1
+        # if all(x is not None for x in (self.spec_2d.cfg.link, self.spec_1d._data, self.spec_1d._data)):
+        #     # set x-axis transformation for the 2D spectrum plot
+        #     DLAM = self.spec_2d._hdu.header['CD1_1'] * 1e4
+        #     CRVAL = self.spec_2d._hdu.header['CRVAL1'] * 1e4
+        #     CRPIX = self.spec_2d._hdu.header['CRPIX1']
+        #     qtransform = QtGui.QTransform(DLAM, 0, 0,
+        #                                   0, 1, 0,
+        #                                   CRVAL - DLAM * CRPIX, 0, 1)
+        #     self.spec_2d._image_2d.setTransform(qtransform)
+        #
+        #     self.spec_2d._image_2d_plot.setXLink(self.spec_2d.cfg.link)  # link the x-axis range
 
-            self.spec_2d._image_2d_plot.setXLink(self.spec_2d.cfg.link)  # link the x-axis range
+        # self.spec_2d._image_2d_plot.setAspectLocked(True, 1 / DLAM)
 
-        self.spec_2d._image_2d_plot.setAspectLocked(True, 1 / DLAM)
-        self.image_cutout._image_2d_plot.setAspectLocked(True)
+        for image in self.images.values():
+            image.image_2d_plot.setAspectLocked(True)
 
     def reset_view(self):
         for w in self.widgets:

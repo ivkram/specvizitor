@@ -31,11 +31,11 @@ class Image2D(ViewerElement):
         self._cmap = pg.colormap.get('viridis')
 
         # set up the image and the view box
-        self._image_2d_plot = self._image_2d_widget.addPlot(name=name)
+        self.image_2d_plot = self._image_2d_widget.addPlot(name=name)
 
         self._image_2d = pg.ImageItem(border='k')
         self._image_2d.setLookupTable(self._cmap.getLookupTable())
-        self._image_2d_plot.addItem(self._image_2d)
+        self.image_2d_plot.addItem(self._image_2d)
 
         # set up the color bar
         self._cbar = ColorLegendItem(imageItem=self._image_2d, showHistogram=True, histHeightPercentile=99.0)
@@ -70,7 +70,7 @@ class Image2D(ViewerElement):
         # TODO: allow to choose between min/max and zscale?
         self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
 
-        self._image_2d_plot.autoRange()
+        self.image_2d_plot.autoRange()
 
     def load_object(self):
         super().load_object()
