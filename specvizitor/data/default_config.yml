@@ -37,8 +37,9 @@ viewer:
 
   spec_2d:
     title: "Spectrum 2D"
-    link: "Spectrum 1D"
     search_mask: "*{}.stack.fits"
+    rotate: 270
+    link: "Spectrum 1D"
     min_height: 200
 
   spec_1d:

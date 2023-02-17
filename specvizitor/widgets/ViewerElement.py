@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 from astropy.utils import lazyproperty
 from astropy.io import fits
 
@@ -15,8 +16,9 @@ logger = logging.getLogger(__name__)
 
 class ViewerElement(AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ViewerElement, parent=None):
-        super().__init__(rd=rd, cfg=cfg, parent=parent)
+        self.cfg = cfg
 
+        super().__init__(rd=rd, cfg=cfg, parent=parent)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
     @lazyproperty
@@ -39,7 +41,16 @@ class ViewerElement(AbstractWidget):
 
     @lazyproperty
     def _data(self):
-        return self._hdu.data if self._hdu else None
+        if self._hdu is None:
+            return
+
+        data = self._hdu.data
+
+        # rotate the image
+        if self.cfg.rotate is not None:
+            data = np.rot90(data, k=self.cfg.rotate // 90)
+
+        return data
 
     def reset_view(self):
         pass

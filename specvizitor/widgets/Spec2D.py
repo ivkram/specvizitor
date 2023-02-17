@@ -46,17 +46,6 @@ class Spec2D(ViewerElement):
         self.layout.addWidget(self._label, 1, 1)
         self.layout.addWidget(self._spec_2d_widget, 2, 1)
 
-    @property
-    def _default_xrange(self):
-        return 30000, 40000
-
-    @lazyproperty
-    def _data(self):
-        data = super()._data
-        if data is not None:
-            return np.rot90(data)[::-1]
-        return
-
     def reset_view(self):
         if self._data is None:
             return

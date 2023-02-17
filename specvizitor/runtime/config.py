@@ -54,8 +54,9 @@ class ReviewForm(AbstractWidget):
 @dataclass
 class ViewerElement(AbstractWidget):
     title: str
-    link: str | None
     search_mask: str
+    rotate: int | None
+    link: str | None
 
 
 @dataclass
