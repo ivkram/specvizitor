@@ -26,8 +26,6 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
         # display information about the object
         self._labels = self.create_info_widgets(self.cfg.items.items())
 
-        self.init_ui()
-
     @staticmethod
     def create_info_widgets(items) -> dict[str, QtWidgets.QLabel]:
         if items is None:

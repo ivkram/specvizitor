@@ -22,8 +22,6 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         # create a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit()
 
-        self.init_ui()
-
     @staticmethod
     def create_checkbox_widgets(checkboxes: dict[str, str] | None) -> dict[str, QtWidgets.QCheckBox]:
         if checkboxes is None:

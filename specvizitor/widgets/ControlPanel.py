@@ -57,8 +57,6 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._index_field.setFixedWidth(self.cfg.button_width)
         self._index_field.returnPressed.connect(self.go_to_index)
 
-        self.init_ui()
-
     def create_pn_buttons(self) -> dict[str, QtWidgets.QPushButton]:
         pn_buttons_params = {'previous': {'shortcut': 'left'},
                              'next': {'shortcut': 'right'}}

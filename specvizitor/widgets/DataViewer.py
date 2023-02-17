@@ -27,14 +27,14 @@ class DataViewer(AbstractWidget):
         for name, spec_cfg in cfg.spectra.items():
             self.spectra[name] = Spec1D(rd=rd, cfg=spec_cfg, name=name, parent=self)
 
-        self.init_ui()
-
     def init_ui(self):
         for i, image in enumerate(self.images.values()):
             self.layout.addWidget(image, i + 1, 1, 1, 1)
+            image.init_ui()
 
         for i, spectrum in enumerate(self.spectra.values()):
             self.layout.addWidget(spectrum, i + len(self.images) + 1, 1, 1, 1)
+            spectrum.init_ui()
 
     @property
     def widgets(self) -> list[ViewerElement]:

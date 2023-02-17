@@ -43,8 +43,6 @@ class Image2D(ViewerElement):
         self._cbar = ColorLegendItem(imageItem=self._image_2d, showHistogram=True, histHeightPercentile=99.0)
         self._image_2d_widget.addItem(self._cbar, 0, 1)
 
-        self.init_ui()
-
     def init_ui(self):
         self.layout.addWidget(self._label, 1, 1)
         self.layout.addWidget(self._image_2d_widget, 2, 1)

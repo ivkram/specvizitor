@@ -63,8 +63,6 @@ class Spec1D(ViewerElement):
 
             self._line_artists[line_name] = {'line': line, 'label': label}
 
-        self.init_ui()
-
     def init_ui(self):
         self.layout.addWidget(self._label, 1, 1)
         self.layout.addWidget(self._spec_1d_widget, 2, 1, 1, 3)

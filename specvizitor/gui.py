@@ -41,6 +41,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget = CentralWidget(self.rd, parent=self)
         self.project_loaded.connect(self.central_widget.activate)
         self.setCentralWidget(self.central_widget)
+        self.central_widget.init_ui()
 
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
@@ -197,6 +198,10 @@ class CentralWidget(QtWidgets.QWidget):
         @return: a list of widgets added to the central widget.
         """
         return get_widgets(self.layout)
+
+    def init_ui(self):
+        for widget in self.widgets:
+            widget.init_ui()
 
     @Slot(int)
     def load_object(self, j: int):
