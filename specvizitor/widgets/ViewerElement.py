@@ -1,6 +1,6 @@
 import logging
+import abc
 
-import numpy as np
 from astropy.utils import lazyproperty
 from astropy.io import fits
 
@@ -14,7 +14,7 @@ from ..io.viewer_data import get_filename
 logger = logging.getLogger(__name__)
 
 
-class ViewerElement(AbstractWidget):
+class ViewerElement(AbstractWidget, abc.ABC):
     def __init__(self, rd: AppData, cfg: config.ViewerElement, name: str, parent=None):
         super().__init__(cfg=cfg, parent=parent)
 
@@ -46,6 +46,7 @@ class ViewerElement(AbstractWidget):
     def _data(self):
         return self._hdu.data if self._hdu is not None else None
 
+    @abc.abstractmethod
     def reset_view(self):
         pass
 
