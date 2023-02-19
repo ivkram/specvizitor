@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LocalFile:
     directory: str
-    filename: str = "specvizitor.yml"
+    filename: str = f"{__package__.split('.')[0]}.yml"
     signature: str = "Local file"
 
     @property
