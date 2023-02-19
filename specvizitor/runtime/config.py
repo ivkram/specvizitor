@@ -91,7 +91,3 @@ class Config(Params):
     object_info: ObjectInfo
     review_form: ReviewForm
     viewer: Viewer
-
-    @classmethod
-    def read(cls, file: LocalFile, path_to_default: str | None = None):
-        return super().read(file, path_to_default='default_config.yml')
