@@ -91,3 +91,4 @@ class Config(Params):
     object_info: ObjectInfo
     review_form: ReviewForm
     viewer: Viewer
+    plugins: list[str]

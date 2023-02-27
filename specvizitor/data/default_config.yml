@@ -39,7 +39,6 @@ viewer:
     Spectrum 2D:
       search_mask: "*{}.stack.fits"
       rotate: 270
-      link: "Spectrum 1D"
       min_height: 200
 
   spectra:
@@ -51,3 +50,6 @@ viewer:
         max_value: 10
         step: 0.000001
         default_value: 5  # overwritten if the input catalogue contains a column with redshifts
+
+plugins:
+  - grizli

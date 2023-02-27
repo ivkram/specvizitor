@@ -173,7 +173,7 @@ class CentralWidget(QtWidgets.QWidget):
         self.setLayout(self.layout)
 
         # add a widget for the data viewer
-        self.data_viewer = DataViewer(self.rd, cfg=self.rd.config.viewer, parent=self)
+        self.data_viewer = DataViewer(self.rd, cfg=self.rd.config.viewer, plugins=self.rd.config.plugins, parent=self)
         self.layout.addWidget(self.data_viewer, 1, 1, 3, 1)
 
         # add a widget for the control panel

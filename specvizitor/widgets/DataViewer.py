@@ -1,4 +1,4 @@
-from qtpy import QtGui
+import importlib
 
 from .AbstractWidget import AbstractWidget
 from .ViewerElement import ViewerElement
@@ -11,8 +11,13 @@ from ..utils.widgets import get_widgets
 
 
 class DataViewer(AbstractWidget):
-    def __init__(self, rd: AppData, cfg: config.Viewer, parent=None):
+    def __init__(self, rd: AppData, cfg: config.Viewer, plugins=None, parent=None):
         super().__init__(cfg=cfg, parent=parent)
+
+        if plugins is not None:
+            self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin() for plugin_name in plugins]
+        else:
+            self._plugins = []
 
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -47,23 +52,8 @@ class DataViewer(AbstractWidget):
         for w in self.widgets:
             w.load_object()
 
-        # DLAM = 1
-        # if all(x is not None for x in (self.spec_2d.cfg.link, self.spec_1d._data, self.spec_1d._data)):
-        #     # set x-axis transformation for the 2D spectrum plot
-        #     DLAM = self.spec_2d._hdu.header['CD1_1'] * 1e4
-        #     CRVAL = self.spec_2d._hdu.header['CRVAL1'] * 1e4
-        #     CRPIX = self.spec_2d._hdu.header['CRPIX1']
-        #     qtransform = QtGui.QTransform(DLAM, 0, 0,
-        #                                   0, 1, 0,
-        #                                   CRVAL - DLAM * CRPIX, 0, 1)
-        #     self.spec_2d._image_2d.setTransform(qtransform)
-        #
-        #     self.spec_2d._image_2d_plot.setXLink(self.spec_2d.cfg.link)  # link the x-axis range
-
-        # self.spec_2d._image_2d_plot.setAspectLocked(True, 1 / DLAM)
-
-        for image in self.images.values():
-            image.image_2d_plot.setAspectLocked(True)
+        for plugin in self._plugins:
+            plugin.link({w.name: w for w in self.widgets})
 
     def reset_view(self):
         for w in self.widgets:
