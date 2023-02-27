@@ -29,14 +29,15 @@ def get_filename(directory, search_mask: str, object_id) -> pathlib.Path | None:
 
 
 # TODO: create a FilenameParser class
-def get_grizli_id(filename) -> str | None:
+def get_grizli_id(filename) -> int | None:
     """ Parse a file name to get the object ID. The file must be one of the grizli fit products.
     @param filename: the file name to parse
     @return: the object ID
     """
 
     try:
-        return pathlib.Path(filename).name.split('_')[1].split('.')[0]
-    except IndexError:
+        return int(pathlib.Path(filename).name.split('_')[1].split('.')[0])
+    except (IndexError, ValueError):
+        # commented out because might be called too many times
         # logger.error('Failed to parse the file name `{}`'.format(filename))
         return
