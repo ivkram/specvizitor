@@ -191,6 +191,7 @@ class CentralWidget(QtWidgets.QWidget):
         # connect signals from the control panel to the slots of the central widget
         self.control_panel.object_selected.connect(self.load_object)
         self.control_panel.reset_button_clicked.connect(self.data_viewer.reset_view)
+        self.control_panel.screenshot_button_clicked.connect(self.data_viewer.take_screenshot)
 
     @property
     def widgets(self) -> list[AbstractWidget]:

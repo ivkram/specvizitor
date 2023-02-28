@@ -2,6 +2,7 @@ import logging
 import pathlib
 from functools import partial
 
+import qtpy
 from qtpy import QtGui, QtCore, QtWidgets
 
 from ..runtime.appdata import AppData
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
     reset_button_clicked = QtCore.Signal()
+    screenshot_button_clicked = QtCore.Signal(str)
     object_selected = QtCore.Signal(int)
 
     def __init__(self, rd: AppData, cfg: config.ControlPanel, parent=None):
@@ -43,6 +45,12 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon()))
         self._star_button.setToolTip('Star the object')
         self._star_button.clicked.connect(self.star)
+
+        # create a `screenshot` button
+        self._screenshot_button = QtWidgets.QPushButton()
+        self._screenshot_button.setIcon(QtGui.QIcon(get_icon_abs_path('screenshot.svg')))
+        self._screenshot_button.setToolTip('Take a screenshot')
+        self._screenshot_button.clicked.connect(self.screenshot)
 
         # create a `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton()
@@ -88,6 +96,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.layout.addWidget(self._pn_buttons['previous'], 2, 1, 1, 1)
         self.layout.addWidget(self._pn_buttons['next'], 2, 2, 1, 1)
         self.layout.addWidget(self._star_button, 2, 3, 1, 1)
+        self.layout.addWidget(self._screenshot_button, 2, 4, 1, 1)
 
         self.layout.addWidget(self._go_to_id_button, 3, 1, 1, 2)
         self.layout.addWidget(self._id_field, 3, 3, 1, 2)
@@ -121,6 +130,15 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
 
         self.rd.df.at[self.rd.id, 'starred'] = starred
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(starred)))
+
+    def screenshot(self):
+        path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
+                                                      basedir=str(pathlib.Path().resolve() /
+                                                                  f'specvizitor_ID{self.rd.id}.png'),
+                                                      filters='Images (*.png)')
+
+        if path:
+            self.screenshot_button_clicked.emit(path)
 
     def go_to_id(self):
         text = self._id_field.text()

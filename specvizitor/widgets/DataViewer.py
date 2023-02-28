@@ -58,3 +58,6 @@ class DataViewer(AbstractWidget):
     def reset_view(self):
         for w in self.widgets:
             w.reset_view()
+
+    def take_screenshot(self, filename: str):
+        self.grab().save(filename)
