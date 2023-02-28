@@ -41,6 +41,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         # create a `starred` button
         self._star_button = QtWidgets.QPushButton()
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon()))
+        self._star_button.setToolTip('Star the object')
         self._star_button.clicked.connect(self.star)
 
         # create a `Go to ID` button
