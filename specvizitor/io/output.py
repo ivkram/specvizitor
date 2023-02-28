@@ -37,8 +37,7 @@ def read(filename: str | pathlib.Path) -> pd.DataFrame:
     df['comment'] = '' if 'comment' not in df.columns else df['comment'].fillna('')
 
     # reordering the columns
-    default_columns = ['starred', 'comment']
-    df = df[default_columns + [cname for cname in df.columns if cname not in default_columns]]
+    df = df[default_columns() + get_custom_columns(df)]
 
     return df
 
@@ -53,6 +52,14 @@ def save(df: pd.DataFrame, filename: str | pathlib.Path):
     df.to_csv(filename, index_label='id')
 
 
+def default_columns() -> list[str]:
+    return ['starred', 'comment']
+
+
+def get_custom_columns(df: pd.DataFrame) -> list[str]:
+    return [cname for cname in df.columns if cname not in default_columns()]
+
+
 def get_checkboxes(df: pd.DataFrame, configured_checkboxes: dict[str, str] | None = None) -> dict[str, str]:
     """ Get checkboxes from the dataframe. By default, each checkbox is automatically assigned a label to be displayed
     in the GUI by a simple capitalization of the column name, e.g. a checkbox named `extended` will get a label
@@ -62,13 +69,13 @@ def get_checkboxes(df: pd.DataFrame, configured_checkboxes: dict[str, str] | Non
     @return: the checkboxes parsed from the dataframe
     """
 
-    if configured_checkboxes is None:
-        checkboxes = {}
-    else:
-        checkboxes = {key: value for key, value in configured_checkboxes.items() if key in df.columns}
+    checkboxes = {}
 
-    for cname in df.columns:
-        if pd.api.types.is_bool_dtype(df[cname]) and cname not in checkboxes.keys():
+    for cname in get_custom_columns(df):
+        if pd.api.types.is_bool_dtype(df[cname]):
             checkboxes[cname] = cname.capitalize()
+
+    if configured_checkboxes is not None:
+        checkboxes.update({key: value for key, value in configured_checkboxes.items() if key in get_custom_columns(df)})
 
     return checkboxes
