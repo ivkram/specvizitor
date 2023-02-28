@@ -64,15 +64,14 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._index_field.returnPressed.connect(self.go_to_index)
 
     def create_pn_buttons(self) -> dict[str, QtWidgets.QPushButton]:
-        pn_buttons_params = {'previous': {'shortcut': 'left'},
-                             'next': {'shortcut': 'right'}}
+        pn_buttons_params = {'previous': {'shortcut': 'left', 'icon': QtWidgets.QStyle.SP_ArrowBack},
+                             'next': {'shortcut': 'right', 'icon': QtWidgets.QStyle.SP_ArrowForward}}
 
         pn_buttons = {}
         for pn_text, pn_properties in pn_buttons_params.items():
             button = QtWidgets.QPushButton('')
-            # button.setIcon(QtGui.QIcon(pn_text + '.png'))
             button.setToolTip('Look at the {} object'.format(pn_text))
-            button.setText(pn_text)
+            button.setIcon(self.style().standardIcon(pn_properties['icon']))
             # button.setFixedWidth(self.cfg.button_width)
             button.clicked.connect(partial(self.previous_next_object, pn_text))
             button.setShortcut(pn_properties['shortcut'])
