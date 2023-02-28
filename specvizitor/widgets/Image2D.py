@@ -47,7 +47,7 @@ class Image2D(ViewerElement):
         self.image_2d_plot.setAspectLocked(True)
 
     def init_ui(self):
-        self.layout.addWidget(self._label, 1, 1)
+        # self.layout.addWidget(self._label, 1, 1)
         self.layout.addWidget(self._image_2d_widget, 2, 1)
 
     @lazyproperty

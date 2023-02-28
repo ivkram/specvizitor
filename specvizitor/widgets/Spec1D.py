@@ -64,7 +64,7 @@ class Spec1D(ViewerElement):
             self._line_artists[line_name] = {'line': line, 'label': label}
 
     def init_ui(self):
-        self.layout.addWidget(self._label, 1, 1)
+        # self.layout.addWidget(self._label, 1, 1)
         self.layout.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
         self.layout.addWidget(self._z_slider, 3, 1, 1, 1)
         self.layout.addWidget(QtWidgets.QLabel('z = ', self), 3, 2, 1, 1)
