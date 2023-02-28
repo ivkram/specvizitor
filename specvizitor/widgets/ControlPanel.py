@@ -2,6 +2,8 @@ import logging
 import pathlib
 from functools import partial
 
+import numpy as np
+
 import qtpy
 from qtpy import QtGui, QtCore, QtWidgets
 
@@ -73,17 +75,22 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._index_field.returnPressed.connect(self.go_to_index)
 
     def create_pn_buttons(self) -> dict[str, QtWidgets.QPushButton]:
-        pn_buttons_params = {'previous': {'shortcut': 'left', 'icon': QtWidgets.QStyle.SP_ArrowBack},
-                             'next': {'shortcut': 'right', 'icon': QtWidgets.QStyle.SP_ArrowForward}}
+        pn_buttons_params = {'previous': {'shortcut': 'left', 'icon': 'arrow-backward'},
+                             'next': {'shortcut': 'right', 'icon': 'arrow-forward'},
+                             'previous starred': {'icon': 'arrow-backward-starred'},
+                             'next starred': {'icon': 'arrow-forward-starred'}
+                             }
 
         pn_buttons = {}
         for pn_text, pn_properties in pn_buttons_params.items():
             button = QtWidgets.QPushButton('')
             button.setToolTip('Look at the {} object'.format(pn_text))
-            button.setIcon(self.style().standardIcon(pn_properties['icon']))
-            # button.setFixedWidth(self.cfg.button_width)
-            button.clicked.connect(partial(self.previous_next_object, pn_text))
-            button.setShortcut(pn_properties['shortcut'])
+            button.setIcon(QtGui.QIcon(get_icon_abs_path(pn_properties['icon'])))
+
+            button.clicked.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
+
+            if pn_properties.get('shortcut'):
+                button.setShortcut(pn_properties['shortcut'])
 
             pn_buttons[pn_text] = button
 
@@ -98,27 +105,43 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.layout.addWidget(self._star_button, 2, 3, 1, 1)
         self.layout.addWidget(self._screenshot_button, 2, 4, 1, 1)
 
-        self.layout.addWidget(self._go_to_id_button, 3, 1, 1, 2)
-        self.layout.addWidget(self._id_field, 3, 3, 1, 2)
-        self.layout.addWidget(self._go_to_index_button, 4, 1, 1, 2)
-        self.layout.addWidget(self._index_field, 4, 3, 1, 2)
+        self.layout.addWidget(self._pn_buttons['previous starred'], 3, 1, 1, 1)
+        self.layout.addWidget(self._pn_buttons['next starred'], 3, 2, 1, 1)
+
+        self.layout.addWidget(self._go_to_id_button, 4, 1, 1, 2)
+        self.layout.addWidget(self._id_field, 4, 3, 1, 2)
+        self.layout.addWidget(self._go_to_index_button, 5, 1, 1, 2)
+        self.layout.addWidget(self._index_field, 5, 3, 1, 2)
 
     def load_object(self):
         self._reset_button.setText('ID {}'.format(self.rd.id))
         self._number_of_obj_label.setText('(#{} / {})'.format(self.rd.j + 1, self.rd.n_objects))
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(self.rd.df.at[self.rd.id, 'starred'])))
 
-    def previous_next_object(self, command: str):
-        j_upd = self.rd.j
+    def previous_next_object(self, command: str, starred: bool):
+        j_upd = self.update_index(self.rd.j, self.rd.n_objects, command)
+
+        if starred:
+            if np.sum(self.rd.df['starred']) > 0:
+                while not self.rd.df.iat[j_upd, self.rd.df.columns.get_loc('starred')]:
+                    j_upd = self.update_index(j_upd, self.rd.n_objects, command)
+            else:
+                return
+
+        self.object_selected.emit(j_upd)
+
+    @staticmethod
+    def update_index(current_index, n_objects, command: str):
+        j_upd = current_index
 
         if command == 'next':
             j_upd += 1
         elif command == 'previous':
             j_upd -= 1
 
-        j_upd = j_upd % self.rd.n_objects
+        j_upd = j_upd % n_objects
 
-        self.object_selected.emit(j_upd)
+        return j_upd
 
     @staticmethod
     def get_star_icon(starred=False):
