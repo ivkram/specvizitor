@@ -16,7 +16,7 @@ gui:
   antialiasing: False
 
 control_panel:
-  button_width: 120
+  button_width: 130
 
 object_info:
   items:

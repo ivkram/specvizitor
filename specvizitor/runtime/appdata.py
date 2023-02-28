@@ -65,11 +65,7 @@ class AppData:
             logger.error("Failed to read the inspection file: the file path is not specified")
             return
 
-        # TODO: validate the input
-        df = pd.read_csv(self.output_path, index_col='id')
-        df['comment'] = df['comment'].fillna('')
-
-        self.df = df
+        self.df = output.read(self.output_path)
 
         if self.cat is None:
             # load the catalogue

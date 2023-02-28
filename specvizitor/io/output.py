@@ -13,11 +13,32 @@ def create(ids, checkboxes: dict[str, str] | None) -> pd.DataFrame:
     """
 
     df = pd.DataFrame(index=ids).sort_index()
+    df['starred'] = False
     df['comment'] = ''
 
     if checkboxes is not None:
         for i, cname in enumerate(checkboxes.keys()):
             df[cname] = False
+
+    return df
+
+
+def read(filename: str | pathlib.Path) -> pd.DataFrame:
+    """ Read an existing inspection file
+    @param filename: the inspection file filename
+    @return: the dataframe
+    """
+    # TODO: validate the input
+    df = pd.read_csv(filename, index_col='id')
+
+    if 'starred' not in df.columns:
+        df['starred'] = False
+
+    df['comment'] = '' if 'comment' not in df.columns else df['comment'].fillna('')
+
+    # reordering the columns
+    default_columns = ['starred', 'comment']
+    df = df[default_columns + [cname for cname in df.columns if cname not in default_columns]]
 
     return df
 

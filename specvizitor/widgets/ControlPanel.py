@@ -1,7 +1,8 @@
 import logging
+import pathlib
 from functools import partial
 
-from qtpy import QtCore, QtWidgets
+from qtpy import QtGui, QtCore, QtWidgets
 
 from ..runtime.appdata import AppData
 from ..runtime import config
@@ -37,6 +38,11 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         # create buttons for switching to the next or previous object
         self._pn_buttons = self.create_pn_buttons()
 
+        # create a `starred` button
+        self._star_button = QtWidgets.QPushButton()
+        self._star_button.setIcon(QtGui.QIcon(self.get_star_icon()))
+        self._star_button.clicked.connect(self.star)
+
         # create a `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton()
         self._go_to_id_button.setText('Go to ID')
@@ -67,7 +73,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
             # button.setIcon(QtGui.QIcon(pn_text + '.png'))
             button.setToolTip('Look at the {} object'.format(pn_text))
             button.setText(pn_text)
-            button.setFixedWidth(self.cfg.button_width)
+            # button.setFixedWidth(self.cfg.button_width)
             button.clicked.connect(partial(self.previous_next_object, pn_text))
             button.setShortcut(pn_properties['shortcut'])
 
@@ -76,20 +82,22 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         return pn_buttons
 
     def init_ui(self):
-        self.layout.addWidget(self._reset_button, 1, 1, 1, 1)
-        self.layout.addWidget(self._number_of_obj_label, 1, 2, 1, 1)
+        self.layout.addWidget(self._reset_button, 1, 1, 1, 2)
+        self.layout.addWidget(self._number_of_obj_label, 1, 3, 1, 2)
 
         self.layout.addWidget(self._pn_buttons['previous'], 2, 1, 1, 1)
         self.layout.addWidget(self._pn_buttons['next'], 2, 2, 1, 1)
+        self.layout.addWidget(self._star_button, 2, 3, 1, 1)
 
-        self.layout.addWidget(self._go_to_id_button, 3, 1, 1, 1)
-        self.layout.addWidget(self._id_field, 3, 2, 1, 1)
-        self.layout.addWidget(self._go_to_index_button, 4, 1, 1, 1)
-        self.layout.addWidget(self._index_field, 4, 2, 1, 1)
+        self.layout.addWidget(self._go_to_id_button, 3, 1, 1, 2)
+        self.layout.addWidget(self._id_field, 3, 3, 1, 2)
+        self.layout.addWidget(self._go_to_index_button, 4, 1, 1, 2)
+        self.layout.addWidget(self._index_field, 4, 3, 1, 2)
 
     def load_object(self):
         self._reset_button.setText('ID {}'.format(self.rd.id))
         self._number_of_obj_label.setText('(#{} / {})'.format(self.rd.j + 1, self.rd.n_objects))
+        self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(self.rd.df.at[self.rd.id, 'starred'])))
 
     def previous_next_object(self, command: str):
         j_upd = self.rd.j
@@ -102,6 +110,17 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         j_upd = j_upd % self.rd.n_objects
 
         self.object_selected.emit(j_upd)
+
+    @staticmethod
+    def get_star_icon(starred=False):
+        icon_name = 'star.svg' if starred else 'star-empty.svg'
+        return get_icon_abs_path(icon_name)
+
+    def star(self):
+        starred = not self.rd.df.at[self.rd.id, 'starred']
+
+        self.rd.df.at[self.rd.id, 'starred'] = starred
+        self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(starred)))
 
     def go_to_id(self):
         text = self._id_field.text()
@@ -134,3 +153,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         else:
             logger.error('Index out of range')
             return
+
+
+def get_icon_abs_path(icon_name: str) -> str:
+    return str(pathlib.Path(__file__).parent.parent / 'data' / 'icons' / icon_name)
