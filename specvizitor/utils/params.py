@@ -20,8 +20,7 @@ class LocalFile:
         return pathlib.Path(self.directory) / self.filename
 
     def save(self, data: dict):
-        if not self.path.parent.exists():
-            self.path.parent.mkdir()
+        self.path.parent.mkdir(parents=True, exist_ok=True)
 
         if self.path.exists():
             msg = "{} updated (path: {})".format(self.signature, self.path)
