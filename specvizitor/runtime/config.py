@@ -54,7 +54,6 @@ class ReviewForm(AbstractWidget):
 @dataclass
 class ViewerElement(AbstractWidget):
     search_mask: str
-    link: str | None
 
 
 @dataclass
