@@ -55,6 +55,8 @@ class ReviewForm(AbstractWidget):
 @dataclass
 class ViewerElement(AbstractWidget):
     filename_pattern: str
+    ext_name: str | None
+    ext_ver: str | None
     position: str | None
     relative_to: str | None
 

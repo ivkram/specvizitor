@@ -37,6 +37,8 @@ viewer:
 
     Spectrum 2D:
       filename_pattern: "stack.fits"
+      ext_name: "SCI"
+      ext_ver: "F444W"
       rotate: 270
 
   spectra:

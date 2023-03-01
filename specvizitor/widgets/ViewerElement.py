@@ -40,7 +40,14 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     @lazyproperty
     def _hdu(self):
-        return self._hdul[1] if self._hdul else None
+        if self._hdul is None:
+            return
+        elif self.cfg.ext_name is not None and self.cfg.ext_ver is None:
+            return self._hdul[self.cfg.ext_name]
+        elif self.cfg.ext_name is not None and self.cfg.ext_ver is not None:
+            return self._hdul[self.cfg.ext_name, self.cfg.ext_ver]
+        else:
+            return self._hdul[1]
 
     @lazyproperty
     def _data(self):
