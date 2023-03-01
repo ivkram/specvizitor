@@ -29,12 +29,12 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.setTitle('Control Panel')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
-        # create a reset button
-        self._reset_button = QtWidgets.QPushButton()
-        self._reset_button.setText('ID --')
-        self._reset_button.setToolTip('Reset the view')
-        self._reset_button.setFixedWidth(self.cfg.button_width)
-        self._reset_button.clicked.connect(self.reset_button_clicked.emit)
+        # create the ID button
+        self._id_button = QtWidgets.QPushButton()
+        self._id_button.setText('ID --')
+        self._id_button.setToolTip('Reset the view')
+        self._id_button.setFixedWidth(self.cfg.button_width)
+        self._id_button.clicked.connect(self.reset_button_clicked.emit)
 
         # create a widget displaying the index of the current object and the total number of objects in the catalogue
         self._number_of_obj_label = QtWidgets.QLabel()
@@ -42,19 +42,30 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         # create buttons for switching to the next or previous object
         self._pn_buttons = self.create_pn_buttons()
 
-        # create a `starred` button
+        # create the `starred` button
         self._star_button = QtWidgets.QPushButton()
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon()))
         self._star_button.setToolTip('Star the object')
         self._star_button.clicked.connect(self.star)
 
-        # create a `screenshot` button
+        # create the `screenshot` button
         self._screenshot_button = QtWidgets.QPushButton()
         self._screenshot_button.setIcon(QtGui.QIcon(get_icon_abs_path('screenshot.svg')))
         self._screenshot_button.setToolTip('Take a screenshot')
         self._screenshot_button.clicked.connect(self.screenshot)
 
-        # create a `Go to ID` button
+        # create the `reset view` button
+        self._reset_view_button = QtWidgets.QPushButton()
+        self._reset_view_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-view.svg')))
+        self._reset_view_button.setToolTip('Reset the view')
+        self._reset_view_button.clicked.connect(self.reset_button_clicked.emit)
+
+        # create a `dark mode` button
+        self._dark_mode = QtWidgets.QPushButton()
+        self._dark_mode.setIcon(QtGui.QIcon(get_icon_abs_path('dark-mode.svg')))
+        self._dark_mode.setToolTip('Turn on dark theme')
+
+        # create the `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton()
         self._go_to_id_button.setText('Go to ID')
         self._go_to_id_button.setFixedWidth(self.cfg.button_width)
@@ -64,7 +75,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._id_field.setFixedWidth(self.cfg.button_width)
         self._id_field.returnPressed.connect(self.go_to_id)
 
-        # create a `Go to index` button
+        # create the `Go to index` button
         self._go_to_index_button = QtWidgets.QPushButton()
         self._go_to_index_button.setText('Go to #')
         self._go_to_index_button.setFixedWidth(self.cfg.button_width)
@@ -97,16 +108,18 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         return pn_buttons
 
     def init_ui(self):
-        self.layout.addWidget(self._reset_button, 1, 1, 1, 2)
+        self.layout.addWidget(self._id_button, 1, 1, 1, 2)
         self.layout.addWidget(self._number_of_obj_label, 1, 3, 1, 2)
 
         self.layout.addWidget(self._pn_buttons['previous'], 2, 1, 1, 1)
         self.layout.addWidget(self._pn_buttons['next'], 2, 2, 1, 1)
         self.layout.addWidget(self._star_button, 2, 3, 1, 1)
-        self.layout.addWidget(self._screenshot_button, 2, 4, 1, 1)
+        self.layout.addWidget(self._dark_mode, 2, 4, 1, 1)
 
         self.layout.addWidget(self._pn_buttons['previous starred'], 3, 1, 1, 1)
         self.layout.addWidget(self._pn_buttons['next starred'], 3, 2, 1, 1)
+        self.layout.addWidget(self._reset_view_button, 3, 3, 1, 1)
+        self.layout.addWidget(self._screenshot_button, 3, 4, 1, 1)
 
         self.layout.addWidget(self._go_to_id_button, 4, 1, 1, 2)
         self.layout.addWidget(self._id_field, 4, 3, 1, 2)
@@ -114,12 +127,13 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.layout.addWidget(self._index_field, 5, 3, 1, 2)
 
     def load_object(self):
-        self._reset_button.setText('ID {}'.format(self.rd.id))
+        self._id_button.setText('ID {}'.format(self.rd.id))
         self._number_of_obj_label.setText('(#{} / {})'.format(self.rd.j + 1, self.rd.n_objects))
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(self.rd.df.at[self.rd.id, 'starred'])))
 
         self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
         self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
+        self._dark_mode.setEnabled(False)
 
     def previous_next_object(self, command: str, starred: bool):
         j_upd = self.update_index(self.rd.j, self.rd.n_objects, command)
