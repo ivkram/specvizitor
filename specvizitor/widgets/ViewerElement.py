@@ -29,7 +29,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         return get_filename(self.rd.config.loader.data.dir, self.cfg.filename_pattern, self.rd.id)
 
     @lazyproperty
-    def _hdul(self):
+    def hdul(self):
         try:
             hdul = fits.open(self.filename)
         except ValueError:
@@ -39,19 +39,19 @@ class ViewerElement(AbstractWidget, abc.ABC):
             return hdul
 
     @lazyproperty
-    def _hdu(self):
-        if self._hdul is None:
+    def hdu(self):
+        if self.hdul is None:
             return
         elif self.cfg.ext_name is not None and self.cfg.ext_ver is None:
-            return self._hdul[self.cfg.ext_name]
+            return self.hdul[self.cfg.ext_name]
         elif self.cfg.ext_name is not None and self.cfg.ext_ver is not None:
-            return self._hdul[self.cfg.ext_name, self.cfg.ext_ver]
+            return self.hdul[self.cfg.ext_name, self.cfg.ext_ver]
         else:
-            return self._hdul[1]
+            return self.hdul[1]
 
     @lazyproperty
-    def _data(self):
-        return self._hdu.data if self._hdu is not None else None
+    def data(self):
+        return self.hdu.data if self.hdu is not None else None
 
     @abc.abstractmethod
     def reset_view(self):
@@ -59,6 +59,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     def load_object(self):
         del self.filename
-        del self._hdul
-        del self._hdu
-        del self._data
+        del self.hdul
+        del self.hdu
+        del self.data

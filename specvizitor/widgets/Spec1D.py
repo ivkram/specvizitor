@@ -72,11 +72,11 @@ class Spec1D(ViewerElement):
 
     @lazyproperty
     def default_xrange(self):
-        return np.nanmin(self._data['wave']), np.nanmax(self._data['wave'])
+        return np.nanmin(self.data['wave']), np.nanmax(self.data['wave'])
 
     @lazyproperty
     def default_yrange(self):
-        return np.nanmin(self._data['flux']), np.nanmax(self._data['flux'])
+        return np.nanmin(self.data['flux']), np.nanmax(self.data['flux'])
 
     @lazyproperty
     def _label_height(self):
@@ -84,14 +84,14 @@ class Spec1D(ViewerElement):
         return y_min + 0.6 * (y_max - y_min)
 
     def _plot(self):
-        self._spec_1d.plot(self._data['wave'], self._data['flux'], pen='k')
-        self._spec_1d.plot(self._data['wave'], self._data['err'], pen='r')
+        self._spec_1d.plot(self.data['wave'], self.data['flux'], pen='k')
+        self._spec_1d.plot(self.data['wave'], self.data['err'], pen='r')
 
         for line_name, line_artist in self._line_artists.items():
             self._spec_1d.addItem(line_artist['line'], ignoreBounds=True)
             self._spec_1d.addItem(line_artist['label'])
 
-        self._spec_1d.setLabel('bottom', self._hdu.header['TUNIT1'], **self._label_style)
+        self._spec_1d.setLabel('bottom', self.hdu.header['TUNIT1'], **self._label_style)
         # self._spec_1d.setLabel('left', self._hdu.header['TUNIT2'], **self._label_style)
 
     def _update_view(self):
@@ -116,7 +116,7 @@ class Spec1D(ViewerElement):
         self._update_from_slider()
 
     def reset_view(self):
-        if self._data is None:
+        if self.data is None:
             return
 
         self._z_slider.reset()
@@ -133,7 +133,7 @@ class Spec1D(ViewerElement):
         del self._label_height
 
         self._spec_1d.clear()
-        if self._data is not None:
+        if self.data is not None:
             self.setEnabled(True)
 
             self._label.setText("{}: {}".format(self.name, self.filename.name))

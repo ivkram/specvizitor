@@ -87,12 +87,23 @@ class DataViewer(AbstractWidget):
 
             # update the titles of the docks
             if w.filename is not None:
-                self.docks[name].setTitle(str(w.filename.name))
+                self.docks[name].setTitle(self.dock_title(w=w))
             else:
                 self.docks[name].setTitle(name)
 
         for plugin in self._plugins:
             plugin.link(self.dock_widgets)
+
+    @staticmethod
+    def dock_title(w: ViewerElement) -> str:
+        if w.cfg.ext_name is not None and w.cfg.ext_ver is None:
+            return f"{w.filename.name} [{w.cfg.ext_name}]"
+        elif w.cfg.ext_name is not None and w.cfg.ext_ver is not None:
+            return f"{w.filename.name} [{w.cfg.ext_name}, {w.cfg.ext_ver}]"
+        elif len(w.hdul) > 2:
+            return f"{w.filename.name} [HDU #1]"
+        else:
+            return w.filename.name
 
     def reset_view(self):
         for w in self.dock_widgets.values():

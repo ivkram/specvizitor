@@ -35,12 +35,12 @@ class Image2D(ViewerElement):
         # set up the image and the view box
         self.image_2d_plot = self._image_2d_widget.addPlot(name=name)
 
-        self._image_2d = pg.ImageItem(border='k')
-        self._image_2d.setLookupTable(self._cmap.getLookupTable())
-        self.image_2d_plot.addItem(self._image_2d)
+        self.image_2d = pg.ImageItem(border='k')
+        self.image_2d.setLookupTable(self._cmap.getLookupTable())
+        self.image_2d_plot.addItem(self.image_2d)
 
         # set up the color bar
-        self._cbar = ColorLegendItem(imageItem=self._image_2d, showHistogram=True, histHeightPercentile=99.0)
+        self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
         self._image_2d_widget.addItem(self._cbar, 0, 1)
 
         # lock the aspect ratio
@@ -51,8 +51,8 @@ class Image2D(ViewerElement):
         self.layout.addWidget(self._image_2d_widget, 2, 1)
 
     @lazyproperty
-    def _data(self):
-        data = super()._data
+    def data(self):
+        data = super().data
         if data is None:
             return
 
@@ -67,26 +67,26 @@ class Image2D(ViewerElement):
         return data
 
     def reset_view(self):
-        if self._data is None:
+        if self.data is None:
             return
 
         # TODO: allow to choose between min/max and zscale?
-        self._cbar.setLevels(ZScaleInterval().get_limits(self._data))
+        self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
 
         self.image_2d_plot.autoRange()
 
     def load_object(self):
         super().load_object()
 
-        if self._data is not None:
+        if self.data is not None:
             self.setEnabled(True)
 
             self._label.setText("{}: {}".format(self.name, self.filename.name))
-            self._image_2d.setImage(self._data)
+            self.image_2d.setImage(self.data)
 
             self.reset_view()
         else:
             self._label.setText("")
-            self._image_2d.clear()
+            self.image_2d.clear()
 
             self.setEnabled(False)
