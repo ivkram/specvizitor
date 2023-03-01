@@ -118,6 +118,9 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._number_of_obj_label.setText('(#{} / {})'.format(self.rd.j + 1, self.rd.n_objects))
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(self.rd.df.at[self.rd.id, 'starred'])))
 
+        self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
+        self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
+
     def previous_next_object(self, command: str, starred: bool):
         j_upd = self.update_index(self.rd.j, self.rd.n_objects, command)
 
@@ -153,6 +156,9 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
 
         self.rd.df.at[self.rd.id, 'starred'] = starred
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(starred)))
+
+        self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
+        self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
 
     def screenshot(self):
         path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
