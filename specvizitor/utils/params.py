@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class LocalFile:
     directory: str
     filename: str = f"{__package__.split('.')[0]}.yml"
-    signature: str = "Local file"
+    full_name: str = "Local file"
 
     @property
     def path(self) -> pathlib.Path:
@@ -23,9 +23,9 @@ class LocalFile:
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
         if self.path.exists():
-            msg = "{} updated (path: {})".format(self.signature, self.path)
+            msg = "{} updated (path: {})".format(self.full_name, self.path)
         else:
-            msg = "{} created (path: {})".format(self.signature, self.path)
+            msg = "{} created (path: {})".format(self.full_name, self.path)
 
         save_yaml(self.path, data)
         logger.debug(msg)

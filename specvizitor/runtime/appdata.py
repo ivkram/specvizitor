@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AppData:
-    config_file: LocalFile = LocalFile(user_config_dir('specvizitor'), signature='Configuration file')
-    cache_file: LocalFile = LocalFile(user_cache_dir('specvizitor'), signature='Cache')
+    config_file: LocalFile = LocalFile(user_config_dir('specvizitor'), full_name='Configuration file')
+    cache_file: LocalFile = LocalFile(user_cache_dir('specvizitor'), full_name='Cache')
 
     config: Config = Config.read(config_file, path_to_default='default_config.yml')
     cache: Cache = Cache.read(cache_file)
