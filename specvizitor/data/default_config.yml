@@ -32,16 +32,16 @@ review_form:
 viewer:
   images:
     Image Cutout:
-      pattern: "beams.fits"
+      filename_pattern: "beams.fits"
       scale: 1.0e+21
 
     Spectrum 2D:
-      pattern: "stack.fits"
+      filename_pattern: "stack.fits"
       rotate: 270
 
   spectra:
     Spectrum 1D:
-      pattern: "1D.fits"
+      filename_pattern: "1D.fits"
       slider:
         min_value: 0
         max_value: 10

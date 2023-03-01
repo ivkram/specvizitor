@@ -26,7 +26,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     @lazyproperty
     def filename(self):
-        return get_filename(self.rd.config.loader.data.dir, self.cfg.pattern, self.rd.id)
+        return get_filename(self.rd.config.loader.data.dir, self.cfg.filename_pattern, self.rd.id)
 
     @lazyproperty
     def _hdul(self):
