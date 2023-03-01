@@ -30,21 +30,17 @@ review_form:
 
 viewer:
   images:
-    Image:
+    Image Cutout:
       search_mask: "*{}.beams.fits"
       scale: 1.0e+21
-      min_width: 400
-      min_height: 400
 
     Spectrum 2D:
       search_mask: "*{}.stack.fits"
       rotate: 270
-      min_height: 200
 
   spectra:
     Spectrum 1D:
       search_mask: "*{}.1D.fits"
-      min_height: 300
       slider:
         min_value: 0
         max_value: 10

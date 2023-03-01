@@ -44,8 +44,11 @@ class DataViewer(AbstractWidget):
     def init_ui(self):
         self.layout.addWidget(self.dock_area, 1, 1, 1, 1)
 
-        for d in self.docks.values():
-            self.dock_area.addDock(d)
+        for name, d in self.docks.items():
+            position = self.dock_widgets[name].cfg.position
+            self.dock_area.addDock(dock=d,
+                                   position=position if position is not None else 'bottom',
+                                   relativeTo=self.dock_widgets[name].cfg.relative_to)
 
         for w in self.dock_widgets.values():
             w.init_ui()
