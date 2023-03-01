@@ -161,9 +161,9 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
 
     def screenshot(self):
+        default_filename = '{}_ID{}.png'.format(self.rd.output_path.stem.replace(' ', '_'), self.rd.id)
         path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
-                                                      basedir=str(pathlib.Path().resolve() /
-                                                                  f'specvizitor_ID{self.rd.id}.png'),
+                                                      basedir=str(pathlib.Path().resolve() / default_filename),
                                                       filters='Images (*.png)')
 
         if path:
