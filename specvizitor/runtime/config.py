@@ -82,8 +82,8 @@ class Spectrum(ViewerElement):
 
 @dataclass
 class Viewer(AbstractWidget):
-    images: dict[str, Image]
-    spectra: dict[str, Spectrum]
+    images: dict[str, Image] | None
+    spectra: dict[str, Spectrum] | None
 
 
 @dataclass
