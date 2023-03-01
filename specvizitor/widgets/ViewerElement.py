@@ -3,12 +3,14 @@ import abc
 
 from astropy.utils import lazyproperty
 from astropy.io import fits
+from astropy.table import Table
 
 from .AbstractWidget import AbstractWidget
 
 from ..runtime.appdata import AppData
 from ..runtime import config
 from ..io.viewer_data import get_filename
+from ..utils import misc
 
 
 logger = logging.getLogger(__name__)
@@ -51,7 +53,24 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     @lazyproperty
     def data(self):
-        return self.hdu.data if self.hdu is not None else None
+        if self.hdu is None:
+            return
+        else:
+            data = self.hdu.data
+
+        if self.hdu.header['XTENSION'] in ('TABLE', 'BINTABLE'):
+            data = Table(data)
+            translate = self.rd.config.loader.data.translate
+
+            if translate:
+                misc.translate(data, translate)
+
+            for cname in ('wavelength', 'flux'):
+                if cname not in data.colnames:
+                    logger.error(misc.column_not_found_message(cname, translate))
+                    return
+
+        return data
 
     @abc.abstractmethod
     def reset_view(self):

@@ -6,6 +6,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from . import viewer_data
+from ..utils import misc
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +37,11 @@ def load_cat(filename=None,
 
     # rename columns
     if translate is not None:
-        for cname, cname_synonyms in translate.items():
-            for syn in cname_synonyms:
-                if syn in cat.colnames:
-                    cat.rename_column(syn, cname)
-                    break
+        misc.translate(cat, translate)
 
     # check that the ID column is present in the catalogue
     if 'id' not in cat.colnames:
-        logger.error(column_not_found_message('id', translate))
+        logger.error(misc.column_not_found_message('id', translate))
         return
     cat.add_index('id')
 
@@ -75,16 +72,3 @@ def load_cat(filename=None,
         return
 
     return cat
-
-
-def column_not_found_message(cname: str, translate: dict[str, list[str]] | None = None) -> str:
-    """ Create the `column not found` message.
-    @param cname: the column name
-    @param translate:
-    @return: the message
-    """
-
-    if translate is None or cname not in translate:
-        return '`{}` column not found'.format(cname)
-    else:
-        return '`{}` column and its equivalences ({}) not found'.format(cname, ", ".join(translate[cname]))

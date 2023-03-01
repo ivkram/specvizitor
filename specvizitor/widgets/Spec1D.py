@@ -1,10 +1,7 @@
 import logging
 from dataclasses import asdict
 
-from qtpy.QtCore import Signal
-
 import numpy as np
-from astropy.io import fits
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
@@ -50,6 +47,7 @@ class Spec1D(ViewerElement):
 
         # set up the plot
         self._spec_1d = self._spec_1d_widget.addPlot(name=self.name)
+        self._spec_1d.setMouseEnabled(True, True)
         self._label_style = {'color': 'r', 'font-size': '20px'}
 
         # set up the spectral lines
@@ -72,7 +70,7 @@ class Spec1D(ViewerElement):
 
     @lazyproperty
     def default_xrange(self):
-        return np.nanmin(self.data['wave']), np.nanmax(self.data['wave'])
+        return np.nanmin(self.data['wavelength']), np.nanmax(self.data['wavelength'])
 
     @lazyproperty
     def default_yrange(self):
@@ -84,15 +82,18 @@ class Spec1D(ViewerElement):
         return y_min + 0.6 * (y_max - y_min)
 
     def _plot(self):
-        self._spec_1d.plot(self.data['wave'], self.data['flux'], pen='k')
-        self._spec_1d.plot(self.data['wave'], self.data['err'], pen='r')
+        self._spec_1d.plot(self.data['wavelength'], self.data['flux'], pen='k')
+
+        if 'flux_error' in self.data.colnames:
+            self._spec_1d.plot(self.data['wavelength'], self.data['flux_error'], pen='r')
 
         for line_name, line_artist in self._line_artists.items():
             self._spec_1d.addItem(line_artist['line'], ignoreBounds=True)
             self._spec_1d.addItem(line_artist['label'])
 
-        self._spec_1d.setLabel('bottom', self.hdu.header['TUNIT1'], **self._label_style)
-        # self._spec_1d.setLabel('left', self._hdu.header['TUNIT2'], **self._label_style)
+        for keyword, position in {'TUNIT1': 'bottom', 'TUNIT2': 'right'}.items():
+            if self.hdu.header.get(keyword):
+                self._spec_1d.setLabel(position, self.hdu.header[keyword], **self._label_style)
 
     def _update_view(self):
         for line_name, line_artist in self._line_artists.items():

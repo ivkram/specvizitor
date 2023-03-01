@@ -13,6 +13,7 @@ class Cat:
 class Data:
     dir: str
     id_pattern: str
+    translate: dict[str, list[str]] | None
 
 
 @dataclass

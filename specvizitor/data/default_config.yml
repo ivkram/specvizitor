@@ -10,6 +10,16 @@ loader:
   data:
     dir: '.'
     id_pattern: '\d+'
+    translate:
+      wavelength:
+        - wave
+        - lambda
+      flux_error:
+        - std
+        - err
+        - fluxerr
+        - flux_err
+        - fluxerror
 
 writer:
 
