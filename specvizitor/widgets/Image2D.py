@@ -81,7 +81,7 @@ class Image2D(ViewerElement):
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("{}: {}".format(self.name, self._filename.name))
+            self._label.setText("{}: {}".format(self.name, self.filename.name))
             self._image_2d.setImage(self._data)
 
             self.reset_view()

@@ -136,7 +136,7 @@ class Spec1D(ViewerElement):
         if self._data is not None:
             self.setEnabled(True)
 
-            self._label.setText("{}: {}".format(self.name, self._filename.name))
+            self._label.setText("{}: {}".format(self.name, self.filename.name))
 
             try:
                 self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']

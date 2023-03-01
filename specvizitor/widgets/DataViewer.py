@@ -1,5 +1,8 @@
 import importlib
 
+from pyqtgraph.dockarea.Dock import Dock
+from pyqtgraph.dockarea.DockArea import DockArea
+
 from .AbstractWidget import AbstractWidget
 from .ViewerElement import ViewerElement
 from .Image2D import Image2D
@@ -7,7 +10,6 @@ from .Spec1D import Spec1D
 
 from ..runtime.appdata import AppData
 from ..runtime import config
-from ..utils.widgets import get_widgets
 
 
 class DataViewer(AbstractWidget):
@@ -22,41 +24,47 @@ class DataViewer(AbstractWidget):
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        # create widgets for images (image cutout, 2D spectrum, etc.)
-        self.images = {}
+        self.dock_area = DockArea()
+        self.docks: dict[str, Dock] = {}
+        self.dock_widgets: dict[str, ViewerElement] = {}
+
+        # create widgets for images (e.g. image cutouts, 2D spectra)
         for name, image_cfg in cfg.images.items():
-            self.images[name] = Image2D(rd=rd, cfg=image_cfg, name=name, parent=self)
+            self.dock_widgets[name] = Image2D(rd=rd, cfg=image_cfg, name=name, parent=self)
 
         # create widgets for 1D spectra
-        self.spectra = {}
         for name, spec_cfg in cfg.spectra.items():
-            self.spectra[name] = Spec1D(rd=rd, cfg=spec_cfg, name=name, parent=self)
+            self.dock_widgets[name] = Spec1D(rd=rd, cfg=spec_cfg, name=name, parent=self)
+
+        for name, widget in self.dock_widgets.items():
+            dock = Dock(name)
+            dock.addWidget(widget)
+            self.docks[name] = dock
 
     def init_ui(self):
-        for i, image in enumerate(self.images.values()):
-            self.layout.addWidget(image, i + 1, 1, 1, 1)
-            image.init_ui()
+        self.layout.addWidget(self.dock_area, 1, 1, 1, 1)
 
-        for i, spectrum in enumerate(self.spectra.values()):
-            self.layout.addWidget(spectrum, i + len(self.images) + 1, 1, 1, 1)
-            spectrum.init_ui()
+        for d in self.docks.values():
+            self.dock_area.addDock(d)
 
-    @property
-    def widgets(self) -> list[ViewerElement]:
-        """
-        @return: a list of widgets added to the data viewer.
-        """
-        return get_widgets(self.layout)
+        for w in self.dock_widgets.values():
+            w.init_ui()
 
     def load_object(self):
-        for w in self.widgets:
+        for name, w in self.dock_widgets.items():
             w.load_object()
 
+            # update the titles of the docks
+            if w.filename is not None:
+                self.docks[name].setTitle(str(w.filename.name))
+            else:
+                self.docks[name].setTitle(name)
+
         for plugin in self._plugins:
-            plugin.link({w.name: w for w in self.widgets})
+            plugin.link(self.dock_widgets)
 
     def reset_view(self):
-        for w in self.widgets:
+        for w in self.dock_widgets.values():
             w.reset_view()
 
     def take_screenshot(self, filename: str):

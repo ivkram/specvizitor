@@ -25,13 +25,13 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
     @lazyproperty
-    def _filename(self):
+    def filename(self):
         return get_filename(self.rd.config.loader.data.dir, self.cfg.search_mask, self.rd.id)
 
     @lazyproperty
     def _hdul(self):
         try:
-            hdul = fits.open(self._filename)
+            hdul = fits.open(self.filename)
         except ValueError:
             logger.warning('{} not found (object ID: {})'.format(self.name, self.rd.id))
             return
@@ -51,7 +51,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         pass
 
     def load_object(self):
-        del self._filename
+        del self.filename
         del self._hdul
         del self._hdu
         del self._data
