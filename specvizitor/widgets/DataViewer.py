@@ -16,6 +16,8 @@ class DataViewer(AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.Viewer, plugins=None, parent=None):
         super().__init__(cfg=cfg, parent=parent)
 
+        self.rd = rd
+
         if plugins is not None:
             self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin() for plugin_name in plugins]
         else:
@@ -50,10 +52,21 @@ class DataViewer(AbstractWidget):
                                    position=position if position is not None else 'bottom',
                                    relativeTo=self.dock_widgets[name].cfg.relative_to)
 
+        try:
+            self.dock_area.restoreState(self.rd.cache.dock_state, missing='ignore')
+        except (ValueError, TypeError):
+            self.save_dock_state()
+
         for w in self.dock_widgets.values():
             w.init_ui()
 
+    def save_dock_state(self):
+        self.rd.cache.dock_state = self.dock_area.saveState()
+        self.rd.cache.save(self.rd.cache_file)
+
     def load_object(self):
+        self.save_dock_state()
+
         for name, w in self.dock_widgets.items():
             w.load_object()
 

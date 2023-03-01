@@ -147,6 +147,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _exit_action(self):
         self.rd.save()  # auto-save
+        self.central_widget.data_viewer.save_dock_state()  # save the dock state
         self.close()
         logger.info("Application closed")
 

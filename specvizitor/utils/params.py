@@ -87,4 +87,4 @@ def save_yaml(filename, data):
     yaml_path = pathlib.Path(filename).resolve()
 
     with open(yaml_path, 'w') as yaml_file:
-        yaml.dump(data, yaml_file, sort_keys=False)
+        yaml.safe_dump(data, yaml_file, sort_keys=False)

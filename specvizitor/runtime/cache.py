@@ -7,3 +7,4 @@ from ..utils.params import Params
 class Cache(Params):
     last_inspection_file: str | None
     last_object_index: int | None
+    dock_state: dict | None
