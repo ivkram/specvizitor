@@ -1,26 +1,22 @@
 import logging
 import pathlib
+import re
 
 logger = logging.getLogger(__name__)
 
 
-def get_filename(directory, search_mask: str, object_id) -> pathlib.Path | None:
-    """ Find a file for a given search mask and object ID. If more than one filename is matched to the search mask,
+def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
+    """ Find a file for a given pattern and object ID. If more than one filename is matched to the pattern,
     return the first item from an alphabetically ordered list of matched filenames.
 
     @param directory: the directory where the search is performed
-    @param search_mask: the search mask
-    Must contain `{}` to indicate the place for ID insertion. Examples: `{}.fits`, `*{}.1D.fits`, `*{}*`
+    @param pattern: the pattern used to match filenames
     @param object_id: the object ID
-    @return: the file name matched to the search mask
+    @return: the file name matched to the pattern
     """
 
-    if '{}' not in search_mask:
-        logger.error('Invalid search mask: `{}`. The search mask must contain `{{}}` to indicate the place for ID '
-                     'insertion'.format(search_mask))
-        return
-
-    matched_filenames = sorted(list(pathlib.Path(directory).glob(search_mask.format(object_id))))
+    matched_to_id = sorted(pathlib.Path(directory).glob(f'*{object_id}*'))
+    matched_filenames = [p for p in matched_to_id if re.search(pattern, str(p))]
 
     if matched_filenames:
         return matched_filenames[0]

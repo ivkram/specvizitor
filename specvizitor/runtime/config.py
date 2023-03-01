@@ -53,7 +53,7 @@ class ReviewForm(AbstractWidget):
 
 @dataclass
 class ViewerElement(AbstractWidget):
-    search_mask: str
+    pattern: str
     position: str | None
     relative_to: str | None
 

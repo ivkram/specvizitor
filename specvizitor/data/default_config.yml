@@ -31,16 +31,16 @@ review_form:
 viewer:
   images:
     Image Cutout:
-      search_mask: "*{}.beams.fits"
+      pattern: "beams.fits"
       scale: 1.0e+21
 
     Spectrum 2D:
-      search_mask: "*{}.stack.fits"
+      pattern: "stack.fits"
       rotate: 270
 
   spectra:
     Spectrum 1D:
-      search_mask: "*{}.1D.fits"
+      pattern: "1D.fits"
       slider:
         min_value: 0
         max_value: 10
