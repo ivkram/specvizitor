@@ -11,7 +11,8 @@ class Cat:
 
 @dataclass
 class Data:
-    dir: str | None
+    dir: str
+    id_pattern: str
 
 
 @dataclass

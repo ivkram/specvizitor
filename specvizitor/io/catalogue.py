@@ -5,7 +5,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
-from .viewer_data import get_grizli_id
+from . import viewer_data
 
 logger = logging.getLogger(__name__)
 
@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 def load_cat(filename=None,
              translate: dict[str, list[str]] | None = None,
              data_folder=None,
-             filename_parser=get_grizli_id) -> [Table, None]:
+             id_pattern=r'\d+') -> [Table, None]:
 
     """ Read and filter the catalogue.
     @param filename: the catalogue filename
     @param translate:
     @param data_folder:
-    @param filename_parser:
+    @param id_pattern:
     @return: the processed catalogue
     """
 
@@ -50,8 +50,17 @@ def load_cat(filename=None,
 
     if data_folder is not None:
         # retrieve IDs from the data folder
-        data_files = sorted(pathlib.Path(data_folder).glob('**/*.fits'))
-        obj_ids = [filename_parser(p) for p in data_files]
+        data_files = sorted(pathlib.Path(data_folder).glob('*'))
+        obj_ids = [viewer_data.get_id(p, id_pattern) for p in data_files]
+        obj_ids = np.array([i for i in obj_ids if i is not None])
+
+        try:
+            # convert IDs to int
+            obj_ids = obj_ids.astype(int)
+            logger.info('Converted IDs to int')
+        except ValueError:
+            logger.info('Converted IDs to str')
+
         obj_ids = np.unique([id_ for id_ in obj_ids if id_ is not None])
 
         if not obj_ids.size:

@@ -57,7 +57,8 @@ class NewFile(QtWidgets.QDialog):
         translate = self.rd.config.loader.cat.translate
         data_folder = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
-        return load_cat(self._browsers['cat'].path, translate=translate, data_folder=data_folder)
+        return load_cat(self._browsers['cat'].path, translate=translate, data_folder=data_folder,
+                        id_pattern=self.rd.config.loader.data.id_pattern)
 
     def accept(self):
         cat = self.process_input()

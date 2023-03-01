@@ -9,6 +9,7 @@ loader:
 
   data:
     dir: '.'
+    id_pattern: '\d+'
 
 writer:
 

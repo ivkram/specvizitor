@@ -24,16 +24,18 @@ def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
         return
 
 
-# TODO: create a FilenameParser class
-def get_grizli_id(filename) -> int | None:
-    """ Parse a file name to get the object ID. The file must be one of the grizli fit products.
+def get_id(filename, pattern: str) -> str | None:
+    """ Parse a file name to get the object ID. If more than one match is found, returns the longest match (a typical
+    case for integer IDs).
+
     @param filename: the file name to parse
+    @param pattern: the pattern used to find the object ID
     @return: the object ID
     """
 
-    try:
-        return int(pathlib.Path(filename).name.split('_')[1].split('.')[0])
-    except (IndexError, ValueError):
-        # commented out because might be called too many times
-        # logger.error('Failed to parse the file name `{}`'.format(filename))
+    matches: list[str] = re.findall(pattern, pathlib.Path(filename).name)
+
+    if matches:
+        return max(matches, key=len)
+    else:
         return
