@@ -13,10 +13,10 @@ class FileBrowser(QtWidgets.QWidget):
     OpenDirectory = 2
     SaveFile = 3
 
-    def __init__(self, title=None, mode=OpenFile, filename_extensions='All files (*.*)', default_path=None,
+    def __init__(self, title: str, mode=OpenFile, filename_extensions='All files (*.*)', default_path=None,
                  button_text='Browse...', parent=None):
+
         super().__init__(parent=parent)
-        self._parent = parent
 
         self._title = title
         self._browser_mode = mode
@@ -43,10 +43,10 @@ class FileBrowser(QtWidgets.QWidget):
         self.setLayout(layout)
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self._line_edit.text()
 
-    def filled(self):
+    def is_filled(self) -> bool:
         if not self.path:
             logger.error('The field `{}` is empty'.format(self._title.rstrip(':')))
             return False
@@ -87,11 +87,8 @@ class FileBrowser(QtWidgets.QWidget):
             path = qtpy.compat.getexistingdirectory(self, caption='Choose Directory', basedir=self._default_path)
 
         elif self._browser_mode == FileBrowser.SaveFile:
-            options = QtWidgets.QFileDialog.Options()
-            # if sys.platform == 'darwin':
-            #    options |= QtWidgets.QFileDialog.DontUseNativeDialog
             path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=self._default_path,
-                                                          filters=self._filter, options=options)
+                                                          filters=self._filter)
 
         if path:
             self._line_edit.setText(path)

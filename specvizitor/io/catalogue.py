@@ -4,7 +4,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
-from .viewer_data import get_id_list
+from .viewer_data import get_ids_from_dir
 from ..utils import misc
 
 logger = logging.getLogger(__name__)
@@ -45,12 +45,12 @@ def load_cat(filename=None,
     cat.add_index('id')
 
     if data_dir is not None:
-        obj_ids = get_id_list(data_dir, id_pattern)
-        if obj_ids is None:
+        ids = get_ids_from_dir(data_dir, id_pattern)
+        if ids is None:
             return
 
         # filter objects based on the list of IDs
-        cat = cat[np.in1d(cat['id'], obj_ids, assume_unique=True)]
+        cat = cat[np.in1d(cat['id'], ids, assume_unique=True)]
 
     if len(cat) == 0:
         logger.error('The processed catalogue is empty')

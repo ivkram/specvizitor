@@ -8,11 +8,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
-    """ Find a file for a given pattern and object ID. If more than one filename is matched to the pattern,
-    return the first item from an alphabetically ordered list of matched filenames.
+    """ Find a file for a given pattern and a given object ID. If more than one file name is matched to the pattern,
+    return the first item from an alphabetically ordered list of matched file names.
 
     @param directory: the directory where the search is performed
-    @param pattern: the pattern used to match filenames
+    @param pattern: the pattern used to match file names
     @param object_id: the object ID
     @return: the file name matched to the pattern
     """
@@ -26,16 +26,19 @@ def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
         return
 
 
-def get_id(filename, pattern: str) -> str | None:
-    """ Parse a file name to get the object ID. If more than one match is found, returns the longest match (a typical
-    case for integer IDs).
+def get_id_from_filename(filename, pattern: str) -> str | None:
+    """ Extract the object ID from a file name using a pattern. If more than one ID is matched to the pattern, return
+    the longest match (a typical case for integer IDs).
 
     @param filename: the file name to parse
-    @param pattern: the pattern used to find the object ID
-    @return: the object ID
+    @param pattern: the pattern (a regular expression) used to match the ID
+    @return: the matched ID
     """
 
-    matches: list[str] = re.findall(pattern, pathlib.Path(filename).name)
+    try:
+        matches: list[str] = re.findall(pattern, pathlib.Path(filename).name)
+    except re.error:
+        return
 
     if matches:
         return max(matches, key=len)
@@ -43,24 +46,29 @@ def get_id(filename, pattern: str) -> str | None:
         return
 
 
-def get_id_list(directory, id_pattern: str) -> np.ndarray | None:
+def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
+    """ Extract IDs from a directory using a pattern.
+    @param directory: the directory where the search for IDs is performed
+    @param id_pattern: the pattern (a regular expression) used to match IDs
+    @return: a list of matched IDs
+    """
 
-    # retrieve IDs from the data directory
-    data_files = sorted(pathlib.Path(directory).glob('*'))
-    obj_ids = [get_id(p, id_pattern) for p in data_files]
-    obj_ids = np.array([i for i in obj_ids if i is not None])
+    data_files = sorted(pathlib.Path(directory).glob('*'))  # includes subdirectories, if any
+    ids = [get_id_from_filename(p, id_pattern) for p in data_files]
+    ids = np.array([i for i in ids if i is not None])
 
     try:
         # convert IDs to int
-        obj_ids = obj_ids.astype(int)
+        ids = ids.astype(int)
         logger.info('Converted IDs to int')
     except ValueError:
-        logger.info('Converted IDs to str')
+        pass
 
-    obj_ids = np.unique([i for i in obj_ids if i is not None])
+    # remove ID duplicates
+    ids = np.unique(ids)
 
-    if not obj_ids.size:
+    if not ids.size:
         logger.error('No IDs retrieved from the data directory')
         return
 
-    return obj_ids
+    return ids

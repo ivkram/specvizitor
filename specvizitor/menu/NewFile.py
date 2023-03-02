@@ -1,12 +1,12 @@
 import logging
 import pathlib
 
-from qtpy import QtWidgets, QtGui
+from qtpy import QtWidgets
 
 from ..runtime.appdata import AppData
 from ..utils import FileBrowser
 from ..io.catalogue import load_cat, create_cat
-from ..io.viewer_data import get_id_list
+from ..io.viewer_data import get_ids_from_dir
 from ..utils.logs import qlog
 
 
@@ -20,7 +20,7 @@ class NewFile(QtWidgets.QDialog):
         super().__init__(parent)
         self.setWindowTitle("Create a New Inspection File")
 
-        layout = QtWidgets.QGridLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setSpacing(20)
 
         self.setFixedSize(layout.sizeHint())
@@ -35,64 +35,93 @@ class NewFile(QtWidgets.QDialog):
                                default_path=self.rd.config.loader.cat.filename, parent=self)
         }
 
-        layout.addWidget(self._browsers['output'], 1, 1, 1, 2)
-        layout.addWidget(self._browsers['data'], 2, 1, 1, 2)
+        # add a file browser for specifying the output file
+        layout.addWidget(self._browsers['output'])
 
-        self._cat_group = QtWidgets.QButtonGroup()
-        self._cat_group.buttonToggled.connect(self.update_cat_creator_state)
+        # add a file browser for specifying the data directory
+        layout.addWidget(self._browsers['data'])
 
-        self._create_cat_radio_button = QtWidgets.QRadioButton('Create a catalogue')
-        self._cat_group.addButton(self._create_cat_radio_button)
-        layout.addWidget(self._create_cat_radio_button, 3, 1, 1, 1)
+        # add radio buttons for choosing between creating a new catalogue and loading an existing one
+        self._cat_factory_group = QtWidgets.QButtonGroup()
+        self._cat_factory_group.buttonToggled.connect(self.update_cat_factory_state)
+
+        self._create_cat_radio_button = QtWidgets.QRadioButton('Create a new catalogue')
+        self._cat_factory_group.addButton(self._create_cat_radio_button)
 
         self._load_cat_radio_button = QtWidgets.QRadioButton('Load an existing catalogue')
-        self._cat_group.addButton(self._load_cat_radio_button)
-        layout.addWidget(self._load_cat_radio_button, 3, 2, 1, 1)
+        self._cat_factory_group.addButton(self._load_cat_radio_button)
 
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.addWidget(self._create_cat_radio_button)
+        sub_layout.addWidget(self._load_cat_radio_button)
+        layout.addLayout(sub_layout)
+
+        # add a horizontal separator
         self.separator = QtWidgets.QFrame()
         self.separator.setFrameShape(QtWidgets.QFrame.HLine)
-        layout.addWidget(self.separator, 4, 1, 1, 2)
+        layout.addWidget(self.separator)
 
-        layout.addWidget(self._browsers['cat'], 5, 1, 1, 2)
+        # add a file browser for specifying the catalogue
+        layout.addWidget(self._browsers['cat'])
         self._browsers['cat'].setHidden(True)
 
+        # add a checkbox for specifying the catalogue loader mode
         self._filter_check_box = QtWidgets.QCheckBox(
-            'Filter the catalogue using a list of IDs retrieved from the data directory')
-        self._filter_check_box.setChecked(True)
+            'Filter the catalogue using a list of IDs extracted from the data directory')
+        self._filter_check_box.setChecked(False)
         self._filter_check_box.setHidden(True)
-        layout.addWidget(self._filter_check_box, 6, 1, 1, 2)
+        self._filter_check_box.stateChanged.connect(self.update_id_pattern_widget_state)
+        layout.addWidget(self._filter_check_box)
 
+        # add a line edit for specifying the ID pattern that will be used to parse the filenames in the data directory
+        self._id_pattern_label = QtWidgets.QLabel('ID pattern:')
+        self._id_pattern_label.setToolTip('A regular expression used to match the source IDs while scanning '
+                                          'the data directory. If more than\none ID is matched to the pattern for a '
+                                          'given filename, only the longest match will be returned.')
+        self._id_pattern_label.setFixedWidth(120)
+        self._id_pattern_label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+
+        self._id_pattern = QtWidgets.QLineEdit(self.rd.config.loader.data.id_pattern)
+
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.addWidget(self._id_pattern_label)
+        sub_layout.addWidget(self._id_pattern)
+        layout.addLayout(sub_layout)
+
+        # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
-        layout.addWidget(self._button_box, 7, 1, 1, 2)
+        layout.addWidget(self._button_box)
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
 
+        # set the state of the radio buttons
         self._create_cat_radio_button.setChecked(True)
 
         self.setLayout(layout)
 
     @qlog
-    def process_input(self):
+    def get_catalogue(self):
         # validate the input
         for b in self._browsers.values():
-            if not b.isHidden() and (not b.filled() or not b.exists()):
+            if not b.isHidden() and (not b.is_filled() or not b.exists()):
                 return
 
+        # create a new catalogue if necessary
         if self._browsers['cat'].isHidden():
-            obj_ids = get_id_list(self._browsers['data'].path, self.rd.config.loader.data.id_pattern)
-            if obj_ids:
+            ids = get_ids_from_dir(self._browsers['data'].path, self._id_pattern.text())
+            if ids is None:
                 return
-            return create_cat(obj_ids)
+            return create_cat(ids)
 
-        # load the catalogue
+        # otherwise, load an existing catalogue
         translate = self.rd.config.loader.cat.translate
-        data_folder = self._browsers['data'].path if self._filter_check_box.isChecked() else None
+        data_dir = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
-        return load_cat(self._browsers['cat'].path, translate=translate, data_dir=data_folder,
+        return load_cat(self._browsers['cat'].path, translate=translate, data_dir=data_dir,
                         id_pattern=self.rd.config.loader.data.id_pattern)
 
     def accept(self):
-        cat = self.process_input()
+        cat = self.get_catalogue()
         if cat is None:
             return
 
@@ -103,16 +132,31 @@ class NewFile(QtWidgets.QDialog):
         self.rd.config.loader.data.dir = self._browsers['data'].path
         if not self._browsers['cat'].isHidden():
             self.rd.config.loader.cat.filename = self._browsers['cat'].path
+        if not self._id_pattern.isHidden():
+            self.rd.config.loader.data.id_pattern = self._id_pattern.text()
         self.rd.config.save(self.rd.config_file)
 
         self.rd.create()
 
         super().accept()
 
-    def update_cat_creator_state(self):
+    def update_cat_factory_state(self):
         if self._create_cat_radio_button.isChecked():
             self._browsers['cat'].setHidden(True)
             self._filter_check_box.setHidden(True)
+
+            self._id_pattern.setHidden(False)
+            self._id_pattern_label.setHidden(False)
         else:
             self._browsers['cat'].setHidden(False)
             self._filter_check_box.setHidden(False)
+
+            self.update_id_pattern_widget_state()
+
+    def update_id_pattern_widget_state(self):
+        if self._filter_check_box.isChecked():
+            self._id_pattern.setHidden(False)
+            self._id_pattern_label.setHidden(False)
+        else:
+            self._id_pattern.setHidden(True)
+            self._id_pattern_label.setHidden(True)
