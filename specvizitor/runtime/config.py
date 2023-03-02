@@ -17,13 +17,7 @@ class Data:
 
 
 @dataclass
-class Loader:
-    cat: Cat
-    data: Data
-
-
-@dataclass
-class GUI:
+class Appearance:
     antialiasing: bool = False
 
 
@@ -50,8 +44,8 @@ class ReviewForm(AbstractWidget):
 @dataclass
 class ViewerElement(AbstractWidget):
     filename_pattern: str
-    ext_name: str | None
-    ext_ver: str | None
+    loader: str | None
+    meta: dict[str, str] | None
     position: str | None
     relative_to: str | None
 
@@ -83,9 +77,9 @@ class Viewer(AbstractWidget):
 
 @dataclass
 class Config(Params):
-    loader: Loader
-    writer: None
-    gui: GUI
+    cat: Cat
+    data: Data
+    appearance: Appearance
     control_panel: ControlPanel
     object_info: ObjectInfo
     review_form: ReviewForm

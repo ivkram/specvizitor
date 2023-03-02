@@ -30,9 +30,9 @@ class NewFile(QtWidgets.QDialog):
                                   mode=FileBrowser.SaveFile, default_path=pathlib.Path().resolve() / 'Untitled.csv',
                                   parent=self),
             'data': FileBrowser(title='Data Source:', mode=FileBrowser.OpenDirectory,
-                                default_path=self.rd.config.loader.data.dir, parent=self),
+                                default_path=self.rd.config.data.dir, parent=self),
             'cat': FileBrowser(title='Catalogue:', filename_extensions='FITS Files (*.fits)', mode=FileBrowser.OpenFile,
-                               default_path=self.rd.config.loader.cat.filename, parent=self)
+                               default_path=self.rd.config.cat.filename, parent=self)
         }
 
         # add a file browser for specifying the output file
@@ -81,7 +81,7 @@ class NewFile(QtWidgets.QDialog):
         self._id_pattern_label.setFixedWidth(120)
         self._id_pattern_label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
-        self._id_pattern = QtWidgets.QLineEdit(self.rd.config.loader.data.id_pattern)
+        self._id_pattern = QtWidgets.QLineEdit(self.rd.config.data.id_pattern)
 
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.addWidget(self._id_pattern_label)
@@ -114,11 +114,11 @@ class NewFile(QtWidgets.QDialog):
             return create_cat(ids)
 
         # otherwise, load an existing catalogue
-        translate = self.rd.config.loader.cat.translate
+        translate = self.rd.config.cat.translate
         data_dir = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
         return load_cat(self._browsers['cat'].path, translate=translate, data_dir=data_dir,
-                        id_pattern=self.rd.config.loader.data.id_pattern)
+                        id_pattern=self.rd.config.data.id_pattern)
 
     def accept(self):
         cat = self.get_catalogue()
@@ -129,11 +129,11 @@ class NewFile(QtWidgets.QDialog):
         self.rd.output_path = pathlib.Path(self._browsers['output'].path)
 
         # update the user configuration file
-        self.rd.config.loader.data.dir = self._browsers['data'].path
+        self.rd.config.data.dir = self._browsers['data'].path
         if not self._browsers['cat'].isHidden():
-            self.rd.config.loader.cat.filename = self._browsers['cat'].path
+            self.rd.config.cat.filename = self._browsers['cat'].path
         if not self._id_pattern.isHidden():
-            self.rd.config.loader.data.id_pattern = self._id_pattern.text()
+            self.rd.config.data.id_pattern = self._id_pattern.text()
         self.rd.config.save(self.rd.config_file)
 
         self.rd.create()

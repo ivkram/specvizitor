@@ -28,7 +28,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     @lazyproperty
     def filename(self):
-        return get_filename(self.rd.config.loader.data.dir, self.cfg.filename_pattern, self.rd.id)
+        return get_filename(self.rd.config.data.dir, self.cfg.filename_pattern, self.rd.id)
 
     @lazyproperty
     def hdul(self):
@@ -44,10 +44,10 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def hdu(self):
         if self.hdul is None:
             return
-        elif self.cfg.ext_name is not None and self.cfg.ext_ver is None:
-            index = self.cfg.ext_name
-        elif self.cfg.ext_name is not None and self.cfg.ext_ver is not None:
-            index = (self.cfg.ext_name, self.cfg.ext_ver)
+        # elif self.cfg.ext_name is not None and self.cfg.ext_ver is None:
+        #     index = self.cfg.ext_name
+        # elif self.cfg.ext_name is not None and self.cfg.ext_ver is not None:
+        #     index = (self.cfg.ext_name, self.cfg.ext_ver)
         else:
             index = 1
 
@@ -66,7 +66,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         if self.hdu.header['XTENSION'] in ('TABLE', 'BINTABLE'):
             data = Table(data)
-            translate = self.rd.config.loader.data.translate
+            translate = self.rd.config.data.translate
 
             if translate:
                 misc.translate(data, translate)

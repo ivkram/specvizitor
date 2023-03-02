@@ -1,29 +1,25 @@
-loader:
-  cat:
-    filename:
-    translate:
-      id: [Id, ID, NUMBER]
-      ra: [Ra, RA]
-      dec: [Dec, DEC]
-      z: [Z, redshift, Redshift, z_map]
+cat:
+  translate:
+    id: [Id, ID, NUMBER]
+    ra: [Ra, RA]
+    dec: [Dec, DEC]
+    z: [Z, redshift, Redshift, z_map]
 
-  data:
-    dir: '.'
-    id_pattern: '\d+'
-    translate:
-      wavelength:
-        - wave
-        - lambda
-      flux_error:
-        - std
-        - err
-        - fluxerr
-        - flux_err
-        - fluxerror
+data:
+  dir: '.'
+  id_pattern: '\d+'
+  translate:
+    wavelength:
+      - wave
+      - lambda
+    flux_error:
+      - std
+      - err
+      - fluxerr
+      - flux_err
+      - fluxerror
 
-writer:
-
-gui:
+appearance:
   antialiasing: False
 
 control_panel:
@@ -47,8 +43,9 @@ viewer:
 
     Spectrum 2D:
       filename_pattern: "stack.fits"
-      ext_name: "SCI"
-      ext_ver: "F444W"
+      meta:
+        EXTNAME: "SCI"
+        EXTVER: "F444W"
       rotate: 270
 
   spectra:

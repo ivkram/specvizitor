@@ -261,7 +261,7 @@ def main():
     # pyqtgraph configuration
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
-    pg.setConfigOption('antialias', runtime.config.gui.antialiasing)
+    pg.setConfigOption('antialias', runtime.config.appearance.antialiasing)
 
     # start the application
     app = QtWidgets.QApplication(sys.argv)
