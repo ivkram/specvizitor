@@ -24,9 +24,10 @@ class FileBrowser(QtWidgets.QWidget):
         self._default_path = None if default_path is None else str(pathlib.Path(default_path).resolve())
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self._label = QtWidgets.QLabel(title)
-        self._label.setFixedWidth(120)
+        self._label.setFixedWidth(130)
         layout.addWidget(self._label)
 
         self._line_edit = QtWidgets.QLineEdit(self)

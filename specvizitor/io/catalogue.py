@@ -1,11 +1,10 @@
 import logging
-import pathlib
 
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
-from . import viewer_data
+from .viewer_data import get_id_list
 from ..utils import misc
 
 logger = logging.getLogger(__name__)
@@ -13,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 def load_cat(filename=None,
              translate: dict[str, list[str]] | None = None,
-             data_folder=None,
+             data_dir=None,
              id_pattern=r'\d+') -> [Table, None]:
 
     """ Read and filter the catalogue.
     @param filename: the catalogue filename
     @param translate:
-    @param data_folder:
+    @param data_dir:
     @param id_pattern:
     @return: the processed catalogue
     """
@@ -45,23 +44,9 @@ def load_cat(filename=None,
         return
     cat.add_index('id')
 
-    if data_folder is not None:
-        # retrieve IDs from the data folder
-        data_files = sorted(pathlib.Path(data_folder).glob('*'))
-        obj_ids = [viewer_data.get_id(p, id_pattern) for p in data_files]
-        obj_ids = np.array([i for i in obj_ids if i is not None])
-
-        try:
-            # convert IDs to int
-            obj_ids = obj_ids.astype(int)
-            logger.info('Converted IDs to int')
-        except ValueError:
-            logger.info('Converted IDs to str')
-
-        obj_ids = np.unique([id_ for id_ in obj_ids if id_ is not None])
-
-        if not obj_ids.size:
-            logger.error('No IDs retrieved from the data folder')
+    if data_dir is not None:
+        obj_ids = get_id_list(data_dir, id_pattern)
+        if obj_ids is None:
             return
 
         # filter objects based on the list of IDs
@@ -70,5 +55,12 @@ def load_cat(filename=None,
     if len(cat) == 0:
         logger.error('The processed catalogue is empty')
         return
+
+    return cat
+
+
+def create_cat(ids) -> Table:
+    cat = Table([ids], names=('id',))
+    cat.add_index('id')
 
     return cat

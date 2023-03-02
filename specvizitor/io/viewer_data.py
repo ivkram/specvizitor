@@ -2,6 +2,8 @@ import logging
 import pathlib
 import re
 
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,3 +41,26 @@ def get_id(filename, pattern: str) -> str | None:
         return max(matches, key=len)
     else:
         return
+
+
+def get_id_list(directory, id_pattern: str) -> np.ndarray | None:
+
+    # retrieve IDs from the data directory
+    data_files = sorted(pathlib.Path(directory).glob('*'))
+    obj_ids = [get_id(p, id_pattern) for p in data_files]
+    obj_ids = np.array([i for i in obj_ids if i is not None])
+
+    try:
+        # convert IDs to int
+        obj_ids = obj_ids.astype(int)
+        logger.info('Converted IDs to int')
+    except ValueError:
+        logger.info('Converted IDs to str')
+
+    obj_ids = np.unique([i for i in obj_ids if i is not None])
+
+    if not obj_ids.size:
+        logger.error('No IDs retrieved from the data directory')
+        return
+
+    return obj_ids

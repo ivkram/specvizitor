@@ -73,8 +73,7 @@ class AppData:
 
             # create a catalogue with a single column of IDs
             if cat is None:
-                cat = Table([self.df.index.values], names=('id',))
-                cat.add_index('id')
+                cat = catalogue.create_cat(self.df.index.values)
 
             self.cat = cat
 
