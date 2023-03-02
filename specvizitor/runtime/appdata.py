@@ -30,14 +30,20 @@ class AppData:
     j: int = None  # the index of the current object
 
     @property
-    def id(self) -> int | None:
+    def id(self) -> int | str | None:
         """
         @return: the ID of the current object.
         """
         try:
-            return self.df.index[self.j]
+            current_id = self.df.index[self.j]
         except (TypeError, IndexError):
             return
+
+        if pd.api.types.is_integer(current_id):
+            # converting from int64 to int
+            return int(current_id)
+
+        return current_id
 
     @property
     def n_objects(self) -> int | None:

@@ -17,11 +17,22 @@ def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
     @return: the file name matched to the pattern
     """
 
-    matched_to_id = sorted(pathlib.Path(directory).glob(f'*{object_id}*'))
-    matched_filenames = [p for p in matched_to_id if re.search(pattern, str(p))]
+    filenames = sorted(pathlib.Path(directory).glob('*'))
 
-    if matched_filenames:
-        return matched_filenames[0]
+    # match to the pattern
+    matched_to_pattern = [p for p in filenames if re.search(pattern, str(p))]
+
+    # match to the ID
+    if isinstance(object_id, int):
+        # make sure that we don't match e.g. '1123' or '1234' to '123' (but match '0123')
+        matched_ids = [re.findall(r'\d*{}\d*'.format(object_id), str(p)) for p in matched_to_pattern]
+        matched = [p for i, p in enumerate(matched_to_pattern)
+                   if matched_ids[i] and str(max(matched_ids[i], key=len)).lstrip('0') == str(object_id)]
+    else:
+        matched = [p for p in matched_to_pattern if re.search(f'{object_id}', str(p))]
+
+    if matched:
+        return matched[0]
     else:
         return
 
