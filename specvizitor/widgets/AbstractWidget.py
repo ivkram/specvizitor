@@ -1,5 +1,4 @@
 import abc
-from abc import ABC
 
 from qtpy import QtWidgets
 
@@ -7,11 +6,11 @@ from ..runtime import config
 from ..utils.widgets import get_widgets
 
 
-class QtAbcMeta(type(QtWidgets.QWidget), type(ABC)):
+class QtAbcMeta(type(QtWidgets.QWidget), type(abc.ABC)):
     pass
 
 
-class AbstractWidget(QtWidgets.QWidget, ABC, metaclass=QtAbcMeta):
+class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
     def __init__(self, cfg: config.AbstractWidget, parent=None):
         super().__init__(parent)
 
@@ -29,7 +28,6 @@ class AbstractWidget(QtWidgets.QWidget, ABC, metaclass=QtAbcMeta):
     def init_ui(self):
         pass
 
-    @abc.abstractmethod
     def load_object(self):
         pass
 
