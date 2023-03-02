@@ -88,7 +88,7 @@ class DataViewer(AbstractWidget):
             w.load_object()
 
             # update the titles of the docks
-            if w.filename is not None:
+            if w.filename is not None and w.data is not None:
                 self.docks[name].setTitle(self.dock_title(w=w))
             else:
                 self.docks[name].setTitle(name)

@@ -45,11 +45,17 @@ class ViewerElement(AbstractWidget, abc.ABC):
         if self.hdul is None:
             return
         elif self.cfg.ext_name is not None and self.cfg.ext_ver is None:
-            return self.hdul[self.cfg.ext_name]
+            index = self.cfg.ext_name
         elif self.cfg.ext_name is not None and self.cfg.ext_ver is not None:
-            return self.hdul[self.cfg.ext_name, self.cfg.ext_ver]
+            index = (self.cfg.ext_name, self.cfg.ext_ver)
         else:
-            return self.hdul[1]
+            index = 1
+
+        try:
+            return self.hdul[index]
+        except KeyError:
+            logger.error(f'Extension `{index}` not found (object ID: {self.rd.id})')
+            return
 
     @lazyproperty
     def data(self):
