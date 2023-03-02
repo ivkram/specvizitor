@@ -63,7 +63,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         # create a `dark mode` button
         self._dark_mode = QtWidgets.QPushButton()
         self._dark_mode.setIcon(QtGui.QIcon(get_icon_abs_path('dark-mode.svg')))
-        self._dark_mode.setToolTip('Turn on dark theme')
+        self._dark_mode.setToolTip('Turn on the dark theme')
 
         # create the `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton()
@@ -95,7 +95,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         pn_buttons = {}
         for pn_text, pn_properties in pn_buttons_params.items():
             button = QtWidgets.QPushButton('')
-            button.setToolTip('Look at the {} object'.format(pn_text))
+            button.setToolTip('Go to the {} object'.format(pn_text))
             button.setIcon(QtGui.QIcon(get_icon_abs_path(pn_properties['icon'])))
 
             button.clicked.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
