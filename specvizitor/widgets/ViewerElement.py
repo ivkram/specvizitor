@@ -32,7 +32,7 @@ class ViewerElement(AbstractWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
     def load_object(self):
-        self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_pattern, self.rd.id)
+        self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_keyword, self.rd.id)
 
         if self.filename is None:
             logger.warning('{} not found (object ID: {})'.format(self.alias, self.rd.id))

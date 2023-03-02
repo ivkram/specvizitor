@@ -43,7 +43,7 @@ class ReviewForm(AbstractWidget):
 
 @dataclass
 class ViewerElement(AbstractWidget):
-    filename_pattern: str
+    filename_keyword: str
     loader: str | None
     loader_config: dict[str, str] | None
     position: str | None

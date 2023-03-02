@@ -42,7 +42,7 @@ class Params:
             try:
                 user_params = read_yaml(file.path)
             except yaml.YAMLError:
-                logger.error('Error occurred when parsing `{}`. The file will be overwritten.'.format(file.path))
+                logger.error('An error occurred when parsing `{}`. The file will be overwritten.'.format(file.path))
                 cls.save(params, file)
                 return params
 

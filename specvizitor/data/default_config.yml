@@ -38,18 +38,18 @@ review_form:
 viewer:
   images:
     Image Cutout:
-      filename_pattern: "beams.fits"
+      filename_keyword: "beams.fits"
       scale: 1.0e+21
 
     Spectrum 2D:
-      filename_pattern: "stack.fits"
+      filename_keyword: "stack.fits"
       loader_config:
         extname: "SCI"
         extver: "F444W"
 
   spectra:
     Spectrum 1D:
-      filename_pattern: "1D.fits"
+      filename_keyword: "1D.fits"
       slider:
         min_value: 0
         max_value: 10
