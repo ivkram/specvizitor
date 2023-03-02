@@ -23,9 +23,6 @@ class Image2D(ViewerElement):
         self.cfg = cfg
         self.name = name
 
-        # add a label
-        self._label = QtWidgets.QLabel()
-
         # add a widget for the spectrum
         self._image_2d_widget = pg.GraphicsLayoutWidget()
 
@@ -47,8 +44,7 @@ class Image2D(ViewerElement):
         self.image_2d_plot.setAspectLocked(True)
 
     def init_ui(self):
-        # self.layout.addWidget(self._label, 1, 1)
-        self.layout.addWidget(self._image_2d_widget, 2, 1)
+        self.layout.addWidget(self._image_2d_widget, 1, 1)
 
     @lazyproperty
     def data(self):
@@ -76,17 +72,8 @@ class Image2D(ViewerElement):
         self.image_2d_plot.autoRange()
 
     def load_object(self):
-        super().load_object()
+        self.image_2d.setImage(self.data)
 
-        if self.data is not None:
-            self.setEnabled(True)
-
-            self._label.setText("{}: {}".format(self.name, self.filename.name))
-            self.image_2d.setImage(self.data)
-
-            self.reset_view()
-        else:
-            self._label.setText("")
-            self.image_2d.clear()
-
-            self.setEnabled(False)
+    def clear_content(self):
+        super().clear_content()
+        self.image_2d.clear()

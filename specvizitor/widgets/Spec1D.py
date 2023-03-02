@@ -29,9 +29,6 @@ class Spec1D(ViewerElement):
         # TODO: move to the application data
         self._lines = read_yaml('default_lines.yml', in_dist=True)
 
-        # create a label
-        self._label = QtWidgets.QLabel()
-
         # create a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsLayoutWidget()
 
@@ -62,11 +59,10 @@ class Spec1D(ViewerElement):
             self._line_artists[line_name] = {'line': line, 'label': label}
 
     def init_ui(self):
-        # self.layout.addWidget(self._label, 1, 1)
-        self.layout.addWidget(self._spec_1d_widget, 2, 1, 1, 3)
-        self.layout.addWidget(self._z_slider, 3, 1, 1, 1)
-        self.layout.addWidget(QtWidgets.QLabel('z = ', self), 3, 2, 1, 1)
-        self.layout.addWidget(self._redshift_editor, 3, 3, 1, 1)
+        self.layout.addWidget(self._spec_1d_widget, 1, 1, 1, 3)
+        self.layout.addWidget(self._z_slider, 2, 1, 1, 1)
+        self.layout.addWidget(QtWidgets.QLabel('z = ', self), 2, 2, 1, 1)
+        self.layout.addWidget(self._redshift_editor, 2, 3, 1, 1)
 
     @lazyproperty
     def default_xrange(self):
@@ -127,27 +123,19 @@ class Spec1D(ViewerElement):
         self._spec_1d.setYRange(*self.default_yrange)
 
     def load_object(self):
-        super().load_object()
+        try:
+            self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
+        except KeyError:
+            self._z_slider.default_value = self.cfg.slider.default_value
+
+        self._plot()
+
+    def clear_content(self):
+        super().clear_content()
 
         del self.default_xrange
         del self.default_yrange
         del self._label_height
 
+        self._redshift_editor.setText("")
         self._spec_1d.clear()
-        if self.data is not None:
-            self.setEnabled(True)
-
-            self._label.setText("{}: {}".format(self.name, self.filename.name))
-
-            try:
-                self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
-            except KeyError:
-                self._z_slider.default_value = self.cfg.slider.default_value
-
-            self._plot()
-            self.reset_view()
-        else:
-            self._label.setText("")
-            self._redshift_editor.setText("")
-
-            self.setEnabled(False)

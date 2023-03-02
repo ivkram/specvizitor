@@ -82,7 +82,11 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def reset_view(self):
         pass
 
+    @abc.abstractmethod
     def load_object(self):
+        pass
+
+    def clear_content(self):
         del self.filename
         del self.hdul
         del self.hdu

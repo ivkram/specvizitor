@@ -85,7 +85,16 @@ class DataViewer(AbstractWidget):
         self.save_dock_state()
 
         for name, w in self.dock_widgets.items():
-            w.load_object()
+            # clear the widget content
+            w.clear_content()
+
+            # load the data to the widget
+            if w.data is not None:
+                w.setEnabled(True)
+                w.load_object()
+                w.reset_view()
+            else:
+                w.setEnabled(False)
 
             # update the titles of the docks
             if w.filename is not None and w.data is not None:

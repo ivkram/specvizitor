@@ -218,7 +218,7 @@ class CentralWidget(QtWidgets.QWidget):
 
         self.rd.j = j
 
-        for widget in self.widgets:
+        for widget in (self.control_panel, self.object_info, self.review_form, self.data_viewer):
             widget.load_object()
 
         # cache the index of the object
