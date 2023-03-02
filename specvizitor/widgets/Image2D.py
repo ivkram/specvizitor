@@ -1,11 +1,11 @@
 import logging
 
 import numpy as np
+from qtpy import QtGui
 import pyqtgraph as pg
 from astropy.visualization import ZScaleInterval
 from astropy.utils.decorators import lazyproperty
 
-from qtpy import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 from .ViewerElement import ViewerElement
@@ -21,7 +21,6 @@ class Image2D(ViewerElement):
         super().__init__(rd=rd, cfg=cfg, name=name, parent=parent)
 
         self.cfg = cfg
-        self.name = name
 
         # add a widget for the spectrum
         self._image_2d_widget = pg.GraphicsLayoutWidget()

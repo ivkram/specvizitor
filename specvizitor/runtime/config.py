@@ -28,13 +28,7 @@ class GUI:
 
 
 @dataclass
-class Geometry:
-    min_width: int | None
-    min_height: int | None
-
-
-@dataclass
-class AbstractWidget(Geometry):
+class AbstractWidget:
     pass
 
 

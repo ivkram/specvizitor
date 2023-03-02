@@ -23,7 +23,6 @@ class Spec1D(ViewerElement):
         super().__init__(rd=rd, cfg=cfg, name=name, parent=parent)
 
         self.cfg = cfg
-        self.name = name
 
         # load the list of spectral lines
         # TODO: move to the application data
@@ -43,7 +42,7 @@ class Spec1D(ViewerElement):
         self._redshift_editor.setMaximumWidth(120)
 
         # set up the plot
-        self._spec_1d = self._spec_1d_widget.addPlot(name=self.name)
+        self._spec_1d = self._spec_1d_widget.addPlot(name=name)
         self._spec_1d.setMouseEnabled(True, True)
         self._label_style = {'color': 'r', 'font-size': '20px'}
 
@@ -87,9 +86,10 @@ class Spec1D(ViewerElement):
             self._spec_1d.addItem(line_artist['line'], ignoreBounds=True)
             self._spec_1d.addItem(line_artist['label'])
 
-        for keyword, position in {'TUNIT1': 'bottom', 'TUNIT2': 'right'}.items():
-            if self.hdu.header.get(keyword):
-                self._spec_1d.setLabel(position, self.hdu.header[keyword], **self._label_style)
+        if self.hdu is not None:
+            for keyword, position in {'TUNIT1': 'bottom', 'TUNIT2': 'right'}.items():
+                if self.hdu.header.get(keyword):
+                    self._spec_1d.setLabel(position, self.hdu.header[keyword], **self._label_style)
 
     def _update_view(self):
         for line_name, line_artist in self._line_artists.items():

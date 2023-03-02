@@ -20,9 +20,8 @@ class Plugin:
         DLAM = spec_2d.hdu.header['CD1_1'] * 1e4
         CRVAL = spec_2d.hdu.header['CRVAL1'] * 1e4
         CRPIX = spec_2d.hdu.header['CRPIX1']
-        qtransform = QtGui.QTransform(DLAM, 0, 0,
-                                      0, 1, 0,
-                                      CRVAL - DLAM * CRPIX, 0, 1)
+
+        qtransform = QtGui.QTransform().translate(CRVAL - DLAM * CRPIX, 0).scale(DLAM, 1)
 
         spec_2d.image_2d.setTransform(qtransform)
         spec_2d.image_2d_plot.setAspectLocked(True, 1 / DLAM)

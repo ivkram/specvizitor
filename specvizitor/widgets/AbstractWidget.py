@@ -14,11 +14,6 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
     def __init__(self, cfg: config.AbstractWidget, parent=None):
         super().__init__(parent)
 
-        if cfg.min_width:
-            self.setMinimumWidth(cfg.min_width)
-        if cfg.min_height:
-            self.setMinimumHeight(cfg.min_height)
-
         self.layout = QtWidgets.QGridLayout()
         self.setLayout(self.layout)
 
