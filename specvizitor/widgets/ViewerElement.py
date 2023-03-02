@@ -1,93 +1,70 @@
 import logging
 import abc
+import pathlib
 
-from astropy.utils import lazyproperty
-from astropy.io import fits
+import numpy as np
 from astropy.table import Table
+from astropy.io.fits.header import Header
 
 from .AbstractWidget import AbstractWidget
 
 from ..runtime.appdata import AppData
 from ..runtime import config
-from ..io.viewer_data import get_filename
+from ..io.viewer_data import get_filename, load
 from ..utils import misc
 
 
 logger = logging.getLogger(__name__)
 
 
-class ViewerElement(AbstractWidget, abc.ABC):
-    def __init__(self, rd: AppData, cfg: config.ViewerElement, name: str, parent=None):
+class ViewerElement(AbstractWidget):
+    def __init__(self, rd: AppData, cfg: config.ViewerElement, alias: str, parent=None):
         super().__init__(cfg=cfg, parent=parent)
 
         self.rd = rd
         self.cfg = cfg
-        self.name = name
+        self.alias: str = alias
+
+        self.filename: pathlib.Path | None = None
+        self.data: np.ndarray | Table | None = None
+        self.meta: dict | Header | None = None
 
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-    @lazyproperty
-    def filename(self):
-        return get_filename(self.rd.config.data.dir, self.cfg.filename_pattern, self.rd.id)
+    def load_object(self):
+        self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_pattern, self.rd.id)
 
-    @lazyproperty
-    def hdul(self):
-        try:
-            hdul = fits.open(self.filename)
-        except ValueError:
-            logger.warning('{} not found (object ID: {})'.format(self.name, self.rd.id))
+        if self.filename is None:
+            logger.warning('{} not found (object ID: {})'.format(self.alias, self.rd.id))
+            self.data, self.meta = None, None
             return
-        else:
-            return hdul
 
-    @lazyproperty
-    def hdu(self):
-        if self.hdul is None:
-            return
-        # elif self.cfg.ext_name is not None and self.cfg.ext_ver is None:
-        #     index = self.cfg.ext_name
-        # elif self.cfg.ext_name is not None and self.cfg.ext_ver is not None:
-        #     index = (self.cfg.ext_name, self.cfg.ext_ver)
+        if self.cfg.loader_config is None:
+            loader_config = {}
         else:
-            index = 1
+            loader_config = self.cfg.loader_config
 
         try:
-            return self.hdul[index]
-        except KeyError:
-            logger.error(f'Extension `{index}` not found (object ID: {self.rd.id})')
+            self.data, self.meta = load(self.cfg.loader, self.filename, self.alias, **loader_config)
+        except TypeError as e:
+            # unexpected keyword(s) passed to the loader
+            logger.error(e.args[0])
+            self.data, self.meta = None, None
             return
 
-    @lazyproperty
-    def data(self):
-        if self.hdu is None:
-            return
-        else:
-            data = self.hdu.data
+        if isinstance(self.data, Table):
+            # translate the table columns
+            if self.rd.config.data.translate:
+                misc.translate(self.data, self.rd.config.data.translate)
 
-        if self.hdu.header['XTENSION'] in ('TABLE', 'BINTABLE'):
-            data = Table(data)
-            translate = self.rd.config.data.translate
-
-            if translate:
-                misc.translate(data, translate)
-
-            for cname in ('wavelength', 'flux'):
-                if cname not in data.colnames:
-                    logger.error(misc.column_not_found_message(cname, translate))
-                    return
-
-        return data
+    @abc.abstractmethod
+    def display(self):
+        pass
 
     @abc.abstractmethod
     def reset_view(self):
         pass
 
     @abc.abstractmethod
-    def load_object(self):
-        pass
-
     def clear_content(self):
-        del self.filename
-        del self.hdul
-        del self.hdu
-        del self.data
+        pass

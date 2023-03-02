@@ -1,10 +1,65 @@
+import enum
 import logging
 import pathlib
 import re
+from enum import Enum
 
+from astropy.io import fits
+from astropy.table import Table
+from PIL import Image
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+def load_fits(filename: pathlib.Path, extname: str = None, extver: str = None):
+
+    hdul = fits.open(filename)
+
+    if extname is not None and extver is None:
+        index = extname
+    elif extname is not None and extver is not None:
+        index = (extname, extver)
+    else:
+        index = 1
+
+    try:
+        hdu = hdul[index]
+    except KeyError:
+        logger.error(f'Extension `{index}` not found (filename: {filename.name})')
+        return None, None
+
+    data = hdu.data
+    meta = hdu.header
+
+    if meta['XTENSION'] in ('TABLE', 'BINTABLE'):
+        data = Table(data)
+
+    return data, meta
+
+
+def load_pil(filename: pathlib.Path):
+    image = Image.open(filename)
+    return np.flip(np.asarray(image), axis=0), None
+
+
+def load(loader_name: str | None, filename: pathlib.Path, alias: str, **kwargs):
+    loaders = {
+        'fits': load_fits,
+        'pil': load_pil
+    }
+
+    if loader_name is None:
+        if filename.suffix == '.fits':
+            loader_name = 'fits'
+        else:
+            loader_name = 'pil'
+
+    if loader_name not in loaders.keys():
+        logger.error(f'Unknown loader type: `{loader_name}` ({alias}). Available loaders: {tuple(loaders.keys())}')
+        return None, None
+
+    return loaders[loader_name](filename, **kwargs)
 
 
 def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
@@ -70,7 +125,7 @@ def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
 
     try:
         # convert IDs to int
-        ids = ids.astype(int)
+        ids = ids.astype(np.int64)
         logger.info('Converted IDs to int')
     except ValueError:
         pass

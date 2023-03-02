@@ -17,12 +17,12 @@ class Plugin:
             return
 
         # set x-axis transformation for the 2D spectrum plot
-        DLAM = spec_2d.hdu.header['CD1_1'] * 1e4
-        CRVAL = spec_2d.hdu.header['CRVAL1'] * 1e4
-        CRPIX = spec_2d.hdu.header['CRPIX1']
+        DLAM = spec_2d.meta['CD1_1'] * 1e4
+        CRVAL = spec_2d.meta['CRVAL1'] * 1e4
+        CRPIX = spec_2d.meta['CRPIX1']
 
         qtransform = QtGui.QTransform().translate(CRVAL - DLAM * CRPIX, 0).scale(DLAM, 1)
 
         spec_2d.image_2d.setTransform(qtransform)
         spec_2d.image_2d_plot.setAspectLocked(True, 1 / DLAM)
-        spec_2d.image_2d_plot.setXLink(spec_1d.name)  # link the x-axis range
+        spec_2d.image_2d_plot.setXLink(spec_1d.alias)  # link the x-axis range

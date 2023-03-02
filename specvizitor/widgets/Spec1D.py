@@ -9,6 +9,7 @@ from qtpy import QtCore, QtWidgets
 
 from ..utils.params import read_yaml
 from ..utils import SmartSlider
+from ..utils import misc
 
 from .ViewerElement import ViewerElement
 from ..runtime.appdata import AppData
@@ -19,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 class Spec1D(ViewerElement):
-    def __init__(self, rd: AppData, cfg: config.Spectrum, name: str, parent=None):
-        super().__init__(rd=rd, cfg=cfg, name=name, parent=parent)
+    def __init__(self, rd: AppData, cfg: config.Spectrum, alias: str, parent=None):
+        super().__init__(rd=rd, cfg=cfg, alias=alias, parent=parent)
 
         self.cfg = cfg
 
@@ -29,7 +30,9 @@ class Spec1D(ViewerElement):
         self._lines = read_yaml('default_lines.yml', in_dist=True)
 
         # create a widget for the spectrum
-        self._spec_1d_widget = pg.GraphicsLayoutWidget()
+        self._spec_1d_widget = pg.GraphicsView()
+        self._spec_1d_layout = pg.GraphicsLayout()
+        self._spec_1d_widget.setCentralItem(self._spec_1d_layout)
 
         # create a redshift slider
         self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.slider))
@@ -42,7 +45,7 @@ class Spec1D(ViewerElement):
         self._redshift_editor.setMaximumWidth(120)
 
         # set up the plot
-        self._spec_1d = self._spec_1d_widget.addPlot(name=name)
+        self._spec_1d = self._spec_1d_layout.addPlot(name=alias)
         self._spec_1d.setMouseEnabled(True, True)
         self._label_style = {'color': 'r', 'font-size': '20px'}
 
@@ -86,10 +89,9 @@ class Spec1D(ViewerElement):
             self._spec_1d.addItem(line_artist['line'], ignoreBounds=True)
             self._spec_1d.addItem(line_artist['label'])
 
-        if self.hdu is not None:
-            for keyword, position in {'TUNIT1': 'bottom', 'TUNIT2': 'right'}.items():
-                if self.hdu.header.get(keyword):
-                    self._spec_1d.setLabel(position, self.hdu.header[keyword], **self._label_style)
+        for keyword, position in {'TUNIT1': 'bottom', 'TUNIT2': 'right'}.items():
+            if self.meta.get(keyword):
+                self._spec_1d.setLabel(position, self.meta[keyword], **self._label_style)
 
     def _update_view(self):
         for line_name, line_artist in self._line_artists.items():
@@ -112,6 +114,24 @@ class Spec1D(ViewerElement):
 
         self._update_from_slider()
 
+    def load_object(self):
+        super().load_object()
+        if self.data is None:
+            return
+
+        for cname in ('wavelength', 'flux'):
+            if cname not in self.data.colnames:
+                logger.error(misc.column_not_found_message(cname, self.rd.config.data.translate))
+                return
+
+    def display(self):
+        try:
+            self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
+        except KeyError:
+            self._z_slider.default_value = self.cfg.slider.default_value
+
+        self._plot()
+
     def reset_view(self):
         if self.data is None:
             return
@@ -122,17 +142,7 @@ class Spec1D(ViewerElement):
         self._spec_1d.setXRange(*self.default_xrange)
         self._spec_1d.setYRange(*self.default_yrange)
 
-    def load_object(self):
-        try:
-            self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
-        except KeyError:
-            self._z_slider.default_value = self.cfg.slider.default_value
-
-        self._plot()
-
     def clear_content(self):
-        super().clear_content()
-
         del self.default_xrange
         del self.default_yrange
         del self._label_height

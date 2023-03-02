@@ -45,7 +45,7 @@ class ReviewForm(AbstractWidget):
 class ViewerElement(AbstractWidget):
     filename_pattern: str
     loader: str | None
-    meta: dict[str, str] | None
+    loader_config: dict[str, str] | None
     position: str | None
     relative_to: str | None
 
@@ -54,6 +54,7 @@ class ViewerElement(AbstractWidget):
 class Image(ViewerElement):
     rotate: int | None
     scale: float | None
+    interactive: bool = True
 
 
 @dataclass

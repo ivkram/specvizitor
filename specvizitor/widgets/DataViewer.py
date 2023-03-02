@@ -53,12 +53,12 @@ class DataViewer(AbstractWidget):
         # create widgets for images (e.g. image cutouts, 2D spectra)
         if self.cfg.images is not None:
             for name, image_cfg in self.cfg.images.items():
-                widgets[name] = Image2D(rd=self.rd, cfg=image_cfg, name=name, parent=self)
+                widgets[name] = Image2D(rd=self.rd, cfg=image_cfg, alias=name, parent=self)
 
         # create widgets for 1D spectra
         if self.cfg.spectra is not None:
             for name, spec_cfg in self.cfg.spectra.items():
-                widgets[name] = Spec1D(rd=self.rd, cfg=spec_cfg, name=name, parent=self)
+                widgets[name] = Spec1D(rd=self.rd, cfg=spec_cfg, alias=name, parent=self)
 
         return widgets
 
@@ -73,6 +73,7 @@ class DataViewer(AbstractWidget):
     def add_docks(self):
         for name, d in self.docks.items():
             position = self.dock_widgets[name].cfg.position
+
             self.dock_area.addDock(dock=d,
                                    position=position if position is not None else 'bottom',
                                    relativeTo=self.dock_widgets[name].cfg.relative_to)
@@ -89,32 +90,24 @@ class DataViewer(AbstractWidget):
             w.clear_content()
 
             # load the data to the widget
+            w.load_object()
+
+            # display the data
             if w.data is not None:
                 w.setEnabled(True)
-                w.load_object()
+                w.display()
                 w.reset_view()
             else:
                 w.setEnabled(False)
 
-            # update the titles of the docks
+            # update the title of the dock
             if w.filename is not None and w.data is not None:
-                self.docks[name].setTitle(self.dock_title(w=w))
+                self.docks[name].setTitle(w.filename.name)
             else:
                 self.docks[name].setTitle(name)
 
         for plugin in self._plugins:
             plugin.link(self.dock_widgets)
-
-    @staticmethod
-    def dock_title(w: ViewerElement) -> str:
-        # if w.cfg.ext_name is not None and w.cfg.ext_ver is None:
-        #     return f"{w.filename.name} [{w.cfg.ext_name}]"
-        # elif w.cfg.ext_name is not None and w.cfg.ext_ver is not None:
-        #     return f"{w.filename.name} [{w.cfg.ext_name}, {w.cfg.ext_ver}]"
-        # elif len(w.hdul) > 2:
-        #     return f"{w.filename.name} [HDU #1]"
-        # else:
-        return w.filename.name
 
     def reset_view(self):
         for w in self.dock_widgets.values():

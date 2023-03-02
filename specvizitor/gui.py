@@ -261,6 +261,7 @@ def main():
     # pyqtgraph configuration
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
+    pg.setConfigOption('imageAxisOrder', 'row-major')
     pg.setConfigOption('antialias', runtime.config.appearance.antialiasing)
 
     # start the application
