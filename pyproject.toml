@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "specvizitor"
-version = "0.1.13"
+version = "0.1.14"
 description = "Python GUI application for a visual inspection of astronomical spectroscopic data"
 authors = ["Ivan Kramarenko <im.kramarenko@gmail.com>", "Josephine Kerutt <>"]
 license = "BSD-3-Clause"
