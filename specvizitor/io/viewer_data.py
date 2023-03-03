@@ -6,7 +6,7 @@ from enum import Enum
 
 from astropy.io import fits
 from astropy.table import Table
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,8 @@ def load_fits(filename: pathlib.Path, extname: str = None, extver: str = None):
 
 def load_pil(filename: pathlib.Path):
     image = Image.open(filename)
-    return np.flip(np.asarray(image), axis=0), None
+    image = ImageOps.flip(image)
+    return np.asarray(image), image.info
 
 
 def load(loader_name: str | None, filename: pathlib.Path, alias: str, **kwargs):
