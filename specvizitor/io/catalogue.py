@@ -5,7 +5,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from .viewer_data import get_ids_from_dir
-from ..utils import misc
+from ..utils import tables
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +36,11 @@ def load_cat(filename=None,
 
     # rename columns
     if translate is not None:
-        misc.translate(cat, translate)
+        tables.translate(cat, translate)
 
     # check that the ID column is present in the catalogue
     if 'id' not in cat.colnames:
-        logger.error(misc.column_not_found_message('id', translate))
+        logger.error(tables.column_not_found_message('id', translate))
         return
     cat.add_index('id')
 

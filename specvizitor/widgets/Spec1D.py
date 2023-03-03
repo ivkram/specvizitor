@@ -9,7 +9,7 @@ from qtpy import QtCore, QtWidgets
 
 from ..utils.params import read_yaml
 from ..utils import SmartSlider
-from ..utils import misc
+from ..utils import tables
 
 from .ViewerElement import ViewerElement
 from ..runtime.appdata import AppData
@@ -121,7 +121,7 @@ class Spec1D(ViewerElement):
 
         for cname in ('wavelength', 'flux'):
             if cname not in self.data.colnames:
-                logger.error(misc.column_not_found_message(cname, self.rd.config.data.translate))
+                logger.error(tables.column_not_found_message(cname, self.rd.config.data.translate))
                 return
 
     def display(self):
