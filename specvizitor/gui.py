@@ -10,7 +10,7 @@ from qtpy import QtGui, QtWidgets
 from qtpy.QtCore import Signal, Slot
 
 from .runtime.appdata import AppData
-from .menu import NewFile
+from .menu import NewFile, Settings
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
 from .utils.widgets import get_widgets
 from .utils.logs import LogMessageBox
@@ -171,7 +171,8 @@ class MainWindow(QtWidgets.QMainWindow):
         LogMessageBox(logging.INFO, 'Not implemented', parent=self)
 
     def _exit_action(self):
-        self.rd.save()  # auto-save
+        if self.rd.df is not None:
+            self.rd.save()  # auto-save
         self.central_widget.data_viewer.save_dock_state()  # save the dock state
         self.close()
         logger.info("Application closed")
@@ -186,9 +187,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showMaximized()
 
     def _settings_action(self):
-        QtWidgets.QMessageBox.information(self, "Settings",
-                                          "Configuration file: {}\n\nCache: {}".
-                                          format(self.rd.config_file.path, self.rd.cache_file.path))
+        dialog = Settings(self.rd, parent=self)
+        if dialog.exec() and self.rd.df is not None:
+            self.central_widget.data_viewer.load_object()
+            self.central_widget.object_info.load_object()
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))

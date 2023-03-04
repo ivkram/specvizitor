@@ -5,8 +5,8 @@ from qtpy import QtWidgets
 
 from ..runtime.appdata import AppData
 from ..utils import FileBrowser
-from ..io.catalogue import load_cat, create_cat
-from ..io.viewer_data import get_ids_from_dir
+from ..io.catalogue import load_cat, create_cat, cat_browser
+from ..io.viewer_data import get_ids_from_dir, data_browser
 from ..utils.logs import qlog
 
 
@@ -29,10 +29,8 @@ class NewFile(QtWidgets.QDialog):
             'output': FileBrowser(title='Output File:', filename_extensions='CSV Files (*.csv)',
                                   mode=FileBrowser.SaveFile, default_path=pathlib.Path().resolve() / 'Untitled.csv',
                                   parent=self),
-            'data': FileBrowser(title='Data Source:', mode=FileBrowser.OpenDirectory,
-                                default_path=self.rd.config.data.dir, parent=self),
-            'cat': FileBrowser(title='Catalogue:', filename_extensions='FITS Files (*.fits)', mode=FileBrowser.OpenFile,
-                               default_path=self.rd.config.cat.filename, parent=self)
+            'data': data_browser(self.rd.config.data.dir, self),
+            'cat': cat_browser(self.rd.config.cat.filename, self)
         }
 
         # add a file browser for specifying the output file
@@ -100,12 +98,14 @@ class NewFile(QtWidgets.QDialog):
         self.setLayout(layout)
 
     @qlog
-    def get_catalogue(self):
-        # validate the input
+    def validate(self) -> bool:
         for b in self._browsers.values():
-            if not b.isHidden() and (not b.is_filled() or not b.exists()):
-                return
+            if not b.isHidden() and (not b.is_filled(verbose=True) or not b.exists(verbose=True)):
+                return False
+        return True
 
+    @qlog
+    def get_catalogue(self):
         # create a new catalogue if necessary
         if self._browsers['cat'].isHidden():
             ids = get_ids_from_dir(self._browsers['data'].path, self._id_pattern.text())
@@ -121,6 +121,9 @@ class NewFile(QtWidgets.QDialog):
                         id_pattern=self.rd.config.data.id_pattern)
 
     def accept(self):
+        if not self.validate():
+            return
+
         cat = self.get_catalogue()
         if cat is None:
             return
@@ -132,6 +135,8 @@ class NewFile(QtWidgets.QDialog):
         self.rd.config.data.dir = self._browsers['data'].path
         if not self._browsers['cat'].isHidden():
             self.rd.config.cat.filename = self._browsers['cat'].path
+        else:
+            self.rd.config.cat.filename = None
         if not self._id_pattern.isHidden():
             self.rd.config.data.id_pattern = self._id_pattern.text()
         self.rd.config.save(self.rd.config_file)

@@ -6,6 +6,7 @@ from astropy.table import Table
 
 from .viewer_data import get_ids_from_dir
 from ..utils import tables
+from ..utils import FileBrowser
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +65,8 @@ def create_cat(ids) -> Table:
     cat.add_index('id')
 
     return cat
+
+
+def cat_browser(default_path, parent) -> FileBrowser:
+    return FileBrowser(title='Catalogue:', filename_extensions='FITS Files (*.fits)', mode=FileBrowser.OpenFile,
+                       default_path=default_path, parent=parent)

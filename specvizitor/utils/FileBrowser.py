@@ -46,27 +46,28 @@ class FileBrowser(QtWidgets.QWidget):
     def path(self) -> str:
         return self._line_edit.text()
 
-    def is_filled(self) -> bool:
+    def is_filled(self, verbose=False) -> bool:
         if not self.path:
-            logger.error('The field `{}` is empty'.format(self._title.rstrip(':')))
+            if verbose:
+                logger.error('The field `{}` is empty'.format(self._title.rstrip(':')))
             return False
         return True
 
-    def exists(self):
+    def exists(self, verbose=False):
         if self._browser_mode == FileBrowser.SaveFile:
             path_to_check = pathlib.Path(self.path).parent
         else:
             path_to_check = pathlib.Path(self.path)
 
         if not path_to_check.exists():
-            if self._browser_mode == FileBrowser.OpenFile:
-                msg = 'The file `{}` does not exist'.format(path_to_check)
-            elif self._browser_mode in (FileBrowser.OpenDirectory, FileBrowser.SaveFile):
-                msg = 'The directory `{}` does not exist'.format(path_to_check)
-            else:
-                msg = 'The path `{}` does not exist'.format(path_to_check)
-
-            logger.error(msg)
+            if verbose:
+                if self._browser_mode == FileBrowser.OpenFile:
+                    msg = 'The file `{}` does not exist'.format(path_to_check)
+                elif self._browser_mode in (FileBrowser.OpenDirectory, FileBrowser.SaveFile):
+                    msg = 'The directory `{}` does not exist'.format(path_to_check)
+                else:
+                    msg = 'The path `{}` does not exist'.format(path_to_check)
+                logger.error(msg)
             return False
 
         return True

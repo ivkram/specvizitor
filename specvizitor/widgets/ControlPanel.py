@@ -32,7 +32,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
 
         # create the ID label
         self._id_label = QtWidgets.QLabel()
-        self._id_label.setText('ID --')
+        self._id_label.setText('ID -- (# -- / --)')
 
         # create buttons for switching to the next or previous object
         self._pn_buttons = self.create_pn_buttons()

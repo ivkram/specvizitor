@@ -9,6 +9,8 @@ from astropy.table import Table
 from PIL import Image, ImageOps
 import numpy as np
 
+from ..utils import FileBrowser
+
 logger = logging.getLogger(__name__)
 
 
@@ -139,3 +141,7 @@ def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
         return
 
     return ids
+
+
+def data_browser(default_path, parent) -> FileBrowser:
+    return FileBrowser(title='Data Source:', mode=FileBrowser.OpenDirectory, default_path=default_path, parent=parent)
