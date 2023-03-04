@@ -27,7 +27,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super().__init__(parent)
 
-        self.setGeometry(600, 500, 2550, 1450)  # set the position and the size of the main window
         self.setWindowTitle('Specvizitor')      # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
@@ -43,9 +42,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.central_widget.init_ui()
 
+        self._reset_view.triggered.connect(self.central_widget.data_viewer.reset_view)
+        self._reset_dock_state.triggered.connect(self.central_widget.data_viewer.reset_dock_state)
+
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
             self.load_project(self.rd.cache.last_inspection_file)
+
+        self.showMaximized()
+        self.was_maximized: bool
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -54,24 +59,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._new_file = QtWidgets.QAction("&New...")
         self._new_file.triggered.connect(self._new_file_action)
+        self._new_file.setShortcut(QtGui.QKeySequence('Ctrl+N'))
         self._file.addAction(self._new_file)
 
         self._open_file = QtWidgets.QAction("&Open...")
         self._open_file.triggered.connect(self._open_file_action)
+        self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
         self._file.addAction(self._open_file)
 
         self._file.addSeparator()
 
         self._save = QtWidgets.QAction("&Save...")
         self._save.triggered.connect(self._save_action)
+        self._save.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self._save.setEnabled(False)
         self._file.addAction(self._save)
 
-        self.shortcut_close = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+S'), self)
-        self.shortcut_close.activated.connect(self._save_action)
-
         self._save_as = QtWidgets.QAction("Save As...")
         self._save_as.triggered.connect(self._save_as_action)
+        self._save_as.setShortcut(QtGui.QKeySequence('Shift+Ctrl+S'))
         self._save_as.setEnabled(False)
         self._file.addAction(self._save_as)
 
@@ -82,9 +88,28 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file.addSeparator()
 
-        self._exit = QtWidgets.QAction("E&xit...")
-        self._exit.triggered.connect(self._exit_action)
-        self._file.addAction(self._exit)
+        self._quit = QtWidgets.QAction("&Quit...")
+        self._quit.triggered.connect(self._exit_action)
+        self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
+        self._file.addAction(self._quit)
+
+        self._view = self._menu.addMenu("&View")
+
+        self._reset_view = QtWidgets.QAction("Reset View")
+        self._view.addAction(self._reset_view)
+
+        self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
+        self._view.addAction(self._reset_dock_state)
+
+        self._view.addSeparator()
+
+        self._fullscreen = QtWidgets.QAction("Fullscreen")
+        self._fullscreen.triggered.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
+        self._fullscreen.setShortcut('F11')
+        self._view.addAction(self._fullscreen)
+
+        self._shortcut_fullscreen = QtWidgets.QShortcut('Esc', self)
+        self._shortcut_fullscreen.activated.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._tools = self._menu.addMenu("&Tools")
         self._settings = QtWidgets.QAction("Se&ttings...")
@@ -134,7 +159,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
         """
-        msg = 'The data is saved automatically'
+        msg = 'The project data is saved automatically'
         if self.rd.output_path is not None:
             msg += ' to {}'.format(self.rd.output_path)
         LogMessageBox(logging.INFO, msg, parent=self)
@@ -150,6 +175,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.data_viewer.save_dock_state()  # save the dock state
         self.close()
         logger.info("Application closed")
+
+    def _enter_fullscreen(self):
+        self.was_maximized = True if self.isMaximized() else False
+        self.showFullScreen()
+
+    def _exit_fullscreen(self):
+        self.showNormal()
+        if self.was_maximized:
+            self.showMaximized()
 
     def _settings_action(self):
         QtWidgets.QMessageBox.information(self, "Settings",
