@@ -12,7 +12,7 @@ from qtpy.QtCore import Signal, Slot
 from .runtime.appdata import AppData
 from .menu import NewFile, Settings
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
-from .utils.widgets import get_widgets
+from .utils.widget_tools import get_widgets
 from .utils.logs import LogMessageBox
 
 

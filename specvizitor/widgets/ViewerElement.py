@@ -11,7 +11,7 @@ from .AbstractWidget import AbstractWidget
 from ..runtime.appdata import AppData
 from ..runtime import config
 from ..io.viewer_data import get_filename, load
-from ..utils import tables
+from ..utils import table_tools
 
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class ViewerElement(AbstractWidget):
         if isinstance(self.data, Table):
             # translate the table columns
             if self.rd.config.data.translate:
-                tables.translate(self.data, self.rd.config.data.translate)
+                table_tools.translate(self.data, self.rd.config.data.translate)
 
     @abc.abstractmethod
     def display(self):
