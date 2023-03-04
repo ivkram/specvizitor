@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
-    reset_button_clicked = QtCore.Signal()
+    reset_view_button_clicked = QtCore.Signal()
+    reset_dock_state_button_clicked = QtCore.Signal()
     screenshot_button_clicked = QtCore.Signal(str)
     object_selected = QtCore.Signal(int)
 
@@ -34,7 +35,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._id_button.setText('ID --')
         self._id_button.setToolTip('Reset the view')
         self._id_button.setFixedWidth(self.cfg.button_width)
-        self._id_button.clicked.connect(self.reset_button_clicked.emit)
+        self._id_button.clicked.connect(self.reset_view_button_clicked.emit)
 
         # create a widget displaying the index of the current object and the total number of objects in the catalogue
         self._number_of_obj_label = QtWidgets.QLabel()
@@ -58,12 +59,18 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self._reset_view_button = QtWidgets.QPushButton()
         self._reset_view_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-view.svg')))
         self._reset_view_button.setToolTip('Reset the view')
-        self._reset_view_button.clicked.connect(self.reset_button_clicked.emit)
+        self._reset_view_button.clicked.connect(self.reset_view_button_clicked.emit)
 
         # create a `dark mode` button
-        self._dark_mode = QtWidgets.QPushButton()
-        self._dark_mode.setIcon(QtGui.QIcon(get_icon_abs_path('dark-mode.svg')))
-        self._dark_mode.setToolTip('Turn on the dark theme')
+        # self._dark_mode = QtWidgets.QPushButton()
+        # self._dark_mode.setIcon(QtGui.QIcon(get_icon_abs_path('dark-mode.svg')))
+        # self._dark_mode.setToolTip('Turn on the dark theme')
+
+        # create the `reset dock state` button
+        self._reset_dock_state_button = QtWidgets.QPushButton()
+        self._reset_dock_state_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-dock-state.svg')))
+        self._reset_dock_state_button.setToolTip('Reset the dock state')
+        self._reset_dock_state_button.clicked.connect(self.reset_dock_state_button_clicked.emit)
 
         # create the `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton()
@@ -114,12 +121,12 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.layout.addWidget(self._pn_buttons['previous'], 2, 1, 1, 1)
         self.layout.addWidget(self._pn_buttons['next'], 2, 2, 1, 1)
         self.layout.addWidget(self._star_button, 2, 3, 1, 1)
-        self.layout.addWidget(self._dark_mode, 2, 4, 1, 1)
+        self.layout.addWidget(self._screenshot_button, 2, 4, 1, 1)
 
         self.layout.addWidget(self._pn_buttons['previous starred'], 3, 1, 1, 1)
         self.layout.addWidget(self._pn_buttons['next starred'], 3, 2, 1, 1)
         self.layout.addWidget(self._reset_view_button, 3, 3, 1, 1)
-        self.layout.addWidget(self._screenshot_button, 3, 4, 1, 1)
+        self.layout.addWidget(self._reset_dock_state_button, 3, 4, 1, 1)
 
         self.layout.addWidget(self._go_to_id_button, 4, 1, 1, 2)
         self.layout.addWidget(self._id_field, 4, 3, 1, 2)
@@ -133,7 +140,6 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
 
         self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
         self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
-        self._dark_mode.setEnabled(False)
 
     def previous_next_object(self, command: str, starred: bool):
         j_upd = self.update_index(self.rd.j, self.rd.n_objects, command)

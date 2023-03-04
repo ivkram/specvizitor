@@ -39,10 +39,7 @@ class DataViewer(AbstractWidget):
             # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `state`
             self.dock_area.restoreState(self.rd.cache.dock_state, missing='ignore', extra=None)
         except (KeyError, ValueError, TypeError):
-            for d in self.docks.values():
-                d.close()
-            self.docks = self.create_docks()
-            self.add_docks()
+            self.reset_dock_state()
 
         for w in self.dock_widgets.values():
             w.init_ui()
@@ -77,6 +74,12 @@ class DataViewer(AbstractWidget):
             self.dock_area.addDock(dock=d,
                                    position=position if position is not None else 'bottom',
                                    relativeTo=self.dock_widgets[name].cfg.relative_to)
+
+    def reset_dock_state(self):
+        for d in self.docks.values():
+            d.close()
+        self.docks = self.create_docks()
+        self.add_docks()
 
     def save_dock_state(self):
         self.rd.cache.dock_state = self.dock_area.saveState()
