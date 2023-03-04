@@ -44,21 +44,22 @@ class ReviewForm(AbstractWidget):
 @dataclass
 class ViewerElement(AbstractWidget):
     filename_keyword: str
-    loader: str | None
-    loader_config: dict[str, str] | None
-    position: str | None
-    relative_to: str | None
+    loader: str | None = None
+    loader_config: dict[str, str] | None = None
+    position: str | None = None
+    relative_to: str | None = None
+    smoothing_slider: bool = True
 
 
 @dataclass
 class Image(ViewerElement):
-    rotate: int | None
-    scale: float | None
+    rotate: int | None = None
+    scale: float | None = None
     interactive: bool = True
 
 
 @dataclass
-class Slider:
+class RedshiftSlider:
     min_value: float | None
     max_value: float | None
     step: float | None
@@ -67,7 +68,7 @@ class Slider:
 
 @dataclass
 class Spectrum(ViewerElement):
-    slider: Slider
+    redshift_slider: RedshiftSlider | None = None
 
 
 @dataclass

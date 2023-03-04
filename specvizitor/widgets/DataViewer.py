@@ -99,6 +99,7 @@ class DataViewer(AbstractWidget):
             if w.data is not None:
                 w.setEnabled(True)
                 w.display()
+                w.apply_transformations()
                 w.reset_view()
             else:
                 w.setEnabled(False)
@@ -114,7 +115,8 @@ class DataViewer(AbstractWidget):
 
     def reset_view(self):
         for w in self.dock_widgets.values():
-            w.reset_view()
+            if w.data is not None:
+                w.reset_view()
 
     def take_screenshot(self, filename: str):
         self.grab().save(filename)

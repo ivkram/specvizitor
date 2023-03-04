@@ -2,6 +2,7 @@ import logging
 from dataclasses import asdict
 
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
@@ -35,7 +36,7 @@ class Spec1D(ViewerElement):
         self._spec_1d_widget.setCentralItem(self._spec_1d_layout)
 
         # create a redshift slider
-        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.slider))
+        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.redshift_slider))
         self._z_slider.valueChanged[int].connect(self._update_from_slider)
         self._z_slider.setToolTip('Slide to redshift.')
 
@@ -61,10 +62,11 @@ class Spec1D(ViewerElement):
             self._line_artists[line_name] = {'line': line, 'label': label}
 
     def init_ui(self):
-        self.layout.addWidget(self._spec_1d_widget, 1, 1, 1, 3)
-        self.layout.addWidget(self._z_slider, 2, 1, 1, 1)
-        self.layout.addWidget(QtWidgets.QLabel('z = ', self), 2, 2, 1, 1)
-        self.layout.addWidget(self._redshift_editor, 2, 3, 1, 1)
+        self.layout.addWidget(self._smoothing_slider, 1, 1, 1, 1)
+        self.layout.addWidget(self._spec_1d_widget, 1, 2, 1, 4)
+        self.layout.addWidget(self._z_slider, 2, 2, 1, 1)
+        self.layout.addWidget(QtWidgets.QLabel('z = ', self), 2, 3, 1, 1)
+        self.layout.addWidget(self._redshift_editor, 2, 4, 1, 1)
 
     @lazyproperty
     def default_xrange(self):
@@ -79,11 +81,16 @@ class Spec1D(ViewerElement):
         y_min, y_max = self.default_yrange
         return y_min + 0.6 * (y_max - y_min)
 
-    def _plot(self):
-        self._spec_1d.plot(self.data['wavelength'], self.data['flux'], pen='k')
+    def _plot_spec_1d(self, wave, flux):
+        self._spec_1d_plot = self._spec_1d.plot(wave, flux, pen='k')
 
+    def _plot_spec_1d_err(self, wave, flux_err):
         if 'flux_error' in self.data.colnames:
-            self._spec_1d.plot(self.data['wavelength'], self.data['flux_error'], pen='r')
+            self._spec_1d.plot(wave, flux_err, pen='r')
+
+    def _plot(self):
+        self._plot_spec_1d(self.data['wavelength'], self.data['flux'])
+        self._plot_spec_1d_err(self.data['wavelength'], self.data['flux_error'])
 
         for line_name, line_artist in self._line_artists.items():
             self._spec_1d.addItem(line_artist['line'], ignoreBounds=True)
@@ -114,11 +121,7 @@ class Spec1D(ViewerElement):
 
         self._update_from_slider()
 
-    def load_object(self):
-        super().load_object()
-        if self.data is None:
-            return
-
+    def post_load(self):
         for cname in ('wavelength', 'flux'):
             if cname not in self.data.colnames:
                 logger.error(table_tools.column_not_found_message(cname, self.rd.config.data.translate))
@@ -128,19 +131,20 @@ class Spec1D(ViewerElement):
         try:
             self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
         except KeyError:
-            self._z_slider.default_value = self.cfg.slider.default_value
+            self._z_slider.default_value = self.cfg.redshift_slider.default_value
 
         self._plot()
 
     def reset_view(self):
-        if self.data is None:
-            return
-
         self._z_slider.reset()
         self._update_from_slider()
 
         self._spec_1d.setXRange(*self.default_xrange)
         self._spec_1d.setYRange(*self.default_yrange)
+
+    def smooth(self, sigma: int):
+        self._spec_1d.removeItem(self._spec_1d_plot)
+        self._plot_spec_1d(self.data['wavelength'], gaussian_filter1d(self.data['flux'], sigma / 10))
 
     def clear_content(self):
         del self.default_xrange

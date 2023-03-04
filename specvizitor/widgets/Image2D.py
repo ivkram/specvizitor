@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pyqtgraph as pg
 from astropy.visualization import ZScaleInterval
+from scipy.ndimage import gaussian_filter
 
 from qtpy import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
@@ -45,6 +46,8 @@ class Image2D(ViewerElement):
             self.image_2d_plot.setAspectLocked(True)
 
         else:
+            self._smoothing_slider.setHidden(True)
+
             self._view_box = pg.ViewBox()
             self._image_2d_layout.setContentsMargins(0, 0, 0, 0)
             self._view_box.setAspectLocked(True)
@@ -53,13 +56,10 @@ class Image2D(ViewerElement):
             self._image_2d_layout.addItem(self._view_box)
 
     def init_ui(self):
-        self.layout.addWidget(self._image_2d_widget, 1, 1)
+        self.layout.addWidget(self._smoothing_slider, 1, 1)
+        self.layout.addWidget(self._image_2d_widget, 1, 2)
 
-    def load_object(self):
-        super().load_object()
-        if self.data is None:
-            return
-
+    def post_load(self):
         # rotate the image
         if self.cfg.rotate is not None:
             self.data = np.rot90(self.data, k=self.cfg.rotate // 90)
@@ -72,15 +72,15 @@ class Image2D(ViewerElement):
         self.image_2d.setImage(self.data)
 
     def reset_view(self):
-        if self.data is None:
-            return
-
         if self.cfg.interactive:
             # TODO: allow to choose between min/max and zscale?
             self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
             self.image_2d_plot.autoRange()
         else:
             self._view_box.autoRange(padding=0)
+
+    def smooth(self, sigma: int):
+        self.image_2d.setImage(gaussian_filter(self.data, (sigma - 1) / 20))
 
     def clear_content(self):
         self.image_2d.clear()

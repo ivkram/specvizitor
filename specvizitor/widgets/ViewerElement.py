@@ -6,6 +6,8 @@ import numpy as np
 from astropy.table import Table
 from astropy.io.fits.header import Header
 
+from qtpy import QtWidgets
+
 from .AbstractWidget import AbstractWidget
 
 from ..runtime.appdata import AppData
@@ -17,7 +19,7 @@ from ..utils import table_tools
 logger = logging.getLogger(__name__)
 
 
-class ViewerElement(AbstractWidget):
+class ViewerElement(AbstractWidget, abc.ABC):
     def __init__(self, rd: AppData, cfg: config.ViewerElement, alias: str, parent=None):
         super().__init__(cfg=cfg, parent=parent)
 
@@ -30,6 +32,15 @@ class ViewerElement(AbstractWidget):
         self.meta: dict | Header | None = None
 
         self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self._smoothing_slider = QtWidgets.QSlider()
+        self._smoothing_slider.setRange(1, 101)
+        self._smoothing_slider.setSingleStep(1)
+        self._smoothing_slider.setValue(1)
+        self._smoothing_slider.valueChanged[int].connect(self.smooth)
+
+        if not self.cfg.smoothing_slider:
+            self._smoothing_slider.setHidden(True)
 
     def load_object(self):
         self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_keyword, self.rd.id)
@@ -57,12 +68,26 @@ class ViewerElement(AbstractWidget):
             if self.rd.config.data.translate:
                 table_tools.translate(self.data, self.rd.config.data.translate)
 
+        self.post_load()
+
+    def apply_transformations(self):
+        if self._smoothing_slider.value() > 1:
+            self.smooth(self._smoothing_slider.value())
+
+    @abc.abstractmethod
+    def post_load(self):
+        pass
+
     @abc.abstractmethod
     def display(self):
         pass
 
     @abc.abstractmethod
     def reset_view(self):
+        pass
+
+    @abc.abstractmethod
+    def smooth(self, sigma: int):
         pass
 
     @abc.abstractmethod
