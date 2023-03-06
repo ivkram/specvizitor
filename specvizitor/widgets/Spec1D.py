@@ -121,11 +121,12 @@ class Spec1D(ViewerElement):
 
         self._update_from_slider()
 
-    def post_load(self):
+    def validate(self):
         for cname in ('wavelength', 'flux'):
             if cname not in self.data.colnames:
                 logger.error(table_tools.column_not_found_message(cname, self.rd.config.data.translate))
-                return
+                return False
+        return True
 
     def display(self):
         try:

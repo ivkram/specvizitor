@@ -43,6 +43,23 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self._smoothing_slider.setHidden(True)
 
     def load_object(self):
+        # clear the widget content
+        if self.data is not None:
+            self.clear_content()
+
+        # load data to the widget
+        self.load_data()
+
+        # display the data
+        if self.data is not None:
+            self.setEnabled(True)
+            self.display()
+            self.apply_transformations()
+            self.reset_view()
+        else:
+            self.setEnabled(False)
+
+    def load_data(self):
         self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_keyword, self.rd.id)
 
         if self.filename is None:
@@ -68,14 +85,16 @@ class ViewerElement(AbstractWidget, abc.ABC):
             if self.rd.config.data.translate:
                 table_tools.translate(self.data, self.rd.config.data.translate)
 
-        self.post_load()
+        if not self.validate():
+            self.data, self.meta = None, None
+            return
 
     def apply_transformations(self):
         if self._smoothing_slider.value() > 1:
             self.smooth(self._smoothing_slider.value())
 
     @abc.abstractmethod
-    def post_load(self):
+    def validate(self):
         pass
 
     @abc.abstractmethod

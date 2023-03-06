@@ -59,7 +59,7 @@ class Image2D(ViewerElement):
         self.layout.addWidget(self._smoothing_slider, 1, 1)
         self.layout.addWidget(self._image_2d_widget, 1, 2)
 
-    def post_load(self):
+    def apply_transformations(self):
         # rotate the image
         if self.cfg.rotate is not None:
             self.data = np.rot90(self.data, k=self.cfg.rotate // 90)
@@ -67,6 +67,11 @@ class Image2D(ViewerElement):
         # scale the data points
         if self.cfg.scale is not None:
             self.data *= self.cfg.scale
+
+        super().apply_transformations()
+
+    def validate(self):
+        return True
 
     def display(self):
         self.image_2d.setImage(self.data)
