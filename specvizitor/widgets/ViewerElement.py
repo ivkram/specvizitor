@@ -53,8 +53,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
         # display the data
         if self.data is not None:
             self.setEnabled(True)
-            self.display()
             self.apply_transformations()
+            self.display()
             self.reset_view()
         else:
             self.setEnabled(False)
