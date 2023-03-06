@@ -128,6 +128,13 @@ class Spec1D(ViewerElement):
                 return False
         return True
 
+    def transform(self):
+        pass
+
+    def smooth_from_slider(self, sigma: int):
+        self._spec_1d.removeItem(self._spec_1d_plot)
+        self._plot_spec_1d(self.data['wavelength'], gaussian_filter1d(self.data['flux'], sigma / 10))
+
     def display(self):
         try:
             self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
@@ -142,10 +149,6 @@ class Spec1D(ViewerElement):
 
         self._spec_1d.setXRange(*self.default_xrange)
         self._spec_1d.setYRange(*self.default_yrange)
-
-    def smooth(self, sigma: int):
-        self._spec_1d.removeItem(self._spec_1d_plot)
-        self._plot_spec_1d(self.data['wavelength'], gaussian_filter1d(self.data['flux'], sigma / 10))
 
     def clear_content(self):
         del self.default_xrange

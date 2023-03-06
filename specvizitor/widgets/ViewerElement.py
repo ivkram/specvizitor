@@ -37,10 +37,9 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._smoothing_slider.setRange(1, 101)
         self._smoothing_slider.setSingleStep(1)
         self._smoothing_slider.setValue(1)
-        self._smoothing_slider.valueChanged[int].connect(self.smooth)
+        self._smoothing_slider.valueChanged[int].connect(self.smooth_from_slider)
 
-        if not self.cfg.smoothing_slider:
-            self._smoothing_slider.setHidden(True)
+        self._smoothing_slider.setHidden(not self.cfg.smoothing_slider)
 
     def load_object(self):
         # clear the widget content
@@ -53,8 +52,10 @@ class ViewerElement(AbstractWidget, abc.ABC):
         # display the data
         if self.data is not None:
             self.setEnabled(True)
-            self.apply_transformations()
+            self.transform()
             self.display()
+            if self._smoothing_slider.value() > 1:
+                self.smooth_from_slider(self._smoothing_slider.value())
             self.reset_view()
         else:
             self.setEnabled(False)
@@ -89,12 +90,16 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.data, self.meta = None, None
             return
 
-    def apply_transformations(self):
-        if self._smoothing_slider.value() > 1:
-            self.smooth(self._smoothing_slider.value())
-
     @abc.abstractmethod
     def validate(self):
+        pass
+
+    @abc.abstractmethod
+    def transform(self):
+        pass
+
+    @abc.abstractmethod
+    def smooth_from_slider(self, sigma: int):
         pass
 
     @abc.abstractmethod
@@ -103,10 +108,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     @abc.abstractmethod
     def reset_view(self):
-        pass
-
-    @abc.abstractmethod
-    def smooth(self, sigma: int):
         pass
 
     @abc.abstractmethod
