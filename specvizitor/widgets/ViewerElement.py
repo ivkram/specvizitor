@@ -33,7 +33,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        self._smoothing_slider = QtWidgets.QSlider()
+        self._smoothing_slider = QtWidgets.QSlider(parent=self)
         self._smoothing_slider.setRange(1, 101)
         self._smoothing_slider.setSingleStep(1)
         self._smoothing_slider.setValue(1)
