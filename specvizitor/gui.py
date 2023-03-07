@@ -57,53 +57,53 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file = self._menu.addMenu("&File")
 
-        self._new_file = QtWidgets.QAction("&New...")
+        self._new_file = QtWidgets.QAction("&New...", parent=self)
         self._new_file.triggered.connect(self._new_file_action)
         self._new_file.setShortcut(QtGui.QKeySequence('Ctrl+N'))
         self._file.addAction(self._new_file)
 
-        self._open_file = QtWidgets.QAction("&Open...")
+        self._open_file = QtWidgets.QAction("&Open...", parent=self)
         self._open_file.triggered.connect(self._open_file_action)
         self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
         self._file.addAction(self._open_file)
 
         self._file.addSeparator()
 
-        self._save = QtWidgets.QAction("&Save...")
+        self._save = QtWidgets.QAction("&Save...", parent=self)
         self._save.triggered.connect(self._save_action)
         self._save.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self._save.setEnabled(False)
         self._file.addAction(self._save)
 
-        self._save_as = QtWidgets.QAction("Save As...")
+        self._save_as = QtWidgets.QAction("Save As...", parent=self)
         self._save_as.triggered.connect(self._save_as_action)
         self._save_as.setShortcut(QtGui.QKeySequence('Shift+Ctrl+S'))
         self._save_as.setEnabled(False)
         self._file.addAction(self._save_as)
 
-        self._export = QtWidgets.QAction("&Export...")
+        self._export = QtWidgets.QAction("&Export...", parent=self)
         self._export.triggered.connect(self._export_action)
         self._export.setEnabled(False)
         self._file.addAction(self._export)
 
         self._file.addSeparator()
 
-        self._quit = QtWidgets.QAction("&Quit...")
+        self._quit = QtWidgets.QAction("&Quit...", parent=self)
         self._quit.triggered.connect(self._exit_action)
         self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self._file.addAction(self._quit)
 
         self._view = self._menu.addMenu("&View")
 
-        self._reset_view = QtWidgets.QAction("Reset View")
+        self._reset_view = QtWidgets.QAction("Reset View", parent=self)
         self._view.addAction(self._reset_view)
 
-        self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
+        self._reset_dock_state = QtWidgets.QAction("Reset Dock State", parent=self)
         self._view.addAction(self._reset_dock_state)
 
         self._view.addSeparator()
 
-        self._fullscreen = QtWidgets.QAction("Fullscreen")
+        self._fullscreen = QtWidgets.QAction("Fullscreen", parent=self)
         self._fullscreen.triggered.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
         self._fullscreen.setShortcut('F11')
         self._view.addAction(self._fullscreen)
@@ -112,12 +112,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._shortcut_fullscreen.activated.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._tools = self._menu.addMenu("&Tools")
-        self._settings = QtWidgets.QAction("Se&ttings...")
+        self._settings = QtWidgets.QAction("Se&ttings...", parent=self)
         self._settings.triggered.connect(self._settings_action)
         self._tools.addAction(self._settings)
 
         self._help = self._menu.addMenu("&Help")
-        self._about = QtWidgets.QAction("&About...")
+        self._about = QtWidgets.QAction("&About...", parent=self)
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
@@ -205,7 +205,7 @@ class CentralWidget(QtWidgets.QWidget):
         super().__init__(parent)
 
         # set up the layout
-        self.layout = QtWidgets.QGridLayout()
+        self.layout = QtWidgets.QGridLayout(self)
         self.layout.setSpacing(10)
         self.setLayout(self.layout)
 

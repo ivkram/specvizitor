@@ -23,10 +23,10 @@ class FileBrowser(QtWidgets.QWidget):
         self._filter = filename_extensions  # example: 'Images (*.png *.xpm *.jpg);;Text files (*.txt)'
         self._default_path = None if default_path is None else str(pathlib.Path(default_path).resolve())
 
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self._label = QtWidgets.QLabel(title)
+        self._label = QtWidgets.QLabel(title, parent=self)
         self._label.setFixedWidth(130)
         layout.addWidget(self._label)
 
@@ -35,7 +35,7 @@ class FileBrowser(QtWidgets.QWidget):
         self._line_edit.setText(self._default_path)
         layout.addWidget(self._line_edit)
 
-        self._button = QtWidgets.QPushButton(button_text)
+        self._button = QtWidgets.QPushButton(button_text, parent=self)
         self._button.setFixedWidth(120)
         self._button.clicked.connect(self._browse)
         layout.addWidget(self._button)

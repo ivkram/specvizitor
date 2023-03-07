@@ -31,58 +31,58 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
         # create the ID label
-        self._id_label = QtWidgets.QLabel()
+        self._id_label = QtWidgets.QLabel(parent=self)
         self._id_label.setText('ID -- (# -- / --)')
 
         # create buttons for switching to the next or previous object
         self._pn_buttons = self.create_pn_buttons()
 
         # create the `starred` button
-        self._star_button = QtWidgets.QPushButton()
+        self._star_button = QtWidgets.QPushButton(parent=self)
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon()))
         self._star_button.setToolTip('Star the object')
         self._star_button.clicked.connect(self.star)
 
         # create the `screenshot` button
-        self._screenshot_button = QtWidgets.QPushButton()
+        self._screenshot_button = QtWidgets.QPushButton(parent=self)
         self._screenshot_button.setIcon(QtGui.QIcon(get_icon_abs_path('screenshot.svg')))
         self._screenshot_button.setToolTip('Take a screenshot')
         self._screenshot_button.clicked.connect(self.screenshot)
 
         # create the `reset view` button
-        self._reset_view_button = QtWidgets.QPushButton()
+        self._reset_view_button = QtWidgets.QPushButton(parent=self)
         self._reset_view_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-view.svg')))
         self._reset_view_button.setToolTip('Reset the view')
         self._reset_view_button.clicked.connect(self.reset_view_button_clicked.emit)
 
         # create a `dark mode` button
-        # self._dark_mode = QtWidgets.QPushButton()
+        # self._dark_mode = QtWidgets.QPushButton(parent=self)
         # self._dark_mode.setIcon(QtGui.QIcon(get_icon_abs_path('dark-mode.svg')))
         # self._dark_mode.setToolTip('Turn on the dark theme')
 
         # create the `reset dock state` button
-        self._reset_dock_state_button = QtWidgets.QPushButton()
+        self._reset_dock_state_button = QtWidgets.QPushButton(parent=self)
         self._reset_dock_state_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-dock-state.svg')))
         self._reset_dock_state_button.setToolTip('Reset the dock state')
         self._reset_dock_state_button.clicked.connect(self.reset_dock_state_button_clicked.emit)
 
         # create the `Go to ID` button
-        self._go_to_id_button = QtWidgets.QPushButton()
+        self._go_to_id_button = QtWidgets.QPushButton(parent=self)
         self._go_to_id_button.setText('Go to ID')
         self._go_to_id_button.setFixedWidth(self.cfg.button_width)
         self._go_to_id_button.clicked.connect(self.go_to_id)
 
-        self._id_field = QtWidgets.QLineEdit()
+        self._id_field = QtWidgets.QLineEdit(parent=self)
         self._id_field.setFixedWidth(self.cfg.button_width)
         self._id_field.returnPressed.connect(self.go_to_id)
 
         # create the `Go to index` button
-        self._go_to_index_button = QtWidgets.QPushButton()
+        self._go_to_index_button = QtWidgets.QPushButton(parent=self)
         self._go_to_index_button.setText('Go to #')
         self._go_to_index_button.setFixedWidth(self.cfg.button_width)
         self._go_to_index_button.clicked.connect(self.go_to_index)
 
-        self._index_field = QtWidgets.QLineEdit()
+        self._index_field = QtWidgets.QLineEdit(parent=self)
         self._index_field.setFixedWidth(self.cfg.button_width)
         self._index_field.returnPressed.connect(self.go_to_index)
 
@@ -95,7 +95,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
 
         pn_buttons = {}
         for pn_text, pn_properties in pn_buttons_params.items():
-            button = QtWidgets.QPushButton('')
+            button = QtWidgets.QPushButton(parent=self)
             button.setToolTip('Go to the {} object'.format(pn_text))
             button.setIcon(QtGui.QIcon(get_icon_abs_path(pn_properties['icon'])))
 

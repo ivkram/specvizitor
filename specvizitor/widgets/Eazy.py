@@ -8,9 +8,10 @@ class Eazy(QtWidgets.QWidget):
         super().__init__(parent)
         self.setEnabled(False)
 
-        grid = QtWidgets.QGridLayout()
+        grid = QtWidgets.QGridLayout(self)
 
-        self._run_eazy_button = QtWidgets.QPushButton("Run Eazy")
+        self._run_eazy_button = QtWidgets.QPushButton(parent=self)
+        self._run_eazy_button.setText("Run Eazy")
         self._run_eazy_button.clicked.connect(self.run_eazy)
         grid.addWidget(self._run_eazy_button, 1, 1)
 

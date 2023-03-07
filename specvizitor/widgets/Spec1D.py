@@ -41,7 +41,7 @@ class Spec1D(ViewerElement):
         self._z_slider.setToolTip('Slide to redshift.')
 
         # create a line edit for changing the redshift
-        self._redshift_editor = QtWidgets.QLineEdit()
+        self._redshift_editor = QtWidgets.QLineEdit(parent=self)
         self._redshift_editor.returnPressed.connect(self._update_from_editor)
         self._redshift_editor.setMaximumWidth(120)
 
@@ -65,7 +65,7 @@ class Spec1D(ViewerElement):
         self.layout.addWidget(self._smoothing_slider, 1, 1, 1, 1)
         self.layout.addWidget(self._spec_1d_widget, 1, 2, 1, 4)
         self.layout.addWidget(self._z_slider, 2, 2, 1, 1)
-        self.layout.addWidget(QtWidgets.QLabel('z = ', self), 2, 3, 1, 1)
+        self.layout.addWidget(QtWidgets.QLabel('z = ', parent=self), 2, 3, 1, 1)
         self.layout.addWidget(self._redshift_editor, 2, 4, 1, 1)
 
     @lazyproperty

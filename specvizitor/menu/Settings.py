@@ -20,7 +20,7 @@ class Settings(QtWidgets.QDialog):
         super().__init__(parent)
         self.setWindowTitle("Settings [Beta]")
 
-        layout = QtWidgets.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(20)
 
         self._browsers = {
@@ -32,17 +32,18 @@ class Settings(QtWidgets.QDialog):
             layout.addWidget(b)
 
         # add a horizontal separator
-        self.separator = QtWidgets.QFrame()
+        self.separator = QtWidgets.QFrame(self)
         self.separator.setFrameShape(QtWidgets.QFrame.HLine)
         layout.addWidget(self.separator)
 
         self._info_label = QtWidgets.QLabel("Configuration file: {}\n\nCache: {}".
-                                            format(self.rd.config_file.path, self.rd.cache_file.path))
+                                            format(self.rd.config_file.path, self.rd.cache_file.path),
+                                            parent=self)
         layout.addWidget(self._info_label)
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, parent=self)
         layout.addWidget(self._button_box)
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)

@@ -14,7 +14,7 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
     def __init__(self, cfg: config.AbstractWidget, parent=None):
         super().__init__(parent)
 
-        self.layout = QtWidgets.QGridLayout()
+        self.layout = QtWidgets.QGridLayout(self)
         self.setLayout(self.layout)
 
         self.setEnabled(False)

@@ -20,16 +20,15 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         self._checkboxes = self.create_checkbox_widgets(self.cfg.checkboxes)
 
         # create a multi-line text editor for writing comments
-        self._comments_widget = QtWidgets.QTextEdit()
+        self._comments_widget = QtWidgets.QTextEdit(parent=self)
 
-    @staticmethod
-    def create_checkbox_widgets(checkboxes: dict[str, str] | None) -> dict[str, QtWidgets.QCheckBox]:
+    def create_checkbox_widgets(self, checkboxes: dict[str, str] | None) -> dict[str, QtWidgets.QCheckBox]:
         if checkboxes is None:
             return {}
 
         checkbox_widgets = {}
         for i, (cname, label) in enumerate(checkboxes.items()):
-            checkbox_widgets[cname] = QtWidgets.QCheckBox(label)
+            checkbox_widgets[cname] = QtWidgets.QCheckBox(label, parent=self)
 
         return checkbox_widgets
 
@@ -37,7 +36,7 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         for i, widget in enumerate(self._checkboxes.values()):
             self.layout.addWidget(widget, i + 1, 1, 1, 1)
 
-        self.layout.addWidget(QtWidgets.QLabel('Comments:'), len(self._checkboxes) + 1, 1, 1, 1)
+        self.layout.addWidget(QtWidgets.QLabel('Comments:', parent=self), len(self._checkboxes) + 1, 1, 1, 1)
         self.layout.addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
 
     def dump(self):

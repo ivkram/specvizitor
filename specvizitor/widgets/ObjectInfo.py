@@ -26,14 +26,13 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
         # display information about the object
         self._labels = self.create_info_widgets(self.cfg.items.items())
 
-    @staticmethod
-    def create_info_widgets(items) -> dict[str, QtWidgets.QLabel]:
+    def create_info_widgets(self, items) -> dict[str, QtWidgets.QLabel]:
         if items is None:
             return {}
 
         info_widgets = {}
         for i, (cname, label) in enumerate(items):
-            widget = QtWidgets.QLabel()
+            widget = QtWidgets.QLabel(parent=self)
             widget.setText(label)
             widget.setHidden(True)
             widget.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
