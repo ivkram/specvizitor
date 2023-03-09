@@ -7,8 +7,6 @@ from scipy.ndimage import gaussian_filter
 
 from pgcolorbar.colorlegend import ColorLegendItem
 
-from ..utils.widget_tools import wrap_widget
-
 from .ViewerElement import ViewerElement
 from ..runtime.appdata import AppData
 from ..runtime import config
@@ -57,7 +55,7 @@ class Image2D(ViewerElement):
             self._image_2d_layout.addItem(self._view_box)
 
     def init_ui(self):
-        self.layout.addLayout(wrap_widget(self.smoothing_slider), 1, 1)
+        self.layout.addWidget(self.smoothing_slider, 1, 1)
         self.layout.addWidget(self._image_2d_widget, 1, 2)
 
     def load_data(self):

@@ -12,7 +12,6 @@ from qtpy import QtCore, QtWidgets
 from ..utils.params import read_yaml
 from ..utils import SmartSlider
 from ..utils.table_tools import column_not_found_message
-from ..utils.widget_tools import wrap_widget
 
 from .ViewerElement import ViewerElement
 from ..runtime.appdata import AppData
@@ -69,12 +68,12 @@ class Spec1D(ViewerElement):
             self._line_artists[line_name] = {'line': line, 'label': label}
 
     def init_ui(self):
-        self.layout.addLayout(wrap_widget(self.smoothing_slider), 1, 1, 1, 1)
+        self.layout.addWidget(self.smoothing_slider, 1, 1, 1, 1)
         self.layout.addWidget(self._spec_1d_widget, 1, 2, 1, 1)
 
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.setSpacing(10)
-        sub_layout.setContentsMargins(5, 5, 5, 5)
+        sub_layout.setContentsMargins(0, 0, 0, 0)
         sub_layout.addWidget(self._z_slider)
         sub_layout.addWidget(self._z_label)
         sub_layout.addWidget(self._z_editor)

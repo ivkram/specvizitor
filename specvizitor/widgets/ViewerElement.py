@@ -31,8 +31,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.data: np.ndarray | Table | None = None
         self.meta: dict | Header | None = None
 
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(2, 2, 2, 2)
+        self.layout.setSpacing(5)
+        self.layout.setContentsMargins(5, 5, 5, 5)
 
         self.smoothing_slider = SmartSlider(**asdict(self.cfg.smoothing_slider), parent=self)
         self.smoothing_slider.valueChanged[int].connect(self.smoothing_slider_action)
