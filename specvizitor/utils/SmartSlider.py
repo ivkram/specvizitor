@@ -1,10 +1,14 @@
+from dataclasses import asdict
+
 import numpy as np
 from qtpy import QtWidgets
 
 
 class SmartSlider(QtWidgets.QSlider):
-    def __init__(self, *args, min_value=0, max_value=1, step=1, default_value=0, **kwargs):
+    def __init__(self, *args, visible=True, min_value=0, max_value=100, step=1, default_value=0, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.setHidden(not visible)
 
         self._n = int((max_value - min_value) / step) + 1
         self._arr = np.linspace(min_value, max_value, self._n)

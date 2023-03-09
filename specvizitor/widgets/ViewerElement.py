@@ -1,12 +1,11 @@
 import logging
 import abc
 import pathlib
+from dataclasses import asdict
 
 import numpy as np
 from astropy.table import Table
 from astropy.io.fits.header import Header
-
-from qtpy import QtWidgets
 
 from .AbstractWidget import AbstractWidget
 
@@ -14,6 +13,7 @@ from ..runtime.appdata import AppData
 from ..runtime import config
 from ..io.viewer_data import get_filename, load
 from ..utils import table_tools
+from ..utils import SmartSlider
 
 
 logger = logging.getLogger(__name__)
@@ -34,13 +34,9 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(2, 2, 2, 2)
 
-        self.smoothing_slider = QtWidgets.QSlider(parent=self)
-        self.smoothing_slider.setRange(1, 101)
-        self.smoothing_slider.setSingleStep(1)
-        self.smoothing_slider.setValue(1)
+        self.smoothing_slider = SmartSlider(**asdict(self.cfg.smoothing_slider), parent=self)
         self.smoothing_slider.valueChanged[int].connect(self.smoothing_slider_action)
-
-        self.smoothing_slider.setHidden(not self.cfg.smoothing_slider)
+        self.smoothing_slider.setToolTip('Slide to smooth the data')
 
     def load_object(self):
         # clear the widget content
@@ -53,10 +49,9 @@ class ViewerElement(AbstractWidget, abc.ABC):
         # display the data
         if self.data is not None:
             self.setEnabled(True)
-            self.transform()
             self.display()
-            if self.smoothing_slider.value() > 1:
-                self.smoothing_slider_action(self.smoothing_slider.value())
+            if self.smoothing_slider.value > 0:
+                self.smooth(self.smoothing_slider.value)
             self.reset_view()
         else:
             self.setEnabled(False)
@@ -96,10 +91,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def transform(self):
-        pass
-
-    @abc.abstractmethod
     def display(self):
         pass
 
@@ -111,6 +102,10 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def clear_content(self):
         pass
 
+    def smoothing_slider_action(self, index: int):
+        self.smoothing_slider.index = index
+        self.smooth(self.smoothing_slider.value)
+
     @abc.abstractmethod
-    def smoothing_slider_action(self, sigma: int):
+    def smooth(self, sigma: int):
         pass

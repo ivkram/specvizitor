@@ -60,14 +60,18 @@ class Image2D(ViewerElement):
         self.layout.addLayout(wrap_widget(self.smoothing_slider), 1, 1)
         self.layout.addWidget(self._image_2d_widget, 1, 2)
 
-    def transform(self):
+    def load_data(self):
+        super().load_data()
+        if self.data is None:
+            return
+
         # rotate the image
         if self.cfg.rotate is not None:
-            self.data = np.rot90(self.data, k=self.cfg.rotate // 90)
+            self.rotate(self.cfg.rotate)
 
         # scale the data points
         if self.cfg.scale is not None:
-            self.data *= self.cfg.scale
+            self.scale(self.cfg.scale)
 
     def validate(self):
         return True
@@ -86,5 +90,11 @@ class Image2D(ViewerElement):
     def clear_content(self):
         self.image_2d.clear()
 
-    def smoothing_slider_action(self, sigma: int):
-        self.image_2d.setImage(gaussian_filter(self.data, (sigma - 1) / 20))
+    def smooth(self, sigma: float):
+        self.image_2d.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data)
+
+    def rotate(self, angle: int):
+        self.data = np.rot90(self.data, k=angle // 90)
+
+    def scale(self, scale: float):
+        self.data *= scale

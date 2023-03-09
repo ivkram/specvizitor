@@ -44,15 +44,13 @@ class Spec1D(ViewerElement):
         self._z_label = QtWidgets.QLabel('z = ', parent=self)
 
         # create a redshift slider
-        if self.cfg.redshift_slider is not None:
-            self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.redshift_slider), parent=self)
-        else:
-            self._z_slider = SmartSlider(QtCore.Qt.Horizontal, parent=self)
-            self._z_slider.setHidden(True)
+        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.redshift_slider), parent=self)
+        if self._z_slider.isHidden():
             self._z_label.setHidden(True)
             self._z_editor.setHidden(True)
+
         self._z_slider.valueChanged[int].connect(self._update_from_slider)
-        self._z_slider.setToolTip('Slide to redshift.')
+        self._z_slider.setToolTip('Slide to change redshift')
 
         # set up the plot
         self._spec_1d = self._spec_1d_layout.addPlot(name=alias)
@@ -121,7 +119,7 @@ class Spec1D(ViewerElement):
             line_artist['line'].setPos(line_wave)
             line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
 
-    def _update_from_slider(self, index=None):
+    def _update_from_slider(self, index: int | None = None):
         if index is not None:
             self._z_slider.index = index
         self._z_editor.setText("{:.6f}".format(self._z_slider.value))
@@ -142,9 +140,6 @@ class Spec1D(ViewerElement):
                 logger.error(column_not_found_message(cname, self.rd.config.data.translate))
                 return False
         return True
-
-    def transform(self):
-        pass
 
     def display(self):
         try:
@@ -169,6 +164,7 @@ class Spec1D(ViewerElement):
         self._z_editor.setText("")
         self._spec_1d.clear()
 
-    def smoothing_slider_action(self, sigma: int):
+    def smooth(self, sigma: float):
         self._spec_1d.removeItem(self._spec_1d_plot)
-        self._plot_spec_1d(self.data['wavelength'], gaussian_filter1d(self.data['flux'], sigma / 10))
+        self._plot_spec_1d(self.data['wavelength'],
+                           gaussian_filter1d(self.data['flux'], sigma) if sigma > 0 else self.data['flux'])
