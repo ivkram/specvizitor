@@ -21,9 +21,15 @@ Set up a local environment and run
 
 ## Starting `specvizitor`
     
-To start `specvizitor`, run this command in your terminal:    
+To start `specvizitor`, run this command in your terminal:
 
     $ specvizitor
+
+## Troubleshooting
+
+To reset `specvizitor` to its initial state, run the script with the `--purge` option:
+
+    $ specvizitor --purge
 
 ## License
 

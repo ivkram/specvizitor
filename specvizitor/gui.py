@@ -287,20 +287,29 @@ class CentralWidget(QtWidgets.QWidget):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--purge', action='store_true')
 
-    # logging configuration
-    parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
 
-    level = logging.DEBUG if args.verbose else logging.WARNING
+    # logging configuration
+    level = logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
-    # initialize the app configuration and cache
-    config = Config.read_user_params(LocalFile(user_config_dir('specvizitor'), full_name='Configuration file'),
-                                     default='default_config.yml')
-    cache = Cache.read_user_params(LocalFile(user_cache_dir('specvizitor'), full_name='Cache'))
+    user_files = {
+        'config': LocalFile(user_config_dir('specvizitor'), full_name='Configuration file'),
+        'cache': LocalFile(user_cache_dir('specvizitor'), full_name='Cache', auto_backup=False)
+    }
 
-    # initialize the application data
+    if args.purge:
+        for f in user_files.values():
+            f.delete()
+
+    # initialize the app configuration and cache
+    config = Config.read_user_params(user_files['config'], default='default_config.yml')
+    cache = Cache.read_user_params(user_files['cache'])
+
+    # initialize the app data
     appdata = AppData(config=config, cache=cache)
 
     # pyqtgraph configuration

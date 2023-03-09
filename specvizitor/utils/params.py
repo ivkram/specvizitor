@@ -1,10 +1,12 @@
 import logging
 import pathlib
+import shutil
 import yaml
-# from dictdiffer import diff, patch, swap
 from dataclasses import dataclass, asdict
+
 import dacite
 from dacite.exceptions import WrongTypeError, MissingValueError
+from dictdiffer import diff, patch, swap
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +16,7 @@ class LocalFile:
     directory: str
     filename: str = f"{__package__.split('.')[0]}.yml"
     full_name: str = "Local file"
+    auto_backup: bool = True
 
     @property
     def path(self) -> pathlib.Path:
@@ -22,13 +25,31 @@ class LocalFile:
     def save(self, data: dict):
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
+        if self.path.exists():
+            msg = f"{self.full_name} updated (path: {self.path})"
+        else:
+            msg = f"{self.full_name} created (path: {self.path})"
+
         save_yaml(self.path, data)
 
-        if self.path.exists():
-            msg = "{} updated (path: {})".format(self.full_name, self.path)
-        else:
-            msg = "{} created (path: {})".format(self.full_name, self.path)
-        logger.debug(msg)
+        logger.info(msg)
+
+    def backup(self):
+        dst = self.path.parent / (self.filename + '.bak')
+        shutil.copy(self.path, dst)
+        logger.info(f'{self.full_name} backed up (path: {dst})')
+
+    def delete(self):
+        if not self.path.exists():
+            return
+
+        # backup the file
+        if self.auto_backup:
+            self.backup()
+
+        # delete the file
+        self.path.unlink()
+        logger.info(f'{self.full_name} deleted (path: {self.path})')
 
 
 @dataclass
@@ -52,19 +73,20 @@ class Params:
         else:
             params = cls.read_default_params(default)
 
-        if file.path.exists():
+        try:
+            user_params = read_yaml(file.path)
+        except FileNotFoundError:
+            pass
+        except yaml.YAMLError:
+            logger.error(f'Failed to parse `{file.path}`. The file will be overwritten.')
+        else:
+            # TODO: patch the user config file using dictdiffer
             try:
-                user_params = read_yaml(file.path)
-            except yaml.YAMLError:
-                logger.error(f'Failed to parse `{file.path}`. The file will be overwritten.')
+                user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
+            except (WrongTypeError, MissingValueError):
+                logger.error(f'Failed to create a dataclass from `{file.path}`. The file will be overwritten.')
             else:
-                # TODO: patch the user config file using dictdiffer
-                try:
-                    user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
-                except (WrongTypeError, MissingValueError):
-                    logger.error(f'Failed to create a dataclass from `{file.path}`. The file will be overwritten.')
-                else:
-                    params = user_params
+                params = user_params
 
         params._user_file = file
         params.save()
