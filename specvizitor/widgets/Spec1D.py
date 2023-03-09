@@ -35,15 +35,22 @@ class Spec1D(ViewerElement):
         self._spec_1d_layout = pg.GraphicsLayout()
         self._spec_1d_widget.setCentralItem(self._spec_1d_layout)
 
+        # create a line edit for changing the redshift
+        self._z_editor = QtWidgets.QLineEdit(parent=self)
+        self._z_editor.returnPressed.connect(self._update_from_editor)
+        self._z_editor.setMaximumWidth(120)
+        self._z_label = QtWidgets.QLabel('z = ', parent=self)
+
         # create a redshift slider
-        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.redshift_slider))
+        if self.cfg.redshift_slider is not None:
+            self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.redshift_slider), parent=self)
+        else:
+            self._z_slider = SmartSlider(QtCore.Qt.Horizontal, parent=self)
+            self._z_slider.setHidden(True)
+            self._z_label.setHidden(True)
+            self._z_editor.setHidden(True)
         self._z_slider.valueChanged[int].connect(self._update_from_slider)
         self._z_slider.setToolTip('Slide to redshift.')
-
-        # create a line edit for changing the redshift
-        self._redshift_editor = QtWidgets.QLineEdit(parent=self)
-        self._redshift_editor.returnPressed.connect(self._update_from_editor)
-        self._redshift_editor.setMaximumWidth(120)
 
         # set up the plot
         self._spec_1d = self._spec_1d_layout.addPlot(name=alias)
@@ -65,8 +72,8 @@ class Spec1D(ViewerElement):
         self.layout.addWidget(self._smoothing_slider, 1, 1, 1, 1)
         self.layout.addWidget(self._spec_1d_widget, 1, 2, 1, 4)
         self.layout.addWidget(self._z_slider, 2, 2, 1, 1)
-        self.layout.addWidget(QtWidgets.QLabel('z = ', parent=self), 2, 3, 1, 1)
-        self.layout.addWidget(self._redshift_editor, 2, 4, 1, 1)
+        self.layout.addWidget(self._z_label, 2, 3, 1, 1)
+        self.layout.addWidget(self._z_editor, 2, 4, 1, 1)
 
     @lazyproperty
     def default_xrange(self):
@@ -109,14 +116,14 @@ class Spec1D(ViewerElement):
     def _update_from_slider(self, index=None):
         if index is not None:
             self._z_slider.index = index
-        self._redshift_editor.setText("{:.6f}".format(self._z_slider.value))
+        self._z_editor.setText("{:.6f}".format(self._z_slider.value))
         self._update_view()
 
     def _update_from_editor(self):
         try:
-            self._z_slider.index = self._z_slider.index_from_value(float(self._redshift_editor.text()))
+            self._z_slider.index = self._z_slider.index_from_value(float(self._z_editor.text()))
         except ValueError:
-            logger.error('Invalid redshift value: {}'.format(self._redshift_editor.text()))
+            logger.error('Invalid redshift value: {}'.format(self._z_editor.text()))
             self._z_slider.reset()
 
         self._update_from_slider()
@@ -155,5 +162,5 @@ class Spec1D(ViewerElement):
         del self.default_yrange
         del self._label_height
 
-        self._redshift_editor.setText("")
+        self._z_editor.setText("")
         self._spec_1d.clear()

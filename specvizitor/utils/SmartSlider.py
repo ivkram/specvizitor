@@ -3,7 +3,7 @@ from qtpy import QtWidgets
 
 
 class SmartSlider(QtWidgets.QSlider):
-    def __init__(self, *args, min_value=0, max_value=1, step=1, default_value=None, **kwargs):
+    def __init__(self, *args, min_value=0, max_value=1, step=1, default_value=0, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._n = int((max_value - min_value) / step) + 1

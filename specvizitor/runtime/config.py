@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ..utils.params import Params, LocalFile
+from ..utils.params import Params
 
 
 @dataclass
@@ -60,10 +60,10 @@ class Image(ViewerElement):
 
 @dataclass
 class RedshiftSlider:
-    min_value: float | None
-    max_value: float | None
-    step: float | None
-    default_value: float | None
+    min_value: float
+    max_value: float
+    step: float
+    default_value: float
 
 
 @dataclass
