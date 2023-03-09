@@ -31,15 +31,16 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.data: np.ndarray | Table | None = None
         self.meta: dict | Header | None = None
 
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(2, 2, 2, 2)
 
-        self._smoothing_slider = QtWidgets.QSlider(parent=self)
-        self._smoothing_slider.setRange(1, 101)
-        self._smoothing_slider.setSingleStep(1)
-        self._smoothing_slider.setValue(1)
-        self._smoothing_slider.valueChanged[int].connect(self.smoothing_slider_action)
+        self.smoothing_slider = QtWidgets.QSlider(parent=self)
+        self.smoothing_slider.setRange(1, 101)
+        self.smoothing_slider.setSingleStep(1)
+        self.smoothing_slider.setValue(1)
+        self.smoothing_slider.valueChanged[int].connect(self.smoothing_slider_action)
 
-        self._smoothing_slider.setHidden(not self.cfg.smoothing_slider)
+        self.smoothing_slider.setHidden(not self.cfg.smoothing_slider)
 
     def load_object(self):
         # clear the widget content
@@ -54,8 +55,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.setEnabled(True)
             self.transform()
             self.display()
-            if self._smoothing_slider.value() > 1:
-                self.smoothing_slider_action(self._smoothing_slider.value())
+            if self.smoothing_slider.value() > 1:
+                self.smoothing_slider_action(self.smoothing_slider.value())
             self.reset_view()
         else:
             self.setEnabled(False)
