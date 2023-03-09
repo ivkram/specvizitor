@@ -138,10 +138,6 @@ class Spec1D(ViewerElement):
     def transform(self):
         pass
 
-    def smooth_from_slider(self, sigma: int):
-        self._spec_1d.removeItem(self._spec_1d_plot)
-        self._plot_spec_1d(self.data['wavelength'], gaussian_filter1d(self.data['flux'], sigma / 10))
-
     def display(self):
         try:
             self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
@@ -164,3 +160,7 @@ class Spec1D(ViewerElement):
 
         self._z_editor.setText("")
         self._spec_1d.clear()
+
+    def smoothing_slider_action(self, sigma: int):
+        self._spec_1d.removeItem(self._spec_1d_plot)
+        self._plot_spec_1d(self.data['wavelength'], gaussian_filter1d(self.data['flux'], sigma / 10))

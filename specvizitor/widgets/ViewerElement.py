@@ -37,7 +37,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._smoothing_slider.setRange(1, 101)
         self._smoothing_slider.setSingleStep(1)
         self._smoothing_slider.setValue(1)
-        self._smoothing_slider.valueChanged[int].connect(self.smooth_from_slider)
+        self._smoothing_slider.valueChanged[int].connect(self.smoothing_slider_action)
 
         self._smoothing_slider.setHidden(not self.cfg.smoothing_slider)
 
@@ -55,7 +55,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.transform()
             self.display()
             if self._smoothing_slider.value() > 1:
-                self.smooth_from_slider(self._smoothing_slider.value())
+                self.smoothing_slider_action(self._smoothing_slider.value())
             self.reset_view()
         else:
             self.setEnabled(False)
@@ -99,10 +99,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def smooth_from_slider(self, sigma: int):
-        pass
-
-    @abc.abstractmethod
     def display(self):
         pass
 
@@ -112,4 +108,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     @abc.abstractmethod
     def clear_content(self):
+        pass
+
+    @abc.abstractmethod
+    def smoothing_slider_action(self, sigma: int):
         pass

@@ -82,8 +82,8 @@ class Image2D(ViewerElement):
         else:
             self._view_box.autoRange(padding=0)
 
-    def smooth_from_slider(self, sigma: int):
-        self.image_2d.setImage(gaussian_filter(self.data, (sigma - 1) / 20))
-
     def clear_content(self):
         self.image_2d.clear()
+
+    def smoothing_slider_action(self, sigma: int):
+        self.image_2d.setImage(gaussian_filter(self.data, (sigma - 1) / 20))
