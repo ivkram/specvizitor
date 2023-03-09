@@ -4,16 +4,19 @@ import sys
 import logging
 from importlib.metadata import version
 
+from platformdirs import user_config_dir, user_cache_dir
+
 import pyqtgraph as pg
 import qtpy.compat
 from qtpy import QtGui, QtWidgets
 from qtpy.QtCore import Signal, Slot
 
-from .runtime.appdata import AppData
+from .runtime.appdata import AppData, Config, Cache
 from .menu import NewFile, Settings
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
 from .utils.widget_tools import get_widgets
 from .utils.logs import LogMessageBox
+from .utils.params import LocalFile
 
 
 logger = logging.getLogger(__name__)
@@ -22,8 +25,8 @@ logger = logging.getLogger(__name__)
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = Signal()
 
-    def __init__(self, runtime: AppData, parent=None):
-        self.rd = runtime
+    def __init__(self, appdata: AppData, parent=None):
+        self.rd = appdata
 
         super().__init__(parent)
 
@@ -261,7 +264,7 @@ class CentralWidget(QtWidgets.QWidget):
         # cache the index of the object
         # TODO: cache the ID instead of the index
         self.rd.cache.last_object_index = j
-        self.rd.cache.save(self.rd.cache_file)
+        self.rd.cache.save()
 
     @Slot()
     def activate(self):
@@ -272,7 +275,7 @@ class CentralWidget(QtWidgets.QWidget):
 
         # cache the inspection file name
         self.rd.cache.last_inspection_file = str(self.rd.output_path)
-        self.rd.cache.save(self.rd.cache_file)
+        self.rd.cache.save()
 
         # try to display the object with an index stored in cache
         j = self.rd.cache.last_object_index
@@ -292,21 +295,26 @@ def main():
     level = logging.DEBUG if args.verbose else logging.WARNING
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
+    # initialize the app configuration and cache
+    config = Config.read_user_params(LocalFile(user_config_dir('specvizitor'), full_name='Configuration file'),
+                                     default='default_config.yml')
+    cache = Cache.read_user_params(LocalFile(user_cache_dir('specvizitor'), full_name='Cache'))
+
     # initialize the application data
-    runtime = AppData()
+    appdata = AppData(config=config, cache=cache)
 
     # pyqtgraph configuration
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
     pg.setConfigOption('imageAxisOrder', 'row-major')
-    pg.setConfigOption('antialias', runtime.config.appearance.antialiasing)
+    pg.setConfigOption('antialias', appdata.config.appearance.antialiasing)
 
     # start the application
     app = QtWidgets.QApplication(sys.argv)
     logger.info("Application started")
 
     # initialize the main window
-    window = MainWindow(runtime=runtime)
+    window = MainWindow(appdata=appdata)
     window.show()
     sys.exit(app.exec_())
 

@@ -140,7 +140,7 @@ class NewFile(QtWidgets.QDialog):
             self.rd.config.cat.filename = None
         if not self._id_pattern.isHidden():
             self.rd.config.data.id_pattern = self._id_pattern.text()
-        self.rd.config.save(self.rd.config_file)
+        self.rd.config.save()
 
         self.rd.create()
 

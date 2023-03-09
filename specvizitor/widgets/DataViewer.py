@@ -83,7 +83,7 @@ class DataViewer(AbstractWidget):
 
     def save_dock_state(self):
         self.rd.cache.dock_state = self.dock_area.saveState()
-        self.rd.cache.save(self.rd.cache_file)
+        self.rd.cache.save()
 
     def load_object(self):
         self.save_dock_state()

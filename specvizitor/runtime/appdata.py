@@ -1,12 +1,10 @@
 import logging
 import pathlib
 from dataclasses import dataclass
-from platformdirs import user_config_dir, user_cache_dir
 
 import pandas as pd
 from astropy.table import Table
 
-from ..utils.params import LocalFile
 from .config import Config
 from .cache import Cache
 from ..io import catalogue, output
@@ -17,11 +15,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AppData:
-    config_file: LocalFile = LocalFile(user_config_dir('specvizitor'), full_name='Configuration file')
-    cache_file: LocalFile = LocalFile(user_cache_dir('specvizitor'), full_name='Cache')
-
-    config: Config = Config.read(config_file, path_to_default='default_config.yml')
-    cache: Cache = Cache.read(cache_file)
+    config: Config
+    cache: Cache
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
     cat: Table | None = None                 # the catalogue

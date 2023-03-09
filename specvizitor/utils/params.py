@@ -22,58 +22,72 @@ class LocalFile:
     def save(self, data: dict):
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
+        save_yaml(self.path, data)
+
         if self.path.exists():
             msg = "{} updated (path: {})".format(self.full_name, self.path)
         else:
             msg = "{} created (path: {})".format(self.full_name, self.path)
-
-        save_yaml(self.path, data)
         logger.debug(msg)
 
 
 @dataclass
 class Params:
+    def __post_init__(self):
+        self._user_file: LocalFile | None = None
+
     @classmethod
-    def read(cls, file: LocalFile, path_to_default: str | None = None):
-        default_params = read_yaml(path_to_default, in_dist=True)
-        params = dacite.from_dict(data_class=cls, data=default_params)
+    def _read(cls, filename: pathlib.Path):
+        params_dict = read_yaml(filename)
+        return dacite.from_dict(data_class=cls, data=params_dict)
+
+    @classmethod
+    def read_default_params(cls, filename: str):
+        return cls._read(pathlib.Path(__file__).parent.parent / 'data' / filename)
+
+    @classmethod
+    def read_user_params(cls, file: LocalFile, default: str | None = None):
+        if default is None:
+            params = dacite.from_dict(data_class=cls, data={})
+        else:
+            params = cls.read_default_params(default)
 
         if file.path.exists():
             try:
                 user_params = read_yaml(file.path)
             except yaml.YAMLError:
-                logger.error('An error occurred when parsing `{}`. The file will be overwritten.'.format(file.path))
-                cls.save(params, file)
-                return params
-
-            # TODO: patch the user config file using dictdiffer
-            try:
-                user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
-            except (WrongTypeError, MissingValueError):
-                logger.error('Error occurred when parsing `{}`. The file will be overwritten.'.format(file.path))
-                cls.save(params, file)
-                return params
+                logger.error(f'Failed to parse `{file.path}`. The file will be overwritten.')
             else:
-                return user_params
-        else:
-            cls.save(params, file)
+                # TODO: patch the user config file using dictdiffer
+                try:
+                    user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
+                except (WrongTypeError, MissingValueError):
+                    logger.error(f'Failed to create a dataclass from `{file.path}`. The file will be overwritten.')
+                else:
+                    params = user_params
+
+        params._user_file = file
+        params.save()
 
         return params
 
-    def save(self, file: LocalFile):
-        file.save(data=asdict(self))
+    def save(self, file: LocalFile | None = None):
+        if file is not None:
+            output_file = file
+        elif self._user_file is not None:
+            output_file = self._user_file
+        else:
+            logger.error('No output file specified')
+            return
+
+        output_file.save(data=asdict(self))
+
+    def get_user_params_filename(self) -> str | None:
+        return str(self._user_file.path.resolve()) if self._user_file is not None else None
 
 
-def read_yaml(filename=None, in_dist=False) -> dict:
-    if filename is None:
-        return {}
-
-    if in_dist:
-        yaml_path = (pathlib.Path(__file__).parent.parent / 'data' / filename).resolve()
-    else:
-        yaml_path = pathlib.Path(filename).resolve()
-
-    with open(yaml_path, "r") as yaml_file:
+def read_yaml(filename) -> dict:
+    with open(filename, "r") as yaml_file:
         return yaml.safe_load(yaml_file)
 
 
@@ -84,7 +98,5 @@ def filter_none_values(data):
 
 
 def save_yaml(filename, data):
-    yaml_path = pathlib.Path(filename).resolve()
-
-    with open(yaml_path, 'w') as yaml_file:
+    with open(filename, 'w') as yaml_file:
         yaml.safe_dump(data, yaml_file, sort_keys=False)

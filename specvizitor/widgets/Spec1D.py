@@ -1,4 +1,5 @@
 import logging
+import pathlib
 from dataclasses import asdict
 
 import numpy as np
@@ -28,7 +29,7 @@ class Spec1D(ViewerElement):
 
         # load the list of spectral lines
         # TODO: move to the application data
-        self._lines = read_yaml('default_lines.yml', in_dist=True)
+        self._lines = read_yaml(pathlib.Path(__file__).parent.parent / 'data' / 'default_lines.yml')
 
         # create a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsView()

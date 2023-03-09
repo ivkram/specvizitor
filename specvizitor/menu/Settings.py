@@ -37,7 +37,7 @@ class Settings(QtWidgets.QDialog):
         layout.addWidget(self.separator)
 
         self._info_label = QtWidgets.QLabel("Configuration file: {}\n\nCache: {}".
-                                            format(self.rd.config_file.path, self.rd.cache_file.path),
+                                            format(self.rd.config.get_user_params_filename(), self.rd.cache.get_user_params_filename()),
                                             parent=self)
         layout.addWidget(self._info_label)
 
@@ -75,6 +75,6 @@ class Settings(QtWidgets.QDialog):
                 self.rd.cat = create_cat(self.rd.df.index.values)
 
         self.rd.config.data.dir = self._browsers['data'].path
-        self.rd.config.save(self.rd.config_file)
+        self.rd.config.save()
 
         super().accept()
