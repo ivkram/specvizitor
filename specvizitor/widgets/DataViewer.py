@@ -19,10 +19,8 @@ class DataViewer(AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
-        if plugins is not None:
-            self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin() for plugin_name in plugins]
-        else:
-            self._plugins = []
+        self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
+                         for plugin_name in plugins] if plugins is not None else []
 
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(0, 0, 0, 0)

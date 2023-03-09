@@ -107,7 +107,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._view.addSeparator()
 
         self._fullscreen = QtWidgets.QAction("Fullscreen", parent=self)
-        self._fullscreen.triggered.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
+        self._fullscreen.triggered.connect(lambda:
+                                           self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
         self._fullscreen.setShortcut('F11')
         self._view.addAction(self._fullscreen)
 

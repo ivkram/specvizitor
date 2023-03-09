@@ -5,7 +5,6 @@ import pyqtgraph as pg
 from astropy.visualization import ZScaleInterval
 from scipy.ndimage import gaussian_filter
 
-from qtpy import QtWidgets
 from pgcolorbar.colorlegend import ColorLegendItem
 
 from .ViewerElement import ViewerElement

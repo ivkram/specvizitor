@@ -1,8 +1,6 @@
-import enum
 import logging
 import pathlib
 import re
-from enum import Enum
 
 from astropy.io import fits
 from astropy.table import Table

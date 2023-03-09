@@ -1,12 +1,10 @@
 import logging
-import pathlib
 
 from qtpy import QtWidgets
 
 from ..runtime.appdata import AppData
-from ..utils import FileBrowser
 from ..io.catalogue import load_cat, create_cat, cat_browser
-from ..io.viewer_data import get_ids_from_dir, data_browser
+from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
 
 
@@ -37,7 +35,8 @@ class Settings(QtWidgets.QDialog):
         layout.addWidget(self.separator)
 
         self._info_label = QtWidgets.QLabel("Configuration file: {}\n\nCache: {}".
-                                            format(self.rd.config.get_user_params_filename(), self.rd.cache.get_user_params_filename()),
+                                            format(self.rd.config.get_user_params_filename(),
+                                                   self.rd.cache.get_user_params_filename()),
                                             parent=self)
         layout.addWidget(self._info_label)
 
