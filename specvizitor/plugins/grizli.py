@@ -25,4 +25,4 @@ class Plugin:
 
         spec_2d.image_2d.setTransform(qtransform)
         spec_2d.image_2d_plot.setAspectLocked(True, 1 / dlam)
-        spec_2d.image_2d_plot.setXLink(spec_1d.alias)  # link the x-axis range
+        spec_2d.image_2d_plot.setXLink(spec_1d.title)  # link the x-axis range

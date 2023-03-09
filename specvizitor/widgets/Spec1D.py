@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 class Spec1D(ViewerElement):
-    def __init__(self, rd: AppData, cfg: config.Spectrum, alias: str, parent=None):
-        super().__init__(rd=rd, cfg=cfg, alias=alias, parent=parent)
+    def __init__(self, rd: AppData, cfg: config.Spectrum, title: str, parent=None):
+        super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
 
         self.cfg = cfg
 
@@ -52,7 +52,7 @@ class Spec1D(ViewerElement):
         self._z_slider.setToolTip('Slide to change redshift')
 
         # set up the plot
-        self._spec_1d = self._spec_1d_layout.addPlot(name=alias)
+        self._spec_1d = self._spec_1d_layout.addPlot(name=title)
         self._spec_1d.setMouseEnabled(True, True)
         self._label_style = {'color': 'r', 'font-size': '20px'}
 

@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class Image2D(ViewerElement):
-    def __init__(self, rd: AppData, cfg: config.Image, alias: str, parent=None):
-        super().__init__(rd=rd, cfg=cfg, alias=alias, parent=parent)
+    def __init__(self, rd: AppData, cfg: config.Image, title: str, parent=None):
+        super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
 
         self.cfg = cfg
 
@@ -31,7 +31,7 @@ class Image2D(ViewerElement):
             self._cmap = pg.colormap.get('viridis')
 
             # set up the image and the view box
-            self.image_2d_plot = self._image_2d_layout.addPlot(name=alias)
+            self.image_2d_plot = self._image_2d_layout.addPlot(name=title)
 
             self.image_2d = pg.ImageItem(border='k')
             self.image_2d.setLookupTable(self._cmap.getLookupTable())

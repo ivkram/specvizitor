@@ -20,12 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
-    def __init__(self, rd: AppData, cfg: config.ViewerElement, alias: str, parent=None):
+    def __init__(self, rd: AppData, cfg: config.ViewerElement, title: str, parent=None):
         super().__init__(cfg=cfg, parent=parent)
 
         self.rd = rd
         self.cfg = cfg
-        self.alias: str = alias
+        self.title: str = title
 
         self.filename: pathlib.Path | None = None
         self.data: np.ndarray | Table | None = None
@@ -60,7 +60,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_keyword, self.rd.id)
 
         if self.filename is None:
-            logger.warning('{} not found (object ID: {})'.format(self.alias, self.rd.id))
+            logger.warning('{} not found (object ID: {})'.format(self.title, self.rd.id))
             self.data, self.meta = None, None
             return
 
@@ -70,7 +70,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             loader_config = self.cfg.loader_config
 
         try:
-            self.data, self.meta = load(self.cfg.loader, self.filename, self.alias, **loader_config)
+            self.data, self.meta = load(self.cfg.loader, self.filename, self.title, **loader_config)
         except TypeError as e:
             # unexpected keyword(s) passed to the loader
             logger.error(e.args[0])
