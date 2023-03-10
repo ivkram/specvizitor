@@ -100,7 +100,7 @@ class Spec1DItem(pg.PlotItem):
 
     def smooth(self, sigma: float):
         self._flux_plot.setData(self.spec.wavelength.value,
-                                gaussian_filter1d(self.spec.flux.value, sigma) if sigma > 0 else self.flux.value)
+                                gaussian_filter1d(self.spec.flux.value, sigma) if sigma > 0 else self.spec.flux.value)
 
 
 class Spec1DRegion(LazyViewerElement):
@@ -143,20 +143,15 @@ class Spec1D(ViewerElement):
             self._spec_1d.spec = None
             return
 
+        # create a Spectrum1D object
         spectral_axis_unit = u.Unit(self.meta.get(f'TUNIT{self.data.colnames.index("wavelength") + 1}',
                                                   self.rd.lines.units))
-
         flux_unit = u.Unit(self.meta.get(f'TUNIT{self.data.colnames.index("flux") + 1}',
                                          10**-17 * u.Unit('erg cm-2 s-1 AA-1')))
-
-        if 'flux_error' in self.data.colnames:
-            unc = StdDevUncertainty(self.data['flux_error'])
-        else:
-            unc = None
+        unc = StdDevUncertainty(self.data['flux_error']) if 'flux_error' in self.data.colnames else None
 
         self._spec_1d.spec = Spectrum1D(spectral_axis=self.data['wavelength'] * spectral_axis_unit,
-                                        flux=self.data['flux'] * flux_unit,
-                                        uncertainty=unc)
+                                        flux=self.data['flux'] * flux_unit, uncertainty=unc)
 
     def validate(self):
         for cname in ('wavelength', 'flux'):
