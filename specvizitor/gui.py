@@ -100,6 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._view = self._menu.addMenu("&View")
 
         self._reset_view = QtWidgets.QAction("Reset View")
+        self._reset_view.setShortcut('F5')
         self._view.addAction(self._reset_view)
 
         self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
