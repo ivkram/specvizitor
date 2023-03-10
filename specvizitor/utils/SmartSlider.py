@@ -31,7 +31,7 @@ class SmartSliderCore(QtWidgets.QSlider):
 
         self._index = self.default_index
 
-        self.valueChanged[int].connect(self.update)
+        self.valueChanged[int].connect(self.value_changed_action)
 
     @property
     def default_index(self):
@@ -59,7 +59,7 @@ class SmartSliderCore(QtWidgets.QSlider):
     def reset(self):
         self.index = self.default_index
 
-    def update(self, index: int):
+    def value_changed_action(self, index: int):
         self.index = index
         self.value_changed.emit()
 
