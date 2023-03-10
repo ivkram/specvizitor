@@ -27,7 +27,8 @@ class LocalFile:
     def missing_ok(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-
+            if not self.path.exists():
+                return
             func(self, *args, **kwargs)
         return wrapper
 
