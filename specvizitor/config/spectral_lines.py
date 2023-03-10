@@ -1,9 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..utils.params import Params
 
 
 @dataclass
 class SpectralLines(Params):
-    units: str
-    list: dict[str, float]
+    units: str = 'angstrom'
+    list: dict[str, float] = field(default_factory=dict)

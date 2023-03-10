@@ -1,6 +1,9 @@
 import logging
 from dataclasses import asdict
 
+from specutils import Spectrum1D
+from astropy.nddata import StdDevUncertainty
+
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from astropy.utils.decorators import lazyproperty
@@ -13,11 +16,98 @@ from ..utils import SmartSlider
 from ..utils.table_tools import column_not_found_message
 
 from .ViewerElement import ViewerElement
+from .LazyViewerElement import LazyViewerElement
 from ..appdata import AppData
 from ..config import docks
+from ..config.spectral_lines import SpectralLines
 
 
 logger = logging.getLogger(__name__)
+
+
+class Spec1DItem(pg.PlotItem):
+    def __init__(self, spec: Spectrum1D | None = None, lines: SpectralLines | None = None,
+                 *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.setMouseEnabled(True, True)
+        self.showAxis('right')
+
+        self.spec = spec
+        self.lines = SpectralLines() if lines is None else lines
+
+        self._flux_plot = None
+        self._flux_err_plot = None
+
+        self._label_style = {'color': 'r', 'font-size': '20px'}
+        # set up the spectral lines
+        self._line_artists = {}
+        # TODO: store colors in config
+        line_color = (175.68072, 220.68924, 46.59488)
+        line_pen = pg.mkPen(color=line_color, width=1)
+        for line_name, lambda0 in self.lines.list.items():
+            line = pg.InfiniteLine(angle=90, movable=False, pen=line_pen)
+            label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
+            self._line_artists[line_name] = {'line': line, 'label': label}
+
+    @lazyproperty
+    def default_xrange(self):
+        return np.nanmin(self.spec.spectral_axis.value), np.nanmax(self.spec.spectral_axis.value)
+
+    @lazyproperty
+    def default_yrange(self):
+        return np.nanmin(self.spec.flux.value), np.nanmax(self.spec.flux.value)
+
+    @lazyproperty
+    def _label_height(self):
+        y_min, y_max = self.default_yrange
+        return y_min + 0.6 * (y_max - y_min)
+
+    def update_labels(self):
+        self.setLabel('bottom', self.spec.spectral_axis.unit, **self._label_style)
+        self.setLabel('right', self.spec.flux.unit, **self._label_style)
+
+    def add_items(self):
+        self._flux_plot = self.plot(pen='k')
+        self._flux_err_plot = self.plot(pen='r')
+
+        for line_name, line_artist in self._line_artists.items():
+            self.addItem(line_artist['line'], ignoreBounds=True)
+            self.addItem(line_artist['label'])
+
+    def set_line_positions(self, scale: float = 1):
+        for line_name, line_artist in self._line_artists.items():
+            line_wave = self.lines.list[line_name] * scale * self.spec.spectral_axis.unit / u.Unit(self.lines.units)
+            line_artist['line'].setPos(line_wave)
+            line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
+
+    def plot_all(self):
+        self._flux_plot.setData(self.spec.wavelength.value, self.spec.flux.value)
+        if self.spec.uncertainty is not None:
+            self._flux_err_plot.setData(self.spec.wavelength.value, self.spec.uncertainty.array)
+
+    def reset(self):
+        self.setXRange(*self.default_xrange, padding=0)
+        self.setYRange(*self.default_yrange)
+
+    def clear(self):
+        del self.default_xrange
+        del self.default_yrange
+        del self._label_height
+
+        super().clear()
+
+    def smooth(self, sigma: float):
+        self._flux_plot.setData(self.spec.wavelength.value,
+                                gaussian_filter1d(self.spec.flux.value, sigma) if sigma > 0 else self.flux.value)
+
+
+class Spec1DRegion(LazyViewerElement):
+    def __init__(self, rd: AppData, cfg: docks.SpectrumRegion, title: str, parent=None):
+        super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
+
+        self.cfg = cfg
 
 
 class Spec1D(ViewerElement):
@@ -26,59 +116,47 @@ class Spec1D(ViewerElement):
 
         self.cfg = cfg
 
+        self.lazy_widgets: list[Spec1DRegion]
+
+        # create viewer elements zoomed on various spectral regions
+        if self.cfg.follow is not None:
+            for line, line_cfg in self.cfg.follow.items():
+                self.lazy_widgets.append(LazyViewerElement(rd=rd, cfg=line_cfg, title=f"{title} [{line}]",
+                                                           parent=parent))
+
         # create a redshift slider
         self._z_slider = SmartSlider(parameter='z', full_name='redshift', parent=self,
                                      **asdict(self.cfg.redshift_slider))
-        self._z_slider.value_changed[float].connect(self._update_line_pos)
+        self._z_slider.value_changed[float].connect(self._redshift_changed_action)
         self.sliders.append(self._z_slider)
 
         # set up the plot
-        self._spec_1d = self.central_widget_layout.addPlot(name=title)
-        self._spec_1d.setMouseEnabled(True, True)
-        # self._spec_1d.hideAxis('left')
-        self._spec_1d.showAxis('right')
-        self._label_style = {'color': 'r', 'font-size': '20px'}
+        self._spec_1d = Spec1DItem(lines=self.rd.lines, name=title)
+        self.graphics_layout.addItem(self._spec_1d)
 
-        # set up the spectral lines
-        self._line_artists = {}
-        # TODO: store colors in config
-        line_color = (175.68072, 220.68924, 46.59488)
-        line_pen = pg.mkPen(color=line_color, width=1)
-        for line_name, lambda0 in self.rd.lines.list.items():
-            line = pg.InfiniteLine(angle=90, movable=False, pen=line_pen)
-            label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
+    def _redshift_changed_action(self, redshift: float):
+        self._spec_1d.set_line_positions(1 + redshift)
 
-            self._line_artists[line_name] = {'line': line, 'label': label}
+    def _load_data(self):
+        super()._load_data()
+        if self.data is None:
+            self._spec_1d.spec = None
+            return
 
-    @lazyproperty
-    def default_xrange(self):
-        return np.nanmin(self.data['wavelength']), np.nanmax(self.data['wavelength'])
+        spectral_axis_unit = u.Unit(self.meta.get(f'TUNIT{self.data.colnames.index("wavelength") + 1}',
+                                                  self.rd.lines.units))
 
-    @lazyproperty
-    def default_yrange(self):
-        return np.nanmin(self.data['flux']), np.nanmax(self.data['flux'])
+        flux_unit = u.Unit(self.meta.get(f'TUNIT{self.data.colnames.index("flux") + 1}',
+                                         10**-17 * u.Unit('erg cm-2 s-1 AA-1')))
 
-    @lazyproperty
-    def _label_height(self):
-        y_min, y_max = self.default_yrange
-        return y_min + 0.6 * (y_max - y_min)
+        if 'flux_error' in self.data.colnames:
+            unc = StdDevUncertainty(self.data['flux_error'])
+        else:
+            unc = None
 
-    def _plot_spec_1d(self, wave, flux):
-        self._spec_1d_plot = self._spec_1d.plot(wave, flux, pen='k')
-
-    def _plot_spec_1d_err(self, wave, flux_err):
-        self._spec_1d.plot(wave, flux_err, pen='r')
-
-    def _update_line_pos(self, redshift: float):
-        try:
-            scale = u.Unit(self.meta['TUNIT1']) / u.Unit(self.rd.lines.units)
-        except (KeyError, ValueError):
-            scale = 1
-
-        for line_name, line_artist in self._line_artists.items():
-            line_wave = self.rd.lines.list[line_name] * (1 + redshift) * scale
-            line_artist['line'].setPos(line_wave)
-            line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
+        self._spec_1d.spec = Spectrum1D(spectral_axis=self.data['wavelength'] * spectral_axis_unit,
+                                        flux=self.data['flux'] * flux_unit,
+                                        uncertainty=unc)
 
     def validate(self):
         for cname in ('wavelength', 'flux'):
@@ -88,30 +166,16 @@ class Spec1D(ViewerElement):
         return True
 
     def display(self):
-        self._plot_spec_1d(self.data['wavelength'], self.data['flux'])
-        self._plot_spec_1d_err(self.data['wavelength'], self.data['flux_error'])
-
-        for line_name, line_artist in self._line_artists.items():
-            self._spec_1d.addItem(line_artist['line'], ignoreBounds=True)
-            self._spec_1d.addItem(line_artist['label'])
-
-        for keyword, position in {'TUNIT1': 'bottom', 'TUNIT2': 'right'}.items():
-            if self.meta.get(keyword):
-                self._spec_1d.setLabel(position, self.meta[keyword], **self._label_style)
+        self._spec_1d.update_labels()
+        self._spec_1d.add_items()
+        self._spec_1d.plot_all()
 
     def reset_view(self):
+        self._spec_1d.reset()
         self._z_slider.reset()
-        self._spec_1d.setXRange(*self.default_xrange, padding=0)
-        self._spec_1d.setYRange(*self.default_yrange)
 
     def clear_content(self):
-        del self.default_xrange
-        del self.default_yrange
-        del self._label_height
-
         self._spec_1d.clear()
 
     def smooth(self, sigma: float):
-        self._spec_1d.removeItem(self._spec_1d_plot)
-        self._plot_spec_1d(self.data['wavelength'],
-                           gaussian_filter1d(self.data['flux'], sigma) if sigma > 0 else self.data['flux'])
+        self._spec_1d.smooth(sigma)

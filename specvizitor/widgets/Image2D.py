@@ -47,17 +47,17 @@ class Image2D(ViewerElement):
         self.container.setAspectLocked(True)
 
         # add the container to the layout
-        self.central_widget_layout.addItem(self.container, 0, 0)
+        self.graphics_layout.addItem(self.container, 0, 0)
 
         # create a color bar
         self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
 
         # add the color bar to the layout
         if self.cfg.color_bar.visible:
-            self.central_widget_layout.addItem(self._cbar, 0, 1)
+            self.graphics_layout.addItem(self._cbar, 0, 1)
 
-    def load_data(self):
-        super().load_data()
+    def _load_data(self):
+        super()._load_data()
         if self.data is None:
             return
 

@@ -20,6 +20,7 @@ qtpy = "^2.3.0"
 pyqt5 = "^5.15.9"
 pillow = "^9.4.0"
 scipy = "^1.10.1"
+specutils = "^1.9.1"
 
 [tool.poetry.scripts]
 specvizitor = 'specvizitor.gui:main'

@@ -5,6 +5,7 @@ from pyqtgraph.dockarea.DockArea import DockArea
 
 from ..utils import AbstractWidget
 from .ViewerElement import ViewerElement
+from .LazyViewerElement import LazyViewerElement
 from .Image2D import Image2D
 from .Spec1D import Spec1D
 
@@ -58,19 +59,24 @@ class DataViewer(AbstractWidget):
 
     def create_docks(self) -> dict[str, Dock]:
         docks = {}
-        for name, widget in self.dock_widgets.items():
-            dock = Dock(name)
-            dock.addWidget(widget)
-            docks[name] = dock
+        for widget in self.dock_widgets.values():
+            docks[widget.title] = Dock(widget.title, widget=widget)
+
+            for lazy_widget in widget.lazy_widgets:
+                docks[lazy_widget.title] = Dock(lazy_widget.title, widget=lazy_widget)
+
         return docks
 
-    def add_docks(self):
-        for name, d in self.docks.items():
-            position = self.dock_widgets[name].cfg.position
+    def add_dock(self, widget: LazyViewerElement):
+        self.dock_area.addDock(dock=self.docks[widget.title],
+                               position=widget.cfg.position if widget.cfg.position is not None else 'bottom',
+                               relativeTo=widget.cfg.relative_to)
 
-            self.dock_area.addDock(dock=d,
-                                   position=position if position is not None else 'bottom',
-                                   relativeTo=self.dock_widgets[name].cfg.relative_to)
+    def add_docks(self):
+        for widget in self.dock_widgets.values():
+            self.add_dock(widget)
+            for lazy_widget in widget.lazy_widgets:
+                self.add_dock(lazy_widget)
 
     def reset_dock_state(self):
         for d in self.docks.values():
@@ -85,15 +91,19 @@ class DataViewer(AbstractWidget):
     def load_object(self):
         self.save_dock_state()
 
-        for name, w in self.dock_widgets.items():
+        for w in self.dock_widgets.values():
             # load the object to the widget
             w.load_object()
 
             # update the title of the dock
             if w.filename is not None and w.data is not None:
-                self.docks[name].setTitle(w.filename.name)
+                self.docks[w.title].setTitle(w.filename.name)
+                for lazy_widget in w.lazy_widgets:
+                    self.docks[lazy_widget.title].setTitle(w.filename.name)
             else:
-                self.docks[name].setTitle(name)
+                self.docks[w.title].setTitle(w.title)
+                for lazy_widget in w.lazy_widgets:
+                    self.docks[lazy_widget.title].setTitle(lazy_widget.title)
 
         for plugin in self._plugins:
             plugin.link(self.dock_widgets)

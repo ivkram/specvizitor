@@ -21,12 +21,16 @@ class ColorBar:
 
 
 @dataclass
-class ViewerElement:
-    filename_keyword: str
-    loader: str | None = None
-    loader_config: dict[str, str] | None = None
+class LazyViewerElement:
     position: str | None = None
     relative_to: str | None = None
+
+
+@dataclass
+class ViewerElement(LazyViewerElement):
+    filename_keyword: str | None = None
+    loader: str | None = None
+    loader_config: dict[str, str] | None = None
     smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
 
 
@@ -41,6 +45,12 @@ class Image(ViewerElement):
 @dataclass
 class Spectrum(ViewerElement):
     redshift_slider: Slider = field(default_factory=lambda: Slider(max_value=10, step=1e-4))
+    follow: dict[str, LazyViewerElement] | None = None
+
+
+@dataclass
+class SpectrumRegion(LazyViewerElement):
+    window: float = 20
 
 
 @dataclass
