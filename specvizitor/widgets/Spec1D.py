@@ -1,15 +1,14 @@
 import logging
-import pathlib
 from dataclasses import asdict
 
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from astropy.utils.decorators import lazyproperty
+from astropy import units as u
 
 import pyqtgraph as pg
 from qtpy import QtCore
 
-from ..utils.params import read_yaml
 from ..utils import SmartSlider
 from ..utils.table_tools import column_not_found_message
 
@@ -26,10 +25,6 @@ class Spec1D(ViewerElement):
         super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
 
         self.cfg = cfg
-
-        # load the list of spectral lines
-        # TODO: move to the application data
-        self._lines = read_yaml(pathlib.Path(__file__).parent.parent / 'data' / 'default_lines.yml')
 
         # create a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsView()
@@ -55,7 +50,7 @@ class Spec1D(ViewerElement):
         # TODO: store colors in config
         line_color = (175.68072, 220.68924, 46.59488)
         line_pen = pg.mkPen(color=line_color, width=1)
-        for line_name, lambda0 in self._lines['lambda'].items():
+        for line_name, lambda0 in self.rd.lines.list.items():
             line = pg.InfiniteLine(angle=90, movable=False, pen=line_pen)
             label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
 
@@ -82,8 +77,13 @@ class Spec1D(ViewerElement):
             self._spec_1d.plot(wave, flux_err, pen='r')
 
     def _update_redshift(self, redshift: float):
+        if self.meta.get('TUNIT1'):
+            scale = u.Unit(self.meta['TUNIT1']) / u.Unit(self.rd.lines.units)
+        else:
+            scale = 1
+
         for line_name, line_artist in self._line_artists.items():
-            line_wave = self._lines['lambda'][line_name] * (1 + redshift)
+            line_wave = self.rd.lines.list[line_name] * (1 + redshift) * scale
             line_artist['line'].setPos(line_wave)
             line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
 

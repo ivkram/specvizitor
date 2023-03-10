@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pandas as pd
 from astropy.table import Table
 
-from .config import Config, Docks, Cache
+from .config import Config, Docks, SpectralLines, Cache
 from .io import catalogue, output
 
 
@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 class AppData:
     config: Config
     docks: Docks
+    lines: SpectralLines
+
     cache: Cache
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
