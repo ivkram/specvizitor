@@ -8,6 +8,7 @@ from astropy.table import Table
 from astropy.io.fits.header import Header
 
 from qtpy import QtWidgets
+import pyqtgraph as pg
 
 from ..utils import AbstractWidget, SmartSlider, table_tools
 from ..appdata import AppData
@@ -26,7 +27,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.cfg = cfg
         self.title: str = title
         self.sliders: list[SmartSlider] = []
-        self.core_widget: QtWidgets.QWidget | None = None
+        self.central_widget: QtWidgets.QWidget | None = None
 
         self.filename: pathlib.Path | None = None
         self.data: np.ndarray | Table | None = None
@@ -35,6 +36,15 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.layout.setSpacing(self.rd.config.viewer_geometry.spacing)
         self.layout.setContentsMargins(*(self.rd.config.viewer_geometry.margins for _ in range(4)))
 
+        # create a central widget
+        self.central_widget = pg.GraphicsView()
+        self.central_widget_layout = pg.GraphicsLayout()
+        self.central_widget.setCentralItem(self.central_widget_layout)
+
+        self.central_widget_layout.setSpacing(5)
+        self.central_widget_layout.setContentsMargins(5, 5, 5, 5)
+
+        # create a smoothing slider
         self.smoothing_slider = SmartSlider(parameter='sigma', action='smooth the data', parent=self,
                                             **asdict(self.cfg.smoothing_slider))
         self.smoothing_slider.value_changed[float].connect(self.smooth)
@@ -48,11 +58,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         for s in self.sliders:
             if not s.text_editor:
                 sub_layout.addWidget(s)
-
-        # add the central widget
-        if self.core_widget is not None:
-            sub_layout.addWidget(self.core_widget)
-
+        sub_layout.addWidget(self.central_widget)  # add the central widget
         self.layout.addLayout(sub_layout, 1, 1, 1, 1)
 
         sub_layout = QtWidgets.QVBoxLayout()
@@ -61,9 +67,9 @@ class ViewerElement(AbstractWidget, abc.ABC):
         for s in self.sliders:
             if s.text_editor:
                 sub_layout.addWidget(s)
-
         self.layout.addLayout(sub_layout, 2, 1, 1, 1)
 
+        # init the UI of sliders
         for s in self.sliders:
             s.init_ui()
 

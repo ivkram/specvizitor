@@ -26,20 +26,14 @@ class Spec1D(ViewerElement):
 
         self.cfg = cfg
 
-        # create a widget for the spectrum
-        self._spec_1d_widget = pg.GraphicsView()
-        self.core_widget = self._spec_1d_widget
-        self._spec_1d_layout = pg.GraphicsLayout()
-        self._spec_1d_widget.setCentralItem(self._spec_1d_layout)
-
         # create a redshift slider
         self._z_slider = SmartSlider(parameter='z', full_name='redshift', parent=self,
                                      **asdict(self.cfg.redshift_slider))
-        self._z_slider.value_changed[float].connect(self._update_redshift)
+        self._z_slider.value_changed[float].connect(self._update_line_pos)
         self.sliders.append(self._z_slider)
 
         # set up the plot
-        self._spec_1d = self._spec_1d_layout.addPlot(name=title)
+        self._spec_1d = self.central_widget_layout.addPlot(name=title)
         self._spec_1d.setMouseEnabled(True, True)
         # self._spec_1d.hideAxis('left')
         self._spec_1d.showAxis('right')
@@ -73,10 +67,9 @@ class Spec1D(ViewerElement):
         self._spec_1d_plot = self._spec_1d.plot(wave, flux, pen='k')
 
     def _plot_spec_1d_err(self, wave, flux_err):
-        if 'flux_error' in self.data.colnames:
-            self._spec_1d.plot(wave, flux_err, pen='r')
+        self._spec_1d.plot(wave, flux_err, pen='r')
 
-    def _update_redshift(self, redshift: float):
+    def _update_line_pos(self, redshift: float):
         try:
             scale = u.Unit(self.meta['TUNIT1']) / u.Unit(self.rd.lines.units)
         except (KeyError, ValueError):

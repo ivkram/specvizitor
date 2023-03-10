@@ -100,11 +100,12 @@ class Params:
 
         if user_params is None:
             file.backup()
-            params.save(file)
         else:
             params = user_params
 
         params._user_file = file
+        params.save()
+
         return params
 
     def save(self, file: LocalFile | None = None):

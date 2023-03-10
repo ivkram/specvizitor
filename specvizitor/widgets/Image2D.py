@@ -21,16 +21,6 @@ class Image2D(ViewerElement):
 
         self.cfg = cfg
 
-        # add a widget for the image
-        self._image_2d_widget = pg.GraphicsView(parent=self)
-        self.core_widget = self._image_2d_widget
-
-        # create a layout
-        self._image_2d_layout = pg.GraphicsLayout()
-        self._image_2d_layout.setSpacing(5)
-        self._image_2d_layout.setContentsMargins(5, 5, 5, 5)
-        self._image_2d_widget.setCentralItem(self._image_2d_layout)
-
         # set up the color map
         self._cmap = pg.colormap.get('viridis')
 
@@ -57,14 +47,14 @@ class Image2D(ViewerElement):
         self.container.setAspectLocked(True)
 
         # add the container to the layout
-        self._image_2d_layout.addItem(self.container, 0, 0)
+        self.central_widget_layout.addItem(self.container, 0, 0)
 
         # create a color bar
         self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
 
         # add the color bar to the layout
         if self.cfg.color_bar.visible:
-            self._image_2d_layout.addItem(self._cbar, 0, 1)
+            self.central_widget_layout.addItem(self._cbar, 0, 1)
 
     def load_data(self):
         super().load_data()
