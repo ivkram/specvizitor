@@ -77,9 +77,9 @@ class Spec1D(ViewerElement):
             self._spec_1d.plot(wave, flux_err, pen='r')
 
     def _update_redshift(self, redshift: float):
-        if self.meta.get('TUNIT1'):
+        try:
             scale = u.Unit(self.meta['TUNIT1']) / u.Unit(self.rd.lines.units)
-        else:
+        except (KeyError, ValueError):
             scale = 1
 
         for line_name, line_artist in self._line_artists.items():
