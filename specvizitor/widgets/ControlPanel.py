@@ -7,9 +7,10 @@ import numpy as np
 import qtpy
 from qtpy import QtGui, QtCore, QtWidgets
 
+
+from ..utils import AbstractWidget
 from ..appdata import AppData
 from ..config import config
-from .AbstractWidget import AbstractWidget
 
 
 logger = logging.getLogger(__name__)

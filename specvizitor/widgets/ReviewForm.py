@@ -1,7 +1,6 @@
 from qtpy import QtWidgets
 
-from .AbstractWidget import AbstractWidget
-
+from ..utils import AbstractWidget
 from ..appdata import AppData
 from ..config import config
 from ..io.output import get_checkboxes
@@ -50,8 +49,8 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         for cname, widget in self._checkboxes.items():
             widget.setChecked(self.rd.df.at[self.rd.id, cname])
 
-    def activate(self):
+    def activate(self, *args, **kwargs):
         self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.checkboxes))
         self.reset_layout()
 
-        super().activate()
+        super().activate(*args, **kwargs)

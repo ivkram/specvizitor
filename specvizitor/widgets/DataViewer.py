@@ -3,7 +3,7 @@ import importlib
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 
-from .AbstractWidget import AbstractWidget
+from ..utils import AbstractWidget
 from .ViewerElement import ViewerElement
 from .Image2D import Image2D
 from .Spec1D import Spec1D

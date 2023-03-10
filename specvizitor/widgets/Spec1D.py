@@ -7,7 +7,7 @@ from scipy.ndimage import gaussian_filter1d
 from astropy.utils.decorators import lazyproperty
 
 import pyqtgraph as pg
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore
 
 from ..utils.params import read_yaml
 from ..utils import SmartSlider
@@ -33,23 +33,15 @@ class Spec1D(ViewerElement):
 
         # create a widget for the spectrum
         self._spec_1d_widget = pg.GraphicsView()
+        self.core_widget = self._spec_1d_widget
         self._spec_1d_layout = pg.GraphicsLayout()
         self._spec_1d_widget.setCentralItem(self._spec_1d_layout)
 
-        # create a line edit for changing the redshift
-        self._z_editor = QtWidgets.QLineEdit(parent=self)
-        self._z_editor.returnPressed.connect(self._update_from_editor)
-        self._z_editor.setMaximumWidth(120)
-        self._z_label = QtWidgets.QLabel('z = ', parent=self)
-
         # create a redshift slider
-        self._z_slider = SmartSlider(QtCore.Qt.Horizontal, **asdict(self.cfg.redshift_slider), parent=self)
-        if self._z_slider.isHidden():
-            self._z_label.setHidden(True)
-            self._z_editor.setHidden(True)
-
-        self._z_slider.valueChanged[int].connect(self._update_from_slider)
-        self._z_slider.setToolTip('Slide to change redshift')
+        self._z_slider = SmartSlider(parameter='z', full_name='redshift', parent=self,
+                                     **asdict(self.cfg.redshift_slider))
+        self._z_slider.value_changed[float].connect(self._update_redshift)
+        self.sliders.append(self._z_slider)
 
         # set up the plot
         self._spec_1d = self._spec_1d_layout.addPlot(name=title)
@@ -68,19 +60,6 @@ class Spec1D(ViewerElement):
             label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
 
             self._line_artists[line_name] = {'line': line, 'label': label}
-
-    def init_ui(self):
-        self.layout.addWidget(self.smoothing_slider, 1, 1, 1, 1)
-        self.layout.addWidget(self._spec_1d_widget, 1, 2, 1, 1)
-
-        sub_layout = QtWidgets.QHBoxLayout()
-        sub_layout.setSpacing(10)
-        sub_layout.setContentsMargins(0, 0, 0, 0)
-        sub_layout.addWidget(self._z_slider)
-        sub_layout.addWidget(self._z_label)
-        sub_layout.addWidget(self._z_editor)
-
-        self.layout.addLayout(sub_layout, 2, 1, 1, 2)
 
     @lazyproperty
     def default_xrange(self):
@@ -102,7 +81,20 @@ class Spec1D(ViewerElement):
         if 'flux_error' in self.data.colnames:
             self._spec_1d.plot(wave, flux_err, pen='r')
 
-    def _plot(self):
+    def _update_redshift(self, redshift: float):
+        for line_name, line_artist in self._line_artists.items():
+            line_wave = self._lines['lambda'][line_name] * (1 + redshift)
+            line_artist['line'].setPos(line_wave)
+            line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
+
+    def validate(self):
+        for cname in ('wavelength', 'flux'):
+            if cname not in self.data.colnames:
+                logger.error(column_not_found_message(cname, self.rd.config.data.translate))
+                return False
+        return True
+
+    def display(self):
         self._plot_spec_1d(self.data['wavelength'], self.data['flux'])
         self._plot_spec_1d_err(self.data['wavelength'], self.data['flux_error'])
 
@@ -114,46 +106,8 @@ class Spec1D(ViewerElement):
             if self.meta.get(keyword):
                 self._spec_1d.setLabel(position, self.meta[keyword], **self._label_style)
 
-    def _update_view(self):
-        for line_name, line_artist in self._line_artists.items():
-            line_wave = self._lines['lambda'][line_name] * (1 + self._z_slider.value)
-            line_artist['line'].setPos(line_wave)
-            line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
-
-    def _update_from_slider(self, index: int | None = None):
-        if index is not None:
-            self._z_slider.index = index
-        self._z_editor.setText("{:.6f}".format(self._z_slider.value))
-        self._update_view()
-
-    def _update_from_editor(self):
-        try:
-            self._z_slider.index = self._z_slider.index_from_value(float(self._z_editor.text()))
-        except ValueError:
-            logger.error('Invalid redshift value: {}'.format(self._z_editor.text()))
-            self._z_slider.reset()
-
-        self._update_from_slider()
-
-    def validate(self):
-        for cname in ('wavelength', 'flux'):
-            if cname not in self.data.colnames:
-                logger.error(column_not_found_message(cname, self.rd.config.data.translate))
-                return False
-        return True
-
-    def display(self):
-        try:
-            self._z_slider.default_value = self.rd.cat.loc[self.rd.id]['z']
-        except KeyError:
-            self._z_slider.default_value = self.cfg.redshift_slider.default_value
-
-        self._plot()
-
     def reset_view(self):
         self._z_slider.reset()
-        self._update_from_slider()
-
         self._spec_1d.setXRange(*self.default_xrange, padding=0)
         self._spec_1d.setYRange(*self.default_yrange)
 
@@ -162,7 +116,6 @@ class Spec1D(ViewerElement):
         del self.default_yrange
         del self._label_height
 
-        self._z_editor.setText("")
         self._spec_1d.clear()
 
     def smooth(self, sigma: float):

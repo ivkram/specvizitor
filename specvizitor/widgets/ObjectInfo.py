@@ -1,13 +1,12 @@
 import logging
 
 # from astropy.coordinates import SkyCoord
+from qtpy import QtWidgets, QtCore
 
+from ..utils import AbstractWidget
+from ..utils import column_not_found_message
 from ..appdata import AppData
 from ..config import config
-from .AbstractWidget import AbstractWidget
-
-
-from qtpy import QtWidgets, QtCore
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +52,7 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
                 if cname in self.rd.cat.colnames:
                     logger.warning('Object not found in the catalogue (ID: {})'.format(self.rd.id))
                 else:
-                    logger.warning('`{}` column not found in the catalogue'.format(cname))
+                    logger.warning(column_not_found_message(cname, self.rd.config.cat.translate))
                 widget.setHidden(True)
             else:
                 widget.setHidden(False)

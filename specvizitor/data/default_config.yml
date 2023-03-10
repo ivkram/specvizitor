@@ -3,7 +3,7 @@ cat:
     id: [Id, ID, NUMBER]
     ra: [Ra, RA]
     dec: [Dec, DEC]
-    z: [Z, redshift, Redshift, z_map]
+    z: [Z, redshift, Redshift, REDSHIFT, z_map]
 
 data:
   dir: '.'

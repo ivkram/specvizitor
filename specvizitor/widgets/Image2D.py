@@ -23,6 +23,7 @@ class Image2D(ViewerElement):
 
         # add a widget for the image
         self._image_2d_widget = pg.GraphicsView(parent=self)
+        self.core_widget = self._image_2d_widget
 
         # create a layout
         self._image_2d_layout = pg.GraphicsLayout()
@@ -64,10 +65,6 @@ class Image2D(ViewerElement):
         # add the color bar to the layout
         if self.cfg.color_bar.visible:
             self._image_2d_layout.addItem(self._cbar, 0, 1)
-
-    def init_ui(self):
-        self.layout.addWidget(self.smoothing_slider, 1, 1)
-        self.layout.addWidget(self._image_2d_widget, 1, 2)
 
     def load_data(self):
         super().load_data()

@@ -6,6 +6,9 @@ from ..utils.params import Params
 @dataclass
 class Slider:
     visible: bool = True
+    cat_name: str | None = None
+    text_editor: bool = False
+    precision: int = 6
     min_value: float = 0
     max_value: float = 100
     step: float = 1

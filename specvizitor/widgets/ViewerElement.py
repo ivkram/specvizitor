@@ -7,13 +7,12 @@ import numpy as np
 from astropy.table import Table
 from astropy.io.fits.header import Header
 
-from .AbstractWidget import AbstractWidget
+from qtpy import QtWidgets
 
+from ..utils import AbstractWidget, SmartSlider, table_tools
 from ..appdata import AppData
 from ..config import docks
 from ..io.viewer_data import get_filename, load
-from ..utils import table_tools
-from ..utils import SmartSlider
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +25,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.rd = rd
         self.cfg = cfg
         self.title: str = title
+        self.sliders: list[SmartSlider] = []
+        self.core_widget: QtWidgets.QWidget | None = None
 
         self.filename: pathlib.Path | None = None
         self.data: np.ndarray | Table | None = None
@@ -34,27 +35,67 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.layout.setSpacing(self.rd.config.viewer_geometry.spacing)
         self.layout.setContentsMargins(*(self.rd.config.viewer_geometry.margins for _ in range(4)))
 
-        self.smoothing_slider = SmartSlider(**asdict(self.cfg.smoothing_slider), parent=self)
-        self.smoothing_slider.valueChanged[int].connect(self.smoothing_slider_action)
+        self.smoothing_slider = SmartSlider(parameter='sigma', action='smooth the data', parent=self,
+                                            **asdict(self.cfg.smoothing_slider))
+        self.smoothing_slider.value_changed[float].connect(self.smooth)
         self.smoothing_slider.setToolTip('Slide to smooth the data')
+        self.sliders.append(self.smoothing_slider)
+
+    def init_ui(self):
+        sub_layout = QtWidgets.QHBoxLayout()
+
+        # add vertical sliders
+        for s in self.sliders:
+            if not s.text_editor:
+                sub_layout.addWidget(s)
+
+        # add the central widget
+        if self.core_widget is not None:
+            sub_layout.addWidget(self.core_widget)
+
+        self.layout.addLayout(sub_layout, 1, 1, 1, 1)
+
+        sub_layout = QtWidgets.QVBoxLayout()
+
+        # add horizontal sliders
+        for s in self.sliders:
+            if s.text_editor:
+                sub_layout.addWidget(s)
+
+        self.layout.addLayout(sub_layout, 2, 1, 1, 1)
+
+        for s in self.sliders:
+            s.init_ui()
 
     def load_object(self):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
 
+            for s in self.sliders:
+                s.clear()
+
+        # load catalogue values to the sliders
+        for s in self.sliders:
+            if s.cat_name is not None:
+                s.update_from_cat(self.rd.cat, self.rd.id, self.rd.config.cat.translate)
+
         # load data to the widget
         self.load_data()
 
         # display the data
         if self.data is not None:
-            self.setEnabled(True)
+            self.activate()
             self.display()
-            if self.smoothing_slider.value > 0:
-                self.smooth(self.smoothing_slider.value)
+
+            for s in self.sliders:
+                if s.cat_name is not None:
+                    s.reset()
+                s.update_from_slider()
+
             self.reset_view()
         else:
-            self.setEnabled(False)
+            self.activate(False)
 
     def load_data(self):
         self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_keyword, self.rd.id)
@@ -102,10 +143,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def clear_content(self):
         pass
 
-    def smoothing_slider_action(self, index: int):
-        self.smoothing_slider.index = index
-        self.smooth(self.smoothing_slider.value)
-
     @abc.abstractmethod
-    def smooth(self, sigma: int):
+    def smooth(self, sigma: float):
         pass

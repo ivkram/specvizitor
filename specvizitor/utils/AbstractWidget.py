@@ -2,7 +2,7 @@ import abc
 
 from qtpy import QtWidgets
 
-from ..utils.widget_tools import get_widgets
+from specvizitor.utils.widget_tools import get_widgets
 
 
 class QtAbcMeta(type(QtWidgets.QWidget), type(abc.ABC)):
@@ -28,5 +28,12 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
             widget.destroy()
         self.init_ui()
 
-    def activate(self):
-        self.setEnabled(True)
+    def activate(self, a0: bool = True):
+        self.setEnabled(a0)
+
+        for widget in get_widgets(self.layout):
+            if isinstance(widget, AbstractWidget):
+                widget.activate(a0)
+            else:
+                widget.setEnabled(a0)
+
