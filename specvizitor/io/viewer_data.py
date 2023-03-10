@@ -127,7 +127,6 @@ def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
     try:
         # convert IDs to int
         ids = ids.astype(np.int64)
-        logger.info('Converted IDs to int')
     except ValueError:
         pass
 
