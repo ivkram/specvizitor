@@ -11,7 +11,7 @@ from .table_tools import column_not_found_message
 logger = logging.getLogger(__name__)
 
 
-class BaseSlider(QtWidgets.QSlider):
+class SmartSliderCore(QtWidgets.QSlider):
     value_changed = QtCore.Signal()
 
     def __init__(self, min_value=0, max_value=100, step=1, default_value=0,
@@ -70,7 +70,9 @@ class SmartSlider(AbstractWidget):
     def __init__(self, parameter: str = 'x', full_name: str | None = None, action: str | None = None,
                  visible: bool = True, cat_name: str | None = None, text_editor: bool = False, precision: int = 6,
                  parent=None, **kwargs):
+
         super().__init__(parent=parent)
+
         self.layout.setSpacing(5)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setHidden(not visible)
@@ -84,8 +86,8 @@ class SmartSlider(AbstractWidget):
         self.precision = precision
 
         # create a slider
-        self._slider = BaseSlider(orientation=QtCore.Qt.Orientation.Horizontal if self.text_editor
-                                  else QtCore.Qt.Orientation.Vertical, parent=self, **kwargs)
+        self._slider = SmartSliderCore(orientation=QtCore.Qt.Orientation.Horizontal if self.text_editor
+                                       else QtCore.Qt.Orientation.Vertical, parent=self, **kwargs)
         self._slider.value_changed.connect(self.update_from_slider)
         self._slider.setToolTip(f'Slide to {self.action}')
 
