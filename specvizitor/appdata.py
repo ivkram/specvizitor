@@ -5,9 +5,8 @@ from dataclasses import dataclass
 import pandas as pd
 from astropy.table import Table
 
-from .config import Config
-from .cache import Cache
-from ..io import catalogue, output
+from .config import Config, Docks, Cache
+from .io import catalogue, output
 
 
 logger = logging.getLogger(__name__)
@@ -16,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AppData:
     config: Config
+    docks: Docks
     cache: Cache
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file

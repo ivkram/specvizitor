@@ -7,8 +7,8 @@ import numpy as np
 import qtpy
 from qtpy import QtGui, QtCore, QtWidgets
 
-from ..runtime.appdata import AppData
-from ..runtime import config
+from ..appdata import AppData
+from ..config import config
 from .AbstractWidget import AbstractWidget
 
 
@@ -22,7 +22,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
     object_selected = QtCore.Signal(int)
 
     def __init__(self, rd: AppData, cfg: config.ControlPanel, parent=None):
-        super().__init__(cfg=cfg, parent=parent)
+        super().__init__(parent=parent)
 
         self.rd = rd
         self.cfg = cfg

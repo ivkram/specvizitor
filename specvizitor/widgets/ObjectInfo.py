@@ -2,8 +2,8 @@ import logging
 
 # from astropy.coordinates import SkyCoord
 
-from ..runtime.appdata import AppData
-from ..runtime import config
+from ..appdata import AppData
+from ..config import config
 from .AbstractWidget import AbstractWidget
 
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ObjectInfo, parent=None):
-        super().__init__(cfg=cfg, parent=parent)
+        super().__init__(parent=parent)
 
         self.rd = rd
         self.cfg = cfg

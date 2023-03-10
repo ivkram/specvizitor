@@ -1,14 +1,15 @@
 from qtpy import QtWidgets
 
-from ..runtime.appdata import AppData
-from ..runtime import config
-from ..io.output import get_checkboxes
 from .AbstractWidget import AbstractWidget
+
+from ..appdata import AppData
+from ..config import config
+from ..io.output import get_checkboxes
 
 
 class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ReviewForm, parent=None):
-        super().__init__(cfg=cfg, parent=parent)
+        super().__init__(parent=parent)
 
         self.rd = rd
         self.cfg = cfg

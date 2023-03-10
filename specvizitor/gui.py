@@ -11,7 +11,8 @@ import qtpy.compat
 from qtpy import QtGui, QtWidgets
 from qtpy.QtCore import Signal, Slot
 
-from .runtime.appdata import AppData, Config, Cache
+from .appdata import AppData
+from .config import Config, Docks, Cache
 from .menu import NewFile, Settings
 from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
 from .utils.widget_tools import get_widgets
@@ -60,53 +61,53 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file = self._menu.addMenu("&File")
 
-        self._new_file = QtWidgets.QAction("&New...", parent=self)
+        self._new_file = QtWidgets.QAction("&New...")
         self._new_file.triggered.connect(self._new_file_action)
         self._new_file.setShortcut(QtGui.QKeySequence('Ctrl+N'))
         self._file.addAction(self._new_file)
 
-        self._open_file = QtWidgets.QAction("&Open...", parent=self)
+        self._open_file = QtWidgets.QAction("&Open...")
         self._open_file.triggered.connect(self._open_file_action)
         self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
         self._file.addAction(self._open_file)
 
         self._file.addSeparator()
 
-        self._save = QtWidgets.QAction("&Save...", parent=self)
+        self._save = QtWidgets.QAction("&Save...")
         self._save.triggered.connect(self._save_action)
         self._save.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self._save.setEnabled(False)
         self._file.addAction(self._save)
 
-        self._save_as = QtWidgets.QAction("Save As...", parent=self)
+        self._save_as = QtWidgets.QAction("Save As...")
         self._save_as.triggered.connect(self._save_as_action)
         self._save_as.setShortcut(QtGui.QKeySequence('Shift+Ctrl+S'))
         self._save_as.setEnabled(False)
         self._file.addAction(self._save_as)
 
-        self._export = QtWidgets.QAction("&Export...", parent=self)
+        self._export = QtWidgets.QAction("&Export...")
         self._export.triggered.connect(self._export_action)
         self._export.setEnabled(False)
         self._file.addAction(self._export)
 
         self._file.addSeparator()
 
-        self._quit = QtWidgets.QAction("&Quit...", parent=self)
+        self._quit = QtWidgets.QAction("&Quit...")
         self._quit.triggered.connect(self._exit_action)
         self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self._file.addAction(self._quit)
 
         self._view = self._menu.addMenu("&View")
 
-        self._reset_view = QtWidgets.QAction("Reset View", parent=self)
+        self._reset_view = QtWidgets.QAction("Reset View")
         self._view.addAction(self._reset_view)
 
-        self._reset_dock_state = QtWidgets.QAction("Reset Dock State", parent=self)
+        self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
         self._view.addAction(self._reset_dock_state)
 
         self._view.addSeparator()
 
-        self._fullscreen = QtWidgets.QAction("Fullscreen", parent=self)
+        self._fullscreen = QtWidgets.QAction("Fullscreen")
         self._fullscreen.triggered.connect(lambda:
                                            self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
         self._fullscreen.setShortcut('F11')
@@ -116,12 +117,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._shortcut_fullscreen.activated.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._tools = self._menu.addMenu("&Tools")
-        self._settings = QtWidgets.QAction("Se&ttings...", parent=self)
+        self._settings = QtWidgets.QAction("Se&ttings...")
         self._settings.triggered.connect(self._settings_action)
         self._tools.addAction(self._settings)
 
         self._help = self._menu.addMenu("&Help")
-        self._about = QtWidgets.QAction("&About...", parent=self)
+        self._about = QtWidgets.QAction("&About...")
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
@@ -214,7 +215,7 @@ class CentralWidget(QtWidgets.QWidget):
         self.setLayout(self.layout)
 
         # add a widget for the data viewer
-        self.data_viewer = DataViewer(self.rd, cfg=self.rd.config.viewer, plugins=self.rd.config.plugins, parent=self)
+        self.data_viewer = DataViewer(self.rd, cfg=self.rd.docks, plugins=self.rd.config.plugins, parent=self)
         self.layout.addWidget(self.data_viewer, 1, 1, 3, 1)
 
         # add a widget for the control panel
@@ -297,21 +298,20 @@ def main():
     level = logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
-    user_files = {
-        'config': LocalFile(user_config_dir('specvizitor'), full_name='Configuration file'),
-        'cache': LocalFile(user_cache_dir('specvizitor'), full_name='Cache', auto_backup=False)
+    user_files: dict[str, LocalFile] = {
+        'config': LocalFile(user_config_dir('specvizitor'), full_name='Global configuration file'),
+        'docks': LocalFile(user_config_dir('specvizitor'), filename='docks.yml', full_name='Dock configuration file'),
+        'cache': LocalFile(user_cache_dir('specvizitor'), full_name='Cache file', auto_backup=False)
     }
 
     if args.purge:
         for f in user_files.values():
             f.delete()
 
-    # initialize the app configuration and cache
-    config = Config.read_user_params(user_files['config'], default='default_config.yml')
-    cache = Cache.read_user_params(user_files['cache'])
-
     # initialize the app data
-    appdata = AppData(config=config, cache=cache)
+    appdata = AppData(config=Config.read_user_params(user_files['config'], default='default_config.yml'),
+                      docks=Docks.read_user_params(user_files['docks'], default='default_docks.yml'),
+                      cache=Cache.read_user_params(user_files['cache']))
 
     # pyqtgraph configuration
     pg.setConfigOption('background', 'w')

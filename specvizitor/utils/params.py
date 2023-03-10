@@ -2,6 +2,7 @@ import logging
 import pathlib
 import shutil
 import yaml
+from functools import wraps
 from dataclasses import dataclass, asdict
 
 import dacite
@@ -22,7 +23,15 @@ class LocalFile:
     def path(self) -> pathlib.Path:
         return pathlib.Path(self.directory) / self.filename
 
-    def save(self, data: dict):
+    @staticmethod
+    def missing_ok(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+
+            func(self, *args, **kwargs)
+        return wrapper
+
+    def save(self, data: dict) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
         if self.path.exists():
@@ -34,15 +43,14 @@ class LocalFile:
 
         logger.info(msg)
 
-    def backup(self):
+    @missing_ok
+    def backup(self) -> None:
         dst = self.path.parent / (self.filename + '.bak')
         shutil.copy(self.path, dst)
         logger.info(f'{self.full_name} backed up (path: {dst})')
 
-    def delete(self):
-        if not self.path.exists():
-            return
-
+    @missing_ok
+    def delete(self) -> None:
         # backup the file
         if self.auto_backup:
             self.backup()
@@ -73,6 +81,8 @@ class Params:
         else:
             params = cls.read_default_params(default)
 
+        user_params = None
+
         try:
             user_params = read_yaml(file.path)
         except FileNotFoundError:
@@ -84,13 +94,16 @@ class Params:
             try:
                 user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
             except (WrongTypeError, MissingValueError):
+                user_params = None
                 logger.error(f'Failed to create a dataclass from `{file.path}`. The file will be overwritten.')
-            else:
-                params = user_params
+
+        if user_params is None:
+            file.backup()
+            params.save(file)
+        else:
+            params = user_params
 
         params._user_file = file
-        params.save()
-
         return params
 
     def save(self, file: LocalFile | None = None):

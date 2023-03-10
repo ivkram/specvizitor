@@ -2,7 +2,7 @@ import logging
 
 from qtpy import QtWidgets
 
-from ..runtime.appdata import AppData
+from ..appdata import AppData
 from ..io.catalogue import load_cat, create_cat, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog

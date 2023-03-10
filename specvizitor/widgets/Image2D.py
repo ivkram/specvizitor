@@ -8,15 +8,15 @@ from scipy.ndimage import gaussian_filter
 from pgcolorbar.colorlegend import ColorLegendItem
 
 from .ViewerElement import ViewerElement
-from ..runtime.appdata import AppData
-from ..runtime import config
+from ..appdata import AppData
+from ..config import docks
 
 
 logger = logging.getLogger(__name__)
 
 
 class Image2D(ViewerElement):
-    def __init__(self, rd: AppData, cfg: config.Image, title: str, parent=None):
+    def __init__(self, rd: AppData, cfg: docks.Image, title: str, parent=None):
         super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
 
         self.cfg = cfg

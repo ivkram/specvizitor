@@ -14,15 +14,15 @@ from ..utils import SmartSlider
 from ..utils.table_tools import column_not_found_message
 
 from .ViewerElement import ViewerElement
-from ..runtime.appdata import AppData
-from ..runtime import config
+from ..appdata import AppData
+from ..config import docks
 
 
 logger = logging.getLogger(__name__)
 
 
 class Spec1D(ViewerElement):
-    def __init__(self, rd: AppData, cfg: config.Spectrum, title: str, parent=None):
+    def __init__(self, rd: AppData, cfg: docks.Spectrum, title: str, parent=None):
         super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
 
         self.cfg = cfg

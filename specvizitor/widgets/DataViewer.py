@@ -8,13 +8,13 @@ from .ViewerElement import ViewerElement
 from .Image2D import Image2D
 from .Spec1D import Spec1D
 
-from ..runtime.appdata import AppData
-from ..runtime import config
+from ..appdata import AppData
+from ..config.docks import Docks
 
 
 class DataViewer(AbstractWidget):
-    def __init__(self, rd: AppData, cfg: config.Viewer, plugins=None, parent=None):
-        super().__init__(cfg=cfg, parent=parent)
+    def __init__(self, rd: AppData, cfg: Docks, plugins=None, parent=None):
+        super().__init__(parent=parent)
 
         self.rd = rd
         self.cfg = cfg

@@ -2,7 +2,6 @@ import abc
 
 from qtpy import QtWidgets
 
-from ..runtime import config
 from ..utils.widget_tools import get_widgets
 
 
@@ -11,7 +10,7 @@ class QtAbcMeta(type(QtWidgets.QWidget), type(abc.ABC)):
 
 
 class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
-    def __init__(self, cfg: config.AbstractWidget, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
         self.layout = QtWidgets.QGridLayout(self)

@@ -9,8 +9,8 @@ from astropy.io.fits.header import Header
 
 from .AbstractWidget import AbstractWidget
 
-from ..runtime.appdata import AppData
-from ..runtime import config
+from ..appdata import AppData
+from ..config import docks
 from ..io.viewer_data import get_filename, load
 from ..utils import table_tools
 from ..utils import SmartSlider
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
-    def __init__(self, rd: AppData, cfg: config.ViewerElement, title: str, parent=None):
-        super().__init__(cfg=cfg, parent=parent)
+    def __init__(self, rd: AppData, cfg: docks.ViewerElement, title: str, parent=None):
+        super().__init__(parent=parent)
 
         self.rd = rd
         self.cfg = cfg
@@ -31,8 +31,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.data: np.ndarray | Table | None = None
         self.meta: dict | Header | None = None
 
-        self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 5, 5, 5)
+        self.layout.setSpacing(self.rd.config.viewer_geometry.spacing)
+        self.layout.setContentsMargins(*(self.rd.config.viewer_geometry.margins for _ in range(4)))
 
         self.smoothing_slider = SmartSlider(**asdict(self.cfg.smoothing_slider), parent=self)
         self.smoothing_slider.valueChanged[int].connect(self.smoothing_slider_action)

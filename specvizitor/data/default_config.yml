@@ -35,27 +35,9 @@ review_form:
     contamination: "Contamination"
     extended: "Extended emission"
 
-viewer:
-  images:
-    Image Cutout:
-      filename_keyword: "beams.fits"
-      scale: 1.0e+21
-
-    Spectrum 2D:
-      filename_keyword: "stack.fits"
-      loader_config:
-        extname: "SCI"
-        extver: "F444W"
-      container: PlotItem
-
-  spectra:
-    Spectrum 1D:
-      filename_keyword: "1D.fits"
-      redshift_slider:
-        min_value: 0
-        max_value: 10
-        step: 0.000001
-        default_value: 5  # overwritten if the input catalogue contains a column with redshifts
+viewer_geometry:
+  spacing: 5
+  margins: 5
 
 plugins:
   - grizli

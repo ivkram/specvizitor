@@ -3,7 +3,7 @@ import pathlib
 
 from qtpy import QtWidgets
 
-from ..runtime.appdata import AppData
+from ..appdata import AppData
 from ..utils import FileBrowser
 from ..io.catalogue import load_cat, create_cat, cat_browser
 from ..io.viewer_data import get_ids_from_dir, data_browser
