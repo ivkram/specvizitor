@@ -28,9 +28,9 @@
      inkscape:cx="3.2353493"
      inkscape:cy="29.22251"
      inkscape:window-width="1834"
-     inkscape:window-height="1002"
-     inkscape:window-x="86"
-     inkscape:window-y="41"
+     inkscape:window-height="1122"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
@@ -56,21 +56,21 @@
     <path
        d="m 10.929855,5.8689395 c 0,-2.6568246 -2.1537817,-4.8106062 -4.8106062,-4.8106062 -1.5414871,0 -2.9136351,0.7250299 -3.7940319,1.852679"
        id="path1663"
-       style="fill:none;stroke:#000000;stroke-width:0.529167;stroke-miterlimit:4;stroke-dasharray:none"
+       style="fill:none;stroke:#000000;stroke-width:0.635;stroke-miterlimit:4;stroke-dasharray:none"
        sodipodi:nodetypes="csc" />
     <path
        d="m 1.8520833,6.8791667 c 0,2.6568249 2.1537817,4.8106063 4.8106062,4.8106063 1.5414871,0 2.9136351,-0.725029 3.7940315,-1.8526798"
        id="path1663-3"
-       style="fill:none;stroke:#000000;stroke-width:0.529167;stroke-miterlimit:4;stroke-dasharray:none"
+       style="fill:none;stroke:#000000;stroke-width:0.635;stroke-miterlimit:4;stroke-dasharray:none"
        sodipodi:nodetypes="csc" />
     <path
        d="M 2.3252169,0.39747056 V 2.9110123 h 2.5135416"
        id="path1665"
-       style="fill:none;stroke:#000000;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+       style="fill:none;stroke:#000000;stroke-width:0.635;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
     <path
        d="M 10.456721,12.350635 V 9.8370932 H 7.94318"
        id="path1665-6"
-       style="fill:none;stroke:#000000;stroke-width:0.529167;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
+       style="fill:none;stroke:#000000;stroke-width:0.635;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" />
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.52916667;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:5.0752;stroke-opacity:1"
        id="rect2600"
