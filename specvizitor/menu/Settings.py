@@ -1,5 +1,6 @@
 import logging
 
+from platformdirs import user_config_dir, user_cache_dir
 from qtpy import QtWidgets
 
 from ..appdata import AppData
@@ -34,10 +35,8 @@ class Settings(QtWidgets.QDialog):
         self.separator.setFrameShape(QtWidgets.QFrame.HLine)
         layout.addWidget(self.separator)
 
-        self._info_label = QtWidgets.QLabel("Configuration file: {}\n\nCache: {}".
-                                            format(self.rd.config.get_user_params_filename(),
-                                                   self.rd.cache.get_user_params_filename()),
-                                            parent=self)
+        self._info_label = QtWidgets.QLabel(f"GUI Configuration: {user_config_dir('specvizitor')}\n\n"
+                                            f"Cache: {user_cache_dir('specvizitor')}", parent=self)
         layout.addWidget(self._info_label)
 
         # add OK/Cancel buttons
