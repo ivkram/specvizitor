@@ -54,6 +54,8 @@ class Spec1D(ViewerElement):
         # set up the plot
         self._spec_1d = self._spec_1d_layout.addPlot(name=title)
         self._spec_1d.setMouseEnabled(True, True)
+        # self._spec_1d.hideAxis('left')
+        self._spec_1d.showAxis('right')
         self._label_style = {'color': 'r', 'font-size': '20px'}
 
         # set up the spectral lines
@@ -152,7 +154,7 @@ class Spec1D(ViewerElement):
         self._z_slider.reset()
         self._update_from_slider()
 
-        self._spec_1d.setXRange(*self.default_xrange)
+        self._spec_1d.setXRange(*self.default_xrange, padding=0)
         self._spec_1d.setYRange(*self.default_yrange)
 
     def clear_content(self):

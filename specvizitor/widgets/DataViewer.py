@@ -22,7 +22,6 @@ class DataViewer(AbstractWidget):
         self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
                          for plugin_name in plugins] if plugins is not None else []
 
-        self.layout.setSpacing(10)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.dock_area = DockArea()

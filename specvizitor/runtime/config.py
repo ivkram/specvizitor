@@ -51,6 +51,11 @@ class Slider:
 
 
 @dataclass
+class ColorBar:
+    visible: bool = True
+
+
+@dataclass
 class ViewerElement(AbstractWidget):
     filename_keyword: str
     loader: str | None = None
@@ -62,9 +67,10 @@ class ViewerElement(AbstractWidget):
 
 @dataclass
 class Image(ViewerElement):
-    rotate: int | None = None
-    scale: float | None = None
-    interactive: bool = True
+    rotate: int = 0
+    scale: float = 1
+    container: str = 'ViewBox'
+    color_bar: ColorBar = field(default_factory=lambda: ColorBar())
 
 
 @dataclass

@@ -46,6 +46,7 @@ viewer:
       loader_config:
         extname: "SCI"
         extver: "F444W"
+      container: PlotItem
 
   spectra:
     Spectrum 1D:

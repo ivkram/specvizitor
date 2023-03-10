@@ -41,7 +41,7 @@ def load_fits(filename: pathlib.Path, extname: str = None, extver: str = None):
 def load_pil(filename: pathlib.Path):
     image = Image.open(filename)
     image = ImageOps.flip(image)
-    return np.asarray(image), image.info
+    return np.array(image), image.info
 
 
 def load(loader_name: str | None, filename: pathlib.Path, alias: str, **kwargs):

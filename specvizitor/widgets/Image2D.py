@@ -22,37 +22,48 @@ class Image2D(ViewerElement):
         self.cfg = cfg
 
         # add a widget for the image
-        self._image_2d_widget = pg.GraphicsView()
+        self._image_2d_widget = pg.GraphicsView(parent=self)
+
+        # create a layout
         self._image_2d_layout = pg.GraphicsLayout()
+        self._image_2d_layout.setSpacing(5)
+        self._image_2d_layout.setContentsMargins(5, 5, 5, 5)
         self._image_2d_widget.setCentralItem(self._image_2d_layout)
 
-        if self.cfg.interactive:
-            # set up the color map
-            self._cmap = pg.colormap.get('viridis')
+        # set up the color map
+        self._cmap = pg.colormap.get('viridis')
 
-            # set up the image and the view box
-            self.image_2d_plot = self._image_2d_layout.addPlot(name=title)
+        # create an image item
+        self.image_2d = pg.ImageItem()
+        self.image_2d.setLookupTable(self._cmap.getLookupTable())
 
-            self.image_2d = pg.ImageItem(border='k')
-            self.image_2d.setLookupTable(self._cmap.getLookupTable())
-            self.image_2d_plot.addItem(self.image_2d)
+        # create an image container
+        if self.cfg.container == 'PlotItem':
+            # create a plot item
+            self.container = pg.PlotItem(name=title)
+            # self.container.hideAxis('left')
 
-            # set up the color bar
-            self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
-            self._image_2d_layout.addItem(self._cbar, 0, 1)
-
-            # lock the aspect ratio
-            self.image_2d_plot.setAspectLocked(True)
-
+            # add a border to the image
+            self.image_2d.setBorder('k')
         else:
-            self.smoothing_slider.setHidden(True)
+            # create a view box
+            self.container = pg.ViewBox()
 
-            self._view_box = pg.ViewBox()
-            self._image_2d_layout.setContentsMargins(0, 0, 0, 0)
-            self._view_box.setAspectLocked(True)
-            self.image_2d = pg.ImageItem()
-            self._view_box.addItem(self.image_2d)
-            self._image_2d_layout.addItem(self._view_box)
+        # add the image to the container
+        self.container.addItem(self.image_2d)
+
+        # lock the aspect ratio
+        self.container.setAspectLocked(True)
+
+        # add the container to the layout
+        self._image_2d_layout.addItem(self.container, 0, 0)
+
+        # create a color bar
+        self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
+
+        # add the color bar to the layout
+        if self.cfg.color_bar.visible:
+            self._image_2d_layout.addItem(self._cbar, 0, 1)
 
     def init_ui(self):
         self.layout.addWidget(self.smoothing_slider, 1, 1)
@@ -64,12 +75,10 @@ class Image2D(ViewerElement):
             return
 
         # rotate the image
-        if self.cfg.rotate is not None:
-            self.rotate(self.cfg.rotate)
+        self.rotate(self.cfg.rotate)
 
         # scale the data points
-        if self.cfg.scale is not None:
-            self.scale(self.cfg.scale)
+        self.scale(self.cfg.scale)
 
     def validate(self):
         return True
@@ -78,12 +87,9 @@ class Image2D(ViewerElement):
         self.image_2d.setImage(self.data)
 
     def reset_view(self):
-        if self.cfg.interactive:
-            # TODO: allow to choose between min/max and zscale?
-            self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
-            self.image_2d_plot.autoRange()
-        else:
-            self._view_box.autoRange(padding=0)
+        # TODO: allow to choose between min/max and zscale?
+        self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
+        self.container.autoRange(padding=0)
 
     def clear_content(self):
         self.image_2d.clear()
