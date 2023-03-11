@@ -33,6 +33,8 @@ class Image2D(ViewerElement):
             # create a plot item
             self.container = pg.PlotItem(name=title)
             # self.container.hideAxis('left')
+            self.container.showAxes((False, False, False, True), showValues=(False, False, False, True))
+            self.container.hideButtons()
 
             # add a border to the image
             self.image_2d.setBorder('k')

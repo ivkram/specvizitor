@@ -13,8 +13,8 @@ class LazyViewerElement(AbstractWidget):
         self.cfg = cfg
         self.title: str = title
 
-        self.layout.setSpacing(self.rd.config.viewer_geometry.spacing)
-        self.layout.setContentsMargins(*(self.rd.config.viewer_geometry.margins for _ in range(4)))
+        self.layout.setSpacing(self.rd.config.data_viewer.spacing)
+        self.layout.setContentsMargins(*(self.rd.config.data_viewer.margins for _ in range(4)))
 
         # create a central widget
         self.graphics_view = pg.GraphicsView()

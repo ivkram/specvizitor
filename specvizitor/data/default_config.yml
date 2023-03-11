@@ -6,8 +6,6 @@ cat:
     z: [Z, redshift, Redshift, REDSHIFT, z_map]
 
 data:
-  dir: '.'
-  id_pattern: '\d+'
   translate:
     wavelength:
       - wave
@@ -19,25 +17,10 @@ data:
       - flux_err
       - fluxerror
 
-appearance:
-  antialiasing: False
-
-control_panel:
-  button_width: 130
-
-object_info:
-  items:
-    ra: "RA: {}"
-    dec: "Dec: {}"
-
 review_form:
   checkboxes:
     contamination: "Contamination"
     extended: "Extended emission"
-
-viewer_geometry:
-  spacing: 5
-  margins: 5
 
 plugins:
   - grizli

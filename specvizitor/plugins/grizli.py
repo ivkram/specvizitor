@@ -6,7 +6,7 @@ from ..widgets.ViewerElement import ViewerElement
 class Plugin:
     # TODO: create BasePlugin
     @staticmethod
-    def link(widgets: dict[str, ViewerElement]):
+    def link(widgets: dict[str, ViewerElement], label_style: dict[str, str] | None = None):
 
         try:
             spec_1d, spec_2d = widgets["Spectrum 1D"], widgets["Spectrum 2D"]
@@ -25,4 +25,7 @@ class Plugin:
 
         spec_2d.image_2d.setTransform(qtransform)
         spec_2d.container.setAspectLocked(True, 1 / dlam)
+        if label_style is None:
+            label_style = {}
+        spec_2d.container.setLabel('bottom', spec_1d.spec_1d.spec.spectral_axis.unit, **label_style)
         spec_2d.container.setXLink(spec_1d.title)  # link the x-axis range

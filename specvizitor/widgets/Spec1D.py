@@ -28,21 +28,23 @@ logger = logging.getLogger(__name__)
 
 class Spec1DItem(pg.PlotItem):
     def __init__(self, spec: Spectrum1D | None = None, lines: SpectralLines | None = None,
-                 window: tuple[float, float] | None = None, *args, **kwargs):
+                 window: tuple[float, float] | None = None, label_style: dict[str, str] | None = None,
+                 *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
         self.setMouseEnabled(True, True)
-        self.showAxis('right')
+        self.showAxes((True, True, True, True), showValues=(True, False, True, True))
+        self.hideButtons()
 
         self.spec = spec
         self.lines = SpectralLines() if lines is None else lines
         self.window = window
+        self.label_style = {} if label_style is None else label_style
 
         self._flux_plot = None
         self._flux_err_plot = None
 
-        self._label_style = {'color': 'r', 'font-size': '20px'}
         # set up the spectral lines
         self._line_artists = {}
         # TODO: store colors in config
@@ -67,8 +69,8 @@ class Spec1DItem(pg.PlotItem):
         return y_min + 0.6 * (y_max - y_min)
 
     def update_labels(self):
-        self.setLabel('bottom', self.spec.spectral_axis.unit, **self._label_style)
-        self.setLabel('right', self.spec.flux.unit, **self._label_style)
+        self.setLabel('bottom', self.spec.spectral_axis.unit, **self.label_style)
+        self.setLabel('right', self.spec.flux.unit, **self.label_style)
 
     def add_items(self):
         self._flux_plot = self.plot(pen='k')
@@ -128,7 +130,8 @@ class Spec1DRegion(LazyViewerElement):
         lines = SpectralLines(units=lines.units, list={line: lines.list[line]})
         window = (lines.list[line] - self.cfg.window / 2, lines.list[line] + self.cfg.window / 2)
 
-        self.spec_1d = Spec1DItem(lines=lines, window=window, name=title)
+        self.spec_1d = Spec1DItem(lines=lines, window=window, name=title,
+                                  label_style=self.rd.config.data_viewer.label_style)
         self.graphics_layout.addItem(self.spec_1d)
 
 
@@ -156,7 +159,7 @@ class Spec1D(ViewerElement):
         self.sliders.append(self._z_slider)
 
         # set up the plot
-        self.spec_1d = Spec1DItem(lines=self.rd.lines, name=title)
+        self.spec_1d = Spec1DItem(lines=self.rd.lines, name=title, label_style=self.rd.config.data_viewer.label_style)
         self.graphics_layout.addItem(self.spec_1d)
 
     def _redshift_changed_action(self, redshift: float):

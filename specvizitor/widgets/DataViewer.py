@@ -106,7 +106,7 @@ class DataViewer(AbstractWidget):
                     self.docks[lazy_widget.title].setTitle(lazy_widget.title)
 
         for plugin in self._plugins:
-            plugin.link(self.dock_widgets)
+            plugin.link(self.dock_widgets, label_style=self.rd.config.data_viewer.label_style)
 
     def reset_view(self):
         for w in self.dock_widgets.values():
