@@ -15,7 +15,7 @@ class QuickSearch(AbstractWidget):
 
         self.rd = rd
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
         # create the `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton(self)

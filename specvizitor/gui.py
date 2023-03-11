@@ -11,6 +11,8 @@ import qtpy.compat
 from qtpy import QtGui, QtWidgets, QtCore
 from qtpy.QtCore import Slot
 
+import qdarktheme
+
 from .appdata import AppData
 from .config import Config, Docks, SpectralLines, Cache
 from .menu import NewFile, Settings
@@ -30,7 +32,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.was_maximized: bool
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.setStyleSheet("QMainWindow::separator {width: 0px; height:0px;}")
 
         self.setWindowTitle('Specvizitor')  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
@@ -93,12 +94,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.load_project(self.rd.cache.last_inspection_file)
 
         settings = QtCore.QSettings()
+        self.showMaximized()
         if settings.value("geometry") is None or settings.value("windowState") is None:
             self.showMaximized()
             self.setFocus()
         else:
-            self.restoreGeometry(settings.value("geometry"))
-            self.restoreState(settings.value("windowState"))
+            pass
+            #self.restoreGeometry(settings.value("geometry"))
+            #self.restoreState(settings.value("windowState"))
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -334,6 +337,8 @@ def main():
     app.setOrganizationName('FRESCO')
     app.setApplicationName('Specvizitor')
     logger.info("Application started")
+
+    qdarktheme.setup_theme("light")
 
     # initialize the main window
     window = MainWindow(appdata=appdata)

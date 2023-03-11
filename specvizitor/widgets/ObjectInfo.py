@@ -19,7 +19,7 @@ class ObjectInfo(AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
 
         # display information about the object
         self._labels = self.create_info_widgets(self.cfg.items.items())

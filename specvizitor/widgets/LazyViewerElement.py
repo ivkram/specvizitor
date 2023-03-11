@@ -1,3 +1,4 @@
+from qtpy import QtCore
 import pyqtgraph as pg
 
 from ..utils import AbstractWidget
@@ -23,7 +24,7 @@ class LazyViewerElement(AbstractWidget):
         super().set_geometry(spacing=spacing, margins=margins)
 
         self.graphics_layout.setSpacing(spacing)
-        self.graphics_layout.setContentsMargins(0, 0, 0, 0)
+        self.graphics_layout.setContentsMargins(0, 0, 5, 5)
 
     def init_ui(self):
         self.layout().addWidget(self.graphics_view, 1, 1, 1, 1)
