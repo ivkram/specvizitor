@@ -94,7 +94,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.load_project(self.rd.cache.last_inspection_file)
 
         settings = QtCore.QSettings()
-        self.showMaximized()
         if settings.value("geometry") is None or settings.value("windowState") is None:
             self.showMaximized()
             self.setFocus()
@@ -337,7 +336,7 @@ def main():
     app.setApplicationName('Specvizitor')
     logger.info("Application started")
 
-    qdarktheme.setup_theme("light")
+    qdarktheme.setup_theme(appdata.config.appearance.theme)
 
     # initialize the main window
     window = MainWindow(appdata=appdata)

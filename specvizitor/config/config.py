@@ -18,6 +18,7 @@ class Data:
 
 @dataclass
 class Appearance:
+    theme: str = 'light'
     antialiasing: bool = False
 
 
