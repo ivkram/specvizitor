@@ -82,18 +82,19 @@ class Spec1DItem(pg.PlotItem):
             self.addItem(line_artist['label'])
 
     def fit_in_window(self, window):
-        self.setXRange(*window, padding=0)
+        self.setXRange(window[0].to(self.spec.spectral_axis.unit).value,
+                       window[1].to(self.spec.spectral_axis.unit).value,
+                       padding=0)
 
     def set_line_positions(self, scale0: float = 1):
-        scale = scale0 * self.spec.spectral_axis.unit / u.Unit(self.lines.units)
-
         for line_name, line_artist in self._line_artists.items():
-            line_wave = self.lines.list[line_name] * scale
+            line_wave = (self.lines.list[line_name] * u.Unit(self.lines.units)).to(self.spec.spectral_axis.unit)
+            line_wave = line_wave.value * scale0
             line_artist['line'].setPos(line_wave)
             line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
 
         if self.window is not None:
-            self.fit_in_window(tuple(map(lambda x: x * scale, self.window)))
+            self.fit_in_window(tuple(map(lambda x: x * scale0, self.window)))
 
     def plot_all(self):
         self._flux_plot.setData(self.spec.wavelength.value, self.spec.flux.value)
@@ -133,6 +134,7 @@ class Spec1DRegion(LazyViewerElement):
         lines = deepcopy(self.rd.lines)
         lines = SpectralLines(units=lines.units, list={line: lines.list[line]})
         window = (lines.list[line] - self.cfg.window / 2, lines.list[line] + self.cfg.window / 2)
+        window = (window[0] * u.Unit(lines.units), window[1] * u.Unit(lines.units))
 
         self.spec_1d = Spec1DItem(lines=lines, window=window, name=title,
                                   label_style=self.rd.config.data_viewer.label_style)
@@ -182,7 +184,9 @@ class Spec1D(ViewerElement):
             w.spec_1d.set_line_positions(1 + redshift)
 
     def _lr_changed_action(self, n: int):
-        self.lazy_widgets[n].spec_1d.fit_in_window(self.region_items[n].getRegion())
+        region = self.region_items[n].getRegion()
+        self.lazy_widgets[n].spec_1d.fit_in_window((region[0] * self.spec_1d.spec.spectral_axis.unit,
+                                                    region[1] * self.spec_1d.spec.spectral_axis.unit))
 
     def _lazy_widget_changed_action(self, n: int):
         self.region_items[n].setRegion(self.lazy_widgets[n].spec_1d.getViewBox().viewRange()[0])
