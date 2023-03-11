@@ -48,12 +48,14 @@ class DataViewer(AbstractWidget):
         # create widgets for images (e.g. image cutouts, 2D spectra)
         if self.cfg.images is not None:
             for name, image_cfg in self.cfg.images.items():
-                widgets[name] = Image2D(rd=self.rd, cfg=image_cfg, title=name, parent=self)
+                widgets[name] = Image2D(cfg=image_cfg, title=name, global_config=self.rd.config.data_viewer,
+                                        parent=self)
 
         # create widgets for 1D spectra
         if self.cfg.spectra is not None:
             for name, spec_cfg in self.cfg.spectra.items():
-                widgets[name] = Spec1D(rd=self.rd, cfg=spec_cfg, title=name, parent=self)
+                widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg,
+                                       title=name, global_config=self.rd.config.data_viewer, parent=self)
 
         return widgets
 
@@ -93,7 +95,7 @@ class DataViewer(AbstractWidget):
 
         for w in self.dock_widgets.values():
             # load the object to the widget
-            w.load_object()
+            w.load_object(rd=self.rd)
 
             # update the title of the dock
             if w.filename is not None and w.data is not None:

@@ -20,10 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(LazyViewerElement, abc.ABC):
-    def __init__(self, rd: AppData, cfg: docks.ViewerElement, title: str, parent=None):
-        super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
+    def __init__(self, cfg: docks.ViewerElement, **kwargs):
+        super().__init__(cfg=cfg, **kwargs)
 
-        self.rd = rd
         self.cfg = cfg
 
         self.lazy_widgets: list[LazyViewerElement] = []
@@ -34,11 +33,14 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.meta: dict | Header | None = None
 
         # create a smoothing slider
-        self.smoothing_slider = SmartSlider(parameter='sigma', action='smooth the data', parent=self,
-                                            **asdict(self.cfg.smoothing_slider))
-        self.smoothing_slider.value_changed[float].connect(self.smooth)
-        self.smoothing_slider.setToolTip('Slide to smooth the data')
+        self.smoothing_slider = self.create_smoothing_slider(**asdict(self.cfg.smoothing_slider))
         self.sliders.append(self.smoothing_slider)
+
+    def create_smoothing_slider(self, **kwargs):
+        smoothing_slider = SmartSlider(parameter='sigma', action='smooth the data', parent=self, **kwargs)
+        smoothing_slider.value_changed[float].connect(self.smooth)
+        smoothing_slider.setToolTip('Slide to smooth the data')
+        return smoothing_slider
 
     def init_ui(self):
         sub_layout = QtWidgets.QHBoxLayout()
@@ -66,7 +68,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         for s in self.sliders:
             s.init_ui()
 
-    def load_object(self):
+    def load_object(self, rd: AppData):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
@@ -77,10 +79,10 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # load catalogue values to the sliders
         for s in self.sliders:
             if s.cat_name is not None:
-                s.update_from_cat(self.rd.cat, self.rd.id, self.rd.config.catalogue.translate)
+                s.update_from_cat(rd.cat, rd.id, rd.config.catalogue.translate)
 
         # load data to the widget
-        self._load_data()
+        self._load_data(rd=rd)
 
         # display the data
         if self.data is not None:
@@ -96,11 +98,11 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         else:
             self.activate(False)
 
-    def _load_data(self):
-        self.filename = get_filename(self.rd.config.data.dir, self.cfg.filename_keyword, self.rd.id)
+    def _load_data(self, rd: AppData):
+        self.filename = get_filename(rd.config.data.dir, self.cfg.filename_keyword, rd.id)
 
         if self.filename is None:
-            logger.warning('{} not found (object ID: {})'.format(self.title, self.rd.id))
+            logger.warning('{} not found (object ID: {})'.format(self.title, rd.id))
             self.data, self.meta = None, None
             return
 
@@ -119,10 +121,10 @@ class ViewerElement(LazyViewerElement, abc.ABC):
 
         if isinstance(self.data, Table):
             # translate the table columns
-            if self.rd.config.data.translate:
-                table_tools.translate(self.data, self.rd.config.data.translate)
+            if rd.config.data.translate:
+                table_tools.translate(self.data, rd.config.data.translate)
 
-        if not self.validate():
+        if not self.validate(rd.config.data.translate):
             self.data, self.meta = None, None
             return
 
@@ -132,7 +134,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             w.activate(a0=a0)
 
     @abc.abstractmethod
-    def validate(self):
+    def validate(self, translate: dict[str, list[str]] | None):
         pass
 
     @abc.abstractmethod

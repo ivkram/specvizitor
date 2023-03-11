@@ -19,9 +19,9 @@ from ..utils.table_tools import column_not_found_message
 
 from .ViewerElement import ViewerElement
 from .LazyViewerElement import LazyViewerElement
-from ..appdata import AppData
 from ..config import docks
 from ..config.spectral_lines import SpectralLines
+from ..appdata import AppData
 
 
 logger = logging.getLogger(__name__)
@@ -125,77 +125,93 @@ class Spec1DItem(pg.PlotItem):
 
 
 class Spec1DRegion(LazyViewerElement):
-    def __init__(self, line: str, rd: AppData, cfg: docks.SpectrumRegion, title: str, parent=None):
-        super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
+    def __init__(self, lines: SpectralLines, target_line: str, cfg: docks.SpectrumRegion, **kwargs):
+        super().__init__(cfg=cfg, **kwargs)
 
+        self.line = target_line
         self.cfg = cfg
-        self.line = line
 
         # set up the plot
-        lines = deepcopy(self.rd.lines)
-        lines = SpectralLines(wave_unit=lines.wave_unit, list={line: lines.list[line]})
+        lines = deepcopy(lines)
+        lines = SpectralLines(wave_unit=lines.wave_unit, list={target_line: lines.list[target_line]})
 
-        window_center = lines.list[line] * u.Unit(lines.wave_unit)
+        window_center = lines.list[target_line] * u.Unit(lines.wave_unit)
         window_size = u.Quantity(self.cfg.window_size)
         window = (window_center - window_size / 2, window_center + window_size / 2)
 
-        self.spec_1d = Spec1DItem(lines=lines, window=window, name=title,
-                                  label_style=self.rd.config.data_viewer.label_style)
+        self.spec_1d = Spec1DItem(lines=lines, window=window, name=self.title,
+                                  label_style=self.global_config.label_style)
         self.graphics_layout.addItem(self.spec_1d)
 
 
 class Spec1D(ViewerElement):
-    def __init__(self, rd: AppData, cfg: docks.Spectrum, title: str, parent=None):
-        super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
+    def __init__(self, cfg: docks.Spectrum, lines: SpectralLines | None = None, **kwargs):
+        super().__init__(cfg=cfg, **kwargs)
 
+        self.lines = lines
         self.cfg = cfg
 
         self.lazy_widgets: list[Spec1DRegion] = []
         self.region_items: list[pg.LinearRegionItem] = []
 
         # create a redshift slider
-        self._z_slider = SmartSlider(parameter='z', full_name='redshift', parent=self,
-                                     **asdict(self.cfg.redshift_slider))
-        self._z_slider.value_changed[float].connect(self._redshift_changed_action)
+        self._z_slider = self.create_redshift_slider(**asdict(self.cfg.redshift_slider))
         self.sliders.append(self._z_slider)
 
         # set up the plot
-        self.spec_1d = Spec1DItem(lines=self.rd.lines, name=title, label_style=self.rd.config.data_viewer.label_style)
+        self.spec_1d = Spec1DItem(lines=self.lines, name=self.title, label_style=self.global_config.label_style)
         self.graphics_layout.addItem(self.spec_1d)
 
-        # create viewer elements zoomed on various spectral regions
-        if self.cfg.tracked_lines is not None:
-            n = 0
-            for line, line_cfg in self.cfg.tracked_lines.items():
-                if line in self.rd.lines.list.keys():
-                    spec_region = Spec1DRegion(line=line, rd=rd, cfg=line_cfg, title=f"{title} [{line}]", parent=parent)
-                    self.lazy_widgets.append(spec_region)
+        # create widgets zoomed on selected spectral lines
+        if self.lines is not None and self.cfg.tracked_lines is not None:
+            self.lazy_widgets, self.region_items = self.create_spectral_regions(self.cfg.tracked_lines, self.lines,
+                                                                                **kwargs)
 
-                    lr = pg.LinearRegionItem()
-                    self.region_items.append(lr)
+    def create_redshift_slider(self, **kwargs):
+        redshift_slider = SmartSlider(parameter='z', full_name='redshift', parent=self, **kwargs)
+        redshift_slider.value_changed[float].connect(self._redshift_changed_action)
+        return redshift_slider
 
-                    spec_region.spec_1d.sigXRangeChanged.connect(partial(self._lazy_widget_changed_action, n))
-                    lr.sigRegionChanged.connect(partial(self._lr_changed_action, n))
+    def create_spectral_regions(self, tracked_lines: dict[str, docks.SpectrumRegion], lines: SpectralLines, **kwargs)\
+            -> tuple[list[Spec1DRegion], list[pg.LinearRegionItem]]:
 
-                    n += 1
-                else:
-                    logger.warning(f'Unknown spectral line: {line}')
+        region_widgets = []
+        region_items = []
+
+        n = 0
+        for line, line_cfg in tracked_lines.items():
+            if line in lines.list.keys():
+                kwargs.update({'title': f"{self.title} [{line}]"})
+                spec_region = Spec1DRegion(lines=lines, target_line=line, cfg=line_cfg, **kwargs)
+                region_widgets.append(spec_region)
+
+                lr = pg.LinearRegionItem()
+                region_items.append(lr)
+
+                spec_region.spec_1d.sigXRangeChanged.connect(partial(self._region_widget_changed_action, n))
+                lr.sigRegionChanged.connect(partial(self._region_item_changed_action, n))
+
+                n += 1
+            else:
+                logger.warning(f'Unknown spectral line: {line}')
+
+        return region_widgets, region_items
 
     def _redshift_changed_action(self, redshift: float):
         self.spec_1d.set_line_positions(1 + redshift)
         for w in self.lazy_widgets:
             w.spec_1d.set_line_positions(1 + redshift)
 
-    def _lr_changed_action(self, n: int):
+    def _region_item_changed_action(self, n: int):
         region = self.region_items[n].getRegion()
         self.lazy_widgets[n].spec_1d.fit_in_window((region[0] * self.spec_1d.spec.spectral_axis.unit,
                                                     region[1] * self.spec_1d.spec.spectral_axis.unit))
 
-    def _lazy_widget_changed_action(self, n: int):
+    def _region_widget_changed_action(self, n: int):
         self.region_items[n].setRegion(self.lazy_widgets[n].spec_1d.getViewBox().viewRange()[0])
 
-    def _load_data(self):
-        super()._load_data()
+    def _load_data(self, rd: AppData):
+        super()._load_data(rd=rd)
         if self.data is None:
             spec = None
         else:
@@ -221,10 +237,10 @@ class Spec1D(ViewerElement):
         for w in self.lazy_widgets:
             w.spec_1d.spec = spec
 
-    def validate(self):
+    def validate(self, translate: dict[str, list[str]] | None):
         for cname in ('wavelength', 'flux'):
             if cname not in self.data.colnames:
-                logger.error(column_not_found_message(cname, self.rd.config.data.translate))
+                logger.error(column_not_found_message(cname, translate))
                 return False
         return True
 

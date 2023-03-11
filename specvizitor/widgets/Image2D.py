@@ -8,16 +8,16 @@ from scipy.ndimage import gaussian_filter
 from pgcolorbar.colorlegend import ColorLegendItem
 
 from .ViewerElement import ViewerElement
-from ..appdata import AppData
 from ..config import docks
+from ..appdata import AppData
 
 
 logger = logging.getLogger(__name__)
 
 
 class Image2D(ViewerElement):
-    def __init__(self, rd: AppData, cfg: docks.Image, title: str, parent=None):
-        super().__init__(rd=rd, cfg=cfg, title=title, parent=parent)
+    def __init__(self, cfg: docks.Image, **kwargs):
+        super().__init__(cfg=cfg, **kwargs)
 
         self.cfg = cfg
 
@@ -31,7 +31,7 @@ class Image2D(ViewerElement):
         # create an image container
         if self.cfg.container == 'PlotItem':
             # create a plot item
-            self.container = pg.PlotItem(name=title)
+            self.container = pg.PlotItem(name=self.title)
             # self.container.hideAxis('left')
             self.container.showAxes((False, False, False, True), showValues=(False, False, False, True))
             self.container.hideButtons()
@@ -53,13 +53,13 @@ class Image2D(ViewerElement):
 
         # create a color bar
         self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
+        self._cbar.setVisible(self.cfg.color_bar.visible)
 
         # add the color bar to the layout
-        if self.cfg.color_bar.visible:
-            self.graphics_layout.addItem(self._cbar, 0, 1)
+        self.graphics_layout.addItem(self._cbar, 0, 1)
 
-    def _load_data(self):
-        super()._load_data()
+    def _load_data(self, rd: AppData):
+        super()._load_data(rd=rd)
         if self.data is None:
             return
 
@@ -69,7 +69,7 @@ class Image2D(ViewerElement):
         # scale the data points
         self.scale(self.cfg.scale)
 
-    def validate(self):
+    def validate(self, translate: dict[str, list[str]] | None):
         return True
 
     def display(self):
