@@ -143,8 +143,11 @@ class Spec1D(ViewerElement):
         # create viewer elements zoomed on various spectral regions
         if self.cfg.follow is not None:
             for line, line_cfg in self.cfg.follow.items():
-                self.lazy_widgets.append(Spec1DRegion(line=line, rd=rd, cfg=line_cfg, title=f"{title} [{line}]",
-                                                      parent=parent))
+                if line in self.rd.lines.list.keys():
+                    self.lazy_widgets.append(Spec1DRegion(line=line, rd=rd, cfg=line_cfg, title=f"{title} [{line}]",
+                                                          parent=parent))
+                else:
+                    logger.warning(f'Unknown spectral line: {line}')
 
         # create a redshift slider
         self._z_slider = SmartSlider(parameter='z', full_name='redshift', parent=self,
