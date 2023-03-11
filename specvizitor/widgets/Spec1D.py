@@ -8,7 +8,6 @@ from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
-from astropy.utils.decorators import lazyproperty
 from astropy import units as u
 
 import pyqtgraph as pg

@@ -143,7 +143,7 @@ class SmartSlider(AbstractWidget):
         self._slider.reset()
 
         # see a comment in _update_from_editor
-        self._update_editor_text()
+        self.update_from_slider()
 
     def clear(self):
         self._editor.setText("")
