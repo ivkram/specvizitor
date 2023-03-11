@@ -94,7 +94,8 @@ class Spec1DItem(pg.PlotItem):
             line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
 
         if self.window is not None:
-            self.fit_in_window(tuple(map(lambda x: x * scale0, self.window)))
+            self.fit_in_window((scale0 * (self.window[0] + self.window[1]) / 2 - (self.window[1] - self.window[0]) / 2,
+                                scale0 * (self.window[0] + self.window[1]) / 2 + (self.window[1] - self.window[0]) / 2))
 
     def plot_all(self):
         self._flux_plot.setData(self.spec.wavelength.value, self.spec.flux.value)
@@ -133,8 +134,10 @@ class Spec1DRegion(LazyViewerElement):
         # set up the plot
         lines = deepcopy(self.rd.lines)
         lines = SpectralLines(units=lines.units, list={line: lines.list[line]})
-        window = (lines.list[line] - self.cfg.window / 2, lines.list[line] + self.cfg.window / 2)
-        window = (window[0] * u.Unit(lines.units), window[1] * u.Unit(lines.units))
+
+        window_center = lines.list[line] * u.Unit(lines.units)
+        window_size = u.Quantity(self.cfg.window)
+        window = (window_center - window_size / 2, window_center + window_size / 2)
 
         self.spec_1d = Spec1DItem(lines=lines, window=window, name=title,
                                   label_style=self.rd.config.data_viewer.label_style)

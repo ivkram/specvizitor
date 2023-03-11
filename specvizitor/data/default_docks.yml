@@ -24,11 +24,9 @@ spectra:
       OIII 1:
         position: right
         relative_to: Image Cutout
-        window: 40
       OIII 2:
         position: right
         relative_to: Spectrum 1D [OIII 1]
-        window: 40
       Ha:
         position: right
         relative_to: Spectrum 1D [OIII 2]

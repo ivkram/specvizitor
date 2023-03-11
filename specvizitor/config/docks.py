@@ -44,7 +44,7 @@ class Image(ViewerElement):
 
 @dataclass
 class SpectrumRegion(LazyViewerElement):
-    window: float = 40
+    window: str = '200 Angstrom'
 
 
 @dataclass
