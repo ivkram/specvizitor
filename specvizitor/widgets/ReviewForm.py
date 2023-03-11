@@ -13,7 +13,6 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
-        self.setTitle('Review Form')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
 
         # create checkboxes

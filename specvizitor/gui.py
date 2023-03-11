@@ -8,7 +8,7 @@ from platformdirs import user_config_dir, user_cache_dir
 
 import pyqtgraph as pg
 import qtpy.compat
-from qtpy import QtGui, QtWidgets
+from qtpy import QtGui, QtWidgets, QtCore
 from qtpy.QtCore import Signal, Slot
 
 from .appdata import AppData
@@ -24,14 +24,12 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    project_loaded = Signal()
-
     def __init__(self, appdata: AppData, parent=None):
         self.rd = appdata
 
         super().__init__(parent)
 
-        self.setWindowTitle('Specvizitor')      # set the title of the main window
+        self.setWindowTitle('Specvizitor')  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
         # add a menu bar
@@ -40,14 +38,43 @@ class MainWindow(QtWidgets.QMainWindow):
         # add a status bar
         # self.statusBar().showMessage("Message in statusbar.")
 
-        # create the central widget
-        self.central_widget = CentralWidget(self.rd, parent=self)
-        self.project_loaded.connect(self.central_widget.activate)
-        self.setCentralWidget(self.central_widget)
-        self.central_widget.init_ui()
+        self.widgets: list[AbstractWidget] = []
 
-        self._reset_view.triggered.connect(self.central_widget.data_viewer.reset_view)
-        self._reset_dock_state.triggered.connect(self.central_widget.data_viewer.reset_dock_state)
+        # create a central widget
+        self.central_widget = DataViewer(self.rd, cfg=self.rd.docks, plugins=self.rd.config.plugins, parent=self)
+        self.setCentralWidget(self.central_widget)
+
+        self._reset_view.triggered.connect(self.central_widget.reset_view)
+        self._reset_dock_state.triggered.connect(self.central_widget.reset_dock_state)
+
+        # create a widget displaying information about the object
+        self.object_info = ObjectInfo(self.rd, cfg=self.rd.config.object_info, parent=self)
+        self.object_info_dock = QtWidgets.QDockWidget('Object Information', parent=self)
+        self.object_info_dock.setWidget(self.object_info)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.object_info_dock)
+
+        # create a control panel
+        self.control_panel = ControlPanel(self.rd, cfg=self.rd.config.control_panel, parent=self)
+        self.control_panel_dock = QtWidgets.QDockWidget('Control Panel', parent=self)
+        self.control_panel_dock.setWidget(self.control_panel)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.control_panel_dock)
+
+        # create a widget for writing comments
+        self.review_form = ReviewForm(self.rd, cfg=self.rd.config.review_form, parent=self)
+        self.review_form_dock = QtWidgets.QDockWidget('Review Form', parent=self)
+        self.review_form_dock.setWidget(self.review_form)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
+
+        # connect signals from the control panel to the slots of the central widget
+        self.control_panel.object_selected.connect(self.load_object)
+        self.control_panel.reset_view_button_clicked.connect(self.central_widget.reset_view)
+        self.control_panel.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
+        self.control_panel.screenshot_button_clicked.connect(self.central_widget.take_screenshot)
+
+        for w in (self.central_widget, self.control_panel, self.object_info, self.review_form):
+            self.widgets.append(w)
+
+        self._init_ui()
 
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
@@ -127,6 +154,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
+    def _init_ui(self):
+        for widget in self.widgets:
+            widget.init_ui()
+
     def _new_file_action(self):
         """ Create a new inspection file via the NewFile dialog.
         """
@@ -159,8 +190,44 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
-        self.setWindowTitle('{} – Specvizitor'.format(self.rd.output_path.name))
-        self.project_loaded.emit()
+
+        for widget in self.widgets:
+            widget.activate()
+
+        # cache the inspection file name
+        self.rd.cache.last_inspection_file = str(self.rd.output_path)
+        self.rd.cache.save()
+
+        # try to display the object with an index stored in cache
+        j = self.rd.cache.last_object_index
+        if j and j < self.rd.n_objects:
+            self.load_object(int(j))
+        else:
+            self.load_object(0)
+
+    @Slot(int)
+    def load_object(self, j: int):
+        """ Load a new object to the central widget.
+        @param j: the index of the object to display
+        """
+        if self.rd.j is not None:
+            # update the application data from widgets
+            self.review_form.dump()
+
+            self.rd.save()  # auto-save
+
+        self.rd.j = j
+
+        for widget in (self.central_widget, self.control_panel, self.object_info, self.review_form):
+            widget.load_object()
+
+        self.setWindowTitle(
+            f'{self.rd.output_path.name} – ID {self.rd.id} [#{self.rd.j + 1}/{self.rd.n_objects}] – Specvizitor')
+
+        # cache the index of the object
+        # TODO: cache the ID instead of the index
+        self.rd.cache.last_object_index = j
+        self.rd.cache.save()
 
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
@@ -179,7 +246,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _exit_action(self):
         if self.rd.df is not None:
             self.rd.save()  # auto-save
-        self.central_widget.data_viewer.save_dock_state()  # save the dock state
+        self.central_widget.save_dock_state()  # save the dock state
         self.close()
         logger.info("Application closed")
 
@@ -195,97 +262,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def _settings_action(self):
         dialog = Settings(self.rd, parent=self)
         if dialog.exec() and self.rd.df is not None:
-            self.central_widget.data_viewer.load_object()
-            self.central_widget.object_info.load_object()
+            self.central_widget.load_object()
+            self.object_info.load_object()
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
 
     def closeEvent(self, _):
         self._exit_action()
-
-
-class CentralWidget(QtWidgets.QWidget):
-    def __init__(self, rd: AppData, parent=None):
-        self.rd = rd
-        super().__init__(parent)
-
-        # set up the layout
-        self.layout = QtWidgets.QGridLayout(self)
-        self.layout.setSpacing(10)
-        self.setLayout(self.layout)
-
-        # add a widget for the data viewer
-        self.data_viewer = DataViewer(self.rd, cfg=self.rd.docks, plugins=self.rd.config.plugins, parent=self)
-        self.layout.addWidget(self.data_viewer, 1, 1, 3, 1)
-
-        # add a widget for the control panel
-        self.control_panel = ControlPanel(self.rd, cfg=self.rd.config.control_panel, parent=self)
-        self.layout.addWidget(self.control_panel, 1, 2, 1, 1)
-
-        # add a widget for displaying information about the object
-        self.object_info = ObjectInfo(self.rd, cfg=self.rd.config.object_info, parent=self)
-        self.layout.addWidget(self.object_info, 2, 2, 1, 1)
-
-        # add a widget for writing comments
-        self.review_form = ReviewForm(self.rd, cfg=self.rd.config.review_form, parent=self)
-        self.layout.addWidget(self.review_form, 3, 2, 1, 1)
-
-        # connect signals from the control panel to the slots of the central widget
-        self.control_panel.object_selected.connect(self.load_object)
-        self.control_panel.reset_view_button_clicked.connect(self.data_viewer.reset_view)
-        self.control_panel.reset_dock_state_button_clicked.connect(self.data_viewer.reset_dock_state)
-        self.control_panel.screenshot_button_clicked.connect(self.data_viewer.take_screenshot)
-
-    @property
-    def widgets(self) -> list[AbstractWidget]:
-        """
-        @return: a list of widgets added to the central widget.
-        """
-        return get_widgets(self.layout)
-
-    def init_ui(self):
-        for widget in self.widgets:
-            widget.init_ui()
-
-    @Slot(int)
-    def load_object(self, j: int):
-        """ Load a new object to the central widget.
-        @param j: the index of the object to display
-        """
-        if self.rd.j is not None:
-            # update the application data from widgets
-            self.review_form.dump()
-
-            self.rd.save()  # auto-save
-
-        self.rd.j = j
-
-        for widget in (self.control_panel, self.object_info, self.review_form, self.data_viewer):
-            widget.load_object()
-
-        # cache the index of the object
-        # TODO: cache the ID instead of the index
-        self.rd.cache.last_object_index = j
-        self.rd.cache.save()
-
-    @Slot()
-    def activate(self):
-        """ Activate the central widget.
-        """
-        for widget in self.widgets:
-            widget.activate()
-
-        # cache the inspection file name
-        self.rd.cache.last_inspection_file = str(self.rd.output_path)
-        self.rd.cache.save()
-
-        # try to display the object with an index stored in cache
-        j = self.rd.cache.last_object_index
-        if j and j < self.rd.n_objects:
-            self.load_object(int(j))
-        else:
-            self.load_object(0)
 
 
 def main():

@@ -19,7 +19,6 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
-        self.setTitle('Object Information')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
         # display information about the object

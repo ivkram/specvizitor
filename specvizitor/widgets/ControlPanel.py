@@ -28,12 +28,7 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
-        self.setTitle('Control Panel')
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-
-        # create the ID label
-        self._id_label = QtWidgets.QLabel(parent=self)
-        self._id_label.setText('ID -- (# -- / --)')
 
         # create buttons for switching to the next or previous object
         self._pn_buttons = self.create_pn_buttons()
@@ -110,8 +105,6 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         return pn_buttons
 
     def init_ui(self):
-        self.layout.addWidget(self._id_label, 1, 1, 1, 4)
-
         self.layout.addWidget(self._pn_buttons['previous'], 2, 1, 1, 1)
         self.layout.addWidget(self._pn_buttons['next'], 2, 2, 1, 1)
         self.layout.addWidget(self._star_button, 2, 3, 1, 1)
@@ -128,7 +121,6 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         self.layout.addWidget(self._index_field, 5, 3, 1, 2)
 
     def load_object(self):
-        self._id_label.setText('ID {} (#{} / {})'.format(self.rd.id, self.rd.j + 1, self.rd.n_objects))
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(self.rd.df.at[self.rd.id, 'starred'])))
 
         self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
