@@ -166,8 +166,7 @@ class Spec1D(ViewerElement):
                     spec_region = Spec1DRegion(line=line, rd=rd, cfg=line_cfg, title=f"{title} [{line}]", parent=parent)
                     self.lazy_widgets.append(spec_region)
 
-                    lr = pg.LinearRegionItem(list(spec_region.spec_1d.window))
-                    lr.setZValue(-10)
+                    lr = pg.LinearRegionItem()
                     self.region_items.append(lr)
 
                     spec_region.spec_1d.sigXRangeChanged.connect(partial(self._lazy_widget_changed_action, n))
