@@ -1,6 +1,7 @@
 import logging
 from dataclasses import asdict
 from copy import deepcopy
+from functools import partial
 
 from specutils import Spectrum1D
 from astropy.nddata import StdDevUncertainty
@@ -80,6 +81,9 @@ class Spec1DItem(pg.PlotItem):
             self.addItem(line_artist['line'], ignoreBounds=True)
             self.addItem(line_artist['label'])
 
+    def fit_in_window(self, window):
+        self.setXRange(*window, padding=0)
+
     def set_line_positions(self, scale0: float = 1):
         scale = scale0 * self.spec.spectral_axis.unit / u.Unit(self.lines.units)
 
@@ -89,7 +93,7 @@ class Spec1DItem(pg.PlotItem):
             line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
 
         if self.window is not None:
-            self.setXRange(*map(lambda x: x * scale, self.window), padding=0)
+            self.fit_in_window(tuple(map(lambda x: x * scale, self.window)))
 
     def plot_all(self):
         self._flux_plot.setData(self.spec.wavelength.value, self.spec.flux.value)
@@ -142,15 +146,7 @@ class Spec1D(ViewerElement):
         self.cfg = cfg
 
         self.lazy_widgets: list[Spec1DRegion] = []
-
-        # create viewer elements zoomed on various spectral regions
-        if self.cfg.follow is not None:
-            for line, line_cfg in self.cfg.follow.items():
-                if line in self.rd.lines.list.keys():
-                    self.lazy_widgets.append(Spec1DRegion(line=line, rd=rd, cfg=line_cfg, title=f"{title} [{line}]",
-                                                          parent=parent))
-                else:
-                    logger.warning(f'Unknown spectral line: {line}')
+        self.region_items: list[pg.LinearRegionItem] = []
 
         # create a redshift slider
         self._z_slider = SmartSlider(parameter='z', full_name='redshift', parent=self,
@@ -162,10 +158,35 @@ class Spec1D(ViewerElement):
         self.spec_1d = Spec1DItem(lines=self.rd.lines, name=title, label_style=self.rd.config.data_viewer.label_style)
         self.graphics_layout.addItem(self.spec_1d)
 
+        # create viewer elements zoomed on various spectral regions
+        if self.cfg.follow is not None:
+            n = 0
+            for line, line_cfg in self.cfg.follow.items():
+                if line in self.rd.lines.list.keys():
+                    spec_region = Spec1DRegion(line=line, rd=rd, cfg=line_cfg, title=f"{title} [{line}]", parent=parent)
+                    self.lazy_widgets.append(spec_region)
+
+                    lr = pg.LinearRegionItem(list(spec_region.spec_1d.window))
+                    lr.setZValue(-10)
+                    self.region_items.append(lr)
+
+                    spec_region.spec_1d.sigXRangeChanged.connect(partial(self._lazy_widget_changed_action, n))
+                    lr.sigRegionChanged.connect(partial(self._lr_changed_action, n))
+
+                    n += 1
+                else:
+                    logger.warning(f'Unknown spectral line: {line}')
+
     def _redshift_changed_action(self, redshift: float):
         self.spec_1d.set_line_positions(1 + redshift)
         for w in self.lazy_widgets:
             w.spec_1d.set_line_positions(1 + redshift)
+
+    def _lr_changed_action(self, n: int):
+        self.lazy_widgets[n].spec_1d.fit_in_window(self.region_items[n].getRegion())
+
+    def _lazy_widget_changed_action(self, n: int):
+        self.region_items[n].setRegion(self.lazy_widgets[n].spec_1d.getViewBox().viewRange()[0])
 
     def _load_data(self):
         super()._load_data()
@@ -203,6 +224,8 @@ class Spec1D(ViewerElement):
 
     def display(self):
         self.spec_1d.display()
+        for lr in self.region_items:
+            self.spec_1d.addItem(lr)
         for w in self.lazy_widgets:
             w.spec_1d.display()
 
