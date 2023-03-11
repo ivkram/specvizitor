@@ -124,12 +124,13 @@ class SmartSlider(AbstractWidget):
     def _update_from_editor(self):
         try:
             self._slider.index = self._slider.index_from_value(float(self._editor.text()))
+
+            # the true slider value might stay the same, which would require a manual update of the text editor
+            self._update_editor_text()
+
         except ValueError:
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
-
-        # tre true slider value might stay the same...
-        self._update_editor_text()
 
     def update_default_value(self, cat: Table, object_id, translate):
         try:
@@ -140,6 +141,9 @@ class SmartSlider(AbstractWidget):
 
     def reset(self):
         self._slider.reset()
+
+        # see a comment in _update_from_editor
+        self._update_editor_text()
 
     def clear(self):
         self._editor.setText("")
