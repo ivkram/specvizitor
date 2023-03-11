@@ -30,6 +30,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.was_maximized: bool
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setStyleSheet("QMainWindow::separator {width: 0px; height:0px;}")
 
         self.setWindowTitle('Specvizitor')  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
