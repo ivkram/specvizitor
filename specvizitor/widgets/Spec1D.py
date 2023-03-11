@@ -12,7 +12,7 @@ from astropy.utils.decorators import lazyproperty
 from astropy import units as u
 
 import pyqtgraph as pg
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore
 
 from ..utils import SmartSlider
 from ..utils.table_tools import column_not_found_message
@@ -184,7 +184,7 @@ class Spec1D(ViewerElement):
             if line in lines.list.keys():
                 spec_region = Spec1DRegion(lines=lines, target_line=line, cfg=line_cfg,
                                            title=f"{self.title} [{line}]", global_viewer_config=self.global_config,
-                                           layout=QtWidgets.QGridLayout(), parent=self.parent())
+                                           parent=self.parent())
                 region_widgets.append(spec_region)
 
                 lr = pg.LinearRegionItem()

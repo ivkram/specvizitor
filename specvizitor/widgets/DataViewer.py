@@ -28,6 +28,8 @@ class DataViewer(AbstractWidget):
         self.set_geometry(spacing=0, margins=0)
 
         self.dock_area = DockArea()
+        self.added_docks: list[str] = []
+
         self.dock_widgets = self.create_widgets()
         self.docks = self.create_docks()
 
@@ -51,14 +53,14 @@ class DataViewer(AbstractWidget):
         if self.cfg.images is not None:
             for name, image_cfg in self.cfg.images.items():
                 widgets[name] = Image2D(cfg=image_cfg, title=name, global_viewer_config=self.rd.config.data_viewer,
-                                        layout=QtWidgets.QGridLayout(), parent=self)
+                                        parent=self)
 
         # create widgets for 1D spectra
         if self.cfg.spectra is not None:
             for name, spec_cfg in self.cfg.spectra.items():
-                widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg,
-                                       title=name, global_viewer_config=self.rd.config.data_viewer,
-                                       layout=QtWidgets.QGridLayout(), parent=self)
+                if spec_cfg.visible:
+                    widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg, title=name,
+                                           global_viewer_config=self.rd.config.data_viewer, parent=self)
 
         return widgets
 
@@ -73,19 +75,23 @@ class DataViewer(AbstractWidget):
         return docks
 
     def add_dock(self, widget: LazyViewerElement):
-        self.dock_area.addDock(dock=self.docks[widget.title],
-                               position=widget.cfg.position if widget.cfg.position is not None else 'bottom',
-                               relativeTo=widget.cfg.relative_to)
+        if widget.cfg.visible:
+            self.dock_area.addDock(dock=self.docks[widget.title],
+                                   position=widget.cfg.position if widget.cfg.position is not None else 'bottom',
+                                   relativeTo=widget.cfg.relative_to if widget.cfg.relative_to in self.added_docks else None)
+            self.added_docks.append(widget.title)
 
     def add_docks(self):
+        self.added_docks = []
+
         for widget in self.dock_widgets.values():
             self.add_dock(widget)
             for lazy_widget in widget.lazy_widgets:
                 self.add_dock(lazy_widget)
 
     def reset_dock_state(self):
-        for d in self.docks.values():
-            d.close()
+        for dock_name in self.added_docks:
+            self.docks[dock_name].close()
         self.docks = self.create_docks()
         self.add_docks()
 

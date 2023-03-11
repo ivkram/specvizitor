@@ -24,6 +24,8 @@ class ColorBar:
 
 @dataclass
 class LazyViewerElement:
+    visible: bool = True
+
     position: str | None = None
     relative_to: str | None = None
 

@@ -1,3 +1,4 @@
+from qtpy import QtWidgets
 import pyqtgraph as pg
 
 from ..utils import AbstractWidget
@@ -6,7 +7,7 @@ from ..config import docks, config
 
 class LazyViewerElement(AbstractWidget):
     def __init__(self, cfg: docks.LazyViewerElement, title: str, global_viewer_config: config.DataViewer, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(layout=QtWidgets.QGridLayout(), **kwargs)
 
         self.cfg = cfg
         self.title = title
