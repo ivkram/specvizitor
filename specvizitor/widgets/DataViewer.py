@@ -48,14 +48,14 @@ class DataViewer(AbstractWidget):
         # create widgets for images (e.g. image cutouts, 2D spectra)
         if self.cfg.images is not None:
             for name, image_cfg in self.cfg.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, global_config=self.rd.config.data_viewer,
+                widgets[name] = Image2D(cfg=image_cfg, title=name, global_viewer_config=self.rd.config.data_viewer,
                                         parent=self)
 
         # create widgets for 1D spectra
         if self.cfg.spectra is not None:
             for name, spec_cfg in self.cfg.spectra.items():
                 widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg,
-                                       title=name, global_config=self.rd.config.data_viewer, parent=self)
+                                       title=name, global_viewer_config=self.rd.config.data_viewer, parent=self)
 
         return widgets
 

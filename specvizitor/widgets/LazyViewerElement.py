@@ -5,19 +5,19 @@ from ..config import docks, config
 
 
 class LazyViewerElement(AbstractWidget):
-    def __init__(self, cfg: docks.LazyViewerElement, title: str, global_config: config.DataViewer, parent=None):
+    def __init__(self, cfg: docks.LazyViewerElement, title: str, global_viewer_config: config.DataViewer, parent=None):
         super().__init__(parent=parent)
 
         self.cfg = cfg
         self.title = title
-        self.global_config = global_config
+        self.global_config = global_viewer_config
 
         # create a central widget
         self.graphics_view = pg.GraphicsView()
         self.graphics_layout = pg.GraphicsLayout()
         self.graphics_view.setCentralItem(self.graphics_layout)
 
-        self.set_geometry(spacing=global_config.spacing, margins=global_config.margins)
+        self.set_geometry(spacing=global_viewer_config.spacing, margins=global_viewer_config.margins)
 
     def set_geometry(self, spacing: int, margins: int):
         self.layout.setSpacing(spacing)
