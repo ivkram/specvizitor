@@ -76,11 +76,6 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             for s in self.sliders:
                 s.clear()
 
-        # load catalogue values to the sliders
-        for s in self.sliders:
-            if s.cat_name is not None:
-                s.update_from_cat(rd.cat, rd.id, rd.config.catalogue.translate)
-
         # load data to the widget
         self._load_data(rd=rd)
 
@@ -90,9 +85,11 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             self.display()
 
             for s in self.sliders:
+                # load catalogue values to the sliders
                 if s.cat_name is not None:
-                    s.reset()
-                s.update_from_slider()
+                    s.update_from_cat(rd.cat, rd.id, rd.config.catalogue.translate)
+                else:
+                    s.update_from_slider()
 
             self.reset_view()
         else:
