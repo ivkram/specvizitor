@@ -22,11 +22,6 @@ class Appearance:
 
 
 @dataclass
-class ControlPanel:
-    button_width: int = 130
-
-
-@dataclass
 class ObjectInfo:
     items: dict[str, str] | None = field(default_factory=lambda: {'ra': 'RA: {}', 'dec': 'Dec: {}'})
 
@@ -48,7 +43,6 @@ class Config(Params):
     catalogue: Catalogue = field(default_factory=lambda: Catalogue())
     data: Data = field(default_factory=lambda: Data())
     appearance: Appearance = field(default_factory=lambda: Appearance())
-    control_panel: ControlPanel = field(default_factory=lambda: ControlPanel())
     object_info: ObjectInfo = field(default_factory=lambda: ObjectInfo())
     review_form: ReviewForm = field(default_factory=lambda: ReviewForm())
     data_viewer: DataViewer = field(default_factory=lambda: DataViewer())

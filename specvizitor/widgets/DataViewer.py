@@ -1,5 +1,7 @@
 import importlib
 
+from qtpy import QtWidgets
+
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 
@@ -15,7 +17,7 @@ from ..config.docks import Docks
 
 class DataViewer(AbstractWidget):
     def __init__(self, rd: AppData, cfg: Docks, plugins=None, parent=None):
-        super().__init__(parent=parent)
+        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
 
         self.rd = rd
         self.cfg = cfg
@@ -23,14 +25,14 @@ class DataViewer(AbstractWidget):
         self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
                          for plugin_name in plugins] if plugins is not None else []
 
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout().setContentsMargins(0, 0, 0, 0)
 
         self.dock_area = DockArea()
         self.dock_widgets = self.create_widgets()
         self.docks = self.create_docks()
 
     def init_ui(self):
-        self.layout.addWidget(self.dock_area, 1, 1, 1, 1)
+        self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
         self.add_docks()
 
         try:
@@ -49,13 +51,14 @@ class DataViewer(AbstractWidget):
         if self.cfg.images is not None:
             for name, image_cfg in self.cfg.images.items():
                 widgets[name] = Image2D(cfg=image_cfg, title=name, global_viewer_config=self.rd.config.data_viewer,
-                                        parent=self)
+                                        layout=QtWidgets.QGridLayout(), parent=self)
 
         # create widgets for 1D spectra
         if self.cfg.spectra is not None:
             for name, spec_cfg in self.cfg.spectra.items():
                 widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg,
-                                       title=name, global_viewer_config=self.rd.config.data_viewer, parent=self)
+                                       title=name, global_viewer_config=self.rd.config.data_viewer,
+                                       layout=QtWidgets.QGridLayout(), parent=self)
 
         return widgets
 

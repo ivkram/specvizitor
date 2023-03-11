@@ -50,7 +50,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             if not s.text_editor:
                 sub_layout.addWidget(s)
         sub_layout.addWidget(self.graphics_view)  # add the central widget
-        self.layout.addLayout(sub_layout, 1, 1, 1, 1)
+        self.layout().addLayout(sub_layout, 1, 1, 1, 1)
 
         sub_layout = QtWidgets.QVBoxLayout()
 
@@ -58,7 +58,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         for s in self.sliders:
             if s.text_editor:
                 sub_layout.addWidget(s)
-        self.layout.addLayout(sub_layout, 2, 1, 1, 1)
+        self.layout().addLayout(sub_layout, 2, 1, 1, 1)
 
         # init the UI of lazy widgets
         for w in self.lazy_widgets:

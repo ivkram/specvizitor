@@ -12,9 +12,9 @@ from ..config import config
 logger = logging.getLogger(__name__)
 
 
-class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
+class ObjectInfo(AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ObjectInfo, parent=None):
-        super().__init__(parent=parent)
+        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
 
         self.rd = rd
         self.cfg = cfg
@@ -41,7 +41,7 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
 
     def init_ui(self):
         for i, widget in enumerate(self._labels.values()):
-            self.layout.addWidget(widget, i + 1, 1, 1, 1)
+            self.layout().addWidget(widget, i + 1, 1, 1, 1)
 
     def load_object(self):
         for cname, widget in self._labels.items():

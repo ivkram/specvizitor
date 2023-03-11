@@ -5,8 +5,8 @@ from ..config import docks, config
 
 
 class LazyViewerElement(AbstractWidget):
-    def __init__(self, cfg: docks.LazyViewerElement, title: str, global_viewer_config: config.DataViewer, parent=None):
-        super().__init__(parent=parent)
+    def __init__(self, cfg: docks.LazyViewerElement, title: str, global_viewer_config: config.DataViewer, **kwargs):
+        super().__init__(**kwargs)
 
         self.cfg = cfg
         self.title = title
@@ -19,12 +19,11 @@ class LazyViewerElement(AbstractWidget):
 
         self.set_geometry(spacing=global_viewer_config.spacing, margins=global_viewer_config.margins)
 
-    def set_geometry(self, spacing: int, margins: int):
-        self.layout.setSpacing(spacing)
-        self.layout.setContentsMargins(*(margins for _ in range(4)))
+    def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
+        super().set_geometry(spacing=spacing, margins=margins)
 
         self.graphics_layout.setSpacing(spacing)
         self.graphics_layout.setContentsMargins(0, 0, 0, 0)
 
     def init_ui(self):
-        self.layout.addWidget(self.graphics_view, 1, 1, 1, 1)
+        self.layout().addWidget(self.graphics_view, 1, 1, 1, 1)

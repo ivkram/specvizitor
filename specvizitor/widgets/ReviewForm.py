@@ -6,9 +6,9 @@ from ..config import config
 from ..io.output import get_checkboxes
 
 
-class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
+class ReviewForm(AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ReviewForm, parent=None):
-        super().__init__(parent=parent)
+        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
 
         self.rd = rd
         self.cfg = cfg
@@ -33,10 +33,10 @@ class ReviewForm(QtWidgets.QGroupBox, AbstractWidget):
 
     def init_ui(self):
         for i, widget in enumerate(self._checkboxes.values()):
-            self.layout.addWidget(widget, i + 1, 1, 1, 1)
+            self.layout().addWidget(widget, i + 1, 1, 1, 1)
 
-        self.layout.addWidget(QtWidgets.QLabel('Comments:', parent=self), len(self._checkboxes) + 1, 1, 1, 1)
-        self.layout.addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
+        self.layout().addWidget(QtWidgets.QLabel('Comments:', parent=self), len(self._checkboxes) + 1, 1, 1, 1)
+        self.layout().addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
 
     def dump(self):
         self.rd.df.at[self.rd.id, 'comment'] = self._comments_widget.toPlainText()

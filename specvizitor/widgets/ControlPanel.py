@@ -10,46 +10,43 @@ from qtpy import QtGui, QtCore, QtWidgets
 
 from ..utils import AbstractWidget
 from ..appdata import AppData
-from ..config import config
 
 
 logger = logging.getLogger(__name__)
 
 
-class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
+class ControlPanel(QtWidgets.QToolBar, AbstractWidget):
     reset_view_button_clicked = QtCore.Signal()
     reset_dock_state_button_clicked = QtCore.Signal()
     screenshot_button_clicked = QtCore.Signal(str)
     object_selected = QtCore.Signal(int)
 
-    def __init__(self, rd: AppData, cfg: config.ControlPanel, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         super().__init__(parent=parent)
+        self.setWindowTitle('Control Panel')
 
         self.rd = rd
-        self.cfg = cfg
-
-        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
 
         # create buttons for switching to the next or previous object
         self._pn_buttons = self.create_pn_buttons()
 
         # create the `starred` button
-        self._star_button = QtWidgets.QPushButton(parent=self)
+        self._star_button = QtWidgets.QAction(parent=self)
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon()))
         self._star_button.setToolTip('Star the object')
-        self._star_button.clicked.connect(self.star)
+        self._star_button.triggered.connect(self.star)
 
         # create the `screenshot` button
-        self._screenshot_button = QtWidgets.QPushButton(parent=self)
+        self._screenshot_button = QtWidgets.QAction(parent=self)
         self._screenshot_button.setIcon(QtGui.QIcon(get_icon_abs_path('screenshot.svg')))
         self._screenshot_button.setToolTip('Take a screenshot')
-        self._screenshot_button.clicked.connect(self.screenshot)
+        self._screenshot_button.triggered.connect(self.screenshot)
 
         # create the `reset view` button
-        self._reset_view_button = QtWidgets.QPushButton(parent=self)
+        self._reset_view_button = QtWidgets.QAction(parent=self)
         self._reset_view_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-view.svg')))
         self._reset_view_button.setToolTip('Reset the view')
-        self._reset_view_button.clicked.connect(self.reset_view_button_clicked.emit)
+        self._reset_view_button.triggered.connect(self.reset_view_button_clicked.emit)
 
         # create a `dark mode` button
         # self._dark_mode = QtWidgets.QPushButton(parent=self)
@@ -57,46 +54,24 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         # self._dark_mode.setToolTip('Turn on the dark theme')
 
         # create the `reset dock state` button
-        self._reset_dock_state_button = QtWidgets.QPushButton(parent=self)
+        self._reset_dock_state_button = QtWidgets.QAction(parent=self)
         self._reset_dock_state_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-dock-state.svg')))
         self._reset_dock_state_button.setToolTip('Reset the dock state')
-        self._reset_dock_state_button.clicked.connect(self.reset_dock_state_button_clicked.emit)
+        self._reset_dock_state_button.triggered.connect(self.reset_dock_state_button_clicked.emit)
 
-        # create the `Go to ID` button
-        self._go_to_id_button = QtWidgets.QPushButton(parent=self)
-        self._go_to_id_button.setText('Go to ID')
-        self._go_to_id_button.setFixedWidth(self.cfg.button_width)
-        self._go_to_id_button.clicked.connect(self.go_to_id)
-
-        self._id_field = QtWidgets.QLineEdit(parent=self)
-        self._id_field.setFixedWidth(self.cfg.button_width)
-        self._id_field.returnPressed.connect(self.go_to_id)
-
-        # create the `Go to index` button
-        self._go_to_index_button = QtWidgets.QPushButton(parent=self)
-        self._go_to_index_button.setText('Go to #')
-        self._go_to_index_button.setFixedWidth(self.cfg.button_width)
-        self._go_to_index_button.clicked.connect(self.go_to_index)
-
-        self._index_field = QtWidgets.QLineEdit(parent=self)
-        self._index_field.setFixedWidth(self.cfg.button_width)
-        self._index_field.returnPressed.connect(self.go_to_index)
-
-    def create_pn_buttons(self) -> dict[str, QtWidgets.QPushButton]:
-        pn_buttons_params = {'previous': {'shortcut': 'left', 'icon': 'arrow-backward'},
-                             'next': {'shortcut': 'right', 'icon': 'arrow-forward'},
+    def create_pn_buttons(self) -> dict[str, QtWidgets.QAction]:
+        pn_buttons_params = {'previous': {'shortcut': QtGui.QKeySequence.MoveToPreviousChar, 'icon': 'arrow-backward'},
+                             'next': {'shortcut': QtGui.QKeySequence.MoveToNextChar, 'icon': 'arrow-forward'},
                              'previous starred': {'icon': 'arrow-backward-starred'},
                              'next starred': {'icon': 'arrow-forward-starred'}
                              }
 
         pn_buttons = {}
         for pn_text, pn_properties in pn_buttons_params.items():
-            button = QtWidgets.QPushButton(parent=self)
-            button.setToolTip('Go to the {} object'.format(pn_text))
+            button = QtWidgets.QAction('Go to the {} object'.format(pn_text), self)
             button.setIcon(QtGui.QIcon(get_icon_abs_path(pn_properties['icon'])))
 
-            button.clicked.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
-
+            button.triggered.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
             if pn_properties.get('shortcut'):
                 button.setShortcut(pn_properties['shortcut'])
 
@@ -105,20 +80,20 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
         return pn_buttons
 
     def init_ui(self):
-        self.layout.addWidget(self._pn_buttons['previous'], 2, 1, 1, 1)
-        self.layout.addWidget(self._pn_buttons['next'], 2, 2, 1, 1)
-        self.layout.addWidget(self._star_button, 2, 3, 1, 1)
-        self.layout.addWidget(self._screenshot_button, 2, 4, 1, 1)
+        self.addAction(self._pn_buttons['previous starred'])
+        self.addAction(self._pn_buttons['previous'])
+        self.addAction(self._pn_buttons['next'])
+        self.addAction(self._pn_buttons['next starred'])
 
-        self.layout.addWidget(self._pn_buttons['previous starred'], 3, 1, 1, 1)
-        self.layout.addWidget(self._pn_buttons['next starred'], 3, 2, 1, 1)
-        self.layout.addWidget(self._reset_view_button, 3, 3, 1, 1)
-        self.layout.addWidget(self._reset_dock_state_button, 3, 4, 1, 1)
+        self.addSeparator()
 
-        self.layout.addWidget(self._go_to_id_button, 4, 1, 1, 2)
-        self.layout.addWidget(self._id_field, 4, 3, 1, 2)
-        self.layout.addWidget(self._go_to_index_button, 5, 1, 1, 2)
-        self.layout.addWidget(self._index_field, 5, 3, 1, 2)
+        self.addAction(self._screenshot_button)
+        self.addAction(self._star_button)
+
+        self.addSeparator()
+
+        self.addAction(self._reset_view_button)
+        self.addAction(self._reset_dock_state_button)
 
     def load_object(self):
         self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(self.rd.df.at[self.rd.id, 'starred'])))
@@ -173,38 +148,6 @@ class ControlPanel(QtWidgets.QGroupBox, AbstractWidget):
 
         if path:
             self.screenshot_button_clicked.emit(path)
-
-    def go_to_id(self):
-        text = self._id_field.text()
-        self._id_field.clear()
-
-        try:
-            id_upd = int(text)
-        except ValueError:
-            logger.error('Invalid ID')
-            return
-
-        if id_upd in self.rd.df.index:
-            self.object_selected.emit(self.rd.df.index.get_loc(id_upd))
-        else:
-            logger.error('ID not found')
-            return
-
-    def go_to_index(self):
-        text = self._index_field.text()
-        self._index_field.clear()
-
-        try:
-            index_upd = int(text)
-        except ValueError:
-            logger.error('Invalid index')
-            return
-
-        if 0 < index_upd <= self.rd.n_objects:
-            self.object_selected.emit(index_upd - 1)
-        else:
-            logger.error('Index out of range')
-            return
 
 
 def get_icon_abs_path(icon_name: str) -> str:

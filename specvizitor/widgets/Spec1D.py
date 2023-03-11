@@ -12,7 +12,7 @@ from astropy.utils.decorators import lazyproperty
 from astropy import units as u
 
 import pyqtgraph as pg
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 
 from ..utils import SmartSlider
 from ..utils.table_tools import column_not_found_message
@@ -164,15 +164,14 @@ class Spec1D(ViewerElement):
 
         # create widgets zoomed on selected spectral lines
         if self.lines is not None and self.cfg.tracked_lines is not None:
-            self.lazy_widgets, self.region_items = self.create_spectral_regions(self.cfg.tracked_lines, self.lines,
-                                                                                **kwargs)
+            self.lazy_widgets, self.region_items = self.create_spectral_regions(self.cfg.tracked_lines, self.lines)
 
     def create_redshift_slider(self, **kwargs):
         redshift_slider = SmartSlider(parameter='z', full_name='redshift', parent=self, **kwargs)
         redshift_slider.value_changed[float].connect(self._redshift_changed_action)
         return redshift_slider
 
-    def create_spectral_regions(self, tracked_lines: dict[str, docks.SpectrumRegion], lines: SpectralLines, **kwargs)\
+    def create_spectral_regions(self, tracked_lines: dict[str, docks.SpectrumRegion], lines: SpectralLines)\
             -> tuple[list[Spec1DRegion], list[pg.LinearRegionItem]]:
 
         region_widgets = []
@@ -181,8 +180,9 @@ class Spec1D(ViewerElement):
         n = 0
         for line, line_cfg in tracked_lines.items():
             if line in lines.list.keys():
-                kwargs.update({'title': f"{self.title} [{line}]"})
-                spec_region = Spec1DRegion(lines=lines, target_line=line, cfg=line_cfg, **kwargs)
+                spec_region = Spec1DRegion(lines=lines, target_line=line, cfg=line_cfg,
+                                           title=f"{self.title} [{line}]", global_viewer_config=self.global_config,
+                                           layout=QtWidgets.QGridLayout(), parent=self.parent())
                 region_widgets.append(spec_region)
 
                 lr = pg.LinearRegionItem()

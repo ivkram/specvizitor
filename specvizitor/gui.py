@@ -9,13 +9,12 @@ from platformdirs import user_config_dir, user_cache_dir
 import pyqtgraph as pg
 import qtpy.compat
 from qtpy import QtGui, QtWidgets, QtCore
-from qtpy.QtCore import Signal, Slot
+from qtpy.QtCore import Slot
 
 from .appdata import AppData
 from .config import Config, Docks, SpectralLines, Cache
 from .menu import NewFile, Settings
-from .widgets import (AbstractWidget, DataViewer, ControlPanel, ObjectInfo, ReviewForm)
-from .utils.widget_tools import get_widgets
+from .widgets import (AbstractWidget, DataViewer, ControlPanel, QuickSearch, ObjectInfo, ReviewForm)
 from .utils.logs import LogMessageBox
 from .utils.params import LocalFile
 
@@ -28,6 +27,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd = appdata
 
         super().__init__(parent)
+
+        self.was_maximized: bool
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.setWindowTitle('Specvizitor')  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
@@ -47,31 +49,40 @@ class MainWindow(QtWidgets.QMainWindow):
         self._reset_view.triggered.connect(self.central_widget.reset_view)
         self._reset_dock_state.triggered.connect(self.central_widget.reset_dock_state)
 
+        # create a control panel
+        self.control_panel = ControlPanel(self.rd, parent=self)
+        self.control_panel.setObjectName('Control Panel')
+        self.addToolBar(QtCore.Qt.TopToolBarArea, self.control_panel)
+
+        # create a quick search widget
+        self.quick_search = QuickSearch(rd=self.rd, parent=self)
+        self.quick_search_dock = QtWidgets.QDockWidget('Quick Search', self)
+        self.quick_search_dock.setObjectName('Quick Search')
+        self.quick_search_dock.setWidget(self.quick_search)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.quick_search_dock)
+
         # create a widget displaying information about the object
         self.object_info = ObjectInfo(self.rd, cfg=self.rd.config.object_info, parent=self)
-        self.object_info_dock = QtWidgets.QDockWidget('Object Information', parent=self)
+        self.object_info_dock = QtWidgets.QDockWidget('Object Information', self)
+        self.object_info_dock.setObjectName('Object Information')
         self.object_info_dock.setWidget(self.object_info)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.object_info_dock)
 
-        # create a control panel
-        self.control_panel = ControlPanel(self.rd, cfg=self.rd.config.control_panel, parent=self)
-        self.control_panel_dock = QtWidgets.QDockWidget('Control Panel', parent=self)
-        self.control_panel_dock.setWidget(self.control_panel)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.control_panel_dock)
-
         # create a widget for writing comments
         self.review_form = ReviewForm(self.rd, cfg=self.rd.config.review_form, parent=self)
-        self.review_form_dock = QtWidgets.QDockWidget('Review Form', parent=self)
+        self.review_form_dock = QtWidgets.QDockWidget('Review Form', self)
+        self.review_form_dock.setObjectName('Review Form')
         self.review_form_dock.setWidget(self.review_form)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
 
-        # connect signals from the control panel to the slots of the central widget
+        # connect signals from the control panel and the quick search window to the slots of the central widget
         self.control_panel.object_selected.connect(self.load_object)
+        self.quick_search.object_selected.connect(self.load_object)
+        self.control_panel.screenshot_button_clicked.connect(self.central_widget.take_screenshot)
         self.control_panel.reset_view_button_clicked.connect(self.central_widget.reset_view)
         self.control_panel.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
-        self.control_panel.screenshot_button_clicked.connect(self.central_widget.take_screenshot)
 
-        for w in (self.central_widget, self.control_panel, self.object_info, self.review_form):
+        for w in (self.central_widget, self.control_panel, self.quick_search, self.object_info, self.review_form):
             self.widgets.append(w)
 
         self._init_ui()
@@ -80,8 +91,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.cache.last_inspection_file:
             self.load_project(self.rd.cache.last_inspection_file)
 
-        self.showMaximized()
-        self.was_maximized: bool
+        settings = QtCore.QSettings()
+        if settings.value("geometry") is None or settings.value("windowState") is None:
+            self.showMaximized()
+            self.setFocus()
+        else:
+            self.restoreGeometry(settings.value("geometry"))
+            self.restoreState(settings.value("windowState"))
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -246,7 +262,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def _exit_action(self):
         if self.rd.df is not None:
             self.rd.save()  # auto-save
-        self.central_widget.save_dock_state()  # save the dock state
+        self.central_widget.save_dock_state()  # save the dock state of the central widget
+
+        # save the state and geometry of the main window
+        settings = QtCore.QSettings()
+        settings.setValue('geometry', self.saveGeometry())
+        settings.setValue('windowState', self.saveState())
+
         self.close()
         logger.info("Application closed")
 
@@ -308,6 +330,8 @@ def main():
 
     # start the application
     app = QtWidgets.QApplication(sys.argv)
+    app.setOrganizationName('FRESCO')
+    app.setApplicationName('Specvizitor')
     logger.info("Application started")
 
     # initialize the main window
