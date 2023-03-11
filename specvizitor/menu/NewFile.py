@@ -30,7 +30,7 @@ class NewFile(QtWidgets.QDialog):
                                   mode=FileBrowser.SaveFile, default_path=pathlib.Path().resolve() / 'Untitled.csv',
                                   parent=self),
             'data': data_browser(self.rd.config.data.dir, self),
-            'cat': cat_browser(self.rd.config.cat.filename, self)
+            'cat': cat_browser(self.rd.config.catalogue.filename, self)
         }
 
         # add a file browser for specifying the output file
@@ -115,7 +115,7 @@ class NewFile(QtWidgets.QDialog):
             return create_cat(ids)
 
         # otherwise, load an existing catalogue
-        translate = self.rd.config.cat.translate
+        translate = self.rd.config.catalogue.translate
         data_dir = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
         return load_cat(self._browsers['cat'].path, translate=translate, data_dir=data_dir,
@@ -135,9 +135,9 @@ class NewFile(QtWidgets.QDialog):
         # update the user configuration file
         self.rd.config.data.dir = self._browsers['data'].path
         if not self._browsers['cat'].isHidden():
-            self.rd.config.cat.filename = self._browsers['cat'].path
+            self.rd.config.catalogue.filename = self._browsers['cat'].path
         else:
-            self.rd.config.cat.filename = None
+            self.rd.config.catalogue.filename = None
         if not self._id_pattern.isHidden():
             self.rd.config.data.id_pattern = self._id_pattern.text()
         self.rd.config.save()

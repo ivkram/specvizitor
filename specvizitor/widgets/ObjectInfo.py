@@ -52,7 +52,7 @@ class ObjectInfo(QtWidgets.QGroupBox, AbstractWidget):
                 if cname in self.rd.cat.colnames:
                     logger.warning('Object not found in the catalogue (ID: {})'.format(self.rd.id))
                 else:
-                    logger.warning(column_not_found_message(cname, self.rd.config.cat.translate))
+                    logger.warning(column_not_found_message(cname, self.rd.config.catalogue.translate))
                 widget.setHidden(True)
             else:
                 widget.setHidden(False)

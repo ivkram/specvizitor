@@ -88,7 +88,7 @@ class Spec1DItem(pg.PlotItem):
 
     def set_line_positions(self, scale0: float = 1):
         for line_name, line_artist in self._line_artists.items():
-            line_wave = (self.lines.list[line_name] * u.Unit(self.lines.units)).to(self.spec.spectral_axis.unit)
+            line_wave = (self.lines.list[line_name] * u.Unit(self.lines.wave_unit)).to(self.spec.spectral_axis.unit)
             line_wave = line_wave.value * scale0
             line_artist['line'].setPos(line_wave)
             line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
@@ -133,10 +133,10 @@ class Spec1DRegion(LazyViewerElement):
 
         # set up the plot
         lines = deepcopy(self.rd.lines)
-        lines = SpectralLines(units=lines.units, list={line: lines.list[line]})
+        lines = SpectralLines(wave_unit=lines.wave_unit, list={line: lines.list[line]})
 
-        window_center = lines.list[line] * u.Unit(lines.units)
-        window_size = u.Quantity(self.cfg.window)
+        window_center = lines.list[line] * u.Unit(lines.wave_unit)
+        window_size = u.Quantity(self.cfg.window_size)
         window = (window_center - window_size / 2, window_center + window_size / 2)
 
         self.spec_1d = Spec1DItem(lines=lines, window=window, name=title,
@@ -164,9 +164,9 @@ class Spec1D(ViewerElement):
         self.graphics_layout.addItem(self.spec_1d)
 
         # create viewer elements zoomed on various spectral regions
-        if self.cfg.follow is not None:
+        if self.cfg.tracked_lines is not None:
             n = 0
-            for line, line_cfg in self.cfg.follow.items():
+            for line, line_cfg in self.cfg.tracked_lines.items():
                 if line in self.rd.lines.list.keys():
                     spec_region = Spec1DRegion(line=line, rd=rd, cfg=line_cfg, title=f"{title} [{line}]", parent=parent)
                     self.lazy_widgets.append(spec_region)
@@ -204,7 +204,7 @@ class Spec1D(ViewerElement):
                 spectral_axis_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("wavelength") + 1}'])
             except (KeyError, ValueError):
                 logger.warning('Failed to read spectral axis units')
-                spectral_axis_unit = u.Unit(self.rd.lines.units)
+                spectral_axis_unit = u.Unit(self.rd.lines.wave_unit)
 
             try:
                 flux_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("flux") + 1}'])

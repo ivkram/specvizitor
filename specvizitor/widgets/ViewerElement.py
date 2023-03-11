@@ -77,7 +77,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # load catalogue values to the sliders
         for s in self.sliders:
             if s.cat_name is not None:
-                s.update_from_cat(self.rd.cat, self.rd.id, self.rd.config.cat.translate)
+                s.update_from_cat(self.rd.cat, self.rd.id, self.rd.config.catalogue.translate)
 
         # load data to the widget
         self._load_data()
@@ -104,13 +104,13 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             self.data, self.meta = None, None
             return
 
-        if self.cfg.loader_config is None:
+        if self.cfg.data_loader_params is None:
             loader_config = {}
         else:
-            loader_config = self.cfg.loader_config
+            loader_config = self.cfg.data_loader_params
 
         try:
-            self.data, self.meta = load(self.cfg.loader, self.filename, self.title, **loader_config)
+            self.data, self.meta = load(self.cfg.data_loader, self.filename, self.title, **loader_config)
         except TypeError as e:
             # unexpected keyword(s) passed to the loader
             logger.error(e.args[0])

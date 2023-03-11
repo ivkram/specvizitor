@@ -1,4 +1,4 @@
-cat:
+catalogue:
   translate:
     id: [Id, ID, NUMBER]
     ra: [Ra, RA]

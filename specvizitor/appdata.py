@@ -72,7 +72,7 @@ class AppData:
 
         if self.cat is None:
             # load the catalogue
-            cat = catalogue.load_cat(self.config.cat.filename, translate=self.config.cat.translate)
+            cat = catalogue.load_cat(self.config.catalogue.filename, translate=self.config.catalogue.translate)
 
             # create a catalogue with a single column of IDs
             if cat is None:

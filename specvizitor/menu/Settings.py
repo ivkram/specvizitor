@@ -24,7 +24,7 @@ class Settings(QtWidgets.QDialog):
 
         self._browsers = {
             'data': data_browser(self.rd.config.data.dir, self),
-            'cat': cat_browser(self.rd.config.cat.filename, self)
+            'cat': cat_browser(self.rd.config.catalogue.filename, self)
         }
 
         for b in self._browsers.values():
@@ -60,15 +60,15 @@ class Settings(QtWidgets.QDialog):
             return
 
         if self._browsers['cat'].is_filled():
-            cat = load_cat(self._browsers['cat'].path, translate=self.rd.config.cat.translate)
+            cat = load_cat(self._browsers['cat'].path, translate=self.rd.config.catalogue.translate)
             if not cat:
                 return
 
             self.rd.cat = cat
-            self.rd.config.cat.filename = self._browsers['cat'].path
+            self.rd.config.catalogue.filename = self._browsers['cat'].path
 
         else:
-            self.rd.config.cat.filename = None
+            self.rd.config.catalogue.filename = None
             if self.rd.df is not None:
                 self.rd.cat = create_cat(self.rd.df.index.values)
 

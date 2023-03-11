@@ -68,8 +68,8 @@ class SmartSlider(AbstractWidget):
     value_changed = QtCore.Signal(float)
 
     def __init__(self, parameter: str = 'x', full_name: str | None = None, action: str | None = None,
-                 visible: bool = True, cat_name: str | None = None, text_editor: bool = False, precision: int = 6,
-                 parent=None, **kwargs):
+                 visible: bool = True, catalogue_name: str | None = None, show_text_editor: bool = False,
+                 text_editor_precision: int = 6, parent=None, **kwargs):
 
         super().__init__(parent=parent)
 
@@ -77,13 +77,13 @@ class SmartSlider(AbstractWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setHidden(not visible)
 
-        self.parameter = parameter if cat_name is None else cat_name
+        self.parameter = parameter if catalogue_name is None else catalogue_name
         self.full_name = parameter if full_name is None else full_name
         self.action = f"change {self.full_name}" if action is None else action
 
-        self.cat_name = cat_name
-        self.text_editor = text_editor
-        self.precision = precision
+        self.cat_name = catalogue_name
+        self.text_editor = show_text_editor
+        self.precision = text_editor_precision
 
         # create a slider
         self._slider = SmartSliderCore(orientation=QtCore.Qt.Orientation.Horizontal if self.text_editor
@@ -101,8 +101,8 @@ class SmartSlider(AbstractWidget):
         self._editor.returnPressed.connect(self._update_from_editor)
         self._editor.setMaximumWidth(120)
 
-        self._label.setHidden(not text_editor)
-        self._editor.setHidden(not text_editor)
+        self._label.setHidden(not show_text_editor)
+        self._editor.setHidden(not show_text_editor)
 
     def init_ui(self):
         self.layout.addWidget(self._slider, 1, 1, 1, 1)

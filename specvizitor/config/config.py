@@ -4,7 +4,7 @@ from ..utils.params import Params
 
 
 @dataclass
-class Cat:
+class Catalogue:
     filename: str | None = None
     translate: dict[str, list[str]] | None = None
 
@@ -45,8 +45,8 @@ class DataViewer:
 
 @dataclass
 class Config(Params):
-    cat: Cat
-    data: Data
+    catalogue: Catalogue = field(default_factory=lambda: Catalogue())
+    data: Data = field(default_factory=lambda: Data())
     appearance: Appearance = field(default_factory=lambda: Appearance())
     control_panel: ControlPanel = field(default_factory=lambda: ControlPanel())
     object_info: ObjectInfo = field(default_factory=lambda: ObjectInfo())
