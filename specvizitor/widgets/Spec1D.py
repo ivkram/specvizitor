@@ -167,10 +167,18 @@ class Spec1D(ViewerElement):
             spec = None
         else:
             # create a Spectrum1D object
-            spectral_axis_unit = u.Unit(self.meta.get(f'TUNIT{self.data.colnames.index("wavelength") + 1}',
-                                                      self.rd.lines.units))
-            flux_unit = u.Unit(self.meta.get(f'TUNIT{self.data.colnames.index("flux") + 1}',
-                                             10**-17 * u.Unit('erg cm-2 s-1 AA-1')))
+            try:
+                spectral_axis_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("wavelength") + 1}'])
+            except (KeyError, ValueError):
+                logger.warning('Failed to read spectral axis units')
+                spectral_axis_unit = u.Unit(self.rd.lines.units)
+
+            try:
+                flux_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("flux") + 1}'])
+            except (KeyError, ValueError):
+                logger.warning('Failed to read flux units')
+                flux_unit = u.Unit('1e-17 erg cm-2 s-1 AA-1')
+
             unc = StdDevUncertainty(self.data['flux_error']) if 'flux_error' in self.data.colnames else None
 
             spec = Spectrum1D(spectral_axis=self.data['wavelength'] * spectral_axis_unit,
