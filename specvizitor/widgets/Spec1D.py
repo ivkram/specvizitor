@@ -29,7 +29,8 @@ logger = logging.getLogger(__name__)
 
 class Spec1DItem(pg.PlotItem):
     def __init__(self, spec: Spectrum1D | None = None, lines: SpectralLines | None = None,
-                 window: tuple[float, float] | None = None, label_style: dict[str, str] | None = None,
+                 window: tuple[float, float] | None = None,
+                 label_style: dict[str, str] | None = None,
                  *args, **kwargs):
 
         super().__init__(*args, **kwargs)
@@ -41,6 +42,7 @@ class Spec1DItem(pg.PlotItem):
         self.spec = spec
         self.lines = SpectralLines() if lines is None else lines
         self.window = window
+
         self.label_style = {} if label_style is None else label_style
 
         self._flux_plot = None
@@ -74,7 +76,7 @@ class Spec1DItem(pg.PlotItem):
         self.setLabel('right', self.spec.flux.unit, **self.label_style)
 
     def add_items(self):
-        self._flux_plot = self.plot(pen='k')
+        self._flux_plot = self.plot(pen='k' if pg.getConfigOption('background') == 'w' else 'w')
         self._flux_err_plot = self.plot(pen='r')
 
         for line_name, line_artist in self._line_artists.items():

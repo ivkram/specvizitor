@@ -15,7 +15,7 @@ from ..appdata import AppData
 logger = logging.getLogger(__name__)
 
 
-class ControlPanel(QtWidgets.QToolBar, AbstractWidget):
+class ControlBar(QtWidgets.QToolBar, AbstractWidget):
     reset_view_button_clicked = QtCore.Signal()
     reset_dock_state_button_clicked = QtCore.Signal()
     screenshot_button_clicked = QtCore.Signal(str)
@@ -32,30 +32,30 @@ class ControlPanel(QtWidgets.QToolBar, AbstractWidget):
 
         # create the `starred` button
         self._star_button = QtWidgets.QAction(parent=self)
-        self._star_button.setIcon(QtGui.QIcon(self.get_star_icon()))
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name()))
         self._star_button.setToolTip('Star the object')
         self._star_button.triggered.connect(self.star)
 
         # create the `screenshot` button
         self._screenshot_button = QtWidgets.QAction(parent=self)
-        self._screenshot_button.setIcon(QtGui.QIcon(get_icon_abs_path('screenshot.svg')))
+        self._screenshot_button.setIcon(self.get_icon('screenshot.svg'))
         self._screenshot_button.setToolTip('Take a screenshot')
         self._screenshot_button.triggered.connect(self.screenshot)
 
         # create the `reset view` button
         self._reset_view_button = QtWidgets.QAction(parent=self)
-        self._reset_view_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-view.svg')))
+        self._reset_view_button.setIcon(self.get_icon('reset-view.svg'))
         self._reset_view_button.setToolTip('Reset the view')
         self._reset_view_button.triggered.connect(self.reset_view_button_clicked.emit)
 
         # create a `dark mode` button
         # self._dark_mode = QtWidgets.QPushButton(parent=self)
-        # self._dark_mode.setIcon(QtGui.QIcon(get_icon_abs_path('dark-mode.svg')))
+        # self._dark_mode.setIcon(self.create_icon(get_icon_abs_path('dark-mode.svg')))
         # self._dark_mode.setToolTip('Turn on the dark theme')
 
         # create the `reset dock state` button
         self._reset_dock_state_button = QtWidgets.QAction(parent=self)
-        self._reset_dock_state_button.setIcon(QtGui.QIcon(get_icon_abs_path('reset-dock-state.svg')))
+        self._reset_dock_state_button.setIcon(self.get_icon('reset-dock-state.svg'))
         self._reset_dock_state_button.setToolTip('Reset the dock state')
         self._reset_dock_state_button.triggered.connect(self.reset_dock_state_button_clicked.emit)
 
@@ -69,7 +69,7 @@ class ControlPanel(QtWidgets.QToolBar, AbstractWidget):
         pn_buttons = {}
         for pn_text, pn_properties in pn_buttons_params.items():
             button = QtWidgets.QAction('Go to the {} object'.format(pn_text), self)
-            button.setIcon(QtGui.QIcon(get_icon_abs_path(pn_properties['icon'])))
+            button.setIcon(self.get_icon(pn_properties['icon'] + '.svg'))
 
             button.triggered.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
             if pn_properties.get('shortcut'):
@@ -96,7 +96,7 @@ class ControlPanel(QtWidgets.QToolBar, AbstractWidget):
         self.addAction(self._reset_dock_state_button)
 
     def load_object(self):
-        self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(self.rd.df.at[self.rd.id, 'starred'])))
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(self.rd.df.at[self.rd.id, 'starred'])))
 
         self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
         self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
@@ -126,16 +126,27 @@ class ControlPanel(QtWidgets.QToolBar, AbstractWidget):
 
         return j_upd
 
+    def get_icon_abs_path(self, icon_name: str) -> pathlib.Path:
+        icon_root_dir = pathlib.Path(__file__).parent.parent / 'data' / 'icons'
+        icon_path = icon_root_dir / self.rd.config.appearance.theme / icon_name
+        if not icon_path.exists():
+            return icon_root_dir / 'light' / icon_name
+        else:
+            return icon_path
+
     @staticmethod
-    def get_star_icon(starred=False):
+    def get_star_icon_name(starred=False):
         icon_name = 'star.svg' if starred else 'star-empty.svg'
-        return get_icon_abs_path(icon_name)
+        return icon_name
+
+    def get_icon(self, icon_name):
+        return QtGui.QIcon(str(self.get_icon_abs_path(icon_name)))
 
     def star(self):
         starred = not self.rd.df.at[self.rd.id, 'starred']
 
         self.rd.df.at[self.rd.id, 'starred'] = starred
-        self._star_button.setIcon(QtGui.QIcon(self.get_star_icon(starred)))
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(starred)))
 
         self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
         self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
@@ -148,7 +159,3 @@ class ControlPanel(QtWidgets.QToolBar, AbstractWidget):
 
         if path:
             self.screenshot_button_clicked.emit(path)
-
-
-def get_icon_abs_path(icon_name: str) -> str:
-    return str(pathlib.Path(__file__).parent.parent / 'data' / 'icons' / icon_name)

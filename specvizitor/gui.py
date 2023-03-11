@@ -16,7 +16,7 @@ import qdarktheme
 from .appdata import AppData
 from .config import Config, Docks, SpectralLines, Cache
 from .menu import NewFile, Settings
-from .widgets import (AbstractWidget, DataViewer, ControlPanel, QuickSearch, ObjectInfo, ReviewForm)
+from .widgets import (AbstractWidget, DataViewer, ControlBar, QuickSearch, ObjectInfo, ReviewForm)
 from .utils.logs import LogMessageBox
 from .utils.params import LocalFile
 
@@ -52,9 +52,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self._reset_dock_state.triggered.connect(self.central_widget.reset_dock_state)
 
         # create a control panel
-        self.control_panel = ControlPanel(self.rd, parent=self)
-        self.control_panel.setObjectName('Control Panel')
-        self.addToolBar(QtCore.Qt.TopToolBarArea, self.control_panel)
+        self.control_bar = ControlBar(self.rd, parent=self)
+        self.control_bar.setObjectName('Control Bar')
+        self.addToolBar(QtCore.Qt.TopToolBarArea, self.control_bar)
 
         # create a quick search widget
         self.quick_search = QuickSearch(rd=self.rd, parent=self)
@@ -78,13 +78,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
 
         # connect signals from the control panel and the quick search window to the slots of the central widget
-        self.control_panel.object_selected.connect(self.load_object)
+        self.control_bar.object_selected.connect(self.load_object)
         self.quick_search.object_selected.connect(self.load_object)
-        self.control_panel.screenshot_button_clicked.connect(self.central_widget.take_screenshot)
-        self.control_panel.reset_view_button_clicked.connect(self.central_widget.reset_view)
-        self.control_panel.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
+        self.control_bar.screenshot_button_clicked.connect(self.central_widget.take_screenshot)
+        self.control_bar.reset_view_button_clicked.connect(self.central_widget.reset_view)
+        self.control_bar.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
 
-        for w in (self.central_widget, self.control_panel, self.quick_search, self.object_info, self.review_form):
+        for w in (self.central_widget, self.control_bar, self.quick_search, self.object_info, self.review_form):
             self.widgets.append(w)
 
         self._init_ui()
@@ -236,7 +236,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rd.j = j
 
-        for widget in (self.central_widget, self.control_panel, self.object_info, self.review_form):
+        for widget in (self.central_widget, self.control_bar, self.object_info, self.review_form):
             widget.load_object()
 
         self.setWindowTitle(
@@ -336,7 +336,14 @@ def main():
     app.setApplicationName('Specvizitor')
     logger.info("Application started")
 
+    # set up the theme
     qdarktheme.setup_theme(appdata.config.appearance.theme)
+    if appdata.config.appearance.theme == 'dark':
+        pg.setConfigOption('background', "#1d2023")
+        pg.setConfigOption('foreground', '#eff0f1')
+    else:
+        pg.setConfigOption('background', "w")
+        pg.setConfigOption('foreground', 'k')
 
     # initialize the main window
     window = MainWindow(appdata=appdata)
