@@ -99,9 +99,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showMaximized()
             self.setFocus()
         else:
-            pass
-            #self.restoreGeometry(settings.value("geometry"))
-            #self.restoreState(settings.value("windowState"))
+            self.restoreGeometry(settings.value("geometry"))
+            self.restoreState(settings.value("windowState"))
 
     def _init_menu(self):
         self._menu = self.menuBar()
