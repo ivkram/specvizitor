@@ -19,4 +19,4 @@ def column_not_found_message(cname: str, dictionary: dict[str, list[str]] | None
     if dictionary is None or cname not in dictionary:
         return '`{}` column not found'.format(cname)
     else:
-        return '`{}` column and its equivalences ({}) not found'.format(cname, ", ".join(dictionary[cname]))
+        return '`{}` column and its aliases ({}) not found'.format(cname, ", ".join(dictionary[cname]))

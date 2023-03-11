@@ -100,7 +100,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.filename = get_filename(rd.config.data.dir, self.cfg.filename_keyword, rd.id)
 
         if self.filename is None:
-            logger.warning('{} not found (object ID: {})'.format(self.title, rd.id))
+            logger.error('{} not found (object ID: {})'.format(self.title, rd.id))
             self.data, self.meta = None, None
             return
 
@@ -115,6 +115,9 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             # unexpected keyword(s) passed to the loader
             logger.error(e.args[0])
             self.data, self.meta = None, None
+            return
+
+        if self.data is None:
             return
 
         if isinstance(self.data, Table):

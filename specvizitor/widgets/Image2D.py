@@ -70,6 +70,10 @@ class Image2D(ViewerElement):
         self.scale(self.cfg.scale)
 
     def validate(self, translate: dict[str, list[str]] | None):
+        if not isinstance(self.data, np.ndarray):
+            logger.error(f'Invalid data type: {type(self.data)} (widget: {self.title})')
+            return False
+
         return True
 
     def display(self):

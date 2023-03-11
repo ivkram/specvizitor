@@ -5,6 +5,7 @@ from functools import partial
 
 from specutils import Spectrum1D
 from astropy.nddata import StdDevUncertainty
+from astropy.table import Table
 
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
@@ -243,6 +244,10 @@ class Spec1D(ViewerElement):
             w.spec_1d.set_spec(spec)
 
     def validate(self, translate: dict[str, list[str]] | None):
+        if not isinstance(self.data, Table):
+            logger.error(f'Invalid data type: {type(self.data)} (widget: {self.title})')
+            return False
+
         for cname in ('wavelength', 'flux'):
             if cname not in self.data.colnames:
                 logger.error(column_not_found_message(cname, translate))
