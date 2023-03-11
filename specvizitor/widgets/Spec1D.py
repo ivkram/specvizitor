@@ -218,17 +218,19 @@ class Spec1D(ViewerElement):
             spec = None
         else:
             # create a Spectrum1D object
+
+            units = {} if rd.config.data.default_units is None else rd.config.data.default_units
             try:
                 spectral_axis_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("wavelength") + 1}'])
             except (KeyError, ValueError):
-                logger.warning('Failed to read spectral axis units')
-                spectral_axis_unit = u.Unit(self.rd.lines.wave_unit)
+                spectral_axis_unit = u.Unit(units.get('wavelength', 'Angstrom'))
+                logger.warning(f'Failed to read spectral axis units; assuming {spectral_axis_unit}')
 
             try:
                 flux_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("flux") + 1}'])
             except (KeyError, ValueError):
-                logger.warning('Failed to read flux units')
-                flux_unit = u.Unit('1e-17 erg cm-2 s-1 AA-1')
+                flux_unit = u.Unit(units.get('flux', ''))
+                logger.warning(f'Failed to read flux units; assuming {flux_unit}')
 
             unc = StdDevUncertainty(self.data['flux_error']) if 'flux_error' in self.data.colnames else None
 
