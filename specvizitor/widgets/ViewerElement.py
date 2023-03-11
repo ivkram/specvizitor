@@ -126,6 +126,11 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             self.data, self.meta = None, None
             return
 
+    def activate(self, a0: bool = True):
+        super().activate(a0=a0)
+        for w in self.lazy_widgets:
+            w.activate(a0=a0)
+
     @abc.abstractmethod
     def validate(self):
         pass

@@ -43,14 +43,14 @@ class Image(ViewerElement):
 
 
 @dataclass
-class Spectrum(ViewerElement):
-    redshift_slider: Slider = field(default_factory=lambda: Slider(max_value=10, step=1e-4))
-    follow: dict[str, LazyViewerElement] | None = None
+class SpectrumRegion(LazyViewerElement):
+    window: float = 40
 
 
 @dataclass
-class SpectrumRegion(LazyViewerElement):
-    window: float = 20
+class Spectrum(ViewerElement):
+    redshift_slider: Slider = field(default_factory=lambda: Slider(max_value=10, step=1e-4))
+    follow: dict[str, SpectrumRegion] | None = None
 
 
 @dataclass
