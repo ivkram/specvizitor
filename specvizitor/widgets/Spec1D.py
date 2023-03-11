@@ -69,10 +69,12 @@ class Spec1DItem(pg.PlotItem):
         y_min, y_max = self._default_yrange
         return y_min + 0.6 * (y_max - y_min)
 
-    def set_spec(self, spec: Spectrum1D):
+    def set_spec(self, spec: Spectrum1D | None):
         self.spec = spec
-        self._default_xrange = self.get_default_range(self.spec.spectral_axis.value)
-        self._default_yrange = self.get_default_range(self.spec.flux.value)
+
+        if spec is not None:
+            self._default_xrange = self.get_default_range(self.spec.spectral_axis.value)
+            self._default_yrange = self.get_default_range(self.spec.flux.value)
 
     def update_labels(self):
         self.setLabel('bottom', self.spec.spectral_axis.unit, **self.label_style)

@@ -54,7 +54,8 @@ class SmartSliderCore(QtWidgets.QSlider):
         return self._arr[self.index - 1]
 
     def index_from_value(self, value):
-        return self._arr.searchsorted(value, side='right')
+        i = self._arr.searchsorted(value, side='right')
+        return i if i > 0 else 1
 
     def reset(self):
         self.index = self.default_index
@@ -113,11 +114,11 @@ class SmartSlider(AbstractWidget):
     def value(self):
         return self._slider.value
 
-    def _set_editor_text(self):
+    def _update_editor_text(self):
         self._editor.setText('{value:.{precision}f}'.format(value=self.value, precision=self.precision))
 
     def update_from_slider(self):
-        self._set_editor_text()
+        self._update_editor_text()
         self.value_changed.emit(self.value)
 
     def _update_from_editor(self):
@@ -127,10 +128,10 @@ class SmartSlider(AbstractWidget):
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
 
-        # the true slider value might stay the same, so the editor would require a manual intervention
-        self._set_editor_text()
+        # tre true slider value might stay the same...
+        self._update_editor_text()
 
-    def update_from_cat(self, cat: Table, object_id, translate):
+    def update_default_value(self, cat: Table, object_id, translate):
         try:
             self._slider.default_value = cat.loc[object_id][self.cat_name]
         except KeyError:
