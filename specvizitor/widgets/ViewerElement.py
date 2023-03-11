@@ -10,7 +10,7 @@ from astropy.io.fits.header import Header
 from qtpy import QtWidgets
 
 from .LazyViewerElement import LazyViewerElement
-from ..utils import SmartSlider, table_tools
+from ..utils import SmartSliderWithEditor, table_tools
 from ..appdata import AppData
 from ..config import docks
 from ..io.viewer_data import get_filename, load
@@ -26,7 +26,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.cfg = cfg
 
         self.lazy_widgets: list[LazyViewerElement] = []
-        self.sliders: list[SmartSlider] = []
+        self.sliders: list[SmartSliderWithEditor] = []
 
         self.filename: pathlib.Path | None = None
         self.data: np.ndarray | Table | None = None
@@ -37,7 +37,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.sliders.append(self.smoothing_slider)
 
     def create_smoothing_slider(self, **kwargs):
-        smoothing_slider = SmartSlider(parameter='sigma', action='smooth the data', parent=self, **kwargs)
+        smoothing_slider = SmartSliderWithEditor(parameter='sigma', action='smooth the data', parent=self, **kwargs)
         smoothing_slider.value_changed[float].connect(self.smooth)
         smoothing_slider.setToolTip('Slide to smooth the data')
         return smoothing_slider

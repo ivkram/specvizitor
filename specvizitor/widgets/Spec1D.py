@@ -13,7 +13,7 @@ from astropy import units as u
 import pyqtgraph as pg
 from qtpy import QtCore
 
-from ..utils import SmartSlider
+from ..utils import SmartSliderWithEditor
 from ..utils.table_tools import column_not_found_message
 
 from .ViewerElement import ViewerElement
@@ -170,7 +170,7 @@ class Spec1D(ViewerElement):
             self.lazy_widgets, self.region_items = self.create_spectral_regions(self.cfg.tracked_lines, self.lines)
 
     def create_redshift_slider(self, **kwargs):
-        redshift_slider = SmartSlider(parameter='z', full_name='redshift', parent=self, **kwargs)
+        redshift_slider = SmartSliderWithEditor(parameter='z', full_name='redshift', parent=self, **kwargs)
         redshift_slider.value_changed[float].connect(self._redshift_changed_action)
         return redshift_slider
 
@@ -262,6 +262,7 @@ class Spec1D(ViewerElement):
             w.spec_1d.reset()
 
         self._z_slider.reset()
+        self._redshift_changed_action(self._z_slider.value)
 
     def clear_content(self):
         self.spec_1d.clear()

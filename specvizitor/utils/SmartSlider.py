@@ -11,13 +11,12 @@ from .table_tools import column_not_found_message
 logger = logging.getLogger(__name__)
 
 
-class SmartSliderCore(QtWidgets.QSlider):
+class SmartSlider(QtWidgets.QSlider):
     value_changed = QtCore.Signal()
 
-    def __init__(self, min_value=0, max_value=100, step=1, default_value=0,
-                 orientation=QtCore.Qt.Orientation.Vertical, parent=None):
+    def __init__(self, min_value=0, max_value=100, step=1, default_value=0, **kwargs):
 
-        super().__init__(orientation, parent)
+        super().__init__(**kwargs)
 
         self._n = int((max_value - min_value) / step) + 1
         self._arr = np.linspace(min_value, max_value, self._n)
@@ -65,7 +64,7 @@ class SmartSliderCore(QtWidgets.QSlider):
         self.value_changed.emit()
 
 
-class SmartSlider(AbstractWidget):
+class SmartSliderWithEditor(AbstractWidget):
     value_changed = QtCore.Signal(float)
 
     def __init__(self, parameter: str = 'x', full_name: str | None = None, action: str | None = None,
@@ -87,8 +86,8 @@ class SmartSlider(AbstractWidget):
         self.precision = text_editor_precision
 
         # create a slider
-        self._slider = SmartSliderCore(orientation=QtCore.Qt.Orientation.Horizontal if self.text_editor
-                                       else QtCore.Qt.Orientation.Vertical, parent=self, **kwargs)
+        self._slider = SmartSlider(orientation=QtCore.Qt.Orientation.Horizontal if self.text_editor
+                                   else QtCore.Qt.Orientation.Vertical, parent=self, **kwargs)
         self._slider.value_changed.connect(self.update_from_slider)
         self._slider.setToolTip(f'Slide to {self.action}')
 
@@ -143,7 +142,7 @@ class SmartSlider(AbstractWidget):
         self._slider.reset()
 
         # see a comment in _update_from_editor
-        self.update_from_slider()
+        self._update_editor_text()
 
     def clear(self):
         self._editor.setText("")
