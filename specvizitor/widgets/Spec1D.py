@@ -48,6 +48,9 @@ class Spec1DItem(pg.PlotItem):
         self._flux_plot = None
         self._flux_err_plot = None
 
+        self._default_xrange = None
+        self._default_yrange = None
+
         # set up the spectral lines
         self._line_artists = {}
         # TODO: store colors in config
@@ -58,18 +61,18 @@ class Spec1DItem(pg.PlotItem):
             label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
             self._line_artists[line_name] = {'line': line, 'label': label}
 
-    @lazyproperty
-    def default_xrange(self):
-        return np.nanmin(self.spec.spectral_axis.value), np.nanmax(self.spec.spectral_axis.value)
+    @staticmethod
+    def get_default_range(data: np.ndarray):
+        return np.nanmin(data), np.nanmax(data)
 
-    @lazyproperty
-    def default_yrange(self):
-        return np.nanmin(self.spec.flux.value), np.nanmax(self.spec.flux.value)
-
-    @lazyproperty
-    def _label_height(self):
-        y_min, y_max = self.default_yrange
+    def get_label_height(self):
+        y_min, y_max = self._default_yrange
         return y_min + 0.6 * (y_max - y_min)
+
+    def set_spec(self, spec: Spectrum1D):
+        self.spec = spec
+        self._default_xrange = self.get_default_range(self.spec.spectral_axis.value)
+        self._default_yrange = self.get_default_range(self.spec.flux.value)
 
     def update_labels(self):
         self.setLabel('bottom', self.spec.spectral_axis.unit, **self.label_style)
@@ -89,11 +92,13 @@ class Spec1DItem(pg.PlotItem):
                        padding=0)
 
     def set_line_positions(self, scale0: float = 1):
+        label_height = self.get_label_height()
+
         for line_name, line_artist in self._line_artists.items():
             line_wave = (self.lines.list[line_name] * u.Unit(self.lines.wave_unit)).to(self.spec.spectral_axis.unit)
             line_wave = line_wave.value * scale0
             line_artist['line'].setPos(line_wave)
-            line_artist['label'].setPos(QtCore.QPointF(line_wave, self._label_height))
+            line_artist['label'].setPos(QtCore.QPointF(line_wave, label_height))
 
         if self.window is not None:
             self.fit_in_window((scale0 * (self.window[0] + self.window[1]) / 2 - (self.window[1] - self.window[0]) / 2,
@@ -111,19 +116,14 @@ class Spec1DItem(pg.PlotItem):
 
     def reset(self):
         if self.window is None:
-            self.setXRange(*self.default_xrange, padding=0)
-        self.setYRange(*self.default_yrange)
-
-    def clear(self):
-        del self.default_xrange
-        del self.default_yrange
-        del self._label_height
-
-        super().clear()
+            self.setXRange(*self._default_xrange, padding=0)
+        self.setYRange(*self._default_yrange)
 
     def smooth(self, sigma: float):
-        self._flux_plot.setData(self.spec.wavelength.value,
-                                gaussian_filter1d(self.spec.flux.value, sigma) if sigma > 0 else self.spec.flux.value)
+        new_flux = gaussian_filter1d(self.spec.flux.value, sigma) if sigma > 0 else self.spec.flux.value
+
+        self._default_yrange = self.get_default_range(new_flux)
+        self._flux_plot.setData(self.spec.wavelength.value, new_flux)
 
 
 class Spec1DRegion(LazyViewerElement):
@@ -237,9 +237,9 @@ class Spec1D(ViewerElement):
             spec = Spectrum1D(spectral_axis=self.data['wavelength'] * spectral_axis_unit,
                               flux=self.data['flux'] * flux_unit, uncertainty=unc)
 
-        self.spec_1d.spec = spec
+        self.spec_1d.set_spec(spec)
         for w in self.lazy_widgets:
-            w.spec_1d.spec = spec
+            w.spec_1d.set_spec(spec)
 
     def validate(self, translate: dict[str, list[str]] | None):
         for cname in ('wavelength', 'flux'):
