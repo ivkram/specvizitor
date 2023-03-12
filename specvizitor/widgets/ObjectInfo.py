@@ -19,12 +19,15 @@ class ObjectInfo(AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
+
         self._table = QtWidgets.QTableWidget()
         self._table.setColumnCount(2)
         self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self._table.horizontalHeader().hide()
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        # self._table.setHorizontalHeaderLabels(('key', 'value'))
         self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
         # display information about the object

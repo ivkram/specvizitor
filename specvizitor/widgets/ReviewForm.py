@@ -13,6 +13,8 @@ class ReviewForm(AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
+
         # create checkboxes
         self._checkboxes = self.create_checkbox_widgets(self.cfg.default_checkboxes)
 

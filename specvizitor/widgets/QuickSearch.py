@@ -52,6 +52,7 @@ class QuickSearch(AbstractWidget):
             return
 
         if id_upd in self.rd.df.index:
+            self.parent().setFocus()
             self.object_selected.emit(self.rd.df.index.get_loc(id_upd))
         else:
             logger.error('ID not found')
@@ -68,6 +69,7 @@ class QuickSearch(AbstractWidget):
             return
 
         if 0 < index_upd <= self.rd.n_objects:
+            self.parent().setFocus()
             self.object_selected.emit(index_upd - 1)
         else:
             logger.error('Index out of range')
