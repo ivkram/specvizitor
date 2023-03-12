@@ -13,10 +13,8 @@ class ReviewForm(AbstractWidget):
         self.rd = rd
         self.cfg = cfg
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-
         # create checkboxes
-        self._checkboxes = self.create_checkbox_widgets(self.cfg.checkboxes)
+        self._checkboxes = self.create_checkbox_widgets(self.cfg.default_checkboxes)
 
         # create a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit(parent=self)
@@ -49,5 +47,5 @@ class ReviewForm(AbstractWidget):
             widget.setChecked(self.rd.df.at[self.rd.id, cname])
 
     def load_project(self):
-        self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.checkboxes))
+        self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.default_checkboxes))
         self.reset_layout()

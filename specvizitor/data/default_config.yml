@@ -18,7 +18,7 @@ data:
       - fluxerror
 
 review_form:
-  checkboxes:
+  default_checkboxes:
     contamination: "Contamination"
     extended: "Extended emission"
 

@@ -210,6 +210,7 @@ class MainWindow(QtWidgets.QMainWindow):
             w.setEnabled(True)
 
         self.review_form.load_project()
+        self.object_info.update_items()
         for widget in self.widgets:
             widget.setEnabled(True)
 
@@ -286,9 +287,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _settings_action(self):
         dialog = Settings(self.rd, parent=self)
-        if dialog.exec() and self.rd.df is not None:
-            self.central_widget.load_object()
-            self.object_info.load_object()
+        if dialog.exec():
+            self.object_info.update_items()
+            if self.rd.df is not None:
+                for widget in (self.central_widget, self.object_info):
+                    widget.load_object()
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))

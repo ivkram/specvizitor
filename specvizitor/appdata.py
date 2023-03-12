@@ -57,7 +57,7 @@ class AppData:
                          "to the memory")
             return
 
-        self.df = output.create(self.cat['id'], self.config.review_form.checkboxes)
+        self.df = output.create(self.cat['id'], self.config.review_form.default_checkboxes)
 
     def read(self):
         """ Read the inspection file and load inspection data to the dataframe. If the catalogue hasn't been already

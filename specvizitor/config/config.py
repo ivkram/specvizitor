@@ -26,12 +26,13 @@ class Appearance:
 
 @dataclass
 class ObjectInfo:
-    items: dict[str, str] | None = field(default_factory=lambda: {'ra': 'RA: {}', 'dec': 'Dec: {}'})
+    show_all: bool = False
+    items: list[str] | None = field(default_factory=lambda: ['ra', 'dec'])
 
 
 @dataclass
 class ReviewForm:
-    checkboxes: dict[str, str] | None = None
+    default_checkboxes: dict[str, str] | None = None
 
 
 @dataclass
