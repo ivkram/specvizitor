@@ -21,6 +21,8 @@ class Image2D(ViewerElement):
 
         self.cfg = cfg
 
+        self.allowed_data_types = (np.ndarray,)
+
         # set up the color map
         self._cmap = pg.colormap.get('viridis')
 
@@ -68,13 +70,6 @@ class Image2D(ViewerElement):
 
         # scale the data points
         self.scale(self.cfg.scale)
-
-    def validate(self, translate: dict[str, list[str]] | None):
-        if not isinstance(self.data, np.ndarray):
-            logger.error(f'Invalid data type: {type(self.data)} (widget: {self.title})')
-            return False
-
-        return True
 
     def display(self):
         self.image_2d.setImage(self.data)

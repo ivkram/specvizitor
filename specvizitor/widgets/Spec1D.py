@@ -107,9 +107,9 @@ class Spec1DItem(pg.PlotItem):
                                 scale0 * (self.window[0] + self.window[1]) / 2 + (self.window[1] - self.window[0]) / 2))
 
     def plot_all(self):
-        self._flux_plot.setData(self.spec.wavelength.value, self.spec.flux.value)
+        self._flux_plot.setData(self.spec.spectral_axis.value, self.spec.flux.value)
         if self.spec.uncertainty is not None:
-            self._flux_err_plot.setData(self.spec.wavelength.value, self.spec.uncertainty.array)
+            self._flux_err_plot.setData(self.spec.spectral_axis.value, self.spec.uncertainty.array)
 
     def display(self):
         self.update_labels()
@@ -125,7 +125,7 @@ class Spec1DItem(pg.PlotItem):
         new_flux = gaussian_filter1d(self.spec.flux.value, sigma) if sigma > 0 else self.spec.flux.value
 
         self._default_yrange = self.get_default_range(new_flux)
-        self._flux_plot.setData(self.spec.wavelength.value, new_flux)
+        self._flux_plot.setData(self.spec.spectral_axis.value, new_flux)
 
 
 class Spec1DRegion(LazyViewerElement):
@@ -157,6 +157,8 @@ class Spec1D(ViewerElement):
 
         self.lazy_widgets: list[Spec1DRegion] = []
         self.region_items: list[pg.LinearRegionItem] = []
+
+        self.allowed_data_types = (Spectrum1D,)
 
         # create a redshift slider
         self._z_slider = self.create_redshift_slider(**asdict(self.cfg.redshift_slider))
@@ -217,42 +219,11 @@ class Spec1D(ViewerElement):
     def _load_data(self, rd: AppData):
         super()._load_data(rd=rd)
         if self.data is None:
-            spec = None
-        else:
-            # create a Spectrum1D object
+            return
 
-            units = {} if rd.config.data.default_units is None else rd.config.data.default_units
-            try:
-                spectral_axis_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("wavelength") + 1}'])
-            except (KeyError, ValueError):
-                spectral_axis_unit = u.Unit(units.get('wavelength', 'Angstrom'))
-                logger.warning(f'Failed to read spectral axis units; assuming {spectral_axis_unit}')
-
-            try:
-                flux_unit = u.Unit(self.meta[f'TUNIT{self.data.colnames.index("flux") + 1}'])
-            except (KeyError, ValueError):
-                flux_unit = u.Unit(units.get('flux', ''))
-                logger.warning(f'Failed to read flux units; assuming {flux_unit}')
-
-            unc = StdDevUncertainty(self.data['flux_error']) if 'flux_error' in self.data.colnames else None
-
-            spec = Spectrum1D(spectral_axis=self.data['wavelength'] * spectral_axis_unit,
-                              flux=self.data['flux'] * flux_unit, uncertainty=unc)
-
-        self.spec_1d.set_spec(spec)
+        self.spec_1d.set_spec(self.data)
         for w in self.lazy_widgets:
-            w.spec_1d.set_spec(spec)
-
-    def validate(self, translate: dict[str, list[str]] | None):
-        if not isinstance(self.data, Table):
-            logger.error(f'Invalid data type: {type(self.data)} (widget: {self.title})')
-            return False
-
-        for cname in ('wavelength', 'flux'):
-            if cname not in self.data.colnames:
-                logger.error(column_not_found_message(cname, translate))
-                return False
-        return True
+            w.spec_1d.set_spec(self.data)
 
     def display(self):
         self.spec_1d.display()

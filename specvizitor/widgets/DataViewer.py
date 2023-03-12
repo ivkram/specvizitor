@@ -13,6 +13,7 @@ from .Spec1D import Spec1D
 
 from ..appdata import AppData
 from ..config.docks import Docks
+from ..io.viewer_data import add_enabled_aliases
 
 
 class DataViewer(AbstractWidget):
@@ -21,6 +22,10 @@ class DataViewer(AbstractWidget):
 
         self.rd = rd
         self.cfg = cfg
+
+        # register units
+        if self.rd.config.data.defined_units is not None:
+            add_enabled_aliases(self.rd.config.data.defined_units)
 
         self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
                          for plugin_name in plugins] if plugins is not None else []

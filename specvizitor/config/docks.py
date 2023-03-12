@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from ..utils.params import Params
 
@@ -33,8 +34,8 @@ class LazyViewerElement:
 @dataclass
 class ViewerElement(LazyViewerElement):
     filename_keyword: str | None = None
-    data_loader: str | None = None
-    data_loader_params: dict[str, str] | None = None
+    data_loader: str = 'auto'
+    data_loader_params: dict[str, Any] | None = None
     smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
 
 
@@ -53,6 +54,7 @@ class SpectrumRegion(LazyViewerElement):
 
 @dataclass
 class Spectrum(ViewerElement):
+    data_loader: str = 'specutils'
     redshift_slider: Slider = field(default_factory=lambda: Slider(max_value=10, step=1e-4))
     tracked_lines: dict[str, SpectrumRegion] | None = None
 

@@ -5,18 +5,6 @@ catalogue:
     dec: [Dec, DEC]
     z: [Z, redshift, Redshift, REDSHIFT, z_map]
 
-data:
-  translate:
-    wavelength:
-      - wave
-      - lambda
-    flux_error:
-      - std
-      - err
-      - fluxerr
-      - flux_err
-      - fluxerror
-
 review_form:
   default_checkboxes:
     contamination: "Contamination"

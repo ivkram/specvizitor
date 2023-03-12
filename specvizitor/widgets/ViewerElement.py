@@ -10,7 +10,7 @@ from astropy.io.fits.header import Header
 from qtpy import QtWidgets
 
 from .LazyViewerElement import LazyViewerElement
-from ..utils import SmartSliderWithEditor, table_tools
+from ..utils import SmartSliderWithEditor
 from ..appdata import AppData
 from ..config import docks
 from ..io.viewer_data import get_filename, load
@@ -29,8 +29,9 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.cfg = cfg
 
         self.filename: pathlib.Path | None = None
-        self.data: np.ndarray | Table | None = None
+        self.data = None
         self.meta: dict | Header | None = None
+        self.allowed_data_types: tuple | None = None
 
         # create a smoothing slider
         self.smoothing_slider = self.create_smoothing_slider(**asdict(self.cfg.smoothing_slider))
@@ -104,30 +105,18 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             self.data, self.meta = None, None
             return
 
-        if self.cfg.data_loader_params is None:
-            loader_config = {}
-        else:
-            loader_config = self.cfg.data_loader_params
+        loader_config = {} if self.cfg.data_loader_params is None else self.cfg.data_loader_params
 
-        try:
-            self.data, self.meta = load(self.cfg.data_loader, self.filename, self.title, **loader_config)
-        except TypeError as e:
-            # unexpected keyword(s) passed to the loader
-            logger.error(e.args[0])
-            self.data, self.meta = None, None
-            return
-
+        self.data, self.meta = load(self.cfg.data_loader, self.filename, self.title, **loader_config)
         if self.data is None:
             return
 
-        if isinstance(self.data, Table):
-            # translate the table columns
-            if rd.config.data.translate:
-                table_tools.translate(self.data, rd.config.data.translate)
-
-        if not self.validate(rd.config.data.translate):
-            self.data, self.meta = None, None
-            return
+        if self.allowed_data_types is not None:
+            if not any(isinstance(self.data, t) for t in self.allowed_data_types):
+                logger.error(f'Invalid input data type: {type(self.data)} (widget: {self.title}). '
+                             'Try to use a different data loader')
+                self.data, self.meta = None, None
+                return
 
     def setEnabled(self, a0: bool = True):
         super().setEnabled(a0)
@@ -135,10 +124,6 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             w.setEnabled(a0)
         for s in self.sliders:
             s.setEnabled(a0)
-
-    @abc.abstractmethod
-    def validate(self, translate: dict[str, list[str]] | None):
-        pass
 
     @abc.abstractmethod
     def display(self):

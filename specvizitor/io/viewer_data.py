@@ -1,10 +1,19 @@
 import logging
 import pathlib
 import re
+from dataclasses import dataclass
+import abc
+import warnings
 
 from astropy.io import fits
 from astropy.table import Table
-from PIL import Image, ImageOps
+import astropy.units as u
+from astropy.io.registry import IORegistryError
+from astropy.units.core import UnitConversionError
+from astropy.utils.exceptions import AstropyWarning
+from PIL import Image, ImageOps, UnidentifiedImageError
+from specutils import Spectrum1D
+
 import numpy as np
 
 from ..utils import FileBrowser
@@ -12,55 +21,108 @@ from ..utils import FileBrowser
 logger = logging.getLogger(__name__)
 
 
-def load_fits(filename: pathlib.Path, extname: str = None, extver: str = None):
+@dataclass
+class BaseLoader(abc.ABC):
+    name: str
 
-    hdul = fits.open(filename)
+    @abc.abstractmethod
+    def load(self, filename: pathlib.Path, **kwargs):
+        pass
 
-    if extname is not None and extver is None:
-        index = extname
-    elif extname is not None and extver is not None:
-        index = (extname, extver)
-    else:
-        index = 1
+    def raise_error(self, e):
+        logger.error(f'{type(self).__name__}: {e}')
 
-    try:
-        hdu = hdul[index]
-    except KeyError:
-        logger.error(f'Extension `{index}` not found (filename: {filename.name})')
+
+@dataclass
+class GenericFITSLoader(BaseLoader):
+    name: str = 'generic_fits'
+
+    def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, **kwargs):
+
+        hdul = fits.open(filename, **kwargs)
+
+        if extname is not None and extver is None:
+            index = extname
+        elif extname is not None and extver is not None:
+            index = (extname, extver)
+        else:
+            index = 1
+
+        try:
+            hdu = hdul[index]
+        except KeyError:
+            logger.error(f'Extension `{index}` not found (filename: {filename.name})')
+            return None, None
+
+        data = hdu.data
+        meta = hdu.header
+
+        if meta['XTENSION'] in ('TABLE', 'BINTABLE'):
+            data = Table(data)
+
+        return data, meta
+
+
+@dataclass
+class PILLoader(BaseLoader):
+    name: str = 'pil'
+
+    def load(self, filename: pathlib.Path, **kwargs):
+        try:
+            image = Image.open(filename, **kwargs)
+        except (TypeError, UnidentifiedImageError) as e:
+            self.raise_error(e)
+            return None, None
+
+        image = ImageOps.flip(image)
+
+        return np.array(image), image.info
+
+
+@dataclass
+class SpecutilsLoader(BaseLoader):
+    name: str = 'specutils'
+
+    def load(self, filename: pathlib.Path, **kwargs):
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', AstropyWarning)
+                spec: Spectrum1D = Spectrum1D.read(filename, **kwargs)
+        except (IOError, IORegistryError) as e:
+            self.raise_error(e)
+            return None, None
+
+        try:
+            # specutils treats "pix" as a valid spectral axis unit
+            spec.spectral_axis.unit.to(u.Unit('AA'))
+        except UnitConversionError:
+            self.raise_error(f'Invalid spectral axis unit: {spec.spectral_axis.unit}')
+            return None, None
+
+        return spec, spec.meta
+
+
+def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, **kwargs):
+    registered_loaders: dict[str, BaseLoader] =\
+        {loader.name: loader for loader in (GenericFITSLoader(), PILLoader(), SpecutilsLoader())}
+
+    allowed_loader_names = ('auto',) + tuple(loader.name for loader in registered_loaders.values())
+    if loader_name not in allowed_loader_names:
+        logger.error(f'Unknown loader type: `{loader_name}` (widget: {widget_name}).'
+                     f'Available loaders: {allowed_loader_names}')
         return None, None
 
-    data = hdu.data
-    meta = hdu.header
-
-    if meta['XTENSION'] in ('TABLE', 'BINTABLE'):
-        data = Table(data)
-
-    return data, meta
-
-
-def load_pil(filename: pathlib.Path):
-    image = Image.open(filename)
-    image = ImageOps.flip(image)
-    return np.array(image), image.info
-
-
-def load(loader_name: str | None, filename: pathlib.Path, alias: str, **kwargs):
-    loaders = {
-        'fits': load_fits,
-        'pil': load_pil
-    }
-
-    if loader_name is None:
+    if loader_name == 'auto':
         if filename.suffix == '.fits':
-            loader_name = 'fits'
+            loader_name = 'generic_fits'
         else:
             loader_name = 'pil'
 
-    if loader_name not in loaders.keys():
-        logger.error(f'Unknown loader type: `{loader_name}` ({alias}). Available loaders: {tuple(loaders.keys())}')
-        return None, None
+    return registered_loaders[loader_name].load(filename, **kwargs)
 
-    return loaders[loader_name](filename, **kwargs)
+
+def add_enabled_aliases(units: dict[str, str]):
+    u.add_enabled_aliases({alias: u.Unit(unit) for alias, unit in units.items()})
 
 
 def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
