@@ -3,6 +3,7 @@ import argparse
 import sys
 import logging
 from importlib.metadata import version
+from dataclasses import asdict
 
 from platformdirs import user_config_dir, user_cache_dir
 
@@ -18,7 +19,7 @@ from .config import Config, Docks, SpectralLines, Cache
 from .menu import NewFile, Settings
 from .widgets import (AbstractWidget, DataViewer, ControlBar, QuickSearch, ObjectInfo, ReviewForm)
 from .utils.logs import LogMessageBox
-from .utils.params import LocalFile
+from .utils.params import LocalFile, save_yaml
 
 
 logger = logging.getLogger(__name__)
@@ -154,6 +155,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._view.addSeparator()
 
+        self._backup_dock_configuration = QtWidgets.QAction("Backup...")
+        self._backup_dock_configuration.triggered.connect(self._backup_dock_configuration_action)
+        self._view.addAction(self._backup_dock_configuration)
+
         self._restore_dock_configuration = QtWidgets.QAction("Restore...")
         self._restore_dock_configuration.triggered.connect(self._restore_dock_configuration_action)
         self._view.addAction(self._restore_dock_configuration)
@@ -285,7 +290,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _restore_dock_configuration_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Dock Configuration',
-                                           basedir=user_config_dir('specvizitor'),
+                                           basedir=str(pathlib.Path()),
                                            filters='YAML Files (*.yml)')[0]
         if path:
             new_docks = self.rd.docks.replace_params(pathlib.Path(path))
@@ -302,6 +307,15 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.central_widget.load_object()
 
                 logger.info('Dock configuration restored')
+
+    def _backup_dock_configuration_action(self):
+        path = qtpy.compat.getsavefilename(self, caption='Save Dock Configuration',
+                                           basedir=str(pathlib.Path() / 'docks.yml'),
+                                           filters='YAML Files (*.yml)')[0]
+
+        if path:
+            save_yaml(path, asdict(self.rd.docks))
+            logger.info('Dock configuration saved')
 
     def _enter_fullscreen(self):
         self.was_maximized = True if self.isMaximized() else False
