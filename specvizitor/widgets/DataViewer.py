@@ -89,24 +89,8 @@ class DataViewer(AbstractWidget):
             for lazy_widget in widget.lazy_widgets:
                 self.add_dock(lazy_widget)
 
-    def reset_dock_state(self):
-        for dock_name in self.added_docks:
-            self.docks[dock_name].close()
-        self.docks = self.create_docks()
-        self.add_docks()
-
-    def save_dock_state(self):
-        self.rd.cache.dock_state = self.dock_area.saveState()
-        self.rd.cache.save()
-
-    def load_object(self):
-        self.save_dock_state()
-
+    def update_dock_titles(self):
         for w in self.dock_widgets.values():
-            # load the object to the widget
-            w.load_object(rd=self.rd)
-
-            # update the title of the dock
             if w.filename is not None and w.data is not None:
                 self.docks[w.title].setTitle(w.filename.name)
                 for lazy_widget in w.lazy_widgets:
@@ -115,6 +99,27 @@ class DataViewer(AbstractWidget):
                 self.docks[w.title].setTitle(w.title)
                 for lazy_widget in w.lazy_widgets:
                     self.docks[lazy_widget.title].setTitle(lazy_widget.title)
+
+    def reset_dock_state(self):
+        for dock_name in self.added_docks:
+            self.docks[dock_name].close()
+        self.docks = self.create_docks()
+        self.add_docks()
+        self.update_dock_titles()
+
+    def save_dock_state(self):
+        self.rd.cache.dock_state = self.dock_area.saveState()
+        self.rd.cache.save()
+
+    def load_object(self):
+        self.save_dock_state()
+
+        # load the object to the widget
+        for w in self.dock_widgets.values():
+            w.load_object(rd=self.rd)
+
+        # update the title of the dock
+        self.update_dock_titles()
 
         for plugin in self._plugins:
             plugin.link(self.dock_widgets, label_style=self.rd.config.data_viewer.label_style)
