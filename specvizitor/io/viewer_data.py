@@ -39,7 +39,11 @@ class GenericFITSLoader(BaseLoader):
 
     def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, **kwargs):
 
-        hdul = fits.open(filename, **kwargs)
+        try:
+            hdul = fits.open(filename, **kwargs)
+        except Exception as e:
+            self.raise_error(e)
+            return None, None
 
         if extname is not None and extver is None:
             index = extname
@@ -51,7 +55,7 @@ class GenericFITSLoader(BaseLoader):
         try:
             hdu = hdul[index]
         except KeyError:
-            logger.error(f'Extension `{index}` not found (filename: {filename.name})')
+            self.raise_error(f'Extension `{index}` not found (filename: {filename.name})')
             return None, None
 
         data = hdu.data
@@ -70,7 +74,7 @@ class PILLoader(BaseLoader):
     def load(self, filename: pathlib.Path, **kwargs):
         try:
             image = Image.open(filename, **kwargs)
-        except (TypeError, UnidentifiedImageError) as e:
+        except Exception as e:
             self.raise_error(e)
             return None, None
 
@@ -88,7 +92,7 @@ class SpecutilsLoader(BaseLoader):
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', AstropyWarning)
                 spec: Spectrum1D = Spectrum1D.read(filename, **kwargs)
-        except (IOError, IORegistryError, UnitConversionError) as e:
+        except Exception as e:
             self.raise_error(e)
             return None, None
 
