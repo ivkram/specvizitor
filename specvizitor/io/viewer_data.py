@@ -88,7 +88,7 @@ class SpecutilsLoader(BaseLoader):
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', AstropyWarning)
                 spec: Spectrum1D = Spectrum1D.read(filename, **kwargs)
-        except (IOError, IORegistryError) as e:
+        except (IOError, IORegistryError, UnitConversionError) as e:
             self.raise_error(e)
             return None, None
 
