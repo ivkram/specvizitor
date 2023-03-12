@@ -69,7 +69,7 @@ class Params:
     @classmethod
     def _read(cls, filename: pathlib.Path):
         params_dict = read_yaml(filename)
-        return dacite.from_dict(data_class=cls, data=params_dict)
+        return dacite.from_dict(data_class=cls, data=params_dict, config=dacite.Config(strict=True))
 
     @classmethod
     def read_default_params(cls, filename: str):
@@ -106,6 +106,16 @@ class Params:
         params._user_file = file
         params.save()
 
+        return params
+
+    def replace_params(self, filename: pathlib.Path):
+        try:
+            params = self._read(filename)
+        except Exception as e:
+            logger.error(str(e))
+            return None
+
+        params._user_file = self._user_file
         return params
 
     def save(self, file: LocalFile | None = None):

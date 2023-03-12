@@ -32,5 +32,4 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
     def reset_layout(self):
         for widget in get_widgets(self.layout()):
             self.layout().removeWidget(widget)
-            widget.destroy()
         self.init_ui()

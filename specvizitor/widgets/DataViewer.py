@@ -12,21 +12,22 @@ from .Image2D import Image2D
 from .Spec1D import Spec1D
 
 from ..appdata import AppData
-from ..config.docks import Docks
 from ..io.viewer_data import add_enabled_aliases
 
 
 class DataViewer(AbstractWidget):
-    def __init__(self, rd: AppData, cfg: Docks, plugins=None, parent=None):
+    def __init__(self, rd: AppData, parent=None):
         super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
 
         self.rd = rd
-        self.cfg = cfg
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         # register units
         if self.rd.config.data.defined_units is not None:
             add_enabled_aliases(self.rd.config.data.defined_units)
 
+        plugins = self.rd.config.plugins
         self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
                          for plugin_name in plugins] if plugins is not None else []
 
@@ -35,11 +36,11 @@ class DataViewer(AbstractWidget):
         self.dock_area = DockArea()
         self.added_docks: list[str] = []
 
-        self.dock_widgets = self.create_widgets()
-        self.docks = self.create_docks()
+        self.data_widgets: dict[str, ViewerElement] = {}
+        self.docks: dict[str, Dock] = {}
 
-    def init_ui(self):
-        self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
+        self.create_widgets()
+        self.create_docks()
         self.add_docks()
 
         try:
@@ -48,54 +49,64 @@ class DataViewer(AbstractWidget):
         except (KeyError, ValueError, TypeError):
             self.reset_dock_state()
 
-        for w in self.dock_widgets.values():
-            w.init_ui()
+    @property
+    def widgets(self) -> list[LazyViewerElement]:
+        lazy_widgets = []
+        for w in self.data_widgets.values():
+            lazy_widgets.extend(w.lazy_widgets)
 
-    def create_widgets(self) -> dict[str, ViewerElement]:
+        return list(self.data_widgets.values()) + lazy_widgets
+
+    def init_ui(self):
+        self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
+
+    def create_widgets(self):
+        # delete previously created widgets
+        if self.widgets:
+            for w in self.widgets:
+                w.deleteLater()
+
         widgets = {}
 
         # create widgets for images (e.g. image cutouts, 2D spectra)
-        if self.cfg.images is not None:
-            for name, image_cfg in self.cfg.images.items():
+        if self.rd.docks.images is not None:
+            for name, image_cfg in self.rd.docks.images.items():
                 widgets[name] = Image2D(cfg=image_cfg, title=name, global_viewer_config=self.rd.config.data_viewer,
                                         parent=self)
 
         # create widgets for 1D spectra
-        if self.cfg.spectra is not None:
-            for name, spec_cfg in self.cfg.spectra.items():
-                if spec_cfg.visible:
-                    widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg, title=name,
-                                           global_viewer_config=self.rd.config.data_viewer, parent=self)
+        if self.rd.docks.spectra is not None:
+            for name, spec_cfg in self.rd.docks.spectra.items():
+                widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg, title=name,
+                                       global_viewer_config=self.rd.config.data_viewer, parent=self)
 
-        return widgets
+        for w in widgets.values():
+            w.init_ui()
 
-    def create_docks(self) -> dict[str, Dock]:
+        self.data_widgets = widgets
+
+    def create_docks(self):
         docks = {}
-        for widget in self.dock_widgets.values():
+        for widget in self.widgets:
             docks[widget.title] = Dock(widget.title, widget=widget)
 
-            for lazy_widget in widget.lazy_widgets:
-                docks[lazy_widget.title] = Dock(lazy_widget.title, widget=lazy_widget)
-
-        return docks
+        self.docks = docks
 
     def add_dock(self, widget: LazyViewerElement):
-        if widget.cfg.visible:
-            self.dock_area.addDock(dock=self.docks[widget.title],
-                                   position=widget.cfg.position if widget.cfg.position is not None else 'bottom',
-                                   relativeTo=widget.cfg.relative_to if widget.cfg.relative_to in self.added_docks else None)
-            self.added_docks.append(widget.title)
+        self.dock_area.addDock(dock=self.docks[widget.title],
+                               position=widget.cfg.position if widget.cfg.position is not None else 'bottom',
+                               relativeTo=widget.cfg.relative_to if widget.cfg.relative_to in self.added_docks else None)
+        self.added_docks.append(widget.title)
 
     def add_docks(self):
         self.added_docks = []
 
-        for widget in self.dock_widgets.values():
-            self.add_dock(widget)
-            for lazy_widget in widget.lazy_widgets:
-                self.add_dock(lazy_widget)
+        for widget in self.widgets:
+            if widget.cfg.visible:
+                self.add_dock(widget)
 
     def update_dock_titles(self):
-        for w in self.dock_widgets.values():
+        for w in self.data_widgets.values():
             if w.filename is not None and w.data is not None:
                 self.docks[w.title].setTitle(w.filename.name)
                 for lazy_widget in w.lazy_widgets:
@@ -108,7 +119,8 @@ class DataViewer(AbstractWidget):
     def reset_dock_state(self):
         for dock_name in self.added_docks:
             self.docks[dock_name].close()
-        self.docks = self.create_docks()
+            self.docks[dock_name].deleteLater()
+        self.create_docks()
         self.add_docks()
         self.update_dock_titles()
 
@@ -120,17 +132,17 @@ class DataViewer(AbstractWidget):
         self.save_dock_state()
 
         # load the object to the widget
-        for w in self.dock_widgets.values():
+        for w in self.data_widgets.values():
             w.load_object(rd=self.rd)
 
         # update the title of the dock
         self.update_dock_titles()
 
         for plugin in self._plugins:
-            plugin.link(self.dock_widgets, label_style=self.rd.config.data_viewer.label_style)
+            plugin.link(self.data_widgets, label_style=self.rd.config.data_viewer.label_style)
 
     def reset_view(self):
-        for w in self.dock_widgets.values():
+        for w in self.data_widgets.values():
             if w.data is not None:
                 w.reset_view()
 

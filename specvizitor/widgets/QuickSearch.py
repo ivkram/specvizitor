@@ -48,14 +48,14 @@ class QuickSearch(AbstractWidget):
         try:
             id_upd = int(text)
         except ValueError:
-            logger.error('Invalid ID')
+            logger.error(f'Invalid ID: {text}')
             return
 
         if id_upd in self.rd.df.index:
             self.parent().setFocus()
             self.object_selected.emit(self.rd.df.index.get_loc(id_upd))
         else:
-            logger.error('ID not found')
+            logger.error(f'ID `{text}` not found')
             return
 
     def go_to_index(self):
@@ -65,12 +65,12 @@ class QuickSearch(AbstractWidget):
         try:
             index_upd = int(text)
         except ValueError:
-            logger.error('Invalid index')
+            logger.error(f'Invalid index: {text}')
             return
 
         if 0 < index_upd <= self.rd.n_objects:
             self.parent().setFocus()
             self.object_selected.emit(index_upd - 1)
         else:
-            logger.error('Index out of range')
+            logger.error(f'Index `{text}` out of range')
             return

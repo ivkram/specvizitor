@@ -36,20 +36,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle('Specvizitor')  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
+        # create a central widget
+        self.central_widget = DataViewer(self.rd, parent=self)
+
         # add a menu bar
         self._init_menu()
 
         # add a status bar
-        # self.statusBar().showMessage("Message in statusbar.")
+        # self.statusBar().showMessage("Message in the statusbar")
 
         self.widgets: list[AbstractWidget] = []
 
-        # create a central widget
-        self.central_widget = DataViewer(self.rd, cfg=self.rd.docks, plugins=self.rd.config.plugins, parent=self)
+        # add a central widget
         self.setCentralWidget(self.central_widget)
-
-        self._reset_view.triggered.connect(self.central_widget.reset_view)
-        self._reset_dock_state.triggered.connect(self.central_widget.reset_dock_state)
 
         # create a control panel
         self.control_bar = ControlBar(self.rd, parent=self)
@@ -146,10 +145,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setShortcut('F5')
+        self._reset_view.triggered.connect(self.central_widget.reset_view)
         self._view.addAction(self._reset_view)
 
         self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
+        self._reset_dock_state.triggered.connect(self.central_widget.reset_dock_state)
         self._view.addAction(self._reset_dock_state)
+
+        self._view.addSeparator()
+
+        self._restore_dock_configuration = QtWidgets.QAction("Restore...")
+        self._restore_dock_configuration.triggered.connect(self._restore_dock_configuration_action)
+        self._view.addAction(self._restore_dock_configuration)
 
         self._view.addSeparator()
 
@@ -275,6 +282,26 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.close()
         logger.info("Application closed")
+
+    def _restore_dock_configuration_action(self):
+        path = qtpy.compat.getopenfilename(self, caption='Open Dock Configuration',
+                                           basedir=user_config_dir('specvizitor'),
+                                           filters='YAML Files (*.yml)')[0]
+        if path:
+            new_docks = self.rd.docks.replace_params(pathlib.Path(path))
+            if new_docks is None:
+                logger.error('Failed to restore dock configuration')
+            else:
+                self.rd.docks = new_docks
+                self.rd.docks.save()
+
+                self.central_widget.create_widgets()
+                self.central_widget.reset_dock_state()
+
+                if self.rd.df is not None:
+                    self.central_widget.load_object()
+
+                logger.info('Dock configuration restored')
 
     def _enter_fullscreen(self):
         self.was_maximized = True if self.isMaximized() else False
