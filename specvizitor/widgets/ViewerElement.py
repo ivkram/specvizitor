@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 
 class ViewerElement(LazyViewerElement, abc.ABC):
     def __init__(self, cfg: docks.ViewerElement, **kwargs):
+        self.lazy_widgets: list[LazyViewerElement] = []
+        self.sliders: list[SmartSliderWithEditor] = []
+
         super().__init__(cfg=cfg, **kwargs)
 
         self.cfg = cfg
-
-        self.lazy_widgets: list[LazyViewerElement] = []
-        self.sliders: list[SmartSliderWithEditor] = []
 
         self.filename: pathlib.Path | None = None
         self.data: np.ndarray | Table | None = None
@@ -86,7 +86,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
 
         # display the data
         if self.data is not None:
-            self.activate()
+            self.setEnabled(True)
             self.display()
 
             for s in self.sliders:
@@ -94,7 +94,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
 
             self.reset_view()
         else:
-            self.activate(False)
+            self.setEnabled(False)
 
     def _load_data(self, rd: AppData):
         self.filename = get_filename(rd.config.data.dir, self.cfg.filename_keyword, rd.id)
@@ -129,10 +129,12 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             self.data, self.meta = None, None
             return
 
-    def activate(self, a0: bool = True):
-        super().activate(a0=a0)
+    def setEnabled(self, a0: bool = True):
+        super().setEnabled(a0)
         for w in self.lazy_widgets:
-            w.activate(a0=a0)
+            w.setEnabled(a0)
+        for s in self.sliders:
+            s.setEnabled(a0)
 
     @abc.abstractmethod
     def validate(self, translate: dict[str, list[str]] | None):

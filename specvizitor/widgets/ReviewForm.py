@@ -48,8 +48,6 @@ class ReviewForm(AbstractWidget):
         for cname, widget in self._checkboxes.items():
             widget.setChecked(self.rd.df.at[self.rd.id, cname])
 
-    def activate(self, *args, **kwargs):
+    def load_project(self):
         self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.checkboxes))
         self.reset_layout()
-
-        super().activate(*args, **kwargs)

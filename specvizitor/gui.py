@@ -91,7 +91,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
-            self.load_project(self.rd.cache.last_inspection_file)
+            self.open_file(self.rd.cache.last_inspection_file)
 
         settings = QtCore.QSettings()
         if settings.value("geometry") is None or settings.value("windowState") is None:
@@ -182,7 +182,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = NewFile(self.rd, parent=self)
         if dialog.exec():
             self.rd.cache.last_object_index = 0
-            self.activate()
+            self.load_project()
 
     def _open_file_action(self):
         """ Open an existing inspection file via QFileDialog.
@@ -190,27 +190,28 @@ class MainWindow(QtWidgets.QMainWindow):
         path = qtpy.compat.getopenfilename(self, caption='Open Inspection File', filters='CSV Files (*.csv)')[0]
         if path:
             self.rd.cache.last_object_index = 0
-            self.load_project(path)
+            self.open_file(path)
 
-    def load_project(self, path: str):
+    def open_file(self, path: str):
         """ Load inspection data from an existing inspection file.
         @param path: path to the inspection file
         """
         if pathlib.Path(path).exists():
             self.rd.output_path = pathlib.Path(path)
             self.rd.read()
-            self.activate()
+            self.load_project()
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
 
-    def activate(self):
+    def load_project(self):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
 
+        self.review_form.load_project()
         for widget in self.widgets:
-            widget.activate()
+            widget.setEnabled(True)
 
         # cache the inspection file name
         self.rd.cache.last_inspection_file = str(self.rd.output_path)

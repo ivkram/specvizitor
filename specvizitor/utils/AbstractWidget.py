@@ -34,13 +34,3 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
             self.layout().removeWidget(widget)
             widget.destroy()
         self.init_ui()
-
-    def activate(self, a0: bool = True):
-        self.setEnabled(a0)
-
-        for widget in get_widgets(self.layout()):
-            if isinstance(widget, AbstractWidget):
-                widget.activate(a0)
-            else:
-                widget.setEnabled(a0)
-
