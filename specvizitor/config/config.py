@@ -13,8 +13,7 @@ class Catalogue:
 class Data:
     dir: str = '.'
     id_pattern: str = r'\d+'
-    default_units: dict[str, str] | None = field(default_factory=lambda: {'wavelength': 'Angstrom',
-                                                                          'flux': '1e-19 erg cm-2 s-1 AA-1'})
+    default_units: dict[str, str] | None = field(default_factory=lambda: {'wavelength': 'Angstrom', 'flux': ''})
     translate: dict[str, list[str]] | None = None
 
 
