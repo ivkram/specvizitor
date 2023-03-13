@@ -16,7 +16,7 @@ from ..io.viewer_data import add_enabled_aliases
 
 class DataViewer(AbstractWidget):
     new_object_selected = QtCore.Signal(AppData)
-    reset_view_triggered = QtCore.Signal()
+    view_reset = QtCore.Signal()
 
     def __init__(self, rd: AppData, parent=None):
         super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
@@ -63,7 +63,7 @@ class DataViewer(AbstractWidget):
         # delete previously created widgets
         if self.widgets:
             self.new_object_selected.disconnect()
-            self.reset_view_triggered.disconnect()
+            self.view_reset.disconnect()
 
             for w in self.widgets:
                 w.graphics_layout.clear()
@@ -88,7 +88,6 @@ class DataViewer(AbstractWidget):
 
         for w in widgets.values():
             self.new_object_selected.connect(w.load_object)
-            self.reset_view_triggered.connect(w.reset_view)
 
         self.core_widgets = widgets
 
@@ -153,6 +152,14 @@ class DataViewer(AbstractWidget):
         # load the object to the widgets
         self.new_object_selected.emit(self.rd)
 
+        try:
+            self.view_reset.disconnect()
+        except TypeError:
+            pass
+        for w in self.core_widgets.values():
+            if w.data is not None:
+                self.view_reset.connect(w.reset_view)
+
         for plugin in self._plugins:
             plugin.link(self.core_widgets, label_style=self.rd.config.data_viewer.label_style)
 
@@ -160,7 +167,7 @@ class DataViewer(AbstractWidget):
         self.update_dock_titles()
 
     def reset_view(self):
-        self.reset_view_triggered.emit()
+        self.view_reset.emit()
 
     def take_screenshot(self, filename: str):
         self.grab().save(filename)
