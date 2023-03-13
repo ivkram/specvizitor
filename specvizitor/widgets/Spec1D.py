@@ -1,24 +1,21 @@
-import logging
-from dataclasses import asdict
-from functools import partial
-
-from specutils import Spectrum1D
-
-import numpy as np
-from scipy.ndimage import gaussian_filter1d
 from astropy import units as u
-
+import numpy as np
 import pyqtgraph as pg
 from qtpy import QtCore
+from scipy.ndimage import gaussian_filter1d
+from specutils import Spectrum1D
 
-from ..utils import SmartSliderWithEditor
+from dataclasses import asdict
+from functools import partial
+import logging
 
-from .ViewerElement import ViewerElement
-from .LazyViewerElement import LazyViewerElement
 from ..config import docks
 from ..config.spectral_lines import SpectralLines
 from ..appdata import AppData
 
+from .LazyViewerElement import LazyViewerElement
+from .ViewerElement import ViewerElement
+from .SmartSlider import SmartSliderWithEditor
 
 logger = logging.getLogger(__name__)
 

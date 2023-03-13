@@ -1,16 +1,13 @@
-import logging
-import pathlib
-from functools import partial
-
 import numpy as np
-
 import qtpy
 from qtpy import QtGui, QtCore, QtWidgets
 
+from functools import partial
+import logging
+import pathlib
 
-from ..utils import AbstractWidget
 from ..appdata import AppData
-
+from .AbstractWidget import AbstractWidget
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
-import abc
-
 from qtpy import QtWidgets
 
-from specvizitor.utils.widget_tools import get_widgets
+import abc
+
+from ..utils.widget_tools import get_widgets
 
 
 class QtAbcMeta(type(QtWidgets.QWidget), type(abc.ABC)):

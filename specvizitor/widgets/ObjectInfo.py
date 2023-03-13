@@ -1,12 +1,12 @@
+from astropy.coordinates import SkyCoord
+from qtpy import QtWidgets
+
 import logging
 
-# from astropy.coordinates import SkyCoord
-from qtpy import QtWidgets, QtCore
-
-from ..utils import AbstractWidget
-from ..utils import column_not_found_message
 from ..appdata import AppData
 from ..config import config
+from ..utils.table_tools import column_not_found_message
+from .AbstractWidget import AbstractWidget
 
 
 logger = logging.getLogger(__name__)

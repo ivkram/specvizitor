@@ -1,19 +1,17 @@
-import logging
-import abc
-import pathlib
-from dataclasses import asdict
-from functools import wraps
-
 from astropy.io.fits.header import Header
-
 from qtpy import QtWidgets, QtCore
 
-from .LazyViewerElement import LazyViewerElement
-from ..utils import SmartSliderWithEditor
+import abc
+from dataclasses import asdict
+import logging
+import pathlib
+
 from ..appdata import AppData
 from ..config import docks
 from ..io.viewer_data import get_filename, load
 
+from .LazyViewerElement import LazyViewerElement
+from .SmartSlider import SmartSliderWithEditor
 
 logger = logging.getLogger(__name__)
 

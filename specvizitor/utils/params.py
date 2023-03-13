@@ -1,13 +1,13 @@
+import dacite
+from dacite.exceptions import WrongTypeError, MissingValueError
+from dictdiffer import diff, patch, swap
+
+from dataclasses import dataclass, asdict
+from functools import wraps
 import logging
 import pathlib
 import shutil
 import yaml
-from functools import wraps
-from dataclasses import dataclass, asdict
-
-import dacite
-from dacite.exceptions import WrongTypeError, MissingValueError
-from dictdiffer import diff, patch, swap
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
-from qtpy import QtGui
 import astropy.units as u
+from qtpy import QtGui
 
 from ..widgets.ViewerElement import ViewerElement
 from ..widgets.Image2D import Image2D

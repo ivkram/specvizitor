@@ -1,26 +1,30 @@
-import pathlib
-import argparse
-import sys
-import logging
-from importlib.metadata import version
-from dataclasses import asdict
-
 from platformdirs import user_config_dir, user_cache_dir
-
 import pyqtgraph as pg
+import qdarktheme
 import qtpy.compat
 from qtpy import QtGui, QtWidgets, QtCore
 from qtpy.QtCore import Slot
 
-import qdarktheme
+import argparse
+from dataclasses import asdict
+from importlib.metadata import version
+import logging
+import pathlib
+import sys
 
 from .appdata import AppData
 from .config import Config, Docks, SpectralLines, Cache
-from .menu import NewFile, Settings
-from .widgets import (AbstractWidget, DataViewer, ControlBar, QuickSearch, ObjectInfo, ReviewForm)
 from .utils.logs import LogMessageBox
 from .utils.params import LocalFile, save_yaml
 
+from .menu.NewFile import NewFile
+from .menu.Settings import Settings
+
+from .widgets.DataViewer import DataViewer
+from .widgets.ControlBar import ControlBar
+from .widgets.QuickSearch import QuickSearch
+from .widgets.ObjectInfo import ObjectInfo
+from .widgets.ReviewForm import ReviewForm
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +36,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
 
         self.rd = appdata
-        self.widgets: list[AbstractWidget] = []
+        self.widgets: list[QtWidgets.QWidget] = []
 
         self.was_maximized: bool
         self.setFocusPolicy(QtCore.Qt.StrongFocus)

@@ -1,13 +1,12 @@
-import logging
-
 from platformdirs import user_config_dir, user_cache_dir
 from qtpy import QtWidgets
+
+import logging
 
 from ..appdata import AppData
 from ..io.catalogue import load_cat, create_cat, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
-
 
 logger = logging.getLogger(__name__)
 

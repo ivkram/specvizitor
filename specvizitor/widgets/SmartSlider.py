@@ -1,11 +1,11 @@
-import logging
-
-import numpy as np
 from astropy.table import Table
+import numpy as np
 from qtpy import QtWidgets, QtCore
 
+import logging
+
+from ..utils.table_tools import column_not_found_message
 from .AbstractWidget import AbstractWidget
-from .table_tools import column_not_found_message
 
 
 logger = logging.getLogger(__name__)

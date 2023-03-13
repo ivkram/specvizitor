@@ -1,22 +1,20 @@
-import logging
-import pathlib
-import re
-from dataclasses import dataclass
-import abc
-import warnings
-
 from astropy.io import fits
 from astropy.table import Table
 import astropy.units as u
-from astropy.io.registry import IORegistryError
 from astropy.units.core import UnitConversionError
 from astropy.utils.exceptions import AstropyWarning
-from PIL import Image, ImageOps, UnidentifiedImageError
+import numpy as np
+from PIL import Image, ImageOps
 from specutils import Spectrum1D
 
-import numpy as np
+import abc
+from dataclasses import dataclass
+import logging
+import pathlib
+import re
+import warnings
 
-from ..utils import FileBrowser
+from ..widgets import FileBrowser
 
 logger = logging.getLogger(__name__)
 

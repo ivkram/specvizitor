@@ -1,8 +1,8 @@
-import logging
-import pathlib
-
 import qtpy.compat
 from qtpy import QtWidgets
+
+import logging
+import pathlib
 
 logger = logging.getLogger(__name__)
 

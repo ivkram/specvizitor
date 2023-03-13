@@ -1,17 +1,17 @@
-import importlib
-from qtpy import QtWidgets, QtCore
-
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
+from qtpy import QtWidgets, QtCore
 
-from ..utils import AbstractWidget
-from .ViewerElement import ViewerElement
-from .LazyViewerElement import LazyViewerElement
-from .Image2D import Image2D
-from .Spec1D import Spec1D
+import importlib
 
 from ..appdata import AppData
 from ..io.viewer_data import add_enabled_aliases
+
+from .AbstractWidget import AbstractWidget
+from .LazyViewerElement import LazyViewerElement
+from .ViewerElement import ViewerElement
+from .Image2D import Image2D
+from .Spec1D import Spec1D
 
 
 class DataViewer(AbstractWidget):

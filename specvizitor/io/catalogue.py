@@ -1,12 +1,12 @@
-import logging
-
-import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+import numpy as np
+
+import logging
 
 from .viewer_data import get_ids_from_dir
 from ..utils import table_tools
-from ..utils import FileBrowser
+from ..widgets.FileBrowser import FileBrowser
 
 logger = logging.getLogger(__name__)
 

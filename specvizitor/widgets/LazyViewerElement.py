@@ -1,8 +1,8 @@
-from qtpy import QtWidgets
 import pyqtgraph as pg
+from qtpy import QtWidgets
 
-from ..utils import AbstractWidget
 from ..config import docks, config
+from .AbstractWidget import AbstractWidget
 
 
 class LazyViewerElement(AbstractWidget):

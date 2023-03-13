@@ -1,9 +1,10 @@
 from qtpy import QtWidgets
 
-from ..utils import AbstractWidget
 from ..appdata import AppData
 from ..config import config
 from ..io.output import get_checkboxes
+
+from .AbstractWidget import AbstractWidget
 
 
 class ReviewForm(AbstractWidget):

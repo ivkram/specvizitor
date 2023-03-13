@@ -1,16 +1,14 @@
-import logging
-
+from astropy.visualization import ZScaleInterval
 import numpy as np
 import pyqtgraph as pg
-from astropy.visualization import ZScaleInterval
+from pgcolorbar.colorlegend import ColorLegendItem
 from scipy.ndimage import gaussian_filter
 
-from pgcolorbar.colorlegend import ColorLegendItem
+import logging
 
-from .ViewerElement import ViewerElement
-from ..config import docks
 from ..appdata import AppData
-
+from ..config import docks
+from .ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
 

@@ -1,14 +1,13 @@
+from qtpy import QtWidgets
+
 import logging
 import pathlib
 
-from qtpy import QtWidgets
-
 from ..appdata import AppData
-from ..utils import FileBrowser
 from ..io.catalogue import load_cat, create_cat, cat_browser
 from ..io.viewer_data import get_ids_from_dir, data_browser
 from ..utils.logs import qlog
-
+from ..widgets.FileBrowser import FileBrowser
 
 logger = logging.getLogger(__name__)
 
