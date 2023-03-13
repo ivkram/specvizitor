@@ -144,7 +144,6 @@ class Spec1DRegion(LazyViewerElement):
 
 
 class Spec1D(ViewerElement):
-    data_loaded = QtCore.Signal(Spectrum1D)
     redshift_changed = QtCore.Signal(float)
 
     def __init__(self, cfg: docks.Spectrum, lines: SpectralLines | None = None, **kwargs):

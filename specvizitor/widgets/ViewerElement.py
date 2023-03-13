@@ -2,6 +2,7 @@ import logging
 import abc
 import pathlib
 from dataclasses import asdict
+from functools import wraps
 
 from astropy.io.fits.header import Header
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(LazyViewerElement, abc.ABC):
-    data_loaded = QtCore.Signal()
+    data_loaded = QtCore.Signal(object)
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal()
