@@ -71,7 +71,7 @@ class Image2D(ViewerElement):
         # scale the data points
         self.scale(self.cfg.scale)
 
-    def display(self):
+    def add_content(self):
         self.image_2d.setImage(self.data)
 
     def reset_view(self):

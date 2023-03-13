@@ -3,11 +3,9 @@ import abc
 import pathlib
 from dataclasses import asdict
 
-import numpy as np
-from astropy.table import Table
 from astropy.io.fits.header import Header
 
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
 from .LazyViewerElement import LazyViewerElement
 from ..utils import SmartSliderWithEditor
@@ -20,6 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(LazyViewerElement, abc.ABC):
+    data_loaded = QtCore.Signal()
+    content_added = QtCore.Signal()
+    view_reset = QtCore.Signal()
+    content_cleared = QtCore.Signal()
+    smoothing_applied = QtCore.Signal(float)
+
     def __init__(self, cfg: docks.ViewerElement, **kwargs):
         self.lazy_widgets: list[LazyViewerElement] = []
         self.sliders: list[SmartSliderWithEditor] = []
@@ -88,7 +92,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # display the data
         if self.data is not None:
             self.setEnabled(True)
-            self.display()
+            self.add_content()
 
             for s in self.sliders:
                 s.update_from_slider()
@@ -126,7 +130,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             s.setEnabled(a0)
 
     @abc.abstractmethod
-    def display(self):
+    def add_content(self):
         pass
 
     @abc.abstractmethod

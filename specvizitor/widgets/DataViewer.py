@@ -153,11 +153,11 @@ class DataViewer(AbstractWidget):
         # load the object to the widgets
         self.new_object_selected.emit(self.rd)
 
-        # update the dock titles
-        self.update_dock_titles()
-
         for plugin in self._plugins:
             plugin.link(self.core_widgets, label_style=self.rd.config.data_viewer.label_style)
+
+        # update the dock titles
+        self.update_dock_titles()
 
     def reset_view(self):
         self.reset_view_triggered.emit()

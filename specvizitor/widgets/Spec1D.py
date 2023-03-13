@@ -89,7 +89,8 @@ class Spec1DItem(pg.PlotItem):
                        window[1].to(self.spec.spectral_axis.unit).value,
                        padding=0)
 
-    def set_line_positions(self, scale0: float = 1):
+    def set_line_positions(self, redshift: float = 0):
+        scale0 = 1 + redshift
         label_height = self.get_label_height()
 
         for line_name, line_artist in self._line_artists.items():
@@ -143,6 +144,9 @@ class Spec1DRegion(LazyViewerElement):
 
 
 class Spec1D(ViewerElement):
+    data_loaded = QtCore.Signal(Spectrum1D)
+    redshift_changed = QtCore.Signal(float)
+
     def __init__(self, cfg: docks.Spectrum, lines: SpectralLines | None = None, **kwargs):
         super().__init__(cfg=cfg, **kwargs)
 
@@ -183,6 +187,12 @@ class Spec1D(ViewerElement):
                 spec_region = Spec1DRegion(line=(line, lines.list[line] * u.Unit(lines.wave_unit)), cfg=line_cfg,
                                            title=f"{self.title} [{line}]", global_viewer_config=self.global_config,
                                            parent=self.parent())
+                self.data_loaded.connect(spec_region.spec_1d.set_spec)
+                self.content_added.connect(spec_region.spec_1d.display)
+                self.view_reset.connect(spec_region.spec_1d.reset)
+                self.content_cleared.connect(spec_region.spec_1d.clear)
+                self.smoothing_applied.connect(spec_region.spec_1d.smooth)
+                self.redshift_changed.connect(spec_region.spec_1d.set_line_positions)
                 region_widgets.append(spec_region)
 
                 lr = pg.LinearRegionItem()
@@ -198,9 +208,8 @@ class Spec1D(ViewerElement):
         return region_widgets, region_items
 
     def _redshift_changed_action(self, redshift: float):
-        self.spec_1d.set_line_positions(1 + redshift)
-        for w in self.lazy_widgets:
-            w.spec_1d.set_line_positions(1 + redshift)
+        self.spec_1d.set_line_positions(redshift)
+        self.redshift_changed.emit(redshift)
 
     def _region_item_changed_action(self, n: int):
         region = self.region_items[n].getRegion()
@@ -216,30 +225,26 @@ class Spec1D(ViewerElement):
             return
 
         self.spec_1d.set_spec(self.data)
-        for w in self.lazy_widgets:
-            w.spec_1d.set_spec(self.data)
+        self.data_loaded.emit(self.data)
 
-    def display(self):
+    def add_content(self):
         self.spec_1d.display()
         for lr in self.region_items:
             self.spec_1d.addItem(lr)
-        for w in self.lazy_widgets:
-            w.spec_1d.display()
+
+        self.content_added.emit()
 
     def reset_view(self):
         self.spec_1d.reset()
-        for w in self.lazy_widgets:
-            w.spec_1d.reset()
-
         self._z_slider.reset()
         self._redshift_changed_action(self._z_slider.value)
 
+        self.view_reset.emit()
+
     def clear_content(self):
         self.spec_1d.clear()
-        for w in self.lazy_widgets:
-            w.spec_1d.clear()
+        self.content_cleared.emit()
 
     def smooth(self, sigma: float):
         self.spec_1d.smooth(sigma)
-        for w in self.lazy_widgets:
-            w.spec_1d.smooth(sigma)
+        self.smoothing_applied.emit(sigma)

@@ -250,16 +250,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rd.j = j
 
+        # cache the index of the object
+        # TODO: cache the ID instead of the index
+        self.rd.cache.last_object_index = j
+        self.rd.cache.save()
+
         for widget in (self.central_widget, self.control_bar, self.object_info, self.review_form):
             widget.load_object()
 
         self.setWindowTitle(
             f'{self.rd.output_path.name} – ID {self.rd.id} [#{self.rd.j + 1}/{self.rd.n_objects}] – Specvizitor')
-
-        # cache the index of the object
-        # TODO: cache the ID instead of the index
-        self.rd.cache.last_object_index = j
-        self.rd.cache.save()
 
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
