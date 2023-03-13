@@ -27,9 +27,10 @@ logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, appdata: AppData, parent=None):
-        self.rd = appdata
-
         super().__init__(parent)
+
+        self.rd = appdata
+        self.widgets: list[AbstractWidget] = []
 
         self.was_maximized: bool
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -39,17 +40,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # create a central widget
         self.central_widget = DataViewer(self.rd, parent=self)
+        self.setCentralWidget(self.central_widget)
 
         # add a menu bar
         self._init_menu()
 
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
-
-        self.widgets: list[AbstractWidget] = []
-
-        # add a central widget
-        self.setCentralWidget(self.central_widget)
 
         # create a control panel
         self.control_bar = ControlBar(self.rd, parent=self)
@@ -89,10 +86,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._init_ui()
 
-        # read cache and try to load the last active project
-        if self.rd.cache.last_inspection_file:
-            self.open_file(self.rd.cache.last_inspection_file)
-
         settings = QtCore.QSettings()
         if settings.value("geometry") is None or settings.value("windowState") is None:
             self.showMaximized()
@@ -100,6 +93,10 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.restoreGeometry(settings.value("geometry"))
             self.restoreState(settings.value("windowState"))
+
+        # read cache and try to load the last active project
+        if self.rd.cache.last_inspection_file:
+            self.open_file(self.rd.cache.last_inspection_file)
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -232,7 +229,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # try to display the object with an index stored in cache
         j = self.rd.cache.last_object_index
-        if j and j < self.rd.n_objects:
+        if j and 0 <= j < self.rd.n_objects:
             self.load_object(int(j))
         else:
             self.load_object(0)

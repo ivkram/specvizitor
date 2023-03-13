@@ -1,6 +1,9 @@
 from qtpy import QtGui
+import astropy.units as u
 
 from ..widgets.ViewerElement import ViewerElement
+from ..widgets.Image2D import Image2D
+from ..widgets.Spec1D import Spec1D
 
 
 class Plugin:
@@ -9,23 +12,26 @@ class Plugin:
     def link(widgets: dict[str, ViewerElement], label_style: dict[str, str] | None = None):
 
         try:
-            spec_1d, spec_2d = widgets["Spectrum 1D"], widgets["Spectrum 2D"]
+            spec_1d_widget: Spec1D = widgets["Spectrum 1D"]
+            spec_2d_widget: Image2D = widgets["Spectrum 2D"]
         except KeyError:
             return
 
-        if any(w.data is None for w in (spec_1d, spec_2d)):
+        if any(w.data is None for w in (spec_1d_widget, spec_2d_widget)):
             return
 
         # set x-axis transformation for the 2D spectrum plot
-        dlam = spec_2d.meta['CD1_1'] * 1e4
-        crval = spec_2d.meta['CRVAL1'] * 1e4
-        crpix = spec_2d.meta['CRPIX1']
+        scale = u.Unit('micron') / spec_1d_widget.spec_1d.spec.spectral_axis.unit
+
+        dlam = spec_2d_widget.meta['CD1_1'] * scale
+        crval = spec_2d_widget.meta['CRVAL1'] * scale
+        crpix = spec_2d_widget.meta['CRPIX1']
 
         qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
 
-        spec_2d.image_2d.setTransform(qtransform)
-        spec_2d.container.setAspectLocked(True, 1 / dlam)
+        spec_2d_widget.image_2d.setTransform(qtransform)
+        spec_2d_widget.container.setAspectLocked(True, 1 / dlam)
         if label_style is None:
             label_style = {}
-        spec_2d.container.setLabel('bottom', spec_1d.spec_1d.spec.spectral_axis.unit, **label_style)
-        spec_2d.container.setXLink(spec_1d.title)  # link the x-axis range
+        spec_2d_widget.container.setLabel('bottom', spec_1d_widget.spec_1d.spec.spectral_axis.unit, **label_style)
+        spec_2d_widget.container.setXLink(spec_1d_widget.title)  # link the x-axis range
