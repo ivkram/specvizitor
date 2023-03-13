@@ -16,7 +16,7 @@ class ControlBar(QtWidgets.QToolBar, AbstractWidget):
     object_selected = QtCore.Signal(int)
     reset_view_button_clicked = QtCore.Signal()
     reset_dock_state_button_clicked = QtCore.Signal()
-    screenshot_button_clicked = QtCore.Signal(str)
+    screenshot_button_clicked = QtCore.Signal()
     settings_button_clicked = QtCore.Signal()
 
     def __init__(self, rd: AppData, parent=None):
@@ -37,8 +37,8 @@ class ControlBar(QtWidgets.QToolBar, AbstractWidget):
         # create the `screenshot` button
         self._screenshot_button = QtWidgets.QAction(parent=self)
         self._screenshot_button.setIcon(self.get_icon('screenshot.svg'))
-        self._screenshot_button.setToolTip('Take a screenshot')
-        self._screenshot_button.triggered.connect(self.screenshot)
+        self._screenshot_button.setToolTip('Take a screenshot of the dock area')
+        self._screenshot_button.triggered.connect(self.screenshot_button_clicked.emit)
 
         # create the `reset view` button
         self._reset_view_button = QtWidgets.QAction(parent=self)
@@ -103,27 +103,29 @@ class ControlBar(QtWidgets.QToolBar, AbstractWidget):
 
         self.addSeparator()
 
-        self.addAction(self._screenshot_button)
         self.addAction(self._star_button)
 
         self.addSeparator()
 
         self.addAction(self._reset_view_button)
         self.addAction(self._reset_dock_state_button)
+        self.addAction(self._screenshot_button)
 
         self.addWidget(self._spacer)
 
         self.addAction(self._settings_button)
 
+    @QtCore.Slot()
     def load_project(self):
         for b in self.viewer_connected_buttons:
             b.setEnabled(True)
 
-    def load_object(self):
-        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(self.rd.df.at[self.rd.id, 'starred'])))
+    @QtCore.Slot(AppData)
+    def load_object(self, rd: AppData):
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(rd.df.at[rd.id, 'starred'])))
 
-        self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
-        self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
+        self._pn_buttons['previous starred'].setEnabled(np.sum(rd.df['starred']) > 0)
+        self._pn_buttons['next starred'].setEnabled(np.sum(rd.df['starred']) > 0)
 
     def previous_next_object(self, command: str, starred: bool):
         j_upd = self.update_index(self.rd.j, self.rd.n_objects, command)
@@ -174,12 +176,3 @@ class ControlBar(QtWidgets.QToolBar, AbstractWidget):
 
         self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
         self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
-
-    def screenshot(self):
-        default_filename = '{}_ID{}.png'.format(self.rd.output_path.stem.replace(' ', '_'), self.rd.id)
-        path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
-                                                      basedir=str(pathlib.Path().resolve() / default_filename),
-                                                      filters='Images (*.png)')
-
-        if path:
-            self.screenshot_button_clicked.emit(path)

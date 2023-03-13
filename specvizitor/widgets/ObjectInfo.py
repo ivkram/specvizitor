@@ -1,5 +1,5 @@
 from astropy.coordinates import SkyCoord
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
 import logging
 
@@ -66,20 +66,22 @@ class ObjectInfo(AbstractWidget):
     def init_ui(self):
         self.layout().addWidget(self._table, 1, 1, 1, 1)
 
+    @QtCore.Slot()
     def load_project(self):
         self.setEnabled(True)
         self.update_items()
 
-    def load_object(self):
+    @QtCore.Slot(AppData)
+    def load_object(self, rd: AppData):
         for row in self._table_items:
             cname = row[0].text()
             try:
-                row[1].setText(str(self.rd.cat.loc[self.rd.id][cname]))
+                row[1].setText(str(rd.cat.loc[rd.id][cname]))
             except KeyError:
-                if cname in self.rd.cat.colnames:
-                    logger.warning('Object not found in the catalogue (ID: {})'.format(self.rd.id))
+                if cname in rd.cat.colnames:
+                    logger.warning('Object not found in the catalogue (ID: {})'.format(rd.id))
                 else:
-                    logger.warning(column_not_found_message(cname, self.rd.config.catalogue.translate))
+                    logger.warning(column_not_found_message(cname, rd.config.catalogue.translate))
                 row[1].setText('')
 
         # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:

@@ -1,4 +1,4 @@
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
 from ..appdata import AppData
 from ..config import config
@@ -41,6 +41,7 @@ class ReviewForm(AbstractWidget):
         self.layout().addWidget(QtWidgets.QLabel('Comments:', parent=self), len(self._checkboxes) + 1, 1, 1, 1)
         self.layout().addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
 
+    @QtCore.Slot()
     def load_project(self):
         self.setEnabled(True)
 
@@ -49,10 +50,11 @@ class ReviewForm(AbstractWidget):
         self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.default_checkboxes))
         self.reset_layout()
 
-    def load_object(self):
-        self._comments_widget.setText(self.rd.df.at[self.rd.id, 'comment'])
+    @QtCore.Slot(AppData)
+    def load_object(self, rd: AppData):
+        self._comments_widget.setText(rd.df.at[rd.id, 'comment'])
         for cname, widget in self._checkboxes.items():
-            widget.setChecked(self.rd.df.at[self.rd.id, cname])
+            widget.setChecked(rd.df.at[rd.id, cname])
 
     def dump(self):
         self.rd.df.at[self.rd.id, 'comment'] = self._comments_widget.toPlainText()

@@ -20,7 +20,6 @@ from .utils.params import LocalFile, save_yaml
 from .menu.NewFile import NewFile
 from .menu.Settings import Settings
 
-from .widgets.AbstractWidget import AbstractWidget
 from .widgets.DataViewer import DataViewer
 from .widgets.ControlBar import ControlBar
 from .widgets.QuickSearch import QuickSearch
@@ -32,15 +31,16 @@ logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal()
+    object_selected = QtCore.Signal(AppData)
+    screenshot_path_selected = QtCore.Signal(str)
     dock_configuration_updated = QtCore.Signal()
 
     def __init__(self, appdata: AppData, parent=None):
         super().__init__(parent)
 
         self.rd = appdata
-        self.widgets: list[AbstractWidget] = []
 
-        self.was_maximized: bool
+        self.was_maximized: bool = False
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.setWindowTitle('Specvizitor')  # set the title of the main window
@@ -48,7 +48,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # create a central widget
         self.central_widget = DataViewer(self.rd, parent=self)
-        self.dock_configuration_updated.connect(self.central_widget.create_all)
         self.setCentralWidget(self.central_widget)
 
         # add a menu bar
@@ -91,16 +90,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.project_loaded.connect(self.object_info.load_project)
         self.project_loaded.connect(self.review_form.load_project)
 
+        self.object_selected.connect(self.central_widget.load_object)
+        self.object_selected.connect(self.control_bar.load_object)
+        self.object_selected.connect(self.object_info.load_object)
+        self.object_selected.connect(self.review_form.load_object)
+
+        self.dock_configuration_updated.connect(self.central_widget.create_all)
+        self.screenshot_path_selected.connect(self.central_widget.take_screenshot)
+
         # connect signals from the control panel and the quick search window to the slots of other widgets
         self.control_bar.object_selected.connect(self.load_object)
         self.quick_search.object_selected.connect(self.load_object)
-        self.control_bar.screenshot_button_clicked.connect(self.central_widget.take_screenshot)
-        self.control_bar.reset_view_button_clicked.connect(self.central_widget.reset_view)
+        self.control_bar.screenshot_button_clicked.connect(self._screenshot_action)
+        self.control_bar.reset_view_button_clicked.connect(self.central_widget.view_reset.emit)
         self.control_bar.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
         self.control_bar.settings_button_clicked.connect(self._settings_action)
-
-        for w in (self.central_widget, self.control_bar, self.quick_search, self.object_info, self.review_form):
-            self.widgets.append(w)
 
         settings = QtCore.QSettings()
         if settings.value("geometry") is None or settings.value("windowState") is None:
@@ -159,7 +163,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setShortcut('F5')
-        self._reset_view.triggered.connect(self.central_widget.reset_view)
+        self._reset_view.triggered.connect(self.central_widget.view_reset.emit)
         self._view.addAction(self._reset_view)
 
         self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
@@ -188,6 +192,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._shortcut_fullscreen.activated.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._tools = self._menu.addMenu("&Tools")
+
+        self._screenshot = QtWidgets.QAction("Capture Dock Area...")
+        self._screenshot.triggered.connect(self._screenshot_action)
+        self._tools.addAction(self._screenshot)
+
+        self._tools.addSeparator()
+
         self._settings = QtWidgets.QAction("Se&ttings...")
         self._settings.triggered.connect(self._settings_action)
         self._tools.addAction(self._settings)
@@ -261,8 +272,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd.cache.last_object_index = j
         self.rd.cache.save()
 
-        for widget in (self.central_widget, self.control_bar, self.object_info, self.review_form):
-            widget.load_object()
+        self.object_selected.emit(self.rd)
 
         self.setWindowTitle(
             f'{self.rd.output_path.name} – ID {self.rd.id} [#{self.rd.j + 1}/{self.rd.n_objects}] – Specvizitor')
@@ -301,7 +311,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if path:
             new_docks = self.rd.docks.replace_params(pathlib.Path(path))
             if new_docks is None:
-                logger.error('Failed to restore dock configuration')
+                logger.error('Failed to restore the dock configuration')
             else:
                 self.rd.docks = new_docks
                 self.rd.docks.save()
@@ -328,13 +338,21 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.was_maximized:
             self.showMaximized()
 
+    def _screenshot_action(self):
+        default_filename = '{}_ID{}.png'.format(self.rd.output_path.stem.replace(' ', '_'), self.rd.id)
+        path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
+                                                      basedir=str(pathlib.Path().resolve() / default_filename),
+                                                      filters='Images (*.png)')
+        if path:
+            self.screenshot_path_selected.emit(path)
+
     def _settings_action(self):
         dialog = Settings(self.rd, parent=self)
         if dialog.exec():
             self.object_info.update_items()
             if self.rd.df is not None:
                 for widget in (self.central_widget, self.object_info):
-                    widget.load_object()
+                    widget.load_object(self.rd)
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))

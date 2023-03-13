@@ -44,6 +44,7 @@ class QuickSearch(AbstractWidget):
         self.layout().addWidget(self._go_to_index_button, 2, 1, 1, 1)
         self.layout().addWidget(self._index_field, 2, 2, 1, 1)
 
+    @QtCore.Slot()
     def load_project(self):
         self.setEnabled(True)
 

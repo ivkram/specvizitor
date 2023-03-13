@@ -15,7 +15,7 @@ from .Spec1D import Spec1D
 
 
 class DataViewer(AbstractWidget):
-    new_object_selected = QtCore.Signal(AppData)
+    object_selected = QtCore.Signal(AppData)
     view_reset = QtCore.Signal()
 
     def __init__(self, rd: AppData, parent=None):
@@ -61,7 +61,7 @@ class DataViewer(AbstractWidget):
     def create_widgets(self):
         # delete previously created widgets
         if self.widgets:
-            self.new_object_selected.disconnect()
+            self.object_selected.disconnect()
             self.view_reset.disconnect()
 
             for w in self.widgets:
@@ -86,7 +86,7 @@ class DataViewer(AbstractWidget):
             w.init_ui()
 
         for w in widgets.values():
-            self.new_object_selected.connect(w.load_object)
+            self.object_selected.connect(w.load_object)
 
         self.core_widgets = widgets
 
@@ -130,15 +130,17 @@ class DataViewer(AbstractWidget):
     def init_ui(self):
         self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
 
+    @QtCore.Slot()
     def load_project(self):
         self.setEnabled(True)
 
-    def load_object(self):
+    @QtCore.Slot(AppData)
+    def load_object(self, rd: AppData):
         # cache the dock state
         self.save_dock_state()
 
         # load the object to the widgets
-        self.new_object_selected.emit(self.rd)
+        self.object_selected.emit(rd)
 
         try:
             self.view_reset.disconnect()
@@ -149,7 +151,7 @@ class DataViewer(AbstractWidget):
                 self.view_reset.connect(w.reset_view)
 
         for plugin in self._plugins:
-            plugin.link(self.core_widgets, label_style=self.rd.config.data_viewer.label_style)
+            plugin.link(self.core_widgets, label_style=rd.config.data_viewer.label_style)
 
         # update the dock titles
         self.update_dock_titles()
@@ -162,6 +164,7 @@ class DataViewer(AbstractWidget):
                 else:
                     self.docks[w.title].setTitle(w.title)
 
+    @QtCore.Slot()
     def reset_dock_state(self):
         self.create_docks()
         self.add_docks()
@@ -171,8 +174,6 @@ class DataViewer(AbstractWidget):
         self.rd.cache.dock_state = self.dock_area.saveState()
         self.rd.cache.save()
 
-    def reset_view(self):
-        self.view_reset.emit()
-
+    @QtCore.Slot(str)
     def take_screenshot(self, filename: str):
         self.grab().save(filename)
