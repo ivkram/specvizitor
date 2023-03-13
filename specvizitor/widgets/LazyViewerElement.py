@@ -14,7 +14,7 @@ class LazyViewerElement(AbstractWidget):
         self.global_config = global_viewer_config
 
         # create a central widget
-        self.graphics_view = pg.GraphicsView()
+        self.graphics_view = pg.GraphicsView(parent=self)
         self.graphics_layout = pg.GraphicsLayout()
         self.graphics_view.setCentralItem(self.graphics_layout)
 

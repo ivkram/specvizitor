@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
+    dock_configuration_updated = QtCore.Signal()
+
     def __init__(self, appdata: AppData, parent=None):
         super().__init__(parent)
 
@@ -40,6 +42,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # create a central widget
         self.central_widget = DataViewer(self.rd, parent=self)
+        self.dock_configuration_updated.connect(self.central_widget.create_all)
         self.setCentralWidget(self.central_widget)
 
         # add a menu bar
@@ -297,11 +300,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.rd.docks = new_docks
                 self.rd.docks.save()
 
-                self.central_widget.create_widgets()
-                self.central_widget.reset_dock_state()
-
-                if self.rd.df is not None:
-                    self.central_widget.load_object()
+                self.dock_configuration_updated.emit()
 
                 logger.info('Dock configuration restored')
 
