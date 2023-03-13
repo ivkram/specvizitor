@@ -1,11 +1,8 @@
 import logging
 from dataclasses import asdict
-from copy import deepcopy
 from functools import partial
 
 from specutils import Spectrum1D
-from astropy.nddata import StdDevUncertainty
-from astropy.table import Table
 
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
@@ -15,7 +12,6 @@ import pyqtgraph as pg
 from qtpy import QtCore
 
 from ..utils import SmartSliderWithEditor
-from ..utils.table_tools import column_not_found_message
 
 from .ViewerElement import ViewerElement
 from .LazyViewerElement import LazyViewerElement
@@ -129,19 +125,17 @@ class Spec1DItem(pg.PlotItem):
 
 
 class Spec1DRegion(LazyViewerElement):
-    def __init__(self, lines: SpectralLines, target_line: str, cfg: docks.SpectrumRegion, **kwargs):
+    def __init__(self, line: tuple[str, u.Quantity], cfg: docks.SpectrumRegion, **kwargs):
         super().__init__(cfg=cfg, **kwargs)
 
-        self.line = target_line
+        self.line = line
         self.cfg = cfg
 
-        # set up the plot
-        lines = deepcopy(lines)
-        lines = SpectralLines(wave_unit=lines.wave_unit, list={target_line: lines.list[target_line]})
-
-        window_center = lines.list[target_line] * u.Unit(lines.wave_unit)
+        window_center = line[1]
         window_size = u.Quantity(self.cfg.window_size)
         window = (window_center - window_size / 2, window_center + window_size / 2)
+
+        lines = SpectralLines(wave_unit=line[1].unit, list={line[0]: line[1].value})
 
         self.spec_1d = Spec1DItem(lines=lines, window=window, name=self.title,
                                   label_style=self.global_config.label_style)
@@ -186,7 +180,7 @@ class Spec1D(ViewerElement):
         n = 0
         for line, line_cfg in tracked_lines.items():
             if line in lines.list.keys():
-                spec_region = Spec1DRegion(lines=lines, target_line=line, cfg=line_cfg,
+                spec_region = Spec1DRegion(line=(line, lines.list[line] * u.Unit(lines.wave_unit)), cfg=line_cfg,
                                            title=f"{self.title} [{line}]", global_viewer_config=self.global_config,
                                            parent=self.parent())
                 region_widgets.append(spec_region)
