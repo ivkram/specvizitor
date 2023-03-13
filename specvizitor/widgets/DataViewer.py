@@ -66,6 +66,7 @@ class DataViewer(AbstractWidget):
             self.reset_view_triggered.disconnect()
 
             for w in self.widgets:
+                w.graphics_layout.clear()
                 w.deleteLater()
 
         widgets = {}
