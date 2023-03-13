@@ -20,6 +20,7 @@ from .utils.params import LocalFile, save_yaml
 from .menu.NewFile import NewFile
 from .menu.Settings import Settings
 
+from .widgets.AbstractWidget import AbstractWidget
 from .widgets.DataViewer import DataViewer
 from .widgets.ControlBar import ControlBar
 from .widgets.QuickSearch import QuickSearch
@@ -30,13 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
+    project_loaded = QtCore.Signal()
     dock_configuration_updated = QtCore.Signal()
 
     def __init__(self, appdata: AppData, parent=None):
         super().__init__(parent)
 
         self.rd = appdata
-        self.widgets: list[QtWidgets.QWidget] = []
+        self.widgets: list[AbstractWidget] = []
 
         self.was_maximized: bool
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -58,6 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # create a control panel
         self.control_bar = ControlBar(self.rd, parent=self)
         self.control_bar.setObjectName('Control Bar')
+        self.control_bar.setEnabled(True)
         self.addToolBar(QtCore.Qt.TopToolBarArea, self.control_bar)
 
         # create a quick search widget
@@ -81,17 +84,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.review_form_dock.setWidget(self.review_form)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
 
-        # connect signals from the control panel and the quick search window to the slots of the central widget
+        # connect signal from the main window to child widgets
+        self.project_loaded.connect(self.central_widget.load_project)
+        self.project_loaded.connect(self.control_bar.load_project)
+        self.project_loaded.connect(self.quick_search.load_project)
+        self.project_loaded.connect(self.object_info.load_project)
+        self.project_loaded.connect(self.review_form.load_project)
+
+        # connect signals from the control panel and the quick search window to the slots of other widgets
         self.control_bar.object_selected.connect(self.load_object)
         self.quick_search.object_selected.connect(self.load_object)
         self.control_bar.screenshot_button_clicked.connect(self.central_widget.take_screenshot)
         self.control_bar.reset_view_button_clicked.connect(self.central_widget.reset_view)
         self.control_bar.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
+        self.control_bar.settings_button_clicked.connect(self._settings_action)
 
         for w in (self.central_widget, self.control_bar, self.quick_search, self.object_info, self.review_form):
             self.widgets.append(w)
-
-        self._init_ui()
 
         settings = QtCore.QSettings()
         if settings.value("geometry") is None or settings.value("windowState") is None:
@@ -188,10 +197,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
-    def _init_ui(self):
-        for widget in self.widgets:
-            widget.init_ui()
-
     def _new_file_action(self):
         """ Create a new inspection file via the NewFile dialog.
         """
@@ -225,10 +230,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
 
-        self.review_form.load_project()
-        self.object_info.update_items()
-        for widget in self.widgets:
-            widget.setEnabled(True)
+        self.project_loaded.emit()
 
         # cache the inspection file name
         self.rd.cache.last_inspection_file = str(self.rd.output_path)

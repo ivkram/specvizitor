@@ -36,11 +36,16 @@ class QuickSearch(AbstractWidget):
         self._index_field = QtWidgets.QLineEdit(self)
         self._index_field.returnPressed.connect(self.go_to_index)
 
+        self.init_ui()
+
     def init_ui(self):
         self.layout().addWidget(self._go_to_id_button, 1, 1, 1, 1)
         self.layout().addWidget(self._id_field, 1, 2, 1, 1)
         self.layout().addWidget(self._go_to_index_button, 2, 1, 1, 1)
         self.layout().addWidget(self._index_field, 2, 2, 1, 1)
+
+    def load_project(self):
+        self.setEnabled(True)
 
     def go_to_id(self):
         text = self._id_field.text()

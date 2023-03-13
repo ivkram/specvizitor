@@ -48,6 +48,8 @@ class DataViewer(AbstractWidget):
         except (KeyError, ValueError, TypeError):
             self.reset_dock_state()
 
+        self.init_ui()
+
     @property
     def widgets(self) -> list[LazyViewerElement]:
         lazy_widgets = []
@@ -55,9 +57,6 @@ class DataViewer(AbstractWidget):
             lazy_widgets.extend(w.lazy_widgets)
 
         return list(self.core_widgets.values()) + lazy_widgets
-
-    def init_ui(self):
-        self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
 
     def create_widgets(self):
         # delete previously created widgets
@@ -128,22 +127,11 @@ class DataViewer(AbstractWidget):
         if self.rd.df is not None:
             self.load_object()
 
-    def update_dock_titles(self):
-        for core_widget in self.core_widgets.values():
-            for w in (core_widget,) + tuple(core_widget.lazy_widgets):
-                if core_widget.filename is not None and core_widget.data is not None:
-                    self.docks[w.title].setTitle(core_widget.filename.name)
-                else:
-                    self.docks[w.title].setTitle(w.title)
+    def init_ui(self):
+        self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
 
-    def reset_dock_state(self):
-        self.create_docks()
-        self.add_docks()
-        self.update_dock_titles()
-
-    def save_dock_state(self):
-        self.rd.cache.dock_state = self.dock_area.saveState()
-        self.rd.cache.save()
+    def load_project(self):
+        self.setEnabled(True)
 
     def load_object(self):
         # cache the dock state
@@ -165,6 +153,23 @@ class DataViewer(AbstractWidget):
 
         # update the dock titles
         self.update_dock_titles()
+
+    def update_dock_titles(self):
+        for core_widget in self.core_widgets.values():
+            for w in (core_widget,) + tuple(core_widget.lazy_widgets):
+                if core_widget.filename is not None and core_widget.data is not None:
+                    self.docks[w.title].setTitle(core_widget.filename.name)
+                else:
+                    self.docks[w.title].setTitle(w.title)
+
+    def reset_dock_state(self):
+        self.create_docks()
+        self.add_docks()
+        self.update_dock_titles()
+
+    def save_dock_state(self):
+        self.rd.cache.dock_state = self.dock_area.saveState()
+        self.rd.cache.save()
 
     def reset_view(self):
         self.view_reset.emit()

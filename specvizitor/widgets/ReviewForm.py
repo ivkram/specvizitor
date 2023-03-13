@@ -22,6 +22,8 @@ class ReviewForm(AbstractWidget):
         # create a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit(parent=self)
 
+        self.init_ui()
+
     def create_checkbox_widgets(self, checkboxes: dict[str, str] | None) -> dict[str, QtWidgets.QCheckBox]:
         if checkboxes is None:
             return {}
@@ -39,18 +41,20 @@ class ReviewForm(AbstractWidget):
         self.layout().addWidget(QtWidgets.QLabel('Comments:', parent=self), len(self._checkboxes) + 1, 1, 1, 1)
         self.layout().addWidget(self._comments_widget, len(self._checkboxes) + 2, 1, 1, 1)
 
-    def dump(self):
-        self.rd.df.at[self.rd.id, 'comment'] = self._comments_widget.toPlainText()
-        for cname, widget in self._checkboxes.items():
-            self.rd.df.at[self.rd.id, cname] = widget.isChecked()
+    def load_project(self):
+        self.setEnabled(True)
+
+        for w in self._checkboxes.values():
+            w.deleteLater()
+        self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.default_checkboxes))
+        self.reset_layout()
 
     def load_object(self):
         self._comments_widget.setText(self.rd.df.at[self.rd.id, 'comment'])
         for cname, widget in self._checkboxes.items():
             widget.setChecked(self.rd.df.at[self.rd.id, cname])
 
-    def load_project(self):
-        for w in self._checkboxes.values():
-            w.deleteLater()
-        self._checkboxes = self.create_checkbox_widgets(get_checkboxes(self.rd.df, self.cfg.default_checkboxes))
-        self.reset_layout()
+    def dump(self):
+        self.rd.df.at[self.rd.id, 'comment'] = self._comments_widget.toPlainText()
+        for cname, widget in self._checkboxes.items():
+            self.rd.df.at[self.rd.id, cname] = widget.isChecked()

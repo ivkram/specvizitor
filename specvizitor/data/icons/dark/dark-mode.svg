@@ -25,12 +25,12 @@
      showgrid="false"
      units="px"
      inkscape:zoom="10.248373"
-     inkscape:cx="11.123717"
-     inkscape:cy="27.028682"
+     inkscape:cx="-19.417716"
+     inkscape:cy="27.028681"
      inkscape:window-width="1834"
-     inkscape:window-height="1122"
-     inkscape:window-x="2006"
-     inkscape:window-y="41"
+     inkscape:window-height="1002"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
@@ -40,14 +40,14 @@
      inkscape:groupmode="layer"
      id="layer1">
     <ellipse
-       style="fill:none;stroke:#000000;stroke-width:1.45922;stroke-linejoin:round;stroke-dashoffset:5.0752"
+       style="fill:none;stroke:#e4e7eb;stroke-width:1.45922;stroke-linejoin:round;stroke-dashoffset:5.0752;stroke-opacity:1"
        id="path846"
        cx="6.3499999"
        cy="6.349998"
        rx="4.5620542"
        ry="4.5620518" />
     <path
-       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.252019;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:5.0752"
+       style="fill:#e4e7eb;fill-opacity:1;stroke:none;stroke-width:0.252019;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:5.0752"
        id="path950"
        sodipodi:type="arc"
        sodipodi:cx="8.0036459"

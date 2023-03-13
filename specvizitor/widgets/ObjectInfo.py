@@ -34,6 +34,8 @@ class ObjectInfo(AbstractWidget):
         self._table_items = self.create_table_items(self.cfg.items)
         self.set_items()
 
+        self.init_ui()
+
     @staticmethod
     def create_table_items(items) -> list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]]:
         if items is None:
@@ -63,6 +65,10 @@ class ObjectInfo(AbstractWidget):
 
     def init_ui(self):
         self.layout().addWidget(self._table, 1, 1, 1, 1)
+
+    def load_project(self):
+        self.setEnabled(True)
+        self.update_items()
 
     def load_object(self):
         for row in self._table_items:

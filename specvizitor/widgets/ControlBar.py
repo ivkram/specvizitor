@@ -13,10 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class ControlBar(QtWidgets.QToolBar, AbstractWidget):
+    object_selected = QtCore.Signal(int)
     reset_view_button_clicked = QtCore.Signal()
     reset_dock_state_button_clicked = QtCore.Signal()
     screenshot_button_clicked = QtCore.Signal(str)
-    object_selected = QtCore.Signal(int)
+    settings_button_clicked = QtCore.Signal()
 
     def __init__(self, rd: AppData, parent=None):
         super().__init__(parent=parent)
@@ -56,6 +57,24 @@ class ControlBar(QtWidgets.QToolBar, AbstractWidget):
         self._reset_dock_state_button.setToolTip('Reset the dock state')
         self._reset_dock_state_button.triggered.connect(self.reset_dock_state_button_clicked.emit)
 
+        for b in self.viewer_connected_buttons:
+            b.setEnabled(False)
+
+        self._spacer = QtWidgets.QWidget()
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self._settings_button = QtWidgets.QAction(parent=self)
+        self._settings_button.setIcon(self.get_icon('gear.svg'))
+        self._settings_button.setToolTip('GUI and Project Settings')
+        self._settings_button.triggered.connect(self.settings_button_clicked)
+
+        self.init_ui()
+
+    @property
+    def viewer_connected_buttons(self):
+        return tuple(self._pn_buttons.values()) + (self._star_button, self._screenshot_button,
+                                                   self._reset_view_button, self._reset_dock_state_button)
+
     def create_pn_buttons(self) -> dict[str, QtWidgets.QAction]:
         pn_buttons_params = {'previous': {'shortcut': QtGui.QKeySequence.MoveToPreviousChar, 'icon': 'arrow-backward'},
                              'next': {'shortcut': QtGui.QKeySequence.MoveToNextChar, 'icon': 'arrow-forward'},
@@ -91,6 +110,14 @@ class ControlBar(QtWidgets.QToolBar, AbstractWidget):
 
         self.addAction(self._reset_view_button)
         self.addAction(self._reset_dock_state_button)
+
+        self.addWidget(self._spacer)
+
+        self.addAction(self._settings_button)
+
+    def load_project(self):
+        for b in self.viewer_connected_buttons:
+            b.setEnabled(True)
 
     def load_object(self):
         self._star_button.setIcon(self.get_icon(self.get_star_icon_name(self.rd.df.at[self.rd.id, 'starred'])))
