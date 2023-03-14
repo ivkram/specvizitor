@@ -1,5 +1,4 @@
 import numpy as np
-import qtpy
 from qtpy import QtGui, QtCore, QtWidgets
 
 from functools import partial
@@ -12,7 +11,7 @@ from .AbstractWidget import AbstractWidget
 logger = logging.getLogger(__name__)
 
 
-class ControlBar(QtWidgets.QToolBar, AbstractWidget):
+class ToolBar(QtWidgets.QToolBar, AbstractWidget):
     object_selected = QtCore.Signal(int)
     reset_view_button_clicked = QtCore.Signal()
     reset_dock_state_button_clicked = QtCore.Signal()
@@ -21,7 +20,7 @@ class ControlBar(QtWidgets.QToolBar, AbstractWidget):
 
     def __init__(self, rd: AppData, parent=None):
         super().__init__(parent=parent)
-        self.setWindowTitle('Control Panel')
+        self.setWindowTitle('Tool Controls Bar')
 
         self.rd = rd
 

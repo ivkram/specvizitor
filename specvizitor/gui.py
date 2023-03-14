@@ -21,7 +21,7 @@ from .menu.NewFile import NewFile
 from .menu.Settings import Settings
 
 from .widgets.DataViewer import DataViewer
-from .widgets.ControlBar import ControlBar
+from .widgets.ToolBar import ToolBar
 from .widgets.QuickSearch import QuickSearch
 from .widgets.ObjectInfo import ObjectInfo
 from .widgets.ReviewForm import ReviewForm
@@ -56,11 +56,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
 
-        # create a control panel
-        self.control_bar = ControlBar(self.rd, parent=self)
-        self.control_bar.setObjectName('Control Bar')
-        self.control_bar.setEnabled(True)
-        self.addToolBar(QtCore.Qt.TopToolBarArea, self.control_bar)
+        # create a toolbar
+        self.toolbar = ToolBar(self.rd, parent=self)
+        self.toolbar.setObjectName('Toolbar')
+        self.toolbar.setEnabled(True)
+        self.addToolBar(QtCore.Qt.TopToolBarArea, self.toolbar)
 
         # create a quick search widget
         self.quick_search = QuickSearch(rd=self.rd, parent=self)
@@ -85,26 +85,26 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # connect signal from the main window to child widgets
         self.project_loaded.connect(self.central_widget.load_project)
-        self.project_loaded.connect(self.control_bar.load_project)
+        self.project_loaded.connect(self.toolbar.load_project)
         self.project_loaded.connect(self.quick_search.load_project)
         self.project_loaded.connect(self.object_info.load_project)
         self.project_loaded.connect(self.review_form.load_project)
 
         self.object_selected.connect(self.central_widget.load_object)
-        self.object_selected.connect(self.control_bar.load_object)
+        self.object_selected.connect(self.toolbar.load_object)
         self.object_selected.connect(self.object_info.load_object)
         self.object_selected.connect(self.review_form.load_object)
 
         self.dock_configuration_updated.connect(self.central_widget.create_all)
         self.screenshot_path_selected.connect(self.central_widget.take_screenshot)
 
-        # connect signals from the control panel and the quick search window to the slots of other widgets
-        self.control_bar.object_selected.connect(self.load_object)
+        # connect signals from the toolbar and the quick search window to the slots of other widgets
+        self.toolbar.object_selected.connect(self.load_object)
         self.quick_search.object_selected.connect(self.load_object)
-        self.control_bar.screenshot_button_clicked.connect(self._screenshot_action)
-        self.control_bar.reset_view_button_clicked.connect(self.central_widget.view_reset.emit)
-        self.control_bar.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
-        self.control_bar.settings_button_clicked.connect(self._settings_action)
+        self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
+        self.toolbar.reset_view_button_clicked.connect(self.central_widget.view_reset.emit)
+        self.toolbar.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
+        self.toolbar.settings_button_clicked.connect(self._settings_action)
 
         settings = QtCore.QSettings()
         if settings.value("geometry") is None or settings.value("windowState") is None:
