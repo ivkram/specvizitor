@@ -15,13 +15,20 @@ logger = logging.getLogger(__name__)
 
 class Image2D(ViewerElement):
     def __init__(self, cfg: docks.Image, **kwargs):
-        super().__init__(cfg=cfg, **kwargs)
-
         self.cfg = cfg
         self.allowed_data_types = (np.ndarray,)
 
         # set up the color map
         self._cmap = pg.colormap.get('viridis')
+
+        self.image_2d: pg.ImageItem | None = None
+        self._container: pg.PlotItem | pg.ViewBox | None = None
+        self._cbar: ColorLegendItem | None = None
+
+        super().__init__(cfg=cfg, **kwargs)
+
+    def init_ui(self):
+        super().init_ui()
 
         # create an image item
         self.image_2d = pg.ImageItem()
@@ -30,34 +37,35 @@ class Image2D(ViewerElement):
         # create an image container
         if self.cfg.container == 'PlotItem':
             # create a plot item
-            self.container = pg.PlotItem(name=self.title)
+            self._container = pg.PlotItem(name=self.title)
             # self.container.hideAxis('left')
-            self.container.showAxes((False, False, False, True), showValues=(False, False, False, True))
-            self.container.hideButtons()
+            self._container.showAxes((False, False, False, True), showValues=(False, False, False, True))
+            self._container.hideButtons()
 
             # add a border to the image
             self.image_2d.setBorder('k')
         else:
             # create a view box
-            self.container = pg.ViewBox()
-
-        # add the image to the container
-        self.container.addItem(self.image_2d)
+            self._container = pg.ViewBox()
 
         # lock the aspect ratio
-        self.container.setAspectLocked(True)
-
-        # add the container to the layout
-        self.graphics_layout.addItem(self.container, 0, 0)
+        self._container.setAspectLocked(True)
 
         # create a color bar
         self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
         self._cbar.setVisible(self.cfg.color_bar.visible)
 
+    def populate(self):
+        super().populate()
+
+        # add the image to the container
+        self._container.addItem(self.image_2d)
+
+        # add the container to the layout
+        self.graphics_layout.addItem(self._container, 0, 0)
+
         # add the color bar to the layout
         self.graphics_layout.addItem(self._cbar, 0, 1)
-
-        self.populate()
 
     def _load_data(self, rd: AppData):
         super()._load_data(rd=rd)
@@ -76,7 +84,7 @@ class Image2D(ViewerElement):
     def reset_view(self):
         # TODO: allow to choose between min/max and zscale?
         self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
-        self.container.autoRange(padding=0)
+        self._container.autoRange(padding=0)
 
     def clear_content(self):
         self.image_2d.clear()

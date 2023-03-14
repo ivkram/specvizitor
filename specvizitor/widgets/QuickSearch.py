@@ -12,31 +12,39 @@ class QuickSearch(AbstractWidget):
     object_selected = QtCore.Signal(int)
 
     def __init__(self, rd: AppData, parent=None):
-        super().__init__(parent=parent)
-        self.setLayout(QtWidgets.QGridLayout())
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
-
         self.rd = rd
 
-        # create the `Go to ID` button
+        self._go_to_id_button: QtWidgets.QPushButton | None = None
+        self._id_field: QtWidgets.QLineEdit | None = None
+        self._go_to_index_button: QtWidgets.QPushButton | None = None
+        self._index_field: QtWidgets.QLineEdit | None = None
+
+        super().__init__(parent=parent)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+
+    def init_ui(self):
+        # create a `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton(self)
         self._go_to_id_button.setText('Go to ID')
         self._go_to_id_button.setFixedWidth(110)
-        self._go_to_id_button.clicked.connect(self.go_to_id)
 
         self._id_field = QtWidgets.QLineEdit(self)
-        self._id_field.returnPressed.connect(self.go_to_id)
 
-        # create the `Go to index` button
+        # create a `Go to index` button
         self._go_to_index_button = QtWidgets.QPushButton(self)
         self._go_to_index_button.setText('Go to #')
         self._go_to_index_button.setFixedWidth(110)
-        self._go_to_index_button.clicked.connect(self.go_to_index)
 
         self._index_field = QtWidgets.QLineEdit(self)
+
+    def connect(self):
+        self._go_to_id_button.clicked.connect(self.go_to_id)
+        self._id_field.returnPressed.connect(self.go_to_id)
+        self._go_to_index_button.clicked.connect(self.go_to_index)
         self._index_field.returnPressed.connect(self.go_to_index)
 
-        self.populate()
+    def set_layout(self):
+        self.setLayout(QtWidgets.QGridLayout())
 
     def populate(self):
         self.layout().addWidget(self._go_to_id_button, 1, 1, 1, 1)

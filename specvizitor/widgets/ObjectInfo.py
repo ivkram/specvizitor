@@ -1,4 +1,5 @@
 from astropy.coordinates import SkyCoord
+from astropy.table import Table
 from qtpy import QtWidgets, QtCore
 
 import logging
@@ -13,32 +14,21 @@ logger = logging.getLogger(__name__)
 
 
 class ObjectInfo(AbstractWidget):
-    def __init__(self, rd: AppData, cfg: config.ObjectInfo, parent=None):
-        super().__init__(parent=parent)
-        self.setLayout(QtWidgets.QGridLayout())
-
-        self.rd = rd
+    def __init__(self, cfg: config.ObjectInfo, parent=None):
         self.cfg = cfg
 
+        self._table: QtWidgets.QTableWidget | None = None
+        self._table_items: list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]] | None = None
+
+        super().__init__(parent=parent)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
-        self._table = QtWidgets.QTableWidget()
-        self._table.setColumnCount(2)
-        self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self._table.horizontalHeader().hide()
-        self._table.horizontalHeader().setStretchLastSection(True)
-        self._table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        # self._table.setHorizontalHeaderLabels(('key', 'value'))
-        self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+    def create_table_items(self, cat: Table | None = None):
+        if self.cfg.show_all and cat is not None:
+            items = cat.colnames
+        else:
+            items = self.cfg.items
 
-        # display information about the object
-        self._table_items = self.create_table_items(self.cfg.items)
-        self.set_items()
-
-        self.populate()
-
-    @staticmethod
-    def create_table_items(items) -> list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]]:
         if items is None:
             return []
 
@@ -49,20 +39,36 @@ class ObjectInfo(AbstractWidget):
 
             table_items.append((cname_item, value_item))
 
-        return table_items
+        self._table_items = table_items
 
-    def set_items(self):
+    def set_table_items(self):
         self._table.setRowCount(len(self._table_items))
         for i, row in enumerate(self._table_items):
             self._table.setItem(i, 0, row[0])
             self._table.setItem(i, 1, row[1])
 
-    def update_items(self):
-        if self.cfg.show_all and self.rd.cat is not None:
-            self._table_items = self.create_table_items(self.rd.cat.colnames)
-        else:
-            self._table_items = self.create_table_items(self.cfg.items)
-        self.set_items()
+    @QtCore.Slot(Table)
+    def update_table_items(self, cat: Table | None = None):
+        self.create_table_items(cat=cat)
+        self.set_table_items()
+
+    def init_ui(self):
+        self._table = QtWidgets.QTableWidget()
+        self._table.setColumnCount(2)
+        self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self._table.horizontalHeader().hide()
+        self._table.horizontalHeader().setStretchLastSection(True)
+        self._table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        # self._table.setHorizontalHeaderLabels(('key', 'value'))
+        self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+
+        self.update_table_items()
+
+    def connect(self):
+        pass
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QGridLayout())
 
     def populate(self):
         self.layout().addWidget(self._table, 1, 1, 1, 1)
@@ -70,19 +76,21 @@ class ObjectInfo(AbstractWidget):
     @QtCore.Slot()
     def load_project(self):
         self.setEnabled(True)
-        self.update_items()
 
     @QtCore.Slot(AppData)
     def load_object(self, rd: AppData):
+        try:
+            rd.cat.loc[rd.id]
+        except KeyError:
+            logger.warning('Object not found in the catalogue (ID: {})'.format(rd.id))
+            return
+
         for row in self._table_items:
             cname = row[0].text()
             try:
                 row[1].setText(str(rd.cat.loc[rd.id][cname]))
             except KeyError:
-                if cname in rd.cat.colnames:
-                    logger.warning('Object not found in the catalogue (ID: {})'.format(rd.id))
-                else:
-                    logger.warning(column_not_found_message(cname, rd.config.catalogue.translate))
+                logger.warning(column_not_found_message(cname, rd.config.catalogue.translate))
                 row[1].setText('')
 
         # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:

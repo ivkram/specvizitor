@@ -1,3 +1,5 @@
+from astropy.table import Table
+import pandas as pd
 from platformdirs import user_config_dir, user_cache_dir
 import pyqtgraph as pg
 import qdarktheme
@@ -5,8 +7,10 @@ import qtpy.compat
 from qtpy import QtGui, QtWidgets, QtCore
 from qtpy.QtCore import Slot
 
+
 import argparse
 from dataclasses import asdict
+import importlib
 from importlib.metadata import version
 import logging
 import pathlib
@@ -16,6 +20,7 @@ from .appdata import AppData
 from .config import Config, Docks, SpectralLines, Cache
 from .utils.logs import LogMessageBox
 from .utils.params import LocalFile, save_yaml
+from .io.viewer_data import add_enabled_aliases
 
 from .menu.NewFile import NewFile
 from .menu.Settings import Settings
@@ -30,10 +35,13 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    project_loaded = QtCore.Signal()
+    project_loaded = QtCore.Signal(pd.DataFrame)
+    data_requested = QtCore.Signal()
     object_selected = QtCore.Signal(AppData)
+    catalogue_changed = QtCore.Signal(Table)
     screenshot_path_selected = QtCore.Signal(str)
-    dock_configuration_updated = QtCore.Signal()
+    dock_state_updated = QtCore.Signal(dict)
+    dock_configuration_updated = QtCore.Signal(Docks)
 
     def __init__(self, appdata: AppData, parent=None):
         super().__init__(parent)
@@ -46,9 +54,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle('Specvizitor')  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
+        # register units
+        if appdata.config.data.defined_units is not None:
+            add_enabled_aliases(appdata.config.data.defined_units)
+
+        # register plugins
+        self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
+                         for plugin_name in self.rd.config.plugins]
+
         # create a central widget
-        self.central_widget = DataViewer(self.rd, parent=self)
-        self.setCentralWidget(self.central_widget)
+        self.inspector_widget = DataViewer(self.rd.config.data_viewer, self.rd.docks,
+                                           spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
+        self.setCentralWidget(self.inspector_widget)
 
         # add a menu bar
         self._init_menu()
@@ -70,41 +87,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.quick_search_dock)
 
         # create a widget displaying information about the object
-        self.object_info = ObjectInfo(self.rd, cfg=self.rd.config.object_info, parent=self)
+        self.object_info = ObjectInfo(cfg=self.rd.config.object_info, parent=self)
         self.object_info_dock = QtWidgets.QDockWidget('Object Information', self)
         self.object_info_dock.setObjectName('Object Information')
         self.object_info_dock.setWidget(self.object_info)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.object_info_dock)
 
         # create a widget for writing comments
-        self.review_form = ReviewForm(self.rd, cfg=self.rd.config.review_form, parent=self)
+        self.review_form = ReviewForm(cfg=self.rd.config.review_form, parent=self)
         self.review_form_dock = QtWidgets.QDockWidget('Review Form', self)
         self.review_form_dock.setObjectName('Review Form')
         self.review_form_dock.setWidget(self.review_form)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
 
-        # connect signal from the main window to child widgets
-        self.project_loaded.connect(self.central_widget.load_project)
-        self.project_loaded.connect(self.toolbar.load_project)
-        self.project_loaded.connect(self.quick_search.load_project)
-        self.project_loaded.connect(self.object_info.load_project)
-        self.project_loaded.connect(self.review_form.load_project)
-
-        self.object_selected.connect(self.central_widget.load_object)
-        self.object_selected.connect(self.toolbar.load_object)
-        self.object_selected.connect(self.object_info.load_object)
-        self.object_selected.connect(self.review_form.load_object)
-
-        self.dock_configuration_updated.connect(self.central_widget.create_all)
-        self.screenshot_path_selected.connect(self.central_widget.take_screenshot)
-
-        # connect signals from the toolbar and the quick search window to the slots of other widgets
-        self.toolbar.object_selected.connect(self.load_object)
-        self.quick_search.object_selected.connect(self.load_object)
-        self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
-        self.toolbar.reset_view_button_clicked.connect(self.central_widget.view_reset.emit)
-        self.toolbar.reset_dock_state_button_clicked.connect(self.central_widget.reset_dock_state)
-        self.toolbar.settings_button_clicked.connect(self._settings_action)
+        self.connect()
 
         settings = QtCore.QSettings()
         if settings.value("geometry") is None or settings.value("windowState") is None:
@@ -114,9 +110,43 @@ class MainWindow(QtWidgets.QMainWindow):
             self.restoreGeometry(settings.value("geometry"))
             self.restoreState(settings.value("windowState"))
 
+        # restore the dock state from cache
+        if self.rd.cache.dock_state:
+            self.dock_state_updated.emit(self.rd.cache.dock_state)
+
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
             self.open_file(self.rd.cache.last_inspection_file)
+
+    def connect(self):
+        # connect signal from the main window to child widgets
+        for w in (self.inspector_widget, self.toolbar, self.quick_search, self.object_info, self.review_form):
+            self.project_loaded.connect(w.load_project)
+
+        for w in (self.inspector_widget, self.review_form):
+            self.data_requested.connect(w.capture)
+
+        for w in (self.inspector_widget, self.toolbar, self.object_info, self.review_form):
+            self.object_selected.connect(w.load_object)
+
+        self.catalogue_changed.connect(self.object_info.update_table_items)
+
+        self.dock_state_updated.connect(self.inspector_widget.restore_dock_state)
+        self.dock_configuration_updated.connect(self.inspector_widget.init_ui)
+        self.screenshot_path_selected.connect(self.inspector_widget.take_screenshot)
+
+        # connect signals from the child widgets to the main window
+        self.quick_search.object_selected.connect(self.load_object)
+        self.toolbar.object_selected.connect(self.load_object)
+        self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
+        self.toolbar.settings_button_clicked.connect(self._settings_action)
+
+        self.inspector_widget.data_captured.connect(self._save_inspector_data)
+        self.review_form.data_captured.connect(self._save_review_data)
+
+        # connect signals between the child widgets
+        self.toolbar.reset_view_button_clicked.connect(self.inspector_widget.view_reset.emit)
+        self.toolbar.reset_dock_state_button_clicked.connect(self.inspector_widget.reset_dock_state)
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -163,11 +193,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setShortcut('F5')
-        self._reset_view.triggered.connect(self.central_widget.view_reset.emit)
+        self._reset_view.triggered.connect(self.inspector_widget.view_reset.emit)
         self._view.addAction(self._reset_view)
 
         self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
-        self._reset_dock_state.triggered.connect(self.central_widget.reset_dock_state)
+        self._reset_dock_state.triggered.connect(self.inspector_widget.reset_dock_state)
         self._view.addAction(self._reset_dock_state)
 
         self._view.addSeparator()
@@ -214,6 +244,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = NewFile(self.rd, parent=self)
         if dialog.exec():
             self.rd.cache.last_object_index = 0
+            self.catalogue_changed.emit(self.rd.cat)
             self.load_project()
 
     def _open_file_action(self):
@@ -231,6 +262,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if pathlib.Path(path).exists():
             self.rd.output_path = pathlib.Path(path)
             self.rd.read()
+            self.catalogue_changed.emit(self.rd.cat)
             self.load_project()
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
@@ -241,7 +273,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
 
-        self.project_loaded.emit()
+        self.project_loaded.emit(self.rd.df)
 
         # cache the inspection file name
         self.rd.cache.last_inspection_file = str(self.rd.output_path)
@@ -260,10 +292,7 @@ class MainWindow(QtWidgets.QMainWindow):
         @param j: the index of the object to display
         """
         if self.rd.j is not None:
-            # update the application data from widgets
-            self.review_form.dump()
-
-            self.rd.save()  # auto-save
+            self.data_requested.emit()
 
         self.rd.j = j
 
@@ -293,8 +322,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _exit_action(self):
         if self.rd.df is not None:
-            self.rd.save()  # auto-save
-        self.central_widget.save_dock_state()  # save the dock state of the central widget
+            self.data_requested.emit()
 
         # save the state and geometry of the main window
         settings = QtCore.QSettings()
@@ -316,7 +344,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.rd.docks = new_docks
                 self.rd.docks.save()
 
-                self.dock_configuration_updated.emit()
+                self.dock_configuration_updated.emit(self.rd.docks)
+                self.object_selected.emit(self.rd)
 
                 logger.info('Dock configuration restored')
 
@@ -349,9 +378,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def _settings_action(self):
         dialog = Settings(self.rd, parent=self)
         if dialog.exec():
-            self.object_info.update_items()
+            self.catalogue_changed.emit(self.rd.cat)
             if self.rd.df is not None:
-                for widget in (self.central_widget, self.object_info):
+                for widget in (self.inspector_widget, self.object_info):
                     widget.load_object(self.rd)
 
     def _about_action(self):
@@ -359,6 +388,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, _):
         self._exit_action()
+
+    @QtCore.Slot(dict)
+    def _save_inspector_data(self, dock_state: dict):
+        self.rd.cache.dock_state = dock_state
+        self.rd.cache.save()
+
+    @QtCore.Slot(str, dict)
+    def _save_review_data(self, comments: str, checkboxes: dict[str, bool]):
+        self.rd.df.at[self.rd.id, 'comment'] = comments
+        for cname, is_checked in checkboxes.items():
+            self.rd.df.at[self.rd.id, cname] = is_checked
+        self.rd.save()
 
 
 def main():

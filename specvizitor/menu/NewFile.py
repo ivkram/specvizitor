@@ -42,15 +42,15 @@ class NewFile(QtWidgets.QDialog):
         self._cat_factory_group = QtWidgets.QButtonGroup(parent=self)
         self._cat_factory_group.buttonToggled.connect(self.update_cat_factory_state)
 
-        self._create_cat_radio_button = QtWidgets.QRadioButton('Create a new catalogue', parent=self)
+        self._create_cat_radio_button = QtWidgets.QRadioButton('Create a new catalogue', self)
         self._cat_factory_group.addButton(self._create_cat_radio_button)
 
-        self._load_cat_radio_button = QtWidgets.QRadioButton('Load an existing catalogue', parent=self)
+        self._load_cat_radio_button = QtWidgets.QRadioButton('Load an existing catalogue', self)
         self._cat_factory_group.addButton(self._load_cat_radio_button)
 
         sub_layout = QtWidgets.QHBoxLayout()
-        sub_layout.addWidget(self._create_cat_radio_button)
         sub_layout.addWidget(self._load_cat_radio_button)
+        sub_layout.addWidget(self._create_cat_radio_button)
         layout.addLayout(sub_layout)
 
         # add a horizontal separator
@@ -64,21 +64,21 @@ class NewFile(QtWidgets.QDialog):
 
         # add a checkbox for specifying the catalogue loader mode
         self._filter_check_box = QtWidgets.QCheckBox(
-            'Filter the catalogue using a list of IDs extracted from the data directory', parent=self)
+            'Filter the catalogue using a list of IDs extracted from the data directory', self)
         self._filter_check_box.setChecked(False)
         self._filter_check_box.setHidden(True)
         self._filter_check_box.stateChanged.connect(self.update_id_pattern_widget_state)
         layout.addWidget(self._filter_check_box)
 
         # add a line edit for specifying the ID pattern that will be used to parse the filenames in the data directory
-        self._id_pattern_label = QtWidgets.QLabel('ID pattern:', parent=self)
+        self._id_pattern_label = QtWidgets.QLabel('ID pattern:', self)
         self._id_pattern_label.setToolTip('A regular expression used to match the source IDs while scanning '
                                           'the data directory. If more than\none ID is matched to the pattern for a '
                                           'given filename, only the longest match will be returned.')
         self._id_pattern_label.setFixedWidth(120)
         self._id_pattern_label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
-        self._id_pattern = QtWidgets.QLineEdit(self.rd.config.data.id_pattern, parent=self)
+        self._id_pattern = QtWidgets.QLineEdit(self.rd.config.data.id_pattern, self)
 
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.addWidget(self._id_pattern_label)
@@ -87,13 +87,13 @@ class NewFile(QtWidgets.QDialog):
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
-                                                      parent=self)
+                                                      self)
         layout.addWidget(self._button_box)
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
 
         # set the state of the radio buttons
-        self._create_cat_radio_button.setChecked(True)
+        self._load_cat_radio_button.setChecked(True)
 
         self.setLayout(layout)
 

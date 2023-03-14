@@ -14,6 +14,12 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
         super().__init__(parent=parent)
         self.setEnabled(False)
 
+        self.init_ui()
+        self.connect()
+
+        self.set_layout()
+        self.populate()
+
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
         self.layout().setSpacing(spacing)
 
@@ -22,10 +28,22 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
         self.layout().setContentsMargins(*margins)
 
     @abc.abstractmethod
+    def init_ui(self):
+        pass
+
+    @abc.abstractmethod
+    def connect(self):
+        pass
+
+    @abc.abstractmethod
+    def set_layout(self):
+        pass
+
+    @abc.abstractmethod
     def populate(self):
         pass
 
-    def reset_layout(self):
+    def repopulate(self):
         for widget in get_widgets(self.layout()):
             self.layout().removeWidget(widget)
         self.populate()

@@ -4,10 +4,12 @@ from qtpy import QtWidgets
 import logging
 import pathlib
 
+from .AbstractWidget import AbstractWidget
+
 logger = logging.getLogger(__name__)
 
 
-class FileBrowser(QtWidgets.QWidget):
+class FileBrowser(AbstractWidget):
     OpenFile = 0
     # OpenFiles = 1
     OpenDirectory = 2
@@ -16,31 +18,41 @@ class FileBrowser(QtWidgets.QWidget):
     def __init__(self, title: str, mode=OpenFile, filename_extensions='All files (*.*)', default_path=None,
                  button_text='Browse...', parent=None):
 
-        super().__init__(parent=parent)
-
         self._title = title
         self._browser_mode = mode
         self._filter = filename_extensions  # example: 'Images (*.png *.xpm *.jpg);;Text files (*.txt)'
         self._default_path = None if default_path is None else str(pathlib.Path(default_path).resolve())
+        self._button_text = button_text
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self._label: QtWidgets.QLabel | None = None
+        self._line_edit: QtWidgets.QLineEdit | None = None
+        self._button: QtWidgets.QPushButton | None = None
 
-        self._label = QtWidgets.QLabel(title, parent=self)
+        super().__init__(parent=parent)
+        self.setEnabled(True)
+
+    def init_ui(self):
+        self._label = QtWidgets.QLabel(self._title, self)
         self._label.setFixedWidth(130)
-        layout.addWidget(self._label)
 
         self._line_edit = QtWidgets.QLineEdit(self)
         self._line_edit.setMinimumWidth(700)
         self._line_edit.setText(self._default_path)
-        layout.addWidget(self._line_edit)
 
-        self._button = QtWidgets.QPushButton(button_text, parent=self)
+        self._button = QtWidgets.QPushButton(self._button_text, self)
         self._button.setFixedWidth(120)
-        self._button.clicked.connect(self._browse)
-        layout.addWidget(self._button)
 
-        self.setLayout(layout)
+    def connect(self):
+        self._button.clicked.connect(self._browse)
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QHBoxLayout())
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
+    def populate(self):
+        self.layout().addWidget(self._label)
+        self.layout().addWidget(self._line_edit)
+        self.layout().addWidget(self._button)
 
     @property
     def path(self) -> str:

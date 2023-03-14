@@ -54,12 +54,16 @@ class Settings(QtWidgets.QDialog):
                 return False
         return True
 
+    @qlog
+    def get_catalogue(self):
+        return load_cat(self._browsers['cat'].path, translate=self.rd.config.catalogue.translate)
+
     def accept(self):
         if not self.validate():
             return
 
         if self._browsers['cat'].is_filled():
-            cat = load_cat(self._browsers['cat'].path, translate=self.rd.config.catalogue.translate)
+            cat = self.get_catalogue()
             if not cat:
                 return
 

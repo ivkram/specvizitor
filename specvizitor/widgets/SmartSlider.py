@@ -72,12 +72,6 @@ class SmartSliderWithEditor(AbstractWidget):
                  visible: bool = True, catalogue_name: str | None = None, show_text_editor: bool = False,
                  text_editor_precision: int = 6, parent=None, **kwargs):
 
-        super().__init__(parent=parent)
-        self.setLayout(QtWidgets.QGridLayout())
-        self.set_geometry(spacing=5, margins=0)
-
-        self.setHidden(not visible)
-
         self.parameter = parameter if catalogue_name is None else catalogue_name
         self.full_name = parameter if full_name is None else full_name
         self.action = f"change {self.full_name}" if action is None else action
@@ -86,26 +80,44 @@ class SmartSliderWithEditor(AbstractWidget):
         self.text_editor = show_text_editor
         self.precision = text_editor_precision
 
-        # create a slider
-        self._slider = SmartSlider(orientation=QtCore.Qt.Orientation.Horizontal if self.text_editor
-                                   else QtCore.Qt.Orientation.Vertical, parent=self, **kwargs)
-        self._slider.value_changed.connect(self.update_from_slider)
-        self._slider.setToolTip(f'Slide to {self.action}')
+        self._slider_kwargs = kwargs
+
+        self._slider: SmartSlider | None = None
+        self._label: QtWidgets.QLabel | None = None
+        self._editor: QtWidgets.QLineEdit | None = None
+
+        super().__init__(parent=parent)
+        self.setHidden(not visible)
 
         self._default_value_backup = self._slider.default_value
+
+    def init_ui(self):
+        # create a slider
+        if self.text_editor:
+            orientation = QtCore.Qt.Orientation.Horizontal
+        else:
+            orientation = QtCore.Qt.Orientation.Vertical
+
+        self._slider = SmartSlider(orientation=orientation, parent=self, **self._slider_kwargs)
+        self._slider.setToolTip(f'Slide to {self.action}')
 
         # create a label
         self._label = QtWidgets.QLabel(f'{self.parameter} =', self)
 
         # create a text editor
         self._editor = QtWidgets.QLineEdit(self)
-        self._editor.returnPressed.connect(self._update_from_editor)
         self._editor.setMaximumWidth(120)
 
-        self._label.setHidden(not show_text_editor)
-        self._editor.setHidden(not show_text_editor)
+        self._label.setHidden(not self.text_editor)
+        self._editor.setHidden(not self.text_editor)
 
-        self.populate()
+    def connect(self):
+        self._slider.value_changed.connect(self.update_from_slider)
+        self._editor.returnPressed.connect(self._update_from_editor)
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QGridLayout())
+        self.set_geometry(spacing=5, margins=0)
 
     def populate(self):
         self.layout().addWidget(self._slider, 1, 1, 1, 1)

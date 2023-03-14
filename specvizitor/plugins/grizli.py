@@ -30,8 +30,8 @@ class Plugin:
         qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
 
         spec_2d_widget.image_2d.setTransform(qtransform)
-        spec_2d_widget.container.setAspectLocked(True, 1 / dlam)
+        spec_2d_widget._container.setAspectLocked(True, 1 / dlam)
         if label_style is None:
             label_style = {}
-        spec_2d_widget.container.setLabel('bottom', spec_1d_widget.spec_1d.spec.spectral_axis.unit, **label_style)
-        spec_2d_widget.container.setXLink(spec_1d_widget.title)  # link the x-axis range
+        spec_2d_widget._container.setLabel('bottom', spec_1d_widget.spec_1d.spec.spectral_axis.unit, **label_style)
+        spec_2d_widget._container.setXLink(spec_1d_widget.title)  # link the x-axis range

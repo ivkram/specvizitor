@@ -123,89 +123,104 @@ class Spec1DItem(pg.PlotItem):
 
 
 class Spec1DRegion(LazyViewerElement):
-    def __init__(self, line: tuple[str, u.Quantity], cfg: docks.SpectrumRegion, **kwargs):
-        super().__init__(cfg=cfg, **kwargs)
+    def __init__(self, title: str, line: tuple[str, u.Quantity], cfg: docks.SpectrumRegion, **kwargs):
 
-        self.line = line
         self.cfg = cfg
+        self.line = line
 
         window_center = line[1]
         window_size = u.Quantity(self.cfg.window_size)
-        window = (window_center - window_size / 2, window_center + window_size / 2)
+        self.window = (window_center - window_size / 2, window_center + window_size / 2)
 
-        lines = SpectralLines(wave_unit=line[1].unit, list={line[0]: line[1].value})
+        self.spec_1d: Spec1DItem | None = None
 
-        self.spec_1d = Spec1DItem(lines=lines, window=window, name=self.title,
+        super().__init__(title=title, cfg=cfg, **kwargs)
+
+    def init_ui(self):
+        super().init_ui()
+
+        lines = SpectralLines(wave_unit=self.line[1].unit, list={self.line[0]: self.line[1].value})
+        self.spec_1d = Spec1DItem(lines=lines, window=self.window, name=self.title,
                                   label_style=self.inspector_config.label_style)
-        self.graphics_layout.addItem(self.spec_1d)
 
-        self.populate()
+    def populate(self):
+        super().populate()
+        self.graphics_layout.addItem(self.spec_1d)
 
 
 class Spec1D(ViewerElement):
     redshift_changed = QtCore.Signal(float)
 
     def __init__(self, cfg: docks.Spectrum, lines: SpectralLines | None = None, **kwargs):
-        super().__init__(cfg=cfg, **kwargs)
-
         self.lines = lines
         self.cfg = cfg
+
+        self.allowed_data_types = (Spectrum1D,)
+
+        self._z_slider: SmartSliderWithEditor | None = None
+        self.spec_1d: Spec1DItem | None = None
 
         self.lazy_widgets: list[Spec1DRegion] = []
         self.region_items: list[pg.LinearRegionItem] = []
 
-        self.allowed_data_types = (Spectrum1D,)
+        super().__init__(cfg=cfg, **kwargs)
 
-        # create a redshift slider
-        self._z_slider = self.create_redshift_slider(**asdict(self.cfg.redshift_slider))
-        self.sliders.append(self._z_slider)
-
-        # set up the plot
-        self.spec_1d = Spec1DItem(lines=self.lines, name=self.title, label_style=self.inspector_config.label_style)
-        self.graphics_layout.addItem(self.spec_1d)
-
-        # create widgets zoomed on selected spectral lines
-        if self.lines is not None and self.cfg.tracked_lines is not None:
-            self.lazy_widgets, self.region_items = self.create_spectral_regions(self.cfg.tracked_lines, self.lines)
-
-        self.populate()
-
-    def create_redshift_slider(self, **kwargs):
-        redshift_slider = SmartSliderWithEditor(parameter='z', full_name='redshift', parent=self, **kwargs)
-        redshift_slider.value_changed[float].connect(self._redshift_changed_action)
-        return redshift_slider
-
-    def create_spectral_regions(self, tracked_lines: dict[str, docks.SpectrumRegion], lines: SpectralLines)\
-            -> tuple[list[Spec1DRegion], list[pg.LinearRegionItem]]:
+    def create_spectral_regions(self):
+        if self.lines is None or self.cfg.tracked_lines is None:
+            return
 
         region_widgets = []
         region_items = []
 
-        n = 0
-        for line, line_cfg in tracked_lines.items():
-            if line in lines.list.keys():
-                spec_region = Spec1DRegion(line=(line, lines.list[line] * u.Unit(lines.wave_unit)), cfg=line_cfg,
-                                           title=f"{self.title} [{line}]", inspector_config=self.inspector_config,
+        for line, line_cfg in self.cfg.tracked_lines.items():
+            if line in self.lines.list.keys():
+                spec_region = Spec1DRegion(title=f"{self.title} [{line}]",
+                                           line=(line, self.lines.list[line] * u.Unit(self.lines.wave_unit)),
+                                           cfg=line_cfg, inspector_config=self.inspector_config,
                                            parent=self.parent())
-                self.data_loaded.connect(spec_region.spec_1d.set_spec)
-                self.content_added.connect(spec_region.spec_1d.display)
-                self.view_reset.connect(spec_region.spec_1d.reset)
-                self.content_cleared.connect(spec_region.spec_1d.clear)
-                self.smoothing_applied.connect(spec_region.spec_1d.smooth)
-                self.redshift_changed.connect(spec_region.spec_1d.set_line_positions)
+
                 region_widgets.append(spec_region)
 
                 lr = pg.LinearRegionItem()
                 region_items.append(lr)
-
-                spec_region.spec_1d.sigXRangeChanged.connect(partial(self._region_widget_changed_action, n))
-                lr.sigRegionChanged.connect(partial(self._region_item_changed_action, n))
-
-                n += 1
             else:
                 logger.warning(f'Unknown spectral line: {line}')
 
-        return region_widgets, region_items
+        self.lazy_widgets = region_widgets
+        self.region_items = region_items
+
+    def init_ui(self):
+        super().init_ui()
+
+        # create a redshift slider
+        self._z_slider = SmartSliderWithEditor(parameter='z', full_name='redshift', parent=self,
+                                               **asdict(self.cfg.redshift_slider))
+        self.sliders.append(self._z_slider)
+
+        # set up the plot
+        self.spec_1d = Spec1DItem(lines=self.lines, name=self.title, label_style=self.inspector_config.label_style)
+
+        # create widgets zoomed on selected spectral lines
+        self.create_spectral_regions()
+
+    def connect(self):
+        super().connect()
+        self._z_slider.value_changed[float].connect(self._redshift_changed_action)
+
+        for i, (w, lr) in enumerate(zip(self.lazy_widgets, self.region_items)):
+            self.data_loaded.connect(w.spec_1d.set_spec)
+            self.content_added.connect(w.spec_1d.display)
+            self.view_reset.connect(w.spec_1d.reset)
+            self.content_cleared.connect(w.spec_1d.clear)
+            self.smoothing_applied.connect(w.spec_1d.smooth)
+            self.redshift_changed.connect(w.spec_1d.set_line_positions)
+
+            w.spec_1d.sigXRangeChanged.connect(partial(self._region_widget_changed_action, i))
+            lr.sigRegionChanged.connect(partial(self._region_item_changed_action, i))
+
+    def populate(self):
+        super().populate()
+        self.graphics_layout.addItem(self.spec_1d)
 
     def _redshift_changed_action(self, redshift: float):
         self.spec_1d.set_line_positions(redshift)

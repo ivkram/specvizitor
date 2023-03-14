@@ -19,55 +19,18 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
     settings_button_clicked = QtCore.Signal()
 
     def __init__(self, rd: AppData, parent=None):
-        super().__init__(parent=parent)
-        self.setWindowTitle('Commands Bar')
-
         self.rd = rd
 
-        # create buttons for switching to the next or previous object
-        self._pn_buttons = self.create_pn_buttons()
+        self._pn_buttons: dict[str, QtWidgets.QAction] | None = None
+        self._star_button: QtWidgets.QAction | None = None
+        self._reset_view_button: QtWidgets.QAction | None = None
+        self._reset_dock_state_button: QtWidgets.QAction | None = None
+        self._screenshot_button: QtWidgets.QAction | None = None
+        self._spacer: QtWidgets.QWidget | None = None
+        self._settings_button: QtWidgets.QAction | None = None
 
-        # create the `starred` button
-        self._star_button = QtWidgets.QAction(parent=self)
-        self._star_button.setIcon(self.get_icon(self.get_star_icon_name()))
-        self._star_button.setToolTip('Star the object')
-        self._star_button.triggered.connect(self.star)
-
-        # create the `screenshot` button
-        self._screenshot_button = QtWidgets.QAction(parent=self)
-        self._screenshot_button.setIcon(self.get_icon('screenshot.svg'))
-        self._screenshot_button.setToolTip('Take a screenshot of the dock area')
-        self._screenshot_button.triggered.connect(self.screenshot_button_clicked.emit)
-
-        # create the `reset view` button
-        self._reset_view_button = QtWidgets.QAction(parent=self)
-        self._reset_view_button.setIcon(self.get_icon('reset-view.svg'))
-        self._reset_view_button.setToolTip('Reset the view')
-        self._reset_view_button.triggered.connect(self.reset_view_button_clicked.emit)
-
-        # create a `dark mode` button
-        # self._dark_mode = QtWidgets.QPushButton(parent=self)
-        # self._dark_mode.setIcon(self.create_icon(get_icon_abs_path('dark-mode.svg')))
-        # self._dark_mode.setToolTip('Turn on the dark theme')
-
-        # create the `reset dock state` button
-        self._reset_dock_state_button = QtWidgets.QAction(parent=self)
-        self._reset_dock_state_button.setIcon(self.get_icon('reset-dock-state.svg'))
-        self._reset_dock_state_button.setToolTip('Reset the dock state')
-        self._reset_dock_state_button.triggered.connect(self.reset_dock_state_button_clicked.emit)
-
-        for b in self.viewer_connected_buttons:
-            b.setEnabled(False)
-
-        self._spacer = QtWidgets.QWidget()
-        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-
-        self._settings_button = QtWidgets.QAction(parent=self)
-        self._settings_button.setIcon(self.get_icon('gear.svg'))
-        self._settings_button.setToolTip('GUI and Project Settings')
-        self._settings_button.triggered.connect(self.settings_button_clicked)
-
-        self.populate()
+        super().__init__(parent=parent)
+        self.setWindowTitle('Commands Bar')
 
     @property
     def viewer_connected_buttons(self):
@@ -86,13 +49,59 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
             button = QtWidgets.QAction('Go to the {} object'.format(pn_text), self)
             button.setIcon(self.get_icon(pn_properties['icon'] + '.svg'))
 
-            button.triggered.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
             if pn_properties.get('shortcut'):
                 button.setShortcut(pn_properties['shortcut'])
 
             pn_buttons[pn_text] = button
 
         return pn_buttons
+
+    def init_ui(self):
+        # create buttons for switching to the next or previous object
+        self._pn_buttons = self.create_pn_buttons()
+
+        # create a `star` button
+        self._star_button = QtWidgets.QAction(self)
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name()))
+        self._star_button.setToolTip('Star the object')
+
+        # create a `screenshot` button
+        self._screenshot_button = QtWidgets.QAction(self)
+        self._screenshot_button.setIcon(self.get_icon('screenshot.svg'))
+        self._screenshot_button.setToolTip('Take a screenshot of the dock area')
+
+        # create a `reset view` button
+        self._reset_view_button = QtWidgets.QAction(self)
+        self._reset_view_button.setIcon(self.get_icon('reset-view.svg'))
+        self._reset_view_button.setToolTip('Reset the view')
+
+        # create a `reset dock state` button
+        self._reset_dock_state_button = QtWidgets.QAction(self)
+        self._reset_dock_state_button.setIcon(self.get_icon('reset-dock-state.svg'))
+        self._reset_dock_state_button.setToolTip('Reset the dock state')
+
+        for b in self.viewer_connected_buttons:
+            b.setEnabled(False)
+
+        self._spacer = QtWidgets.QWidget(self)
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        self._settings_button = QtWidgets.QAction(self)
+        self._settings_button.setIcon(self.get_icon('gear.svg'))
+        self._settings_button.setToolTip('GUI and Project Settings')
+
+    def connect(self):
+        for pn_text, b in self._pn_buttons.items():
+            b.triggered.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
+
+        self._star_button.triggered.connect(self.star)
+        self._reset_view_button.triggered.connect(self.reset_view_button_clicked.emit)
+        self._reset_dock_state_button.triggered.connect(self.reset_dock_state_button_clicked.emit)
+        self._screenshot_button.triggered.connect(self.screenshot_button_clicked.emit)
+        self._settings_button.triggered.connect(self.settings_button_clicked)
+
+    def set_layout(self):
+        pass
 
     def populate(self):
         self.addAction(self._pn_buttons['previous starred'])

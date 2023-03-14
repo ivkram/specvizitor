@@ -24,11 +24,6 @@ class ViewerElement(LazyViewerElement, abc.ABC):
     smoothing_applied = QtCore.Signal(float)
 
     def __init__(self, cfg: docks.ViewerElement, **kwargs):
-        self.lazy_widgets: list[LazyViewerElement] = []
-        self.sliders: list[SmartSliderWithEditor] = []
-
-        super().__init__(cfg=cfg, **kwargs)
-
         self.cfg = cfg
 
         self.filename: pathlib.Path | None = None
@@ -36,15 +31,23 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.meta: dict | Header | None = None
         self.allowed_data_types: tuple | None = None
 
-        # create a smoothing slider
-        self.smoothing_slider = self.create_smoothing_slider(**asdict(self.cfg.smoothing_slider))
-        self.sliders.append(self.smoothing_slider)
+        self.lazy_widgets: list[LazyViewerElement] = []
+        self.sliders: list[SmartSliderWithEditor] = []
 
-    def create_smoothing_slider(self, **kwargs):
-        smoothing_slider = SmartSliderWithEditor(parameter='sigma', action='smooth the data', parent=self, **kwargs)
-        smoothing_slider.value_changed[float].connect(self.smooth)
-        smoothing_slider.setToolTip('Slide to smooth the data')
-        return smoothing_slider
+        self._smoothing_slider: SmartSliderWithEditor | None = None
+
+        super().__init__(cfg=cfg, **kwargs)
+
+    def init_ui(self):
+        super().init_ui()
+
+        self._smoothing_slider = SmartSliderWithEditor(parameter='sigma', action='smooth the data', parent=self,
+                                                       **asdict(self.cfg.smoothing_slider))
+        self._smoothing_slider.setToolTip('Slide to smooth the data')
+        self.sliders.append(self._smoothing_slider)
+
+    def connect(self):
+        self._smoothing_slider.value_changed[float].connect(self.smooth)
 
     def populate(self):
         sub_layout = QtWidgets.QHBoxLayout()

@@ -2,10 +2,10 @@ from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
 
-import importlib
-
 from ..appdata import AppData
-from ..io.viewer_data import add_enabled_aliases
+from ..config import config
+from ..config.docks import Docks
+from ..config.spectral_lines import SpectralLines
 
 from .AbstractWidget import AbstractWidget
 from .LazyViewerElement import LazyViewerElement
@@ -17,23 +17,22 @@ from .Spec1D import Spec1D
 class DataViewer(AbstractWidget):
     object_selected = QtCore.Signal(AppData)
     view_reset = QtCore.Signal()
+    data_captured = QtCore.Signal(dict)
 
-    def __init__(self, rd: AppData, parent=None):
-        super().__init__(parent=parent)
-        self.setLayout(QtWidgets.QGridLayout())
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.set_geometry(spacing=0, margins=0)
+    def __init__(self,
+                 cfg: config.DataViewer,
+                 dock_cfg: Docks,
+                 spectral_lines: SpectralLines = None,
+                 plugins=None,
+                 parent=None):
 
-        self.rd = rd
-
-        # register units
-        if self.rd.config.data.defined_units is not None:
-            add_enabled_aliases(self.rd.config.data.defined_units)
+        self.cfg = cfg
+        self.dock_cfg = dock_cfg
 
         # register plugins
-        plugins = self.rd.config.plugins
-        self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
-                         for plugin_name in plugins] if plugins is not None else []
+        self._plugins = plugins if plugins is not None else []
+
+        self.spectral_lines = spectral_lines
 
         self.dock_area = DockArea()
         self.added_docks: list[str] = []
@@ -41,15 +40,8 @@ class DataViewer(AbstractWidget):
         self.core_widgets: dict[str, ViewerElement] = {}
         self.docks: dict[str, Dock] = {}
 
-        self.create_all()
-
-        try:
-            # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `state`
-            self.dock_area.restoreState(self.rd.cache.dock_state, missing='ignore', extra=None)
-        except (KeyError, ValueError, TypeError):
-            self.reset_dock_state()
-
-        self.populate()
+        super().__init__(parent=parent)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
     @property
     def widgets(self) -> list[LazyViewerElement]:
@@ -63,7 +55,11 @@ class DataViewer(AbstractWidget):
         # delete previously created widgets
         if self.widgets:
             self.object_selected.disconnect()
-            self.view_reset.disconnect()
+
+            try:
+                self.view_reset.disconnect()
+            except TypeError:
+                pass
 
             for w in self.widgets:
                 w.graphics_layout.clear()
@@ -72,16 +68,16 @@ class DataViewer(AbstractWidget):
         widgets = {}
 
         # create widgets for images (e.g. image cutouts, 2D spectra)
-        if self.rd.docks.images is not None:
-            for name, image_cfg in self.rd.docks.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, inspector_config=self.rd.config.data_viewer,
+        if self.dock_cfg.images is not None:
+            for name, image_cfg in self.dock_cfg.images.items():
+                widgets[name] = Image2D(cfg=image_cfg, title=name, inspector_config=self.cfg,
                                         parent=self)
 
         # create widgets for 1D spectra
-        if self.rd.docks.spectra is not None:
-            for name, spec_cfg in self.rd.docks.spectra.items():
-                widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg, title=name,
-                                       inspector_config=self.rd.config.data_viewer, parent=self)
+        if self.dock_cfg.spectra is not None:
+            for name, spec_cfg in self.dock_cfg.spectra.items():
+                widgets[name] = Spec1D(lines=self.spectral_lines, cfg=spec_cfg, title=name,
+                                       inspector_config=self.cfg, parent=self)
 
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
@@ -117,16 +113,39 @@ class DataViewer(AbstractWidget):
 
         self.added_docks = added_docks
 
-    def create_all(self):
+    @QtCore.Slot()
+    def reset_dock_state(self):
+        self.create_docks()
+        self.add_docks()
+        self._update_dock_titles()
+
+    @QtCore.Slot(dict)
+    def restore_dock_state(self, dock_state: dict):
+        try:
+            # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `state`
+            self.dock_area.restoreState(dock_state, missing='ignore', extra=None)
+        except (KeyError, ValueError, TypeError):
+            self.reset_dock_state()
+
+    def init_ui(self):
         self.create_widgets()
         self.create_docks()
         self.add_docks()
 
-        if self.rd.df is not None:
-            self.load_object()
+    def connect(self):
+        pass
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QGridLayout())
+        self.set_geometry(spacing=0, margins=0)
 
     def populate(self):
         self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
+
+    @QtCore.Slot()
+    def update_dock_configuration(self, dock_cfg: Docks):
+        self.dock_cfg = dock_cfg
+        self.init_ui()
 
     @QtCore.Slot()
     def load_project(self):
@@ -134,8 +153,6 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(AppData)
     def load_object(self, rd: AppData):
-        # cache the dock state
-        self.save_dock_state()
 
         # load the object to the widgets
         self.object_selected.emit(rd)
@@ -152,26 +169,20 @@ class DataViewer(AbstractWidget):
             plugin.link(self.core_widgets, label_style=rd.config.data_viewer.label_style)
 
         # update the dock titles
-        self.update_dock_titles()
+        self._update_dock_titles()
 
-    def update_dock_titles(self):
+    @QtCore.Slot()
+    def capture(self):
+        self.data_captured.emit(self.dock_area.saveState())
+
+    @QtCore.Slot(str)
+    def take_screenshot(self, filename: str):
+        self.grab().save(filename)
+
+    def _update_dock_titles(self):
         for core_widget in self.core_widgets.values():
             for w in (core_widget,) + tuple(core_widget.lazy_widgets):
                 if core_widget.filename is not None and core_widget.data is not None:
                     self.docks[w.title].setTitle(core_widget.filename.name)
                 else:
                     self.docks[w.title].setTitle(w.title)
-
-    @QtCore.Slot()
-    def reset_dock_state(self):
-        self.create_docks()
-        self.add_docks()
-        self.update_dock_titles()
-
-    def save_dock_state(self):
-        self.rd.cache.dock_state = self.dock_area.saveState()
-        self.rd.cache.save()
-
-    @QtCore.Slot(str)
-    def take_screenshot(self, filename: str):
-        self.grab().save(filename)
