@@ -3,6 +3,8 @@ from astropy.table import Table
 
 def translate(t: Table, dictionary: dict):
     for cname, cname_synonyms in dictionary.items():
+        if cname in t.colnames:
+            continue
         for syn in cname_synonyms:
             if syn in t.colnames:
                 t.rename_column(syn, cname)
