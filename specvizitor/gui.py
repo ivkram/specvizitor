@@ -62,53 +62,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
                          for plugin_name in self.rd.config.plugins]
 
-        # create a central widget
-        self.inspector_widget = DataViewer(self.rd.config.data_viewer, self.rd.docks,
-                                           spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
-        self.setCentralWidget(self.inspector_widget)
-
-        # add a menu bar
-        self._init_menu()
-
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
 
-        # create a toolbar
-        self.toolbar = ToolBar(self.rd, parent=self)
-        self.toolbar.setObjectName('Toolbar')
-        self.toolbar.setEnabled(True)
-        self.addToolBar(QtCore.Qt.TopToolBarArea, self.toolbar)
+        self.inspector_widget: DataViewer | None = None
+        self.toolbar: ToolBar | None = None
+        self.quick_search: QuickSearch | None = None
+        self.object_info: ObjectInfo | None = None
+        self.review_form: ReviewForm | None = None
 
-        # create a quick search widget
-        self.quick_search = QuickSearch(rd=self.rd, parent=self)
-        self.quick_search_dock = QtWidgets.QDockWidget('Quick Search', self)
-        self.quick_search_dock.setObjectName('Quick Search')
-        self.quick_search_dock.setWidget(self.quick_search)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.quick_search_dock)
+        self.quick_search_dock: QtWidgets.QDockWidget | None = None
+        self.object_info_dock: QtWidgets.QDockWidget | None = None
+        self.review_form_dock: QtWidgets.QDockWidget | None = None
 
-        # create a widget displaying information about the object
-        self.object_info = ObjectInfo(cfg=self.rd.config.object_info, parent=self)
-        self.object_info_dock = QtWidgets.QDockWidget('Object Information', self)
-        self.object_info_dock.setObjectName('Object Information')
-        self.object_info_dock.setWidget(self.object_info)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.object_info_dock)
-
-        # create a widget for writing comments
-        self.review_form = ReviewForm(cfg=self.rd.config.review_form, parent=self)
-        self.review_form_dock = QtWidgets.QDockWidget('Review Form', self)
-        self.review_form_dock.setObjectName('Review Form')
-        self.review_form_dock.setWidget(self.review_form)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
-
+        self.init_ui()
+        self.populate()
         self.connect()
 
-        settings = QtCore.QSettings()
-        if settings.value("geometry") is None or settings.value("windowState") is None:
-            self.showMaximized()
-            self.setFocus()
-        else:
-            self.restoreGeometry(settings.value("geometry"))
-            self.restoreState(settings.value("windowState"))
+        self.restore_window_state()
 
         # restore the dock state from cache
         if self.rd.cache.dock_state:
@@ -118,35 +89,35 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.cache.last_inspection_file:
             self.open_file(self.rd.cache.last_inspection_file)
 
-    def connect(self):
-        # connect signal from the main window to child widgets
-        for w in (self.inspector_widget, self.toolbar, self.quick_search, self.object_info, self.review_form):
-            self.project_loaded.connect(w.load_project)
+    def init_ui(self):
+        # create a central widget
+        self.inspector_widget = DataViewer(self.rd.config.data_viewer, self.rd.docks,
+                                           spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
 
-        for w in (self.inspector_widget, self.review_form):
-            self.data_requested.connect(w.capture)
+        # create a toolbar
+        self.toolbar = ToolBar(self.rd, parent=self)
+        self.toolbar.setObjectName('Toolbar')
+        self.toolbar.setEnabled(True)
 
-        for w in (self.inspector_widget, self.toolbar, self.object_info, self.review_form):
-            self.object_selected.connect(w.load_object)
+        # create a quick search widget
+        self.quick_search = QuickSearch(rd=self.rd, parent=self)
+        self.quick_search_dock = QtWidgets.QDockWidget('Quick Search', self)
+        self.quick_search_dock.setObjectName('Quick Search')
+        self.quick_search_dock.setWidget(self.quick_search)
 
-        self.catalogue_changed.connect(self.object_info.update_table_items)
+        # create a widget displaying information about the object
+        self.object_info = ObjectInfo(cfg=self.rd.config.object_info, parent=self)
+        self.object_info_dock = QtWidgets.QDockWidget('Object Information', self)
+        self.object_info_dock.setObjectName('Object Information')
+        self.object_info_dock.setWidget(self.object_info)
 
-        self.dock_state_updated.connect(self.inspector_widget.restore_dock_state)
-        self.dock_configuration_updated.connect(self.inspector_widget.init_ui)
-        self.screenshot_path_selected.connect(self.inspector_widget.take_screenshot)
+        # create a widget for writing comments
+        self.review_form = ReviewForm(cfg=self.rd.config.review_form, parent=self)
+        self.review_form_dock = QtWidgets.QDockWidget('Review Form', self)
+        self.review_form_dock.setObjectName('Review Form')
+        self.review_form_dock.setWidget(self.review_form)
 
-        # connect signals from the child widgets to the main window
-        self.quick_search.object_selected.connect(self.load_object)
-        self.toolbar.object_selected.connect(self.load_object)
-        self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
-        self.toolbar.settings_button_clicked.connect(self._settings_action)
-
-        self.inspector_widget.data_captured.connect(self._save_inspector_data)
-        self.review_form.data_captured.connect(self._save_review_data)
-
-        # connect signals between the child widgets
-        self.toolbar.reset_view_button_clicked.connect(self.inspector_widget.view_reset.emit)
-        self.toolbar.reset_dock_state_button_clicked.connect(self.inspector_widget.reset_dock_state)
+        self._init_menu()
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -237,6 +208,53 @@ class MainWindow(QtWidgets.QMainWindow):
         self._about = QtWidgets.QAction("&About...")
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
+
+    def connect(self):
+        # connect the main window to the child widgets
+        for w in (self.inspector_widget, self.toolbar, self.quick_search, self.object_info, self.review_form):
+            self.project_loaded.connect(w.load_project)
+
+        for w in (self.inspector_widget, self.review_form):
+            self.data_requested.connect(w.capture)
+
+        for w in (self.inspector_widget, self.toolbar, self.object_info, self.review_form):
+            self.object_selected.connect(w.load_object)
+
+        self.catalogue_changed.connect(self.object_info.update_table_items)
+
+        self.dock_state_updated.connect(self.inspector_widget.restore_dock_state)
+        self.dock_configuration_updated.connect(self.inspector_widget.init_ui)
+        self.screenshot_path_selected.connect(self.inspector_widget.take_screenshot)
+
+        # connect the child widgets to the main window
+        self.quick_search.object_selected.connect(self.load_object)
+        self.toolbar.object_selected.connect(self.load_object)
+        self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
+        self.toolbar.settings_button_clicked.connect(self._settings_action)
+
+        self.inspector_widget.data_captured.connect(self._save_inspector_data)
+        self.review_form.data_captured.connect(self._save_review_data)
+
+        # connect the child widgets between each other
+        self.toolbar.reset_view_button_clicked.connect(self.inspector_widget.view_reset.emit)
+        self.toolbar.reset_dock_state_button_clicked.connect(self.inspector_widget.reset_dock_state)
+
+    def populate(self):
+        self.setCentralWidget(self.inspector_widget)
+
+        self.addToolBar(QtCore.Qt.TopToolBarArea, self.toolbar)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.quick_search_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.object_info_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
+
+    def restore_window_state(self):
+        settings = QtCore.QSettings()
+        if settings.value("geometry") is None or settings.value("windowState") is None:
+            self.showMaximized()
+            self.setFocus()
+        else:
+            self.restoreGeometry(settings.value("geometry"))
+            self.restoreState(settings.value("windowState"))
 
     def _new_file_action(self):
         """ Create a new inspection file via the NewFile dialog.
