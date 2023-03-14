@@ -14,9 +14,10 @@ logger = logging.getLogger(__name__)
 class SmartSlider(QtWidgets.QSlider):
     value_changed = QtCore.Signal()
 
-    def __init__(self, min_value=0, max_value=100, step=1, default_value=0, **kwargs):
+    def __init__(self, min_value=0, max_value=100, step=1, default_value=0,
+                 orientation=QtCore.Qt.Orientation.Vertical, parent=None):
 
-        super().__init__(**kwargs)
+        super().__init__(orientation, parent)
 
         self._n = int((max_value - min_value) / step) + 1
         self._arr = np.linspace(min_value, max_value, self._n)
@@ -71,10 +72,10 @@ class SmartSliderWithEditor(AbstractWidget):
                  visible: bool = True, catalogue_name: str | None = None, show_text_editor: bool = False,
                  text_editor_precision: int = 6, parent=None, **kwargs):
 
-        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
+        super().__init__(parent=parent)
+        self.setLayout(QtWidgets.QGridLayout())
+        self.set_geometry(spacing=5, margins=0)
 
-        self.layout().setSpacing(5)
-        self.layout().setContentsMargins(0, 0, 0, 0)
         self.setHidden(not visible)
 
         self.parameter = parameter if catalogue_name is None else catalogue_name
@@ -94,17 +95,19 @@ class SmartSliderWithEditor(AbstractWidget):
         self._default_value_backup = self._slider.default_value
 
         # create a label
-        self._label = QtWidgets.QLabel(f'{self.parameter} =', parent=self)
+        self._label = QtWidgets.QLabel(f'{self.parameter} =', self)
 
         # create a text editor
-        self._editor = QtWidgets.QLineEdit(parent=self)
+        self._editor = QtWidgets.QLineEdit(self)
         self._editor.returnPressed.connect(self._update_from_editor)
         self._editor.setMaximumWidth(120)
 
         self._label.setHidden(not show_text_editor)
         self._editor.setHidden(not show_text_editor)
 
-    def init_ui(self):
+        self.populate()
+
+    def populate(self):
         self.layout().addWidget(self._slider, 1, 1, 1, 1)
         self.layout().addWidget(self._label, 1, 2, 1, 1)
         self.layout().addWidget(self._editor, 1, 3, 1, 1)

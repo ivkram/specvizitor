@@ -136,8 +136,10 @@ class Spec1DRegion(LazyViewerElement):
         lines = SpectralLines(wave_unit=line[1].unit, list={line[0]: line[1].value})
 
         self.spec_1d = Spec1DItem(lines=lines, window=window, name=self.title,
-                                  label_style=self.global_config.label_style)
+                                  label_style=self.inspector_config.label_style)
         self.graphics_layout.addItem(self.spec_1d)
+
+        self.populate()
 
 
 class Spec1D(ViewerElement):
@@ -159,12 +161,14 @@ class Spec1D(ViewerElement):
         self.sliders.append(self._z_slider)
 
         # set up the plot
-        self.spec_1d = Spec1DItem(lines=self.lines, name=self.title, label_style=self.global_config.label_style)
+        self.spec_1d = Spec1DItem(lines=self.lines, name=self.title, label_style=self.inspector_config.label_style)
         self.graphics_layout.addItem(self.spec_1d)
 
         # create widgets zoomed on selected spectral lines
         if self.lines is not None and self.cfg.tracked_lines is not None:
             self.lazy_widgets, self.region_items = self.create_spectral_regions(self.cfg.tracked_lines, self.lines)
+
+        self.populate()
 
     def create_redshift_slider(self, **kwargs):
         redshift_slider = SmartSliderWithEditor(parameter='z', full_name='redshift', parent=self, **kwargs)
@@ -181,7 +185,7 @@ class Spec1D(ViewerElement):
         for line, line_cfg in tracked_lines.items():
             if line in lines.list.keys():
                 spec_region = Spec1DRegion(line=(line, lines.list[line] * u.Unit(lines.wave_unit)), cfg=line_cfg,
-                                           title=f"{self.title} [{line}]", global_viewer_config=self.global_config,
+                                           title=f"{self.title} [{line}]", inspector_config=self.inspector_config,
                                            parent=self.parent())
                 self.data_loaded.connect(spec_region.spec_1d.set_spec)
                 self.content_added.connect(spec_region.spec_1d.display)

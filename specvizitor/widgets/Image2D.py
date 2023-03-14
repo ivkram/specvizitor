@@ -18,7 +18,6 @@ class Image2D(ViewerElement):
         super().__init__(cfg=cfg, **kwargs)
 
         self.cfg = cfg
-
         self.allowed_data_types = (np.ndarray,)
 
         # set up the color map
@@ -57,6 +56,8 @@ class Image2D(ViewerElement):
 
         # add the color bar to the layout
         self.graphics_layout.addItem(self._cbar, 0, 1)
+
+        self.populate()
 
     def _load_data(self, rd: AppData):
         super()._load_data(rd=rd)

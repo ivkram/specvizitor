@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 class ObjectInfo(AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ObjectInfo, parent=None):
-        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
+        super().__init__(parent=parent)
+        self.setLayout(QtWidgets.QGridLayout())
 
         self.rd = rd
         self.cfg = cfg
@@ -34,7 +35,7 @@ class ObjectInfo(AbstractWidget):
         self._table_items = self.create_table_items(self.cfg.items)
         self.set_items()
 
-        self.init_ui()
+        self.populate()
 
     @staticmethod
     def create_table_items(items) -> list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]]:
@@ -63,7 +64,7 @@ class ObjectInfo(AbstractWidget):
             self._table_items = self.create_table_items(self.cfg.items)
         self.set_items()
 
-    def init_ui(self):
+    def populate(self):
         self.layout().addWidget(self._table, 1, 1, 1, 1)
 
     @QtCore.Slot()

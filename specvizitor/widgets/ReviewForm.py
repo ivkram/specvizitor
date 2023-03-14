@@ -9,7 +9,8 @@ from .AbstractWidget import AbstractWidget
 
 class ReviewForm(AbstractWidget):
     def __init__(self, rd: AppData, cfg: config.ReviewForm, parent=None):
-        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
+        super().__init__(parent=parent)
+        self.setLayout(QtWidgets.QGridLayout())
 
         self.rd = rd
         self.cfg = cfg
@@ -22,7 +23,7 @@ class ReviewForm(AbstractWidget):
         # create a multi-line text editor for writing comments
         self._comments_widget = QtWidgets.QTextEdit(parent=self)
 
-        self.init_ui()
+        self.populate()
 
     def create_checkbox_widgets(self, checkboxes: dict[str, str] | None) -> dict[str, QtWidgets.QCheckBox]:
         if checkboxes is None:
@@ -34,7 +35,7 @@ class ReviewForm(AbstractWidget):
 
         return checkbox_widgets
 
-    def init_ui(self):
+    def populate(self):
         for i, widget in enumerate(self._checkboxes.values()):
             self.layout().addWidget(widget, i + 1, 1, 1, 1)
 

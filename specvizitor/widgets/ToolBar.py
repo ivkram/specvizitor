@@ -20,7 +20,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
     def __init__(self, rd: AppData, parent=None):
         super().__init__(parent=parent)
-        self.setWindowTitle('Tool Controls Bar')
+        self.setWindowTitle('Commands Bar')
 
         self.rd = rd
 
@@ -67,7 +67,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._settings_button.setToolTip('GUI and Project Settings')
         self._settings_button.triggered.connect(self.settings_button_clicked)
 
-        self.init_ui()
+        self.populate()
 
     @property
     def viewer_connected_buttons(self):
@@ -94,7 +94,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         return pn_buttons
 
-    def init_ui(self):
+    def populate(self):
         self.addAction(self._pn_buttons['previous starred'])
         self.addAction(self._pn_buttons['previous'])
         self.addAction(self._pn_buttons['next'])

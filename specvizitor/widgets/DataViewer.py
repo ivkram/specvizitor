@@ -19,7 +19,8 @@ class DataViewer(AbstractWidget):
     view_reset = QtCore.Signal()
 
     def __init__(self, rd: AppData, parent=None):
-        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
+        super().__init__(parent=parent)
+        self.setLayout(QtWidgets.QGridLayout())
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.set_geometry(spacing=0, margins=0)
 
@@ -48,7 +49,7 @@ class DataViewer(AbstractWidget):
         except (KeyError, ValueError, TypeError):
             self.reset_dock_state()
 
-        self.init_ui()
+        self.populate()
 
     @property
     def widgets(self) -> list[LazyViewerElement]:
@@ -73,17 +74,14 @@ class DataViewer(AbstractWidget):
         # create widgets for images (e.g. image cutouts, 2D spectra)
         if self.rd.docks.images is not None:
             for name, image_cfg in self.rd.docks.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, global_viewer_config=self.rd.config.data_viewer,
+                widgets[name] = Image2D(cfg=image_cfg, title=name, inspector_config=self.rd.config.data_viewer,
                                         parent=self)
 
         # create widgets for 1D spectra
         if self.rd.docks.spectra is not None:
             for name, spec_cfg in self.rd.docks.spectra.items():
                 widgets[name] = Spec1D(lines=self.rd.lines, cfg=spec_cfg, title=name,
-                                       global_viewer_config=self.rd.config.data_viewer, parent=self)
-
-        for w in widgets.values():
-            w.init_ui()
+                                       inspector_config=self.rd.config.data_viewer, parent=self)
 
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
@@ -127,7 +125,7 @@ class DataViewer(AbstractWidget):
         if self.rd.df is not None:
             self.load_object()
 
-    def init_ui(self):
+    def populate(self):
         self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
 
     @QtCore.Slot()

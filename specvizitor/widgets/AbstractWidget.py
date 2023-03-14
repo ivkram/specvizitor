@@ -10,12 +10,8 @@ class QtAbcMeta(type(QtWidgets.QWidget), type(abc.ABC)):
 
 
 class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
-    def __init__(self, layout: QtWidgets.QLayout = None, parent=None):
-        super().__init__(parent)
-
-        if layout is not None:
-            self.setLayout(layout)
-
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         self.setEnabled(False)
 
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
@@ -26,10 +22,10 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
         self.layout().setContentsMargins(*margins)
 
     @abc.abstractmethod
-    def init_ui(self):
+    def populate(self):
         pass
 
     def reset_layout(self):
         for widget in get_widgets(self.layout()):
             self.layout().removeWidget(widget)
-        self.init_ui()
+        self.populate()

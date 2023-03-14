@@ -12,11 +12,11 @@ class QuickSearch(AbstractWidget):
     object_selected = QtCore.Signal(int)
 
     def __init__(self, rd: AppData, parent=None):
-        super().__init__(layout=QtWidgets.QGridLayout(), parent=parent)
+        super().__init__(parent=parent)
+        self.setLayout(QtWidgets.QGridLayout())
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
         self.rd = rd
-
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
         # create the `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton(self)
@@ -36,9 +36,9 @@ class QuickSearch(AbstractWidget):
         self._index_field = QtWidgets.QLineEdit(self)
         self._index_field.returnPressed.connect(self.go_to_index)
 
-        self.init_ui()
+        self.populate()
 
-    def init_ui(self):
+    def populate(self):
         self.layout().addWidget(self._go_to_id_button, 1, 1, 1, 1)
         self.layout().addWidget(self._id_field, 1, 2, 1, 1)
         self.layout().addWidget(self._go_to_index_button, 2, 1, 1, 1)

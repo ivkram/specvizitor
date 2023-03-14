@@ -6,19 +6,20 @@ from .AbstractWidget import AbstractWidget
 
 
 class LazyViewerElement(AbstractWidget):
-    def __init__(self, cfg: docks.LazyViewerElement, title: str, global_viewer_config: config.DataViewer, **kwargs):
-        super().__init__(layout=QtWidgets.QGridLayout(), **kwargs)
+    def __init__(self, title: str, cfg: docks.LazyViewerElement, inspector_config: config.DataViewer, parent=None):
+        super().__init__(parent=parent)
+        self.setLayout(QtWidgets.QGridLayout())
 
-        self.cfg = cfg
         self.title = title
-        self.global_config = global_viewer_config
+        self.cfg = cfg
+        self.inspector_config = inspector_config
 
         # create a central widget
         self.graphics_view = pg.GraphicsView(parent=self)
         self.graphics_layout = pg.GraphicsLayout()
         self.graphics_view.setCentralItem(self.graphics_layout)
 
-        self.set_geometry(spacing=global_viewer_config.spacing, margins=global_viewer_config.margins)
+        self.set_geometry(spacing=self.inspector_config.spacing, margins=self.inspector_config.margins)
 
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
         super().set_geometry(spacing=spacing, margins=margins)
@@ -26,5 +27,5 @@ class LazyViewerElement(AbstractWidget):
         self.graphics_layout.setSpacing(spacing)
         self.graphics_layout.setContentsMargins(0, 0, 5, 5)
 
-    def init_ui(self):
+    def populate(self):
         self.layout().addWidget(self.graphics_view, 1, 1, 1, 1)

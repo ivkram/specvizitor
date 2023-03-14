@@ -46,7 +46,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         smoothing_slider.setToolTip('Slide to smooth the data')
         return smoothing_slider
 
-    def init_ui(self):
+    def populate(self):
         sub_layout = QtWidgets.QHBoxLayout()
 
         # add vertical sliders
@@ -63,14 +63,6 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             if s.text_editor:
                 sub_layout.addWidget(s)
         self.layout().addLayout(sub_layout, 2, 1, 1, 1)
-
-        # init the UI of lazy widgets
-        for w in self.lazy_widgets:
-            w.init_ui()
-
-        # init the UI of sliders
-        for s in self.sliders:
-            s.init_ui()
 
     def load_object(self, rd: AppData):
         # clear the widget content
