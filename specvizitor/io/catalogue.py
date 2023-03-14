@@ -38,6 +38,7 @@ def load_cat(filename=None,
     # rename columns
     if translate is not None:
         table_tools.translate(cat, translate)
+        cat.meta['aliases'] = translate
 
     # check that the ID column is present in the catalogue
     if 'id' not in cat.colnames:

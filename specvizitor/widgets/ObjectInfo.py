@@ -90,7 +90,7 @@ class ObjectInfo(AbstractWidget):
             try:
                 row[1].setText(str(rd.cat.loc[rd.id][cname]))
             except KeyError:
-                logger.warning(column_not_found_message(cname, rd.config.catalogue.translate))
+                logger.warning(column_not_found_message(cname, rd.cat.meta.get('aliases')))
                 row[1].setText('')
 
         # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:

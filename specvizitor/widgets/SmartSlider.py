@@ -146,11 +146,11 @@ class SmartSliderWithEditor(AbstractWidget):
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
 
-    def update_default_value(self, cat: Table, object_id, translate):
+    def update_default_value(self, cat: Table, object_id):
         try:
             self._slider.default_value = cat.loc[object_id][self.cat_name]
         except KeyError:
-            logger.warning(column_not_found_message(self.cat_name, translate))
+            logger.warning(column_not_found_message(self.cat_name, cat.meta.get('aliases')))
             self._slider.default_value = self._default_value_backup
 
     def reset(self):
