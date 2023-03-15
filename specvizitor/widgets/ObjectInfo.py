@@ -17,6 +17,7 @@ class ObjectInfo(AbstractWidget):
     def __init__(self, cfg: config.ObjectInfo, parent=None):
         self.cfg = cfg
 
+        self._search_lineedit: QtWidgets.QLineEdit | None = None
         self._table: QtWidgets.QTableWidget | None = None
         self._table_items: list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]] | None = None
 
@@ -53,7 +54,9 @@ class ObjectInfo(AbstractWidget):
         self.set_table_items()
 
     def init_ui(self):
-        self._table = QtWidgets.QTableWidget()
+        self._search_lineedit = QtWidgets.QLineEdit(self)
+
+        self._table = QtWidgets.QTableWidget(self)
         self._table.setColumnCount(2)
         self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self._table.horizontalHeader().hide()
@@ -65,13 +68,21 @@ class ObjectInfo(AbstractWidget):
         self.update_table_items()
 
     def connect(self):
-        pass
+        self._search_lineedit.textChanged[str].connect(self.search)
 
     def set_layout(self):
-        self.setLayout(QtWidgets.QGridLayout())
+        self.setLayout(QtWidgets.QVBoxLayout())
 
     def populate(self):
-        self.layout().addWidget(self._table, 1, 1, 1, 1)
+        self.layout().addWidget(self._table)
+        self.layout().addWidget(self._search_lineedit)
+
+    def search(self, keyword):
+        for i, row in enumerate(self._table_items):
+            if keyword in row[0].text():
+                self._table.showRow(i)
+            else:
+                self._table.hideRow(i)
 
     @QtCore.Slot()
     def load_project(self):

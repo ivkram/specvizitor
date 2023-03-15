@@ -24,7 +24,7 @@ class Appearance:
 
 @dataclass
 class ObjectInfo:
-    show_all: bool = False
+    show_all: bool = True
     items: list[str] | None = field(default_factory=lambda: ['ra', 'dec'])
 
 
