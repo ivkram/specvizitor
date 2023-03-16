@@ -17,7 +17,7 @@ from .Spec1D import Spec1D
 class DataViewer(AbstractWidget):
     object_selected = QtCore.Signal(AppData)
     view_reset = QtCore.Signal()
-    data_captured = QtCore.Signal(dict)
+    data_collected = QtCore.Signal(dict)
 
     def __init__(self,
                  cfg: config.DataViewer,
@@ -51,7 +51,7 @@ class DataViewer(AbstractWidget):
 
         return list(self.core_widgets.values()) + lazy_widgets
 
-    def create_widgets(self):
+    def _create_widgets(self):
         # delete previously created widgets
         if self.widgets:
             self.object_selected.disconnect()
@@ -84,7 +84,7 @@ class DataViewer(AbstractWidget):
 
         self.core_widgets = widgets
 
-    def create_docks(self):
+    def _create_docks(self):
         # delete previously added docks
         for dock_name in self.added_docks:
             self.docks[dock_name].close()
@@ -95,7 +95,7 @@ class DataViewer(AbstractWidget):
 
         self.docks = docks
 
-    def add_dock(self, widget: LazyViewerElement):
+    def _add_dock(self, widget: LazyViewerElement):
         position = widget.cfg.position if widget.cfg.position is not None else 'bottom'
         relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self.added_docks else None
 
@@ -103,34 +103,34 @@ class DataViewer(AbstractWidget):
                                position=position,
                                relativeTo=relative_to)
 
-    def add_docks(self):
+    def _add_docks(self):
         added_docks = []
 
         for widget in self.widgets:
             if widget.cfg.visible:
-                self.add_dock(widget)
+                self._add_dock(widget)
                 added_docks.append(widget.title)
 
         self.added_docks = added_docks
 
     @QtCore.Slot()
-    def reset_dock_state(self):
-        self.create_docks()
-        self.add_docks()
+    def reset_dock_layout(self):
+        self._create_docks()
+        self._add_docks()
         self._update_dock_titles()
 
     @QtCore.Slot(dict)
-    def restore_dock_state(self, dock_state: dict):
+    def restore_dock_layout(self, layout: dict):
         try:
-            # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `state`
-            self.dock_area.restoreState(dock_state, missing='ignore', extra=None)
+            # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `layout`
+            self.dock_area.restoreState(layout, missing='ignore', extra=None)
         except (KeyError, ValueError, TypeError):
-            self.reset_dock_state()
+            self.reset_dock_layout()
 
     def init_ui(self):
-        self.create_widgets()
-        self.create_docks()
-        self.add_docks()
+        self._create_widgets()
+        self._create_docks()
+        self._add_docks()
 
     def connect(self):
         pass
@@ -172,8 +172,8 @@ class DataViewer(AbstractWidget):
         self._update_dock_titles()
 
     @QtCore.Slot()
-    def capture(self):
-        self.data_captured.emit(self.dock_area.saveState())
+    def collect(self):
+        self.data_collected.emit(self.dock_area.saveState())
 
     @QtCore.Slot(str)
     def take_screenshot(self, filename: str):

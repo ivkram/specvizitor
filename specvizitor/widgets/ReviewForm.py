@@ -9,7 +9,7 @@ from .AbstractWidget import AbstractWidget
 
 
 class ReviewForm(AbstractWidget):
-    data_captured = QtCore.Signal(str, dict)
+    data_collected = QtCore.Signal(str, dict)
 
     def __init__(self, cfg: config.ReviewForm, parent=None):
 
@@ -71,8 +71,8 @@ class ReviewForm(AbstractWidget):
             widget.setChecked(rd.df.at[rd.id, cname])
 
     @QtCore.Slot()
-    def capture(self):
+    def collect(self):
         comment = self._comments_widget.toPlainText()
         checkboxes = {cname: widget.isChecked() for cname, widget in self._checkbox_widgets.items()}
 
-        self.data_captured.emit(comment, checkboxes)
+        self.data_collected.emit(comment, checkboxes)

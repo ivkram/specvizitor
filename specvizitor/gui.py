@@ -40,7 +40,7 @@ class MainWindow(QtWidgets.QMainWindow):
     object_selected = QtCore.Signal(AppData)
     catalogue_changed = QtCore.Signal(Table)
     screenshot_path_selected = QtCore.Signal(str)
-    dock_state_updated = QtCore.Signal(dict)
+    dock_layout_updated = QtCore.Signal(dict)
     dock_configuration_updated = QtCore.Signal(Docks)
 
     def __init__(self, appdata: AppData, parent=None):
@@ -65,7 +65,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
 
-        self.inspector_widget: DataViewer | None = None
+        self.data_viewer: DataViewer | None = None
         self.toolbar: ToolBar | None = None
         self.quick_search: QuickSearch | None = None
         self.object_info: ObjectInfo | None = None
@@ -81,9 +81,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.restore_window_state()
 
-        # restore the dock state from cache
-        if self.rd.cache.dock_state:
-            self.dock_state_updated.emit(self.rd.cache.dock_state)
+        # restore the dock state (= the layout of the data viewer) from cache
+        if self.rd.cache.dock_layout:
+            self.dock_layout_updated.emit(self.rd.cache.dock_layout)
 
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
@@ -91,8 +91,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self.inspector_widget = DataViewer(self.rd.config.data_viewer, self.rd.docks,
-                                           spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
+        self.data_viewer = DataViewer(self.rd.config.data_viewer, self.rd.docks,
+                                      spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
 
         # create a toolbar
         self.toolbar = ToolBar(self.rd, parent=self)
@@ -164,22 +164,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setShortcut('F5')
-        self._reset_view.triggered.connect(self.inspector_widget.view_reset.emit)
+        self._reset_view.triggered.connect(self.data_viewer.view_reset.emit)
         self._view.addAction(self._reset_view)
 
-        self._reset_dock_state = QtWidgets.QAction("Reset Dock State")
-        self._reset_dock_state.triggered.connect(self.inspector_widget.reset_dock_state)
-        self._view.addAction(self._reset_dock_state)
-
-        self._view.addSeparator()
-
-        self._backup_dock_configuration = QtWidgets.QAction("Backup...")
-        self._backup_dock_configuration.triggered.connect(self._backup_dock_configuration_action)
-        self._view.addAction(self._backup_dock_configuration)
-
-        self._restore_dock_configuration = QtWidgets.QAction("Restore...")
-        self._restore_dock_configuration.triggered.connect(self._restore_dock_configuration_action)
-        self._view.addAction(self._restore_dock_configuration)
+        self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
+        self._reset_dock_layout.triggered.connect(self.data_viewer.reset_dock_layout)
+        self._view.addAction(self._reset_dock_layout)
 
         self._view.addSeparator()
 
@@ -192,13 +182,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self._shortcut_fullscreen = QtWidgets.QShortcut('Esc', self)
         self._shortcut_fullscreen.activated.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
-        self._tools = self._menu.addMenu("&Tools")
+        self._docks = self._menu.addMenu("&Docks")
 
-        self._screenshot = QtWidgets.QAction("Capture Dock Area...")
+        self._backup_dock_configuration = QtWidgets.QAction("Backup...")
+        self._backup_dock_configuration.triggered.connect(self._backup_dock_configuration_action)
+        self._docks.addAction(self._backup_dock_configuration)
+
+        self._restore_dock_configuration = QtWidgets.QAction("Restore...")
+        self._restore_dock_configuration.triggered.connect(self._restore_dock_configuration_action)
+        self._docks.addAction(self._restore_dock_configuration)
+
+        self._docks.addSeparator()
+
+        self._screenshot = QtWidgets.QAction("Capture...")
         self._screenshot.triggered.connect(self._screenshot_action)
-        self._tools.addAction(self._screenshot)
+        self._docks.addAction(self._screenshot)
 
-        self._tools.addSeparator()
+        self._tools = self._menu.addMenu("&Tools")
 
         self._settings = QtWidgets.QAction("Se&ttings...")
         self._settings.triggered.connect(self._settings_action)
@@ -211,20 +211,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def connect(self):
         # connect the main window to the child widgets
-        for w in (self.inspector_widget, self.toolbar, self.quick_search, self.object_info, self.review_form):
+        for w in (self.data_viewer, self.toolbar, self.quick_search, self.object_info, self.review_form):
             self.project_loaded.connect(w.load_project)
 
-        for w in (self.inspector_widget, self.review_form):
-            self.data_requested.connect(w.capture)
+        for w in (self.data_viewer, self.review_form):
+            self.data_requested.connect(w.collect)
 
-        for w in (self.inspector_widget, self.toolbar, self.object_info, self.review_form):
+        for w in (self.data_viewer, self.toolbar, self.object_info, self.review_form):
             self.object_selected.connect(w.load_object)
 
         self.catalogue_changed.connect(self.object_info.update_table_items)
 
-        self.dock_state_updated.connect(self.inspector_widget.restore_dock_state)
-        self.dock_configuration_updated.connect(self.inspector_widget.update_dock_configuration)
-        self.screenshot_path_selected.connect(self.inspector_widget.take_screenshot)
+        self.dock_layout_updated.connect(self.data_viewer.restore_dock_layout)
+        self.dock_configuration_updated.connect(self.data_viewer.update_dock_configuration)
+        self.screenshot_path_selected.connect(self.data_viewer.take_screenshot)
 
         # connect the child widgets to the main window
         self.quick_search.object_selected.connect(self.load_object)
@@ -232,15 +232,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
         self.toolbar.settings_button_clicked.connect(self._settings_action)
 
-        self.inspector_widget.data_captured.connect(self._save_inspector_data)
-        self.review_form.data_captured.connect(self._save_review_data)
+        self.data_viewer.data_collected.connect(self._save_viewer_data)
+        self.review_form.data_collected.connect(self._save_review_data)
 
         # connect the child widgets between each other
-        self.toolbar.reset_view_button_clicked.connect(self.inspector_widget.view_reset.emit)
-        self.toolbar.reset_dock_state_button_clicked.connect(self.inspector_widget.reset_dock_state)
+        self.toolbar.reset_view_button_clicked.connect(self.data_viewer.view_reset.emit)
+        self.toolbar.reset_layout_button_clicked.connect(self.data_viewer.reset_dock_layout)
 
     def populate(self):
-        self.setCentralWidget(self.inspector_widget)
+        self.setCentralWidget(self.data_viewer)
 
         self.addToolBar(QtCore.Qt.TopToolBarArea, self.toolbar)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.quick_search_dock)
@@ -398,7 +398,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if dialog.exec():
             self.catalogue_changed.emit(self.rd.cat)
             if self.rd.df is not None:
-                for widget in (self.inspector_widget, self.object_info):
+                for widget in (self.data_viewer, self.object_info):
                     widget.load_object(self.rd)
 
     def _about_action(self):
@@ -408,8 +408,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._exit_action()
 
     @QtCore.Slot(dict)
-    def _save_inspector_data(self, dock_state: dict):
-        self.rd.cache.dock_state = dock_state
+    def _save_viewer_data(self, layout: dict):
+        self.rd.cache.dock_layout = layout
         self.rd.cache.save()
 
     @QtCore.Slot(str, dict)

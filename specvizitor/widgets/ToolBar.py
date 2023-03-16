@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class ToolBar(QtWidgets.QToolBar, AbstractWidget):
     object_selected = QtCore.Signal(int)
     reset_view_button_clicked = QtCore.Signal()
-    reset_dock_state_button_clicked = QtCore.Signal()
+    reset_layout_button_clicked = QtCore.Signal()
     screenshot_button_clicked = QtCore.Signal()
     settings_button_clicked = QtCore.Signal()
 
@@ -24,7 +24,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._pn_buttons: dict[str, QtWidgets.QAction] | None = None
         self._star_button: QtWidgets.QAction | None = None
         self._reset_view_button: QtWidgets.QAction | None = None
-        self._reset_dock_state_button: QtWidgets.QAction | None = None
+        self._reset_layout_button: QtWidgets.QAction | None = None
         self._screenshot_button: QtWidgets.QAction | None = None
         self._spacer: QtWidgets.QWidget | None = None
         self._settings_button: QtWidgets.QAction | None = None
@@ -35,7 +35,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
     @property
     def viewer_connected_buttons(self):
         return tuple(self._pn_buttons.values()) + (self._star_button, self._screenshot_button,
-                                                   self._reset_view_button, self._reset_dock_state_button)
+                                                   self._reset_view_button, self._reset_layout_button)
 
     def create_pn_buttons(self) -> dict[str, QtWidgets.QAction]:
         pn_buttons_params = {'previous': {'shortcut': QtGui.QKeySequence.MoveToPreviousChar, 'icon': 'arrow-backward'},
@@ -68,17 +68,17 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         # create a `screenshot` button
         self._screenshot_button = QtWidgets.QAction(self)
         self._screenshot_button.setIcon(self.get_icon('screenshot.svg'))
-        self._screenshot_button.setToolTip('Take a screenshot of the dock area')
+        self._screenshot_button.setToolTip('Take a screenshot')
 
         # create a `reset view` button
         self._reset_view_button = QtWidgets.QAction(self)
         self._reset_view_button.setIcon(self.get_icon('reset-view.svg'))
         self._reset_view_button.setToolTip('Reset the view')
 
-        # create a `reset dock state` button
-        self._reset_dock_state_button = QtWidgets.QAction(self)
-        self._reset_dock_state_button.setIcon(self.get_icon('reset-dock-state.svg'))
-        self._reset_dock_state_button.setToolTip('Reset the dock state')
+        # create a `reset layout` button
+        self._reset_layout_button = QtWidgets.QAction(self)
+        self._reset_layout_button.setIcon(self.get_icon('reset-dock-state.svg'))
+        self._reset_layout_button.setToolTip('Reset the layout')
 
         for b in self.viewer_connected_buttons:
             b.setEnabled(False)
@@ -96,7 +96,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         self._star_button.triggered.connect(self.star)
         self._reset_view_button.triggered.connect(self.reset_view_button_clicked.emit)
-        self._reset_dock_state_button.triggered.connect(self.reset_dock_state_button_clicked.emit)
+        self._reset_layout_button.triggered.connect(self.reset_layout_button_clicked.emit)
         self._screenshot_button.triggered.connect(self.screenshot_button_clicked.emit)
         self._settings_button.triggered.connect(self.settings_button_clicked)
 
@@ -116,7 +116,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self.addSeparator()
 
         self.addAction(self._reset_view_button)
-        self.addAction(self._reset_dock_state_button)
+        self.addAction(self._reset_layout_button)
         self.addAction(self._screenshot_button)
 
         self.addWidget(self._spacer)
