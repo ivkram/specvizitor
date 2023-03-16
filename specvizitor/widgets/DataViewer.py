@@ -142,7 +142,7 @@ class DataViewer(AbstractWidget):
     def populate(self):
         self.layout().addWidget(self.dock_area, 1, 1, 1, 1)
 
-    @QtCore.Slot()
+    @QtCore.Slot(Docks)
     def update_dock_configuration(self, dock_cfg: Docks):
         self.dock_cfg = dock_cfg
         self.init_ui()

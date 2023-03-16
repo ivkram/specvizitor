@@ -223,7 +223,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.catalogue_changed.connect(self.object_info.update_table_items)
 
         self.dock_state_updated.connect(self.inspector_widget.restore_dock_state)
-        self.dock_configuration_updated.connect(self.inspector_widget.init_ui)
+        self.dock_configuration_updated.connect(self.inspector_widget.update_dock_configuration)
         self.screenshot_path_selected.connect(self.inspector_widget.take_screenshot)
 
         # connect the child widgets to the main window
