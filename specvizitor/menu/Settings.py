@@ -72,8 +72,8 @@ class Settings(QtWidgets.QDialog):
 
         else:
             self.rd.config.catalogue.filename = None
-            if self.rd.df is not None:
-                self.rd.cat = create_cat(self.rd.df.index.values)
+            if self.rd.notes is not None:
+                self.rd.cat = create_cat(self.rd.notes.ids)
 
         self.rd.config.data.dir = self._browsers['data'].path
         self.rd.config.save()

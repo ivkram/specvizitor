@@ -66,9 +66,9 @@ class QuickSearch(AbstractWidget):
             logger.error(f'Invalid ID: {text}')
             return
 
-        if id_upd in self.rd.df.index:
+        if id_upd in self.rd.notes.ids:
             self.parent().setFocus()
-            self.object_selected.emit(self.rd.df.index.get_loc(id_upd))
+            self.object_selected.emit(self.rd.notes.get_id_loc(id_upd))
         else:
             logger.error(f'ID `{text}` not found')
             return
@@ -83,7 +83,7 @@ class QuickSearch(AbstractWidget):
             logger.error(f'Invalid index: {text}')
             return
 
-        if 0 < index_upd <= self.rd.n_objects:
+        if 0 < index_upd <= self.rd.notes.n_objects:
             self.parent().setFocus()
             self.object_selected.emit(index_upd - 1)
         else:

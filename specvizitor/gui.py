@@ -1,5 +1,4 @@
 from astropy.table import Table
-import pandas as pd
 from platformdirs import user_config_dir, user_cache_dir
 import pyqtgraph as pg
 import qdarktheme
@@ -20,6 +19,7 @@ from .appdata import AppData
 from .config import Config, Docks, SpectralLines, Cache
 from .utils.logs import LogMessageBox
 from .utils.params import LocalFile, save_yaml
+from .io.inspection_data import InspectionData
 from .io.viewer_data import add_enabled_aliases
 
 from .menu.NewFile import NewFile
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    project_loaded = QtCore.Signal(pd.DataFrame)
+    project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
     object_selected = QtCore.Signal(AppData)
     catalogue_changed = QtCore.Signal(Table)
@@ -291,7 +291,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._save, self._save_as, self._export):
             w.setEnabled(True)
 
-        self.project_loaded.emit(self.rd.df)
+        self.project_loaded.emit(self.rd.notes)
 
         # cache the inspection file name
         self.rd.cache.last_inspection_file = str(self.rd.output_path)
@@ -299,7 +299,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # try to display the object with an index stored in cache
         j = self.rd.cache.last_object_index
-        if j and 0 <= j < self.rd.n_objects:
+        if j and 0 <= j < self.rd.notes.n_objects:
             self.load_object(int(j))
         else:
             self.load_object(0)
@@ -315,14 +315,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd.j = j
 
         # cache the index of the object
-        # TODO: cache the ID instead of the index
         self.rd.cache.last_object_index = j
         self.rd.cache.save()
 
         self.object_selected.emit(self.rd)
 
         self.setWindowTitle(
-            f'{self.rd.output_path.name} – ID {self.rd.id} [#{self.rd.j + 1}/{self.rd.n_objects}] – Specvizitor')
+            f'{self.rd.output_path.name} – ID {self.rd.id} [#{self.rd.j + 1}/{self.rd.notes.n_objects}] – Specvizitor')
 
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
@@ -339,7 +338,7 @@ class MainWindow(QtWidgets.QMainWindow):
         LogMessageBox(logging.INFO, 'Not implemented', parent=self)
 
     def _exit_action(self):
-        if self.rd.df is not None:
+        if self.rd.notes is not None:
             self.data_requested.emit()
 
         # save the state and geometry of the main window
@@ -397,7 +396,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = Settings(self.rd, parent=self)
         if dialog.exec():
             self.catalogue_changed.emit(self.rd.cat)
-            if self.rd.df is not None:
+            if self.rd.notes is not None:
                 for widget in (self.data_viewer, self.object_info):
                     widget.load_object(self.rd)
 
@@ -414,9 +413,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(str, dict)
     def _save_review_data(self, comments: str, checkboxes: dict[str, bool]):
-        self.rd.df.at[self.rd.id, 'comment'] = comments
+        self.rd.notes.update_single_value(self.rd.j, 'comment', comments)
         for cname, is_checked in checkboxes.items():
-            self.rd.df.at[self.rd.id, cname] = is_checked
+            self.rd.notes.update_single_value(self.rd.j, cname, is_checked)
         self.rd.save()
 
 

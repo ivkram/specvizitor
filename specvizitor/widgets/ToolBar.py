@@ -1,4 +1,3 @@
-import numpy as np
 from qtpy import QtGui, QtCore, QtWidgets
 
 from functools import partial
@@ -130,18 +129,18 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
     @QtCore.Slot(AppData)
     def load_object(self, rd: AppData):
-        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(rd.df.at[rd.id, 'starred'])))
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(rd.notes.get_single_value(self.rd.j, 'starred'))))
 
-        self._pn_buttons['previous starred'].setEnabled(np.sum(rd.df['starred']) > 0)
-        self._pn_buttons['next starred'].setEnabled(np.sum(rd.df['starred']) > 0)
+        self._pn_buttons['previous starred'].setEnabled(self.rd.notes.has_starred)
+        self._pn_buttons['next starred'].setEnabled(self.rd.notes.has_starred)
 
     def previous_next_object(self, command: str, starred: bool):
-        j_upd = self.update_index(self.rd.j, self.rd.n_objects, command)
+        j_upd = self.update_index(self.rd.j, self.rd.notes.n_objects, command)
 
         if starred:
-            if np.sum(self.rd.df['starred']) > 0:
-                while not self.rd.df.iat[j_upd, self.rd.df.columns.get_loc('starred')]:
-                    j_upd = self.update_index(j_upd, self.rd.n_objects, command)
+            if self.rd.notes.has_starred:
+                while not self.rd.notes.get_single_value(j_upd, 'starred'):
+                    j_upd = self.update_index(j_upd, self.rd.notes.n_objects, command)
             else:
                 return
 
@@ -177,10 +176,10 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         return QtGui.QIcon(str(self.get_icon_abs_path(icon_name)))
 
     def star(self):
-        starred = not self.rd.df.at[self.rd.id, 'starred']
+        starred = not self.rd.notes.get_single_value(self.rd.j, 'starred')
 
-        self.rd.df.at[self.rd.id, 'starred'] = starred
+        self.rd.notes.update_single_value(self.rd.j, 'starred', starred)
         self._star_button.setIcon(self.get_icon(self.get_star_icon_name(starred)))
 
-        self._pn_buttons['previous starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
-        self._pn_buttons['next starred'].setEnabled(np.sum(self.rd.df['starred']) > 0)
+        self._pn_buttons['previous starred'].setEnabled(self.rd.notes.has_starred)
+        self._pn_buttons['next starred'].setEnabled(self.rd.notes.has_starred)
