@@ -321,6 +321,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._emit_object_selected_signal()
 
+        self._update_window_title()
+
+    def _update_window_title(self):
         self.setWindowTitle(
             f'{self.rd.output_path.name} – ID {self.rd.notes.get_id(self.rd.j)}'
             f'[#{self.rd.j + 1}/{self.rd.notes.n_objects}] – Specvizitor')
@@ -349,7 +352,15 @@ class MainWindow(QtWidgets.QMainWindow):
         LogMessageBox(logging.INFO, msg, parent=self)
 
     def _save_as_action(self):
-        LogMessageBox(logging.INFO, 'Not implemented', parent=self)
+        path = qtpy.compat.getsavefilename(self, caption='Save/Save As',
+                                           basedir=str(self.rd.output_path),
+                                           filters='CSV Files (*.csv)')[0]
+        if path:
+            self.rd.output_path = pathlib.Path(path).resolve()
+            self.rd.notes.save(self.rd.output_path)
+            self.rd.cache.last_inspection_file = str(self.rd.output_path)
+            self.rd.cache.save()
+            self._update_window_title()
 
     def _export_action(self):
         LogMessageBox(logging.INFO, 'Not implemented', parent=self)
@@ -368,7 +379,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _restore_dock_configuration_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Dock Configuration',
-                                           basedir=str(pathlib.Path()),
                                            filters='YAML Files (*.yml)')[0]
         if path:
             new_docks = self.rd.docks.replace_params(pathlib.Path(path))

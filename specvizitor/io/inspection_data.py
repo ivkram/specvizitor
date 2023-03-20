@@ -1,3 +1,4 @@
+from astropy.table import Table
 import numpy as np
 import pandas as pd
 
@@ -54,13 +55,23 @@ class InspectionData:
 
         return notes
 
-    def save(self, filename: str | pathlib.Path):
+    def _save_to_csv(self, filename: str | pathlib.Path):
+        self.df.to_csv(filename, index_label='id')
+
+    def _save_to_fits(self, filename: str | pathlib.Path):
+        Table(self.df).write(filename)
+
+    def save(self, filename: str | pathlib.Path, fmt: str = 'csv'):
         """ Save inspection data to the output file.
         @param filename: the output filename
+        @param fmt: the output format
         @return: None
         """
 
-        self.df.to_csv(filename, index_label='id')
+        if fmt == 'fits':
+            self._save_to_fits(filename)
+        else:
+            self._save_to_csv(filename)
 
     @property
     def ids(self) -> np.array:
