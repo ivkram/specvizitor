@@ -59,7 +59,8 @@ class InspectionData:
         self.df.to_csv(filename, index_label='id')
 
     def _save_to_fits(self, filename: str | pathlib.Path):
-        Table(self.df).write(filename)
+        t: Table = Table.from_pandas(self.df)
+        t.write(filename, overwrite=True)
 
     def save(self, filename: str | pathlib.Path, fmt: str = 'csv'):
         """ Save inspection data to the output file.

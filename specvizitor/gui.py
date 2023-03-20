@@ -148,7 +148,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self._save_as.setEnabled(False)
         self._file.addAction(self._save_as)
 
-        self._export = QtWidgets.QAction("&Export...")
+        self._file.addSeparator()
+
+        self._export = QtWidgets.QAction("&Export FITS Table...")
         self._export.triggered.connect(self._export_action)
         self._export.setEnabled(False)
         self._file.addAction(self._export)
@@ -363,7 +365,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self._update_window_title()
 
     def _export_action(self):
-        LogMessageBox(logging.INFO, 'Not implemented', parent=self)
+        path = qtpy.compat.getsavefilename(self, caption='Export To FITS',
+                                           basedir=str(self.rd.output_path.with_suffix('.fits')),
+                                           filters='FITS Files (*.fits)')[0]
+
+        if path:
+            self.rd.notes.save(self.rd.output_path.with_suffix('.fits'), 'fits')
 
     def _exit_action(self):
         if self.rd.notes is not None:
