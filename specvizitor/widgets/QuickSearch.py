@@ -2,18 +2,16 @@ from qtpy import QtWidgets, QtCore
 
 import logging
 
-from ..appdata import AppData
 from .AbstractWidget import AbstractWidget
 
 logger = logging.getLogger(__name__)
 
 
 class QuickSearch(AbstractWidget):
-    object_selected = QtCore.Signal(int)
+    id_selected = QtCore.Signal(str)
+    index_selected = QtCore.Signal(str)
 
-    def __init__(self, rd: AppData, parent=None):
-        self.rd = rd
-
+    def __init__(self, parent=None):
         self._go_to_id_button: QtWidgets.QPushButton | None = None
         self._id_field: QtWidgets.QLineEdit | None = None
         self._go_to_index_button: QtWidgets.QPushButton | None = None
@@ -57,35 +55,9 @@ class QuickSearch(AbstractWidget):
         self.setEnabled(True)
 
     def go_to_id(self):
-        text = self._id_field.text()
+        self.id_selected.emit(self._id_field.text())
         self._id_field.clear()
 
-        try:
-            id_upd = int(text)
-        except ValueError:
-            logger.error(f'Invalid ID: {text}')
-            return
-
-        if id_upd in self.rd.notes.ids:
-            self.parent().setFocus()
-            self.object_selected.emit(self.rd.notes.get_id_loc(id_upd))
-        else:
-            logger.error(f'ID `{text}` not found')
-            return
-
     def go_to_index(self):
-        text = self._index_field.text()
+        self.index_selected.emit(self._index_field.text())
         self._index_field.clear()
-
-        try:
-            index_upd = int(text)
-        except ValueError:
-            logger.error(f'Invalid index: {text}')
-            return
-
-        if 0 < index_upd <= self.rd.notes.n_objects:
-            self.parent().setFocus()
-            self.object_selected.emit(index_upd - 1)
-        else:
-            logger.error(f'Index `{text}` out of range')
-            return

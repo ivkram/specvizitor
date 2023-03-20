@@ -100,7 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.toolbar.setEnabled(True)
 
         # create a quick search widget
-        self.quick_search = QuickSearch(rd=self.rd, parent=self)
+        self.quick_search = QuickSearch(parent=self)
         self.quick_search_dock = QtWidgets.QDockWidget('Quick Search', self)
         self.quick_search_dock.setObjectName('Quick Search')
         self.quick_search_dock.setWidget(self.quick_search)
@@ -227,7 +227,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.screenshot_path_selected.connect(self.data_viewer.take_screenshot)
 
         # connect the child widgets to the main window
-        self.quick_search.object_selected.connect(self.load_object)
+        self.quick_search.id_selected.connect(self._select_by_id)
+        self.quick_search.index_selected.connect(self._select_by_index)
         self.toolbar.object_selected.connect(self.load_object)
         self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
         self.toolbar.settings_button_clicked.connect(self._settings_action)
@@ -323,6 +324,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(
             f'{self.rd.output_path.name} – ID {self.rd.notes.get_id(self.rd.j)}'
             f'[#{self.rd.j + 1}/{self.rd.notes.n_objects}] – Specvizitor')
+
+    @Slot(str)
+    def _select_by_id(self, obj_id: str):
+        if self.rd.notes.validate_id(obj_id):
+            self.setFocus()
+            self.load_object(self.rd.notes.get_id_loc(obj_id))
+
+    @Slot(str)
+    def _select_by_index(self, index: str):
+        if self.rd.notes.validate_index(index):
+            self.setFocus()
+            self.load_object(int(index) - 1)
 
     def _emit_object_selected_signal(self):
         self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self.rd.config.data)

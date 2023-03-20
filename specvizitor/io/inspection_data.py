@@ -107,7 +107,10 @@ class InspectionData:
 
         return obj_id
 
-    def get_id_loc(self, obj_id):
+    def get_id_loc(self, obj_id: str):
+        if pd.api.types.is_integer_dtype(self.df.index):
+            obj_id = int(obj_id)
+
         return self.df.index.get_loc(obj_id)
 
     def get_checkboxes(self, default_checkboxes: dict[str, str] | None = None) -> dict[str, str]:
@@ -132,3 +135,30 @@ class InspectionData:
 
     def update_single_value(self, j: int, cname: str, value):
         self.df.iat[j, self.df.columns.get_loc(cname)] = value
+
+    def validate_id(self, obj_id: str) -> bool:
+        if pd.api.types.is_integer_dtype(self.df.index):
+            try:
+                obj_id = int(obj_id)
+            except ValueError:
+                logger.error(f'Invalid ID: {obj_id}')
+                return False
+
+        if obj_id not in self.ids:
+            logger.error(f'ID `{obj_id}` not found')
+            return False
+
+        return True
+
+    def validate_index(self, index: str) -> bool:
+        try:
+            index = int(index)
+        except ValueError:
+            logger.error(f'Invalid index: {index}')
+            return False
+
+        if not 0 < index <= self.n_objects:
+            logger.error(f'Index `{index}` out of range')
+            return False
+
+        return True
