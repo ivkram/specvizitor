@@ -5,6 +5,7 @@ import logging
 import pathlib
 
 from ..appdata import AppData
+from ..io.inspection_data import InspectionData
 from .AbstractWidget import AbstractWidget
 
 logger = logging.getLogger(__name__)
@@ -127,12 +128,12 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         for b in self.viewer_connected_buttons:
             b.setEnabled(True)
 
-    @QtCore.Slot(AppData)
-    def load_object(self, rd: AppData):
-        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(rd.notes.get_single_value(self.rd.j, 'starred'))))
+    @QtCore.Slot(int, InspectionData)
+    def load_object(self, j: int, notes: InspectionData):
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(notes.get_single_value(j, 'starred'))))
 
-        self._pn_buttons['previous starred'].setEnabled(self.rd.notes.has_starred)
-        self._pn_buttons['next starred'].setEnabled(self.rd.notes.has_starred)
+        self._pn_buttons['previous starred'].setEnabled(notes.has_starred)
+        self._pn_buttons['next starred'].setEnabled(notes.has_starred)
 
     def previous_next_object(self, command: str, starred: bool):
         j_upd = self.update_index(self.rd.j, self.rd.notes.n_objects, command)

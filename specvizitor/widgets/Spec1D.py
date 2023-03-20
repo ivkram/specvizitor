@@ -11,7 +11,6 @@ import logging
 
 from ..config import docks
 from ..config.spectral_lines import SpectralLines
-from ..appdata import AppData
 
 from .LazyViewerElement import LazyViewerElement
 from .ViewerElement import ViewerElement
@@ -234,8 +233,8 @@ class Spec1D(ViewerElement):
     def _region_widget_changed_action(self, n: int):
         self.region_items[n].setRegion(self.lazy_widgets[n].spec_1d.getViewBox().viewRange()[0])
 
-    def _load_data(self, rd: AppData):
-        super()._load_data(rd=rd)
+    def _load_data(self, *args, **kwargs):
+        super()._load_data(*args, **kwargs)
         if self.data is None:
             return
 

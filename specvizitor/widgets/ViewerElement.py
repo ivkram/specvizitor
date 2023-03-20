@@ -1,4 +1,5 @@
 from astropy.io.fits.header import Header
+from astropy.table import Table
 from qtpy import QtWidgets, QtCore
 
 import abc
@@ -6,8 +7,8 @@ from dataclasses import asdict
 import logging
 import pathlib
 
-from ..appdata import AppData
-from ..config import docks
+from ..config import config, docks
+from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filename, load
 
 from .LazyViewerElement import LazyViewerElement
@@ -67,7 +68,8 @@ class ViewerElement(LazyViewerElement, abc.ABC):
                 sub_layout.addWidget(s)
         self.layout().addLayout(sub_layout, 2, 1, 1, 1)
 
-    def load_object(self, rd: AppData):
+    @QtCore.Slot(int, InspectionData, Table, config.Data)
+    def load_object(self, j: int, notes: InspectionData, cat: Table, data_cfg: config.Data):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
@@ -78,10 +80,10 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # load catalogue values to the sliders
         for s in self.sliders:
             if s.cat_name is not None:
-                s.update_default_value(rd.cat, rd.id)
+                s.update_default_value(cat, notes.get_id(j))
 
         # load data to the widget
-        self._load_data(rd=rd)
+        self._load_data(j=j, cat=cat, notes=notes, data_cfg=data_cfg)
 
         # display the data
         if self.data is not None:
@@ -95,11 +97,11 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         else:
             self.setEnabled(False)
 
-    def _load_data(self, rd: AppData):
-        self.filename = get_filename(rd.config.data.dir, self.cfg.filename_keyword, rd.id)
+    def _load_data(self, j: int, cat: Table, notes: InspectionData, data_cfg: config.Data):
+        self.filename = get_filename(data_cfg.dir, self.cfg.filename_keyword, notes.get_id(j))
 
         if self.filename is None:
-            logger.error('{} not found (object ID: {})'.format(self.title, rd.id))
+            logger.error('{} not found (object ID: {})'.format(self.title, notes.get_id(j)))
             self.data, self.meta = None, None
             return
 

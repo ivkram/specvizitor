@@ -16,7 +16,7 @@ import pathlib
 import sys
 
 from .appdata import AppData
-from .config import Config, Docks, SpectralLines, Cache
+from .config import Config, Docks, SpectralLines, Cache, config
 from .utils.logs import LogMessageBox
 from .utils.params import LocalFile, save_yaml
 from .io.inspection_data import InspectionData
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
-    object_selected = QtCore.Signal(AppData)
+    object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
     catalogue_changed = QtCore.Signal(Table)
     screenshot_path_selected = QtCore.Signal(str)
     dock_layout_updated = QtCore.Signal(dict)
@@ -318,10 +318,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd.cache.last_object_index = j
         self.rd.cache.save()
 
-        self.object_selected.emit(self.rd)
+        self._emit_object_selected_signal()
 
         self.setWindowTitle(
-            f'{self.rd.output_path.name} – ID {self.rd.id} [#{self.rd.j + 1}/{self.rd.notes.n_objects}] – Specvizitor')
+            f'{self.rd.output_path.name} – ID {self.rd.notes.get_id(self.rd.j)}'
+            f'[#{self.rd.j + 1}/{self.rd.notes.n_objects}] – Specvizitor')
+
+    def _emit_object_selected_signal(self):
+        self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self.rd.config.data)
 
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
@@ -362,7 +366,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.rd.docks.save()
 
                 self.dock_configuration_updated.emit(self.rd.docks)
-                self.object_selected.emit(self.rd)
+                self._emit_object_selected_signal()
 
                 logger.info('Dock configuration restored')
 
@@ -385,7 +389,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showMaximized()
 
     def _screenshot_action(self):
-        default_filename = '{}_ID{}.png'.format(self.rd.output_path.stem.replace(' ', '_'), self.rd.id)
+        default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.notes.get_id(self.rd.j)}.png'
         path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
                                                       basedir=str(pathlib.Path().resolve() / default_filename),
                                                       filters='Images (*.png)')

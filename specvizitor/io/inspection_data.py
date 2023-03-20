@@ -95,6 +95,18 @@ class InspectionData:
     def get_single_value(self, j: int, cname: str):
         return self.df.iat[j, self.df.columns.get_loc(cname)]
 
+    def get_id(self, j: int) -> int | str | None:
+        try:
+            obj_id = self.ids[j]
+        except (TypeError, IndexError):
+            return
+
+        if pd.api.types.is_integer(obj_id):
+            # converting from int64 to int
+            return int(obj_id)
+
+        return obj_id
+
     def get_id_loc(self, obj_id):
         return self.df.index.get_loc(obj_id)
 

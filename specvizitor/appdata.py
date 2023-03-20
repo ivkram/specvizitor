@@ -1,5 +1,4 @@
 from astropy.table import Table
-import pandas as pd
 
 from dataclasses import dataclass
 import logging
@@ -25,22 +24,6 @@ class AppData:
     notes: InspectionData | None = None      # inspection results
 
     j: int = None  # the index of the current object
-
-    @property
-    def id(self) -> int | str | None:
-        """
-        @return: the ID of the current object.
-        """
-        try:
-            current_id = self.notes.ids[self.j]
-        except (TypeError, IndexError):
-            return
-
-        if pd.api.types.is_integer(current_id):
-            # converting from int64 to int
-            return int(current_id)
-
-        return current_id
 
     def create(self):
         """ Create an object for storing inspection data.

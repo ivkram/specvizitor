@@ -6,7 +6,6 @@ from scipy.ndimage import gaussian_filter
 
 import logging
 
-from ..appdata import AppData
 from ..config import docks
 from .ViewerElement import ViewerElement
 
@@ -67,8 +66,8 @@ class Image2D(ViewerElement):
         # add the color bar to the layout
         self.graphics_layout.addItem(self._cbar, 0, 1)
 
-    def _load_data(self, rd: AppData):
-        super()._load_data(rd=rd)
+    def _load_data(self, *args, **kwargs):
+        super()._load_data(*args, **kwargs)
         if self.data is None:
             return
 

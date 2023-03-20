@@ -1,6 +1,5 @@
 from qtpy import QtWidgets, QtCore
 
-from ..appdata import AppData
 from ..config import config
 from ..io.inspection_data import InspectionData
 
@@ -63,11 +62,11 @@ class ReviewForm(AbstractWidget):
         self.create_checkbox_widgets(notes=notes)
         self.repopulate()
 
-    @QtCore.Slot(AppData)
-    def load_object(self, rd: AppData):
-        self._comments_widget.setText(rd.notes.get_single_value(rd.j, 'comment'))
+    @QtCore.Slot(int, InspectionData)
+    def load_object(self, j: int, notes: InspectionData):
+        self._comments_widget.setText(notes.get_single_value(j, 'comment'))
         for cname, widget in self._checkbox_widgets.items():
-            widget.setChecked(rd.notes.get_single_value(rd.j, cname))
+            widget.setChecked(notes.get_single_value(j, cname))
 
     @QtCore.Slot()
     def collect(self):

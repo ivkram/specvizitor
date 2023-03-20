@@ -1,11 +1,12 @@
+from astropy.table import Table
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
 
-from ..appdata import AppData
 from ..config import config
 from ..config.docks import Docks
 from ..config.spectral_lines import SpectralLines
+from ..io.inspection_data import InspectionData
 
 from .AbstractWidget import AbstractWidget
 from .LazyViewerElement import LazyViewerElement
@@ -15,7 +16,7 @@ from .Spec1D import Spec1D
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(AppData)
+    object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
@@ -151,11 +152,11 @@ class DataViewer(AbstractWidget):
     def load_project(self):
         self.setEnabled(True)
 
-    @QtCore.Slot(AppData)
-    def load_object(self, rd: AppData):
+    @QtCore.Slot(int, InspectionData, Table, config.Data)
+    def load_object(self, *args):
 
         # load the object to the widgets
-        self.object_selected.emit(rd)
+        self.object_selected.emit(*args)
 
         try:
             self.view_reset.disconnect()
@@ -166,7 +167,7 @@ class DataViewer(AbstractWidget):
                 self.view_reset.connect(w.reset_view)
 
         for plugin in self._plugins:
-            plugin.link(self.core_widgets, label_style=rd.config.data_viewer.label_style)
+            plugin.link(self.core_widgets, label_style=self.cfg.label_style)
 
         # update the dock titles
         self._update_dock_titles()
