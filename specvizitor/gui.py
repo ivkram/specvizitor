@@ -1,5 +1,4 @@
 from astropy.table import Table
-from platformdirs import user_config_dir, user_cache_dir
 import pyqtgraph as pg
 import qdarktheme
 import qtpy.compat
@@ -16,9 +15,10 @@ import pathlib
 import sys
 
 from .appdata import AppData
-from .config import Config, Docks, SpectralLines, Cache, config
+from .config import Docks, config
+from .config.config import Appearance
 from .utils.logs import LogMessageBox
-from .utils.params import LocalFile, save_yaml
+from .utils.params import save_yaml
 from .io.inspection_data import InspectionData
 from .io.viewer_data import add_enabled_aliases
 
@@ -321,7 +321,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd.cache.last_object_index = j
         self.rd.cache.save()
 
-        self._emit_object_selected_signal()
+        self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self.rd.config.data)
 
         self._update_window_title()
 
@@ -341,9 +341,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.notes.validate_index(index):
             self.setFocus()
             self.load_object(index - 1)
-
-    def _emit_object_selected_signal(self):
-        self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self.rd.config.data)
 
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
@@ -373,7 +370,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rd.notes.write(self.rd.output_path.with_suffix('.fits'), 'fits')
 
     def _exit_action(self):
-        if self.rd.notes is not None:
+        if self.rd.j is not None:
             self.data_requested.emit()
 
         # save the state and geometry of the main window
@@ -396,7 +393,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.rd.docks.save()
 
                 self.dock_configuration_updated.emit(self.rd.docks)
-                self._emit_object_selected_signal()
+
+                if self.rd.j is not None:
+                    self.load_object(self.rd.j)
 
                 logger.info('Dock configuration restored')
 
@@ -430,9 +429,8 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = Settings(self.rd, parent=self)
         if dialog.exec():
             self.catalogue_changed.emit(self.rd.cat)
-            if self.rd.notes is not None:
-                for widget in (self.data_viewer, self.object_info):
-                    widget.load_object(self.rd)
+            if self.rd.j is not None:
+                self.load_object(self.rd.j)
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
@@ -453,6 +451,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd.save()
 
 
+def change_appearance(cfg: Appearance):
+    pg.setConfigOption('antialias', cfg.antialiasing)
+
+    # set up the theme
+    qdarktheme.setup_theme(cfg.theme)
+    if cfg.theme == 'dark':
+        pg.setConfigOption('background', "#1d2023")
+        pg.setConfigOption('foreground', '#eff0f1')
+    else:
+        pg.setConfigOption('background', "w")
+        pg.setConfigOption('foreground', 'k')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', action='store_true')
@@ -464,28 +475,8 @@ def main():
     level = logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
-    user_files: dict[str, LocalFile] = {
-        'config': LocalFile(user_config_dir('specvizitor'), full_name='Settings file'),
-        'docks': LocalFile(user_config_dir('specvizitor'), filename='docks.yml', full_name='Dock configuration file'),
-        'lines': LocalFile(user_config_dir('specvizitor'), filename='lines.yml', full_name='List of spectral lines'),
-        'cache': LocalFile(user_cache_dir('specvizitor'), full_name='Cache file', auto_backup=False)
-    }
-
-    if args.purge:
-        for f in user_files.values():
-            f.delete()
-
-    # initialize the app data
-    appdata = AppData(config=Config.read_user_params(user_files['config'], default='default_config.yml'),
-                      docks=Docks.read_user_params(user_files['docks'], default='default_docks.yml'),
-                      lines=SpectralLines.read_user_params(user_files['lines'], default='default_lines.yml'),
-                      cache=Cache.read_user_params(user_files['cache']))
-
-    # pyqtgraph configuration
-    pg.setConfigOption('background', 'w')
-    pg.setConfigOption('foreground', 'k')
-    pg.setConfigOption('imageAxisOrder', 'row-major')
-    pg.setConfigOption('antialias', appdata.config.appearance.antialiasing)
+    # initialize the application data
+    appdata = AppData.init_from_disk(purge=args.purge)
 
     # start the application
     app = QtWidgets.QApplication(sys.argv)
@@ -493,14 +484,11 @@ def main():
     app.setApplicationName('Specvizitor')
     logger.info("Application started")
 
-    # set up the theme
-    qdarktheme.setup_theme(appdata.config.appearance.theme)
-    if appdata.config.appearance.theme == 'dark':
-        pg.setConfigOption('background', "#1d2023")
-        pg.setConfigOption('foreground', '#eff0f1')
-    else:
-        pg.setConfigOption('background', "w")
-        pg.setConfigOption('foreground', 'k')
+    # pyqtgraph configuration
+    pg.setConfigOption('imageAxisOrder', 'row-major')
+
+    # GUI appearance
+    change_appearance(cfg=appdata.config.appearance)
 
     # initialize the main window
     window = MainWindow(appdata=appdata)
