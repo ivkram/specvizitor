@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class QuickSearch(AbstractWidget):
     id_selected = QtCore.Signal(str)
-    index_selected = QtCore.Signal(str)
+    index_selected = QtCore.Signal(int)
 
     def __init__(self, parent=None):
         self._go_to_id_button: QtWidgets.QPushButton | None = None
@@ -55,9 +55,19 @@ class QuickSearch(AbstractWidget):
         self.setEnabled(True)
 
     def go_to_id(self):
+        # don't validate the ID here because it could be either int OR str
         self.id_selected.emit(self._id_field.text())
         self._id_field.clear()
 
     def go_to_index(self):
-        self.index_selected.emit(self._index_field.text())
+        text = self._index_field.text()
         self._index_field.clear()
+
+        # validate the index (must be int)
+        try:
+            index = int(text)
+        except ValueError:
+            logger.error(f'Invalid index: {text}')
+            return False
+
+        self.index_selected.emit(index)

@@ -62,5 +62,5 @@ class AppData:
             logger.error("Failed to save the inspection data: the output path is not specified")
             return
 
-        self.notes.save(self.output_path)
+        self.notes.write(self.output_path)
         logger.info('Project saved (path: {})'.format(self.output_path))

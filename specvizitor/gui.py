@@ -336,11 +336,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.setFocus()
             self.load_object(self.rd.notes.get_id_loc(obj_id))
 
-    @Slot(str)
-    def _select_by_index(self, index: str):
+    @Slot(int)
+    def _select_by_index(self, index: int):
         if self.rd.notes.validate_index(index):
             self.setFocus()
-            self.load_object(int(index) - 1)
+            self.load_object(index - 1)
 
     def _emit_object_selected_signal(self):
         self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self.rd.config.data)
@@ -359,7 +359,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='CSV Files (*.csv)')[0]
         if path:
             self.rd.output_path = pathlib.Path(path).resolve()
-            self.rd.notes.save(self.rd.output_path)
+            self.rd.notes.write(self.rd.output_path)
             self.rd.cache.last_inspection_file = str(self.rd.output_path)
             self.rd.cache.save()
             self._update_window_title()
@@ -370,7 +370,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='FITS Files (*.fits)')[0]
 
         if path:
-            self.rd.notes.save(self.rd.output_path.with_suffix('.fits'), 'fits')
+            self.rd.notes.write(self.rd.output_path.with_suffix('.fits'), 'fits')
 
     def _exit_action(self):
         if self.rd.notes is not None:
@@ -447,9 +447,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(str, dict)
     def _save_review_data(self, comments: str, checkboxes: dict[str, bool]):
-        self.rd.notes.update_single_value(self.rd.j, 'comment', comments)
+        self.rd.notes.update_value(self.rd.j, 'comment', comments)
         for cname, is_checked in checkboxes.items():
-            self.rd.notes.update_single_value(self.rd.j, cname, is_checked)
+            self.rd.notes.update_value(self.rd.j, cname, is_checked)
         self.rd.save()
 
 

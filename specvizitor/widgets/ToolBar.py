@@ -130,7 +130,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, notes: InspectionData):
-        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(notes.get_single_value(j, 'starred'))))
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(notes.get_value(j, 'starred'))))
 
         self._pn_buttons['previous starred'].setEnabled(notes.has_starred)
         self._pn_buttons['next starred'].setEnabled(notes.has_starred)
@@ -140,7 +140,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         if starred:
             if self.rd.notes.has_starred:
-                while not self.rd.notes.get_single_value(j_upd, 'starred'):
+                while not self.rd.notes.get_value(j_upd, 'starred'):
                     j_upd = self.update_index(j_upd, self.rd.notes.n_objects, command)
             else:
                 return
@@ -177,9 +177,9 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         return QtGui.QIcon(str(self.get_icon_abs_path(icon_name)))
 
     def star(self):
-        starred = not self.rd.notes.get_single_value(self.rd.j, 'starred')
+        starred = not self.rd.notes.get_value(self.rd.j, 'starred')
 
-        self.rd.notes.update_single_value(self.rd.j, 'starred', starred)
+        self.rd.notes.update_value(self.rd.j, 'starred', starred)
         self._star_button.setIcon(self.get_icon(self.get_star_icon_name(starred)))
 
         self._pn_buttons['previous starred'].setEnabled(self.rd.notes.has_starred)

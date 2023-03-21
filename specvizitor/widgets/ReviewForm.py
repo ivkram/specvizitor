@@ -64,9 +64,9 @@ class ReviewForm(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, notes: InspectionData):
-        self._comments_widget.setText(notes.get_single_value(j, 'comment'))
+        self._comments_widget.setText(notes.get_value(j, 'comment'))
         for cname, widget in self._checkbox_widgets.items():
-            widget.setChecked(notes.get_single_value(j, cname))
+            widget.setChecked(notes.get_value(j, cname))
 
     @QtCore.Slot()
     def collect(self):

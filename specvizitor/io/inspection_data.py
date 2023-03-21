@@ -2,7 +2,8 @@ from astropy.table import Table
 import numpy as np
 import pandas as pd
 
-from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 import logging
 import pathlib
 
@@ -10,13 +11,31 @@ import pathlib
 logger = logging.getLogger(__name__)
 
 
+class WriterBase(ABC):
+    @abstractmethod
+    def write(self, df: pd.DataFrame, filename: pathlib.Path):
+        pass
+
+
+class CSVWriter(WriterBase):
+    def write(self, df: pd.DataFrame, filename: pathlib.Path):
+        df.to_csv(filename, index_label='id')
+
+
+class FITSWriter(WriterBase):
+    def write(self, df: pd.DataFrame, filename: pathlib.Path):
+        t: Table = Table.from_pandas(df)
+        t.write(filename, overwrite=True)
+
+
 @dataclass
 class InspectionData:
     df: pd.DataFrame
+    default_columns: list[str] = field(default_factory=lambda: ['starred', 'comment'])
 
     @classmethod
     def create(cls, ids, flags: list[str] | None):
-        """ Create a new instance of the InspectionData class with a dataframe containing:
+        """ Create a new instance of the InspectionData class with a Pandas dataframe containing:
               - a column of IDs;
               - a column for comments;
               - one column per each user-defined flag.
@@ -55,32 +74,37 @@ class InspectionData:
 
         return notes
 
-    def _save_to_csv(self, filename: str | pathlib.Path):
-        self.df.to_csv(filename, index_label='id')
-
-    def _save_to_fits(self, filename: str | pathlib.Path):
-        t: Table = Table.from_pandas(self.df)
-        t.write(filename, overwrite=True)
-
-    def save(self, filename: str | pathlib.Path, fmt: str = 'csv'):
-        """ Save inspection data to the output file.
+    def write(self, filename: pathlib.Path, fmt: str = 'csv'):
+        """ Write inspection data to the output file.
         @param filename: the output filename
         @param fmt: the output format
         @return: None
         """
 
-        if fmt == 'fits':
-            self._save_to_fits(filename)
+        writers: dict[str, type[WriterBase]] = {
+            'csv': CSVWriter,
+            'fits': FITSWriter
+        }
+
+        if writers.get(fmt):
+            writers[fmt]().write(self.df, filename)
         else:
-            self._save_to_csv(filename)
+            logger.error(f"Unknown output format: {fmt}")
+
+    @property
+    def n_objects(self) -> int | None:
+        """
+        @return: the total number of objects under inspection.
+        """
+        return len(self.df)
 
     @property
     def ids(self) -> np.array:
         return self.df.index.values
 
     @property
-    def default_columns(self) -> list[str]:
-        return ['starred', 'comment']
+    def ids_are_int(self) -> bool:
+        return pd.api.types.is_integer_dtype(self.df.index)
 
     @property
     def user_defined_columns(self) -> list[str]:
@@ -91,20 +115,13 @@ class InspectionData:
         return [cname for cname in self.user_defined_columns if pd.api.types.is_bool_dtype(self.df[cname])]
 
     @property
-    def n_objects(self) -> int | None:
-        """
-        @return: the total number of objects under inspection.
-        """
-        return len(self.df)
-
-    @property
     def has_starred(self) -> bool:
         return self.df['starred'].sum() > 0
 
     def reorder_columns(self):
         self.df = self.df[self.default_columns + self.user_defined_columns]
 
-    def get_single_value(self, j: int, cname: str):
+    def get_value(self, j: int, cname: str):
         return self.df.iat[j, self.df.columns.get_loc(cname)]
 
     def get_id(self, j: int) -> int | str | None:
@@ -113,14 +130,14 @@ class InspectionData:
         except (TypeError, IndexError):
             return
 
-        if pd.api.types.is_integer(obj_id):
-            # converting from int64 to int
-            return int(obj_id)
+        if self.ids_are_int:
+            # convert from int64 to int
+            obj_id = int(obj_id)
 
         return obj_id
 
     def get_id_loc(self, obj_id: str):
-        if pd.api.types.is_integer_dtype(self.df.index):
+        if self.ids_are_int:
             obj_id = int(obj_id)
 
         return self.df.index.get_loc(obj_id)
@@ -145,11 +162,11 @@ class InspectionData:
 
         return checkboxes
 
-    def update_single_value(self, j: int, cname: str, value):
+    def update_value(self, j: int, cname: str, value):
         self.df.iat[j, self.df.columns.get_loc(cname)] = value
 
-    def validate_id(self, obj_id: str) -> bool:
-        if pd.api.types.is_integer_dtype(self.df.index):
+    def validate_id(self, obj_id: str | int) -> bool:
+        if self.ids_are_int:
             try:
                 obj_id = int(obj_id)
             except ValueError:
@@ -162,12 +179,7 @@ class InspectionData:
 
         return True
 
-    def validate_index(self, index: str) -> bool:
-        try:
-            index = int(index)
-        except ValueError:
-            logger.error(f'Invalid index: {index}')
-            return False
+    def validate_index(self, index: int) -> bool:
 
         if not 0 < index <= self.n_objects:
             logger.error(f'Index `{index}` out of range')
