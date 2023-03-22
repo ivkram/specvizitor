@@ -47,7 +47,6 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self._smoothing_slider.setToolTip('Slide to smooth the data')
         self.sliders.append(self._smoothing_slider)
 
-    def connect(self):
         self._smoothing_slider.value_changed[float].connect(self.smooth)
 
     def populate(self):

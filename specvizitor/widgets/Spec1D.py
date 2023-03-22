@@ -202,10 +202,10 @@ class Spec1D(ViewerElement):
         # create widgets zoomed on selected spectral lines
         self.create_spectral_regions()
 
-    def connect(self):
-        super().connect()
+        # connect signals from the redshift slider to slots
         self._z_slider.value_changed[float].connect(self._redshift_changed_action)
 
+        # connect region items and region widgets between each other
         for i, (w, lr) in enumerate(zip(self.lazy_widgets, self.region_items)):
             self.data_loaded.connect(w.spec_1d.set_spec)
             self.content_added.connect(w.spec_1d.display)

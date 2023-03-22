@@ -15,8 +15,6 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
         self.setEnabled(False)
 
         self.init_ui()
-        self.connect()
-
         self.set_layout()
         self.populate()
 
@@ -29,10 +27,6 @@ class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
 
     @abc.abstractmethod
     def init_ui(self):
-        pass
-
-    @abc.abstractmethod
-    def connect(self):
         pass
 
     @abc.abstractmethod

@@ -111,7 +111,6 @@ class SmartSliderWithEditor(AbstractWidget):
         self._label.setHidden(not self.text_editor)
         self._editor.setHidden(not self.text_editor)
 
-    def connect(self):
         self._slider.value_changed.connect(self.update_from_slider)
         self._editor.returnPressed.connect(self._update_from_editor)
 

@@ -33,9 +33,6 @@ class AppearanceWidget(SettingsWidget):
     def init_ui(self):
         pass
 
-    def connect(self):
-        pass
-
     def set_layout(self):
         pass
 
@@ -63,9 +60,6 @@ class CatalogueWidget(SettingsWidget):
 
     def init_ui(self):
         self._browser = cat_browser(self.cfg.filename, self)
-
-    def connect(self):
-        pass
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -103,9 +97,6 @@ class DataSourceWidget(SettingsWidget):
 
     def init_ui(self):
         self._browser = data_browser(self.cfg.dir, self)
-
-    def connect(self):
-        pass
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())

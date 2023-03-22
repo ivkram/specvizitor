@@ -27,9 +27,6 @@ class LazyViewerElement(AbstractWidget):
         self.graphics_layout = pg.GraphicsLayout()
         self.graphics_view.setCentralItem(self.graphics_layout)
 
-    def connect(self):
-        pass
-
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
         self.set_geometry(spacing=self.inspector_config.spacing, margins=self.inspector_config.margins)

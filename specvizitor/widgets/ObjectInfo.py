@@ -67,7 +67,6 @@ class ObjectInfo(AbstractWidget):
 
         self.update_table_items()
 
-    def connect(self):
         self._search_lineedit.textChanged[str].connect(self.search)
 
     def set_layout(self):

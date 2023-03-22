@@ -133,9 +133,6 @@ class DataViewer(AbstractWidget):
         self._create_docks()
         self._add_docks()
 
-    def connect(self):
-        pass
-
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
         self.set_geometry(spacing=0, margins=0)

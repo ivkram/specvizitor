@@ -42,9 +42,6 @@ class ReviewForm(AbstractWidget):
         self.create_checkbox_widgets()
         self._comments_widget = QtWidgets.QTextEdit(self)
 
-    def connect(self):
-        pass
-
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
 

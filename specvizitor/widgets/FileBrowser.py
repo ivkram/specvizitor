@@ -42,7 +42,6 @@ class FileBrowser(AbstractWidget):
         self._button = QtWidgets.QPushButton(self._button_text, self)
         self._button.setFixedWidth(120)
 
-    def connect(self):
         self._button.clicked.connect(self._browse)
 
     def set_layout(self):

@@ -90,7 +90,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._settings_button.setIcon(self.get_icon('gear.svg'))
         self._settings_button.setToolTip('GUI and Project Settings')
 
-    def connect(self):
+        # connect button signals to slots
         for pn_text, b in self._pn_buttons.items():
             b.triggered.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
 

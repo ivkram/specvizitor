@@ -35,7 +35,6 @@ class QuickSearch(AbstractWidget):
 
         self._index_field = QtWidgets.QLineEdit(self)
 
-    def connect(self):
         self._go_to_id_button.clicked.connect(self.go_to_id)
         self._id_field.returnPressed.connect(self.go_to_id)
         self._go_to_index_button.clicked.connect(self.go_to_index)
