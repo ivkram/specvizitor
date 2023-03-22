@@ -1,7 +1,8 @@
-from platformdirs import user_config_dir, user_cache_dir
+from platformdirs import user_config_dir
 from qtpy import QtWidgets, QtCore
 
 from abc import abstractmethod
+from dataclasses import asdict, replace
 import logging
 
 from ..config import config
@@ -16,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class SettingsWidget(AbstractWidget):
+    SPACING = 20
+
     @abstractmethod
     def validate(self) -> bool:
         pass
@@ -26,23 +29,59 @@ class SettingsWidget(AbstractWidget):
 
 
 class AppearanceWidget(SettingsWidget):
-    def __init__(self, parent=None):
+    appearance_changed = QtCore.Signal(bool)
+
+    THEMES = ('light', 'dark')
+
+    def __init__(self, cfg: config.Appearance, parent=None):
+        self.cfg = cfg
+
+        self._theme_label: QtWidgets.QLabel | None = None
+        self._theme_combobox: QtWidgets.QComboBox | None = None
+        self._antialiasing_checkbox: QtWidgets.QCheckBox | None = None
+
         super().__init__(parent=parent)
 
     def init_ui(self):
-        pass
+        self._theme_label = QtWidgets.QLabel("Theme:", self)
+        self._theme_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+
+        self._theme_combobox = QtWidgets.QComboBox(self)
+        self._theme_combobox.addItems(self.THEMES)
+        self._theme_combobox.setCurrentIndex(self.THEMES.index(self.cfg.theme))
+        self._theme_combobox.setFixedWidth(200)
+
+        self._antialiasing_checkbox = QtWidgets.QCheckBox("Antialiasing", self)
+        self._antialiasing_checkbox.setChecked(self.cfg.antialiasing)
 
     def set_layout(self):
-        pass
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().setSpacing(self.SPACING)
 
     def populate(self):
-        pass
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.setAlignment(QtCore.Qt.AlignLeft)
+        sub_layout.addWidget(self._theme_label)
+        sub_layout.addWidget(self._theme_combobox)
+
+        self.layout().addLayout(sub_layout)
+
+        self.layout().addWidget(self._antialiasing_checkbox)
 
     def validate(self) -> bool:
         return True
 
     def accept(self):
-        pass
+        theme = self._theme_combobox.currentText()
+        if theme != self.cfg.theme:
+            theme_changed = True
+        else:
+            theme_changed = False
+
+        self.cfg.theme = theme
+        self.cfg.antialiasing = self._antialiasing_checkbox.isChecked()
+
+        self.appearance_changed.emit(theme_changed)
 
 
 class CatalogueWidget(SettingsWidget):
@@ -61,6 +100,7 @@ class CatalogueWidget(SettingsWidget):
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().setSpacing(self.SPACING)
 
     def populate(self):
         self.layout().addWidget(self._browser)
@@ -97,6 +137,7 @@ class DataSourceWidget(SettingsWidget):
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().setSpacing(self.SPACING)
 
     def populate(self):
         self.layout().addWidget(self._browser)
@@ -112,6 +153,7 @@ class DataSourceWidget(SettingsWidget):
 
 
 class Settings(QtWidgets.QDialog):
+    appearance_changed = QtCore.Signal(bool)
     catalogue_selected = QtCore.Signal(object)
 
     def __init__(self, cfg: config.Config, parent=None):
@@ -131,8 +173,10 @@ class Settings(QtWidgets.QDialog):
         self.populate()
 
     def create_tabs(self):
-        self._tabs = {'Catalogue': CatalogueWidget(self.cfg.catalogue, self),
+        self._tabs = {'Appearance': AppearanceWidget(self.cfg.appearance, self),
+                      'Catalogue': CatalogueWidget(self.cfg.catalogue, self),
                       'Data Source': DataSourceWidget(self.cfg.data, self)}
+        self._tabs['Appearance'].appearance_changed.connect(self.appearance_changed.emit)
         self._tabs['Catalogue'].catalogue_selected.connect(self.catalogue_selected.emit)
 
     def add_tabs(self):
@@ -145,8 +189,7 @@ class Settings(QtWidgets.QDialog):
         self.create_tabs()
         self.add_tabs()
 
-        self._info_label = QtWidgets.QLabel(f"GUI Configuration: {user_config_dir('specvizitor')}\n\n"
-                                            f"Cache: {user_cache_dir('specvizitor')}", parent=self)
+        self._info_label = QtWidgets.QLabel(f"GUI Configuration: {user_config_dir('specvizitor')}", parent=self)
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(

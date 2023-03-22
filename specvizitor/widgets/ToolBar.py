@@ -5,6 +5,7 @@ import logging
 import pathlib
 
 from ..appdata import AppData
+from ..config import config
 from ..io.inspection_data import InspectionData
 from .AbstractWidget import AbstractWidget
 
@@ -18,8 +19,15 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
     screenshot_button_clicked = QtCore.Signal()
     settings_button_clicked = QtCore.Signal()
 
-    def __init__(self, rd: AppData, parent=None):
+    PN_BUTTONS_PARAMS = {'previous': {'shortcut': QtGui.QKeySequence.MoveToPreviousChar, 'icon': 'arrow-backward'},
+                         'next': {'shortcut': QtGui.QKeySequence.MoveToNextChar, 'icon': 'arrow-forward'},
+                         'previous starred': {'icon': 'arrow-backward-starred'},
+                         'next starred': {'icon': 'arrow-forward-starred'}
+                         }
+
+    def __init__(self, rd: AppData, appearance: config.Appearance, parent=None):
         self.rd = rd
+        self.appearance = appearance
 
         self._pn_buttons: dict[str, QtWidgets.QAction] | None = None
         self._star_button: QtWidgets.QAction | None = None
@@ -38,16 +46,10 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
                                                    self._reset_view_button, self._reset_layout_button)
 
     def create_pn_buttons(self) -> dict[str, QtWidgets.QAction]:
-        pn_buttons_params = {'previous': {'shortcut': QtGui.QKeySequence.MoveToPreviousChar, 'icon': 'arrow-backward'},
-                             'next': {'shortcut': QtGui.QKeySequence.MoveToNextChar, 'icon': 'arrow-forward'},
-                             'previous starred': {'icon': 'arrow-backward-starred'},
-                             'next starred': {'icon': 'arrow-forward-starred'}
-                             }
 
         pn_buttons = {}
-        for pn_text, pn_properties in pn_buttons_params.items():
+        for pn_text, pn_properties in self.PN_BUTTONS_PARAMS.items():
             button = QtWidgets.QAction('Go to the {} object'.format(pn_text), self)
-            button.setIcon(self.get_icon(pn_properties['icon'] + '.svg'))
 
             if pn_properties.get('shortcut'):
                 button.setShortcut(pn_properties['shortcut'])
@@ -56,28 +58,34 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         return pn_buttons
 
+    def set_icons(self):
+        for pn_text, pn_properties in self.PN_BUTTONS_PARAMS.items():
+            self._pn_buttons[pn_text].setIcon(self.get_icon(pn_properties['icon'] + '.svg'))
+
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name()))
+        self._screenshot_button.setIcon(self.get_icon('screenshot.svg'))
+        self._reset_view_button.setIcon(self.get_icon('reset-view.svg'))
+        self._reset_layout_button.setIcon(self.get_icon('reset-dock-state.svg'))
+        self._settings_button.setIcon(self.get_icon('gear.svg'))
+
     def init_ui(self):
         # create buttons for switching to the next or previous object
         self._pn_buttons = self.create_pn_buttons()
 
         # create a `star` button
         self._star_button = QtWidgets.QAction(self)
-        self._star_button.setIcon(self.get_icon(self.get_star_icon_name()))
         self._star_button.setToolTip('Star the object')
 
         # create a `screenshot` button
         self._screenshot_button = QtWidgets.QAction(self)
-        self._screenshot_button.setIcon(self.get_icon('screenshot.svg'))
         self._screenshot_button.setToolTip('Take a screenshot')
 
         # create a `reset view` button
         self._reset_view_button = QtWidgets.QAction(self)
-        self._reset_view_button.setIcon(self.get_icon('reset-view.svg'))
         self._reset_view_button.setToolTip('Reset the view')
 
         # create a `reset layout` button
         self._reset_layout_button = QtWidgets.QAction(self)
-        self._reset_layout_button.setIcon(self.get_icon('reset-dock-state.svg'))
         self._reset_layout_button.setToolTip('Reset the layout')
 
         for b in self.viewer_connected_buttons:
@@ -87,8 +95,9 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         self._settings_button = QtWidgets.QAction(self)
-        self._settings_button.setIcon(self.get_icon('gear.svg'))
         self._settings_button.setToolTip('GUI and Project Settings')
+
+        self.set_icons()
 
         # connect button signals to slots
         for pn_text, b in self._pn_buttons.items():
@@ -162,7 +171,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
     def get_icon_abs_path(self, icon_name: str) -> pathlib.Path:
         icon_root_dir = pathlib.Path(__file__).parent.parent / 'data' / 'icons'
-        icon_path = icon_root_dir / self.rd.config.appearance.theme / icon_name
+        icon_path = icon_root_dir / self.appearance.theme / icon_name
         if not icon_path.exists():
             return icon_root_dir / 'light' / icon_name
         else:

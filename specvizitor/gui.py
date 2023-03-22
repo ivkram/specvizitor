@@ -1,10 +1,8 @@
 from astropy.table import Table
 import pyqtgraph as pg
-import qdarktheme
 import qtpy.compat
 from qtpy import QtGui, QtWidgets, QtCore
 from qtpy.QtCore import Slot
-
 
 import argparse
 from dataclasses import asdict
@@ -15,8 +13,7 @@ import pathlib
 import sys
 
 from .appdata import AppData
-from .config import Docks, config
-from .config.config import Appearance
+from .config import appearance, config, Docks
 from .utils.logs import LogMessageBox
 from .utils.params import save_yaml
 from .io.catalogue import create_cat
@@ -39,10 +36,13 @@ class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
     object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
+
+    theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
-    screenshot_path_selected = QtCore.Signal(str)
     dock_layout_updated = QtCore.Signal(dict)
     dock_configuration_updated = QtCore.Signal(Docks)
+
+    screenshot_path_selected = QtCore.Signal(str)
 
     def __init__(self, appdata: AppData, parent=None):
         super().__init__(parent)
@@ -96,7 +96,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                       spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
 
         # create a toolbar
-        self.toolbar = ToolBar(self.rd, parent=self)
+        self.toolbar = ToolBar(self.rd, self.rd.config.appearance, parent=self)
         self.toolbar.setObjectName('Toolbar')
         self.toolbar.setEnabled(True)
 
@@ -225,10 +225,13 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self.data_viewer, self.toolbar, self.object_info, self.review_form):
             self.object_selected.connect(w.load_object)
 
+        self.theme_changed.connect(self.data_viewer.init_ui)
+        self.theme_changed.connect(self.toolbar.set_icons)
         self.catalogue_changed.connect(self.object_info.update_table_items)
 
         self.dock_layout_updated.connect(self.data_viewer.restore_dock_layout)
         self.dock_configuration_updated.connect(self.data_viewer.update_dock_configuration)
+
         self.screenshot_path_selected.connect(self.data_viewer.take_screenshot)
 
         # connect the child widgets to the main window
@@ -328,7 +331,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._update_window_title()
 
-    def refresh(self):
+    def reload(self):
         if self.rd.j is not None:
             self.load_object(self.rd.j)
 
@@ -401,7 +404,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 self.dock_configuration_updated.emit(self.rd.docks)
 
-                self.refresh()
+                self.reload()
 
                 logger.info('Dock configuration restored')
 
@@ -433,9 +436,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _settings_action(self):
         dialog = Settings(self.rd.config, parent=self)
+        dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_selected.connect(self.update_catalogue)
         if dialog.exec():
-            self.refresh()
+            self.reload()
+
+    @Slot(bool)
+    def update_appearance(self, theme_changed: bool = False):
+        appearance.configure(self.rd.config.appearance)
+        if theme_changed:
+            self.theme_changed.emit()
 
     @Slot(object)
     def update_catalogue(self, cat: Table | None):
@@ -443,7 +453,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rd.cat = create_cat(self.rd.notes.ids)
         else:
             self.rd.cat = cat
-
         self.catalogue_changed.emit(self.rd.cat)
 
     def _about_action(self):
@@ -463,19 +472,6 @@ class MainWindow(QtWidgets.QMainWindow):
         for cname, is_checked in checkboxes.items():
             self.rd.notes.update_value(self.rd.j, cname, is_checked)
         self.rd.save()
-
-
-def change_appearance(cfg: Appearance):
-    pg.setConfigOption('antialias', cfg.antialiasing)
-
-    # set up the theme
-    qdarktheme.setup_theme(cfg.theme)
-    if cfg.theme == 'dark':
-        pg.setConfigOption('background', "#1d2023")
-        pg.setConfigOption('foreground', '#eff0f1')
-    else:
-        pg.setConfigOption('background', "w")
-        pg.setConfigOption('foreground', 'k')
 
 
 def main():
@@ -502,7 +498,7 @@ def main():
     pg.setConfigOption('imageAxisOrder', 'row-major')
 
     # GUI appearance
-    change_appearance(cfg=appdata.config.appearance)
+    appearance.configure(cfg=appdata.config.appearance)
 
     # initialize the main window
     window = MainWindow(appdata=appdata)
