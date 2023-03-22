@@ -48,7 +48,7 @@ class ObjectInfo(AbstractWidget):
             self._table.setItem(i, 0, row[0])
             self._table.setItem(i, 1, row[1])
 
-    @QtCore.Slot(Table)
+    @QtCore.Slot(object)
     def update_table_items(self, cat: Table | None = None):
         self.create_table_items(cat=cat)
         self.set_table_items()

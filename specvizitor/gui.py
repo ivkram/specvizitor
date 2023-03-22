@@ -19,6 +19,7 @@ from .config import Docks, config
 from .config.config import Appearance
 from .utils.logs import LogMessageBox
 from .utils.params import save_yaml
+from .io.catalogue import create_cat
 from .io.inspection_data import InspectionData
 from .io.viewer_data import add_enabled_aliases
 
@@ -38,7 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
     object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
-    catalogue_changed = QtCore.Signal(Table)
+    catalogue_changed = QtCore.Signal(object)
     screenshot_path_selected = QtCore.Signal(str)
     dock_layout_updated = QtCore.Signal(dict)
     dock_configuration_updated = QtCore.Signal(Docks)
@@ -325,6 +326,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._update_window_title()
 
+    def refresh(self):
+        if self.rd.j is not None:
+            self.load_object(self.rd.j)
+
     def _update_window_title(self):
         self.setWindowTitle(
             f'{self.rd.output_path.name} – ID {self.rd.notes.get_id(self.rd.j)}'
@@ -394,8 +399,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 self.dock_configuration_updated.emit(self.rd.docks)
 
-                if self.rd.j is not None:
-                    self.load_object(self.rd.j)
+                self.refresh()
 
                 logger.info('Dock configuration restored')
 
@@ -426,11 +430,19 @@ class MainWindow(QtWidgets.QMainWindow):
             self.screenshot_path_selected.emit(path)
 
     def _settings_action(self):
-        dialog = Settings(self.rd, parent=self)
+        dialog = Settings(self.rd.config, parent=self)
+        dialog.catalogue_selected.connect(self.update_catalogue)
         if dialog.exec():
-            self.catalogue_changed.emit(self.rd.cat)
-            if self.rd.j is not None:
-                self.load_object(self.rd.j)
+            self.refresh()
+
+    @Slot(object)
+    def update_catalogue(self, cat: Table | None):
+        if cat is None and self.rd.notes is not None:
+            self.rd.cat = create_cat(self.rd.notes.ids)
+        else:
+            self.rd.cat = cat
+
+        self.catalogue_changed.emit(self.rd.cat)
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))

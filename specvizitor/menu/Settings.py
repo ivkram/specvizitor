@@ -1,81 +1,195 @@
 from platformdirs import user_config_dir, user_cache_dir
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
+from abc import abstractmethod
 import logging
 
-from ..appdata import AppData
-from ..io.catalogue import load_cat, create_cat, cat_browser
+from ..config import config
+from ..io.catalogue import load_cat, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
+
+from ..widgets.AbstractWidget import AbstractWidget
+from ..widgets.FileBrowser import FileBrowser
 
 logger = logging.getLogger(__name__)
 
 
+class SettingsWidget(AbstractWidget):
+    @abstractmethod
+    def validate(self) -> bool:
+        pass
+
+    @abstractmethod
+    def accept(self):
+        pass
+
+
+class AppearanceWidget(SettingsWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setEnabled(True)
+
+    def init_ui(self):
+        pass
+
+    def connect(self):
+        pass
+
+    def set_layout(self):
+        pass
+
+    def populate(self):
+        pass
+
+    def validate(self) -> bool:
+        return True
+
+    def accept(self):
+        pass
+
+
+class CatalogueWidget(SettingsWidget):
+    catalogue_selected = QtCore.Signal(object)
+
+    def __init__(self, cfg: config.Catalogue, parent=None):
+        self.cfg = cfg
+        self.cat = None
+
+        self._browser: FileBrowser | None = None
+
+        super().__init__(parent=parent)
+        self.setEnabled(True)
+
+    def init_ui(self):
+        self._browser = cat_browser(self.cfg.filename, self)
+
+    def connect(self):
+        pass
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QVBoxLayout())
+
+    def populate(self):
+        self.layout().addWidget(self._browser)
+
+    def get_catalogue(self):
+        return load_cat(self._browser.path, translate=self.cfg.translate)
+
+    def validate(self) -> bool:
+        if not self._browser.exists(verbose=True):
+            return False
+
+        if self._browser.is_filled():
+            self.cat = self.get_catalogue()
+            if not self.cat:
+                return False
+
+        return True
+
+    def accept(self):
+        self.cfg.filename = self._browser.path if self.cat else None
+        self.catalogue_selected.emit(self.cat)
+
+
+class DataSourceWidget(SettingsWidget):
+    def __init__(self, cfg: config.Data, parent=None):
+        self.cfg = cfg
+
+        self._browser: FileBrowser | None = None
+
+        super().__init__(parent=parent)
+        self.setEnabled(True)
+
+    def init_ui(self):
+        self._browser = data_browser(self.cfg.dir, self)
+
+    def connect(self):
+        pass
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QVBoxLayout())
+
+    def populate(self):
+        self.layout().addWidget(self._browser)
+
+    def validate(self) -> bool:
+        if not self._browser.is_filled(verbose=True) or not self._browser.exists(verbose=True):
+            return False
+
+        return True
+
+    def accept(self):
+        self.cfg.dir = self._browser.path
+
+
 class Settings(QtWidgets.QDialog):
-    def __init__(self, rd: AppData, parent=None):
-        self.rd = rd
+    catalogue_selected = QtCore.Signal(object)
+
+    def __init__(self, cfg: config.Config, parent=None):
+        self.cfg = cfg
+
+        self._tab_widget: QtWidgets.QTabWidget | None = None
+        self._tabs: dict[str, SettingsWidget] | None = None
+
+        self._info_label: QtWidgets.QLabel | None = None
+        self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
         self.setWindowTitle("Settings [Beta]")
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setSpacing(20)
+        self.init_ui()
+        self.set_layout()
+        self.populate()
 
-        self._browsers = {
-            'data': data_browser(self.rd.config.data.dir, self),
-            'cat': cat_browser(self.rd.config.catalogue.filename, self)
-        }
+    def create_tabs(self):
+        self._tabs = {'Catalogue': CatalogueWidget(self.cfg.catalogue, self),
+                      'Data Source': DataSourceWidget(self.cfg.data, self)}
+        self._tabs['Catalogue'].catalogue_selected.connect(self.catalogue_selected.emit)
 
-        for b in self._browsers.values():
-            layout.addWidget(b)
+    def add_tabs(self):
+        for name, t in self._tabs.items():
+            self._tab_widget.addTab(t, name)
 
-        # add a horizontal separator
-        self.separator = QtWidgets.QFrame(self)
-        self.separator.setFrameShape(QtWidgets.QFrame.HLine)
-        layout.addWidget(self.separator)
+    def init_ui(self):
+        self._tab_widget = QtWidgets.QTabWidget(self)
+
+        self.create_tabs()
+        self.add_tabs()
 
         self._info_label = QtWidgets.QLabel(f"GUI Configuration: {user_config_dir('specvizitor')}\n\n"
                                             f"Cache: {user_cache_dir('specvizitor')}", parent=self)
-        layout.addWidget(self._info_label)
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, parent=self)
-        layout.addWidget(self._button_box)
+
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
 
-        self.setLayout(layout)
+    def set_layout(self):
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().setSpacing(20)
+
+    def populate(self):
+        self.layout().addWidget(self._tab_widget)
+        self.layout().addWidget(self._info_label)
+        self.layout().addWidget(self._button_box)
 
     @qlog
     def validate(self) -> bool:
-        for name, b in self._browsers.items():
-            if (name == 'data' and not b.is_filled(verbose=True)) or not b.exists(verbose=True):
+        for t in self._tabs.values():
+            if not t.validate():
                 return False
         return True
-
-    @qlog
-    def get_catalogue(self):
-        return load_cat(self._browsers['cat'].path, translate=self.rd.config.catalogue.translate)
 
     def accept(self):
         if not self.validate():
             return
 
-        if self._browsers['cat'].is_filled():
-            cat = self.get_catalogue()
-            if not cat:
-                return
+        for t in self._tabs.values():
+            t.accept()
 
-            self.rd.cat = cat
-            self.rd.config.catalogue.filename = self._browsers['cat'].path
-
-        else:
-            self.rd.config.catalogue.filename = None
-            if self.rd.notes is not None:
-                self.rd.cat = create_cat(self.rd.notes.ids)
-
-        self.rd.config.data.dir = self._browsers['data'].path
-        self.rd.config.save()
+        self.cfg.save()
 
         super().accept()
