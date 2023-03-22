@@ -20,6 +20,9 @@ class Data:
 class Appearance:
     theme: str = 'light'
     antialiasing: bool = False
+    spacing: int = 5
+    margins: int = 5
+    label_style: dict[str, str] = field(default_factory=lambda: {})
 
 
 @dataclass
@@ -34,18 +37,10 @@ class ReviewForm:
 
 
 @dataclass
-class DataViewer:
-    spacing: int = 5
-    margins: int = 5
-    label_style: dict[str, str] = field(default_factory=lambda: {'font-size': '20px'})
-
-
-@dataclass
 class Config(Params):
     catalogue: Catalogue = field(default_factory=lambda: Catalogue())
     data: Data = field(default_factory=lambda: Data())
     appearance: Appearance = field(default_factory=lambda: Appearance())
     object_info: ObjectInfo = field(default_factory=lambda: ObjectInfo())
     review_form: ReviewForm = field(default_factory=lambda: ReviewForm())
-    data_viewer: DataViewer = field(default_factory=lambda: DataViewer())
     plugins: list[str] = field(default_factory=list)

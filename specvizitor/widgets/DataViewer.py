@@ -21,13 +21,13 @@ class DataViewer(AbstractWidget):
     data_collected = QtCore.Signal(dict)
 
     def __init__(self,
-                 cfg: config.DataViewer,
                  dock_cfg: Docks,
+                 appearance: config.Appearance,
                  spectral_lines: SpectralLines = None,
                  plugins=None,
                  parent=None):
 
-        self.cfg = cfg
+        self.appearance = appearance
         self.dock_cfg = dock_cfg
 
         # register plugins
@@ -72,14 +72,14 @@ class DataViewer(AbstractWidget):
         # create widgets for images (e.g. image cutouts, 2D spectra)
         if self.dock_cfg.images is not None:
             for name, image_cfg in self.dock_cfg.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, inspector_config=self.cfg,
+                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self.appearance,
                                         parent=self)
 
         # create widgets for 1D spectra
         if self.dock_cfg.spectra is not None:
             for name, spec_cfg in self.dock_cfg.spectra.items():
                 widgets[name] = Spec1D(lines=self.spectral_lines, cfg=spec_cfg, title=name,
-                                       inspector_config=self.cfg, parent=self)
+                                       appearance=self.appearance, parent=self)
 
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
@@ -165,7 +165,7 @@ class DataViewer(AbstractWidget):
                 self.view_reset.connect(w.reset_view)
 
         for plugin in self._plugins:
-            plugin.link(self.core_widgets, label_style=self.cfg.label_style)
+            plugin.link(self.core_widgets, label_style=self.appearance.label_style)
 
         # update the dock titles
         self._update_dock_titles()

@@ -92,7 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self.data_viewer = DataViewer(self.rd.config.data_viewer, self.rd.docks,
+        self.data_viewer = DataViewer(self.rd.docks, self.rd.config.appearance,
                                       spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
 
         # create a toolbar

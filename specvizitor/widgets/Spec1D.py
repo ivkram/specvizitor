@@ -9,7 +9,7 @@ from dataclasses import asdict
 from functools import partial
 import logging
 
-from ..config import docks
+from ..config import config, docks
 from ..config.spectral_lines import SpectralLines
 
 from .LazyViewerElement import LazyViewerElement
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class Spec1DItem(pg.PlotItem):
     def __init__(self, spec: Spectrum1D | None = None, lines: SpectralLines | None = None,
                  window: tuple[float, float] | None = None,
-                 label_style: dict[str, str] | None = None,
+                 appearance: config.Appearance = config.Appearance(),
                  *args, **kwargs):
 
         super().__init__(*args, **kwargs)
@@ -35,7 +35,7 @@ class Spec1DItem(pg.PlotItem):
         self.lines = SpectralLines() if lines is None else lines
         self.window = window
 
-        self.label_style = {} if label_style is None else label_style
+        self.appearance = appearance
 
         self._flux_plot = None
         self._flux_err_plot = None
@@ -69,11 +69,11 @@ class Spec1DItem(pg.PlotItem):
             self._default_yrange = self.get_default_range(self.spec.flux.value)
 
     def update_labels(self):
-        self.setLabel('bottom', self.spec.spectral_axis.unit, **self.label_style)
-        self.setLabel('right', self.spec.flux.unit, **self.label_style)
+        self.setLabel('bottom', self.spec.spectral_axis.unit, **self.appearance.label_style)
+        self.setLabel('right', self.spec.flux.unit, **self.appearance.label_style)
 
     def add_items(self):
-        self._flux_plot = self.plot(pen='k' if pg.getConfigOption('background') == 'w' else 'w')
+        self._flux_plot = self.plot(pen='k' if self.appearance.theme == 'light' else 'w')
         self._flux_err_plot = self.plot(pen='r')
 
         for line_name, line_artist in self._line_artists.items():
@@ -139,8 +139,7 @@ class Spec1DRegion(LazyViewerElement):
         super().init_ui()
 
         lines = SpectralLines(wave_unit=self.line[1].unit, list={self.line[0]: self.line[1].value})
-        self.spec_1d = Spec1DItem(lines=lines, window=self.window, name=self.title,
-                                  label_style=self.inspector_config.label_style)
+        self.spec_1d = Spec1DItem(lines=lines, window=self.window, name=self.title, appearance=self.appearance)
 
     def populate(self):
         super().populate()
@@ -175,7 +174,7 @@ class Spec1D(ViewerElement):
             if line in self.lines.list.keys():
                 spec_region = Spec1DRegion(title=f"{self.title} [{line}]",
                                            line=(line, self.lines.list[line] * u.Unit(self.lines.wave_unit)),
-                                           cfg=line_cfg, inspector_config=self.inspector_config,
+                                           cfg=line_cfg, appearance=self.appearance,
                                            parent=self.parent())
 
                 region_widgets.append(spec_region)
@@ -197,7 +196,7 @@ class Spec1D(ViewerElement):
         self.sliders.append(self._z_slider)
 
         # set up the plot
-        self.spec_1d = Spec1DItem(lines=self.lines, name=self.title, label_style=self.inspector_config.label_style)
+        self.spec_1d = Spec1DItem(lines=self.lines, name=self.title, appearance=self.appearance)
 
         # create widgets zoomed on selected spectral lines
         self.create_spectral_regions()

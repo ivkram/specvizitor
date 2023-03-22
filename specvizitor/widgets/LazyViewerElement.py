@@ -6,10 +6,10 @@ from .AbstractWidget import AbstractWidget
 
 
 class LazyViewerElement(AbstractWidget):
-    def __init__(self, title: str, cfg: docks.LazyViewerElement, inspector_config: config.DataViewer, parent=None):
+    def __init__(self, title: str, cfg: docks.LazyViewerElement, appearance: config.Appearance, parent=None):
         self.title = title
         self.cfg = cfg
-        self.inspector_config = inspector_config
+        self.appearance = appearance
 
         self.graphics_view: pg.GraphicsView | None = None
         self.graphics_layout: pg.GraphicsLayout | None = None
@@ -30,7 +30,7 @@ class LazyViewerElement(AbstractWidget):
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
-        self.set_geometry(spacing=self.inspector_config.spacing, margins=self.inspector_config.margins)
+        self.set_geometry(spacing=self.appearance.spacing, margins=self.appearance.margins)
 
     def populate(self):
         self.layout().addWidget(self.graphics_view, 1, 1, 1, 1)
