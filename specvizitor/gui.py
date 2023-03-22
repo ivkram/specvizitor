@@ -56,8 +56,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
         # register units
-        if appdata.config.data.defined_units is not None:
-            add_enabled_aliases(appdata.config.data.defined_units)
+        if appdata.config.data.user_defined_units is not None:
+            add_enabled_aliases(appdata.config.data.user_defined_units)
 
         # register plugins
         self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()

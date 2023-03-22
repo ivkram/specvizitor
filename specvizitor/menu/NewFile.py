@@ -4,7 +4,7 @@ import logging
 import pathlib
 
 from ..appdata import AppData
-from ..io.catalogue import load_cat, create_cat, cat_browser
+from ..io.catalogue import read_cat, create_cat, cat_browser
 from ..io.viewer_data import get_ids_from_dir, data_browser
 from ..utils.logs import qlog
 from ..widgets.FileBrowser import FileBrowser
@@ -24,12 +24,13 @@ class NewFile(QtWidgets.QDialog):
 
         self.setFixedSize(layout.sizeHint())
 
+        width = 135
         self._browsers = {
-            'output': FileBrowser(title='Output File:', filename_extensions='CSV Files (*.csv)',
+            'output': FileBrowser(filename_extensions='CSV Files (*.csv)',
                                   mode=FileBrowser.SaveFile, default_path=pathlib.Path().resolve() / 'Untitled.csv',
-                                  parent=self),
-            'data': data_browser(self.rd.config.data.dir, self),
-            'cat': cat_browser(self.rd.config.catalogue.filename, self)
+                                  title='Output File:', title_width=width, parent=self),
+            'data': data_browser(self.rd.config.data.dir, title='Data Source:', title_width=width, parent=self),
+            'cat': cat_browser(self.rd.config.catalogue.filename, title='Catalogue:', title_width=width, parent=self)
         }
 
         # add a file browser for specifying the output file
@@ -117,7 +118,7 @@ class NewFile(QtWidgets.QDialog):
         translate = self.rd.config.catalogue.translate
         data_dir = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
-        return load_cat(self._browsers['cat'].path, translate=translate, data_dir=data_dir,
+        return read_cat(self._browsers['cat'].path, translate=translate, data_dir=data_dir,
                         id_pattern=self.rd.config.data.id_pattern)
 
     def accept(self):

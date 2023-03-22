@@ -2,15 +2,15 @@ from platformdirs import user_config_dir
 from qtpy import QtWidgets, QtCore
 
 from abc import abstractmethod
-from dataclasses import asdict, replace
 import logging
 
 from ..config import config
-from ..io.catalogue import load_cat, cat_browser
+from ..io.catalogue import read_cat, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
 
 from ..widgets.AbstractWidget import AbstractWidget
+from ..widgets.Section import Section
 from ..widgets.FileBrowser import FileBrowser
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 
 class SettingsWidget(AbstractWidget):
     SPACING = 20
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.layout().setAlignment(QtCore.Qt.AlignTop)
+        self.setFixedHeight(200)
 
     @abstractmethod
     def validate(self) -> bool:
@@ -87,16 +92,25 @@ class AppearanceWidget(SettingsWidget):
 class CatalogueWidget(SettingsWidget):
     catalogue_selected = QtCore.Signal(object)
 
-    def __init__(self, cfg: config.Catalogue, parent=None):
-        self.cfg = cfg
+    def __init__(self, read_cfg: config.Catalogue, display_cfg: config.ObjectInfo, parent=None):
+        self.read_cfg = read_cfg
+        self.display_cfg = display_cfg
+
         self.cat = None
 
         self._browser: FileBrowser | None = None
+        self._display_section: Section | None = None
+        self._show_all_checkbox: QtWidgets.QCheckBox | None = None
 
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._browser = cat_browser(self.cfg.filename, self)
+        self._browser = cat_browser(self.read_cfg.filename, title='Filename:', parent=self)
+
+        self._display_section = Section("Display Options", parent=self)
+
+        self._show_all_checkbox = QtWidgets.QCheckBox("Show All Columns", self)
+        self._show_all_checkbox.setChecked(self.display_cfg.show_all)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -105,8 +119,14 @@ class CatalogueWidget(SettingsWidget):
     def populate(self):
         self.layout().addWidget(self._browser)
 
+        sub_layout = QtWidgets.QVBoxLayout()
+        sub_layout.addWidget(self._show_all_checkbox)
+
+        self._display_section.set_layout(sub_layout)
+        self.layout().addWidget(self._display_section)
+
     def get_catalogue(self):
-        return load_cat(self._browser.path, translate=self.cfg.translate)
+        return read_cat(self._browser.path, translate=self.read_cfg.translate)
 
     def validate(self) -> bool:
         if not self._browser.exists(verbose=True):
@@ -120,7 +140,8 @@ class CatalogueWidget(SettingsWidget):
         return True
 
     def accept(self):
-        self.cfg.filename = self._browser.path if self.cat else None
+        self.read_cfg.filename = self._browser.path if self.cat else None
+        self.display_cfg.show_all = self._show_all_checkbox.isChecked()
         self.catalogue_selected.emit(self.cat)
 
 
@@ -133,7 +154,7 @@ class DataSourceWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._browser = data_browser(self.cfg.dir, self)
+        self._browser = data_browser(self.cfg.dir, title='Directory:', parent=self)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -174,7 +195,7 @@ class Settings(QtWidgets.QDialog):
 
     def create_tabs(self):
         self._tabs = {'Appearance': AppearanceWidget(self.cfg.appearance, self),
-                      'Catalogue': CatalogueWidget(self.cfg.catalogue, self),
+                      'Catalogue': CatalogueWidget(self.cfg.catalogue, self.cfg.object_info, self),
                       'Data Source': DataSourceWidget(self.cfg.data, self)}
         self._tabs['Appearance'].appearance_changed.connect(self.appearance_changed.emit)
         self._tabs['Catalogue'].catalogue_selected.connect(self.catalogue_selected.emit)
@@ -189,7 +210,7 @@ class Settings(QtWidgets.QDialog):
         self.create_tabs()
         self.add_tabs()
 
-        self._info_label = QtWidgets.QLabel(f"GUI Configuration: {user_config_dir('specvizitor')}", parent=self)
+        self._info_label = QtWidgets.QLabel(f"Advanced Settings: {user_config_dir('specvizitor')}", parent=self)
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(

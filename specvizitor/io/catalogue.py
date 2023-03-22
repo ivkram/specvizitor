@@ -11,7 +11,7 @@ from ..widgets.FileBrowser import FileBrowser
 logger = logging.getLogger(__name__)
 
 
-def load_cat(filename=None,
+def read_cat(filename=None,
              translate: dict[str, list[str]] | None = None,
              data_dir=None,
              id_pattern=r'\d+') -> [Table, None]:
@@ -68,6 +68,6 @@ def create_cat(ids) -> Table:
     return cat
 
 
-def cat_browser(default_path, parent) -> FileBrowser:
-    return FileBrowser(title='Catalogue:', filename_extensions='FITS Files (*.fits)', mode=FileBrowser.OpenFile,
-                       default_path=default_path, parent=parent)
+def cat_browser(default_path, **kwargs) -> FileBrowser:
+    return FileBrowser(filename_extensions='FITS Files (*.fits)', mode=FileBrowser.OpenFile,
+                       default_path=default_path, **kwargs)

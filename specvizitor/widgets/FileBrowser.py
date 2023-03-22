@@ -15,13 +15,15 @@ class FileBrowser(AbstractWidget):
     OpenDirectory = 2
     SaveFile = 3
 
-    def __init__(self, title: str, mode=OpenFile, filename_extensions='All files (*.*)', default_path=None,
-                 button_text='Browse...', parent=None):
+    def __init__(self, mode=OpenFile, filename_extensions='All files (*.*)', default_path=None,
+                 title: str = '', title_width: int | None = None, button_text='Browse...', parent=None):
 
-        self._title = title
         self._browser_mode = mode
         self._filter = filename_extensions  # example: 'Images (*.png *.xpm *.jpg);;Text files (*.txt)'
         self._default_path = None if default_path is None else str(pathlib.Path(default_path).resolve())
+
+        self._title = title
+        self._title_width = title_width
         self._button_text = button_text
 
         self._label: QtWidgets.QLabel | None = None
@@ -32,7 +34,10 @@ class FileBrowser(AbstractWidget):
 
     def init_ui(self):
         self._label = QtWidgets.QLabel(self._title, self)
-        self._label.setFixedWidth(130)
+        if self._title_width is None:
+            self._label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        else:
+            self._label.setFixedWidth(self._title_width)
 
         self._line_edit = QtWidgets.QLineEdit(self)
         self._line_edit.setMinimumWidth(700)

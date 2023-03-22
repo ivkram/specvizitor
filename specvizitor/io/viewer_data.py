@@ -204,5 +204,5 @@ def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
     return ids
 
 
-def data_browser(default_path, parent) -> FileBrowser:
-    return FileBrowser(title='Data Source:', mode=FileBrowser.OpenDirectory, default_path=default_path, parent=parent)
+def data_browser(default_path, **kwargs) -> FileBrowser:
+    return FileBrowser(mode=FileBrowser.OpenDirectory, default_path=default_path, **kwargs)
