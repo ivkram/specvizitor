@@ -29,7 +29,6 @@ class FileBrowser(AbstractWidget):
         self._button: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
-        self.setEnabled(True)
 
     def init_ui(self):
         self._label = QtWidgets.QLabel(self._title, self)

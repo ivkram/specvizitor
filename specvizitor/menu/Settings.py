@@ -28,7 +28,6 @@ class SettingsWidget(AbstractWidget):
 class AppearanceWidget(SettingsWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setEnabled(True)
 
     def init_ui(self):
         pass
@@ -56,7 +55,6 @@ class CatalogueWidget(SettingsWidget):
         self._browser: FileBrowser | None = None
 
         super().__init__(parent=parent)
-        self.setEnabled(True)
 
     def init_ui(self):
         self._browser = cat_browser(self.cfg.filename, self)
@@ -93,7 +91,6 @@ class DataSourceWidget(SettingsWidget):
         self._browser: FileBrowser | None = None
 
         super().__init__(parent=parent)
-        self.setEnabled(True)
 
     def init_ui(self):
         self._browser = data_browser(self.cfg.dir, self)

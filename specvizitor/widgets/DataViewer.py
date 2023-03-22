@@ -42,6 +42,7 @@ class DataViewer(AbstractWidget):
         self.docks: dict[str, Dock] = {}
 
         super().__init__(parent=parent)
+        self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
     @property

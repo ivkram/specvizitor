@@ -15,6 +15,7 @@ class LazyViewerElement(AbstractWidget):
         self.graphics_layout: pg.GraphicsLayout | None = None
 
         super().__init__(parent=parent)
+        self.setEnabled(False)
 
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
         super().set_geometry(spacing=spacing, margins=margins)

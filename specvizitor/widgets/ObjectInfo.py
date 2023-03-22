@@ -22,6 +22,7 @@ class ObjectInfo(AbstractWidget):
         self._table_items: list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]] | None = None
 
         super().__init__(parent=parent)
+        self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
     def create_table_items(self, cat: Table | None = None):

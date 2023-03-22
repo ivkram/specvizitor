@@ -17,6 +17,7 @@ class ReviewForm(AbstractWidget):
         self._comments_widget: QtWidgets.QTextEdit | None = None
 
         super().__init__(parent=parent)
+        self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
     def create_checkbox_widgets(self, notes: InspectionData | None = None):

@@ -12,8 +12,6 @@ class QtAbcMeta(type(QtWidgets.QWidget), type(abc.ABC)):
 class AbstractWidget(QtWidgets.QWidget, abc.ABC, metaclass=QtAbcMeta):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setEnabled(False)
-
         self.init_ui()
         self.set_layout()
         self.populate()

@@ -18,6 +18,7 @@ class QuickSearch(AbstractWidget):
         self._index_field: QtWidgets.QLineEdit | None = None
 
         super().__init__(parent=parent)
+        self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
     def init_ui(self):
