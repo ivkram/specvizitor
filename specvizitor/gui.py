@@ -167,10 +167,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setShortcut('F5')
+        self._reset_view.setEnabled(False)
         self._reset_view.triggered.connect(self.data_viewer.view_reset.emit)
         self._view.addAction(self._reset_view)
 
         self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
+        self._reset_dock_layout.setEnabled(False)
         self._reset_dock_layout.triggered.connect(self.data_viewer.reset_dock_layout)
         self._view.addAction(self._reset_dock_layout)
 
@@ -197,7 +199,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._docks.addSeparator()
 
-        self._screenshot = QtWidgets.QAction("Capture...")
+        self._screenshot = QtWidgets.QAction("Take Screenshot...")
         self._screenshot.triggered.connect(self._screenshot_action)
         self._docks.addAction(self._screenshot)
 
@@ -292,7 +294,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def load_project(self):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
-        for w in (self._save, self._save_as, self._export):
+        for w in (self._save, self._save_as, self._export, self._reset_view, self._reset_dock_layout):
             w.setEnabled(True)
 
         self.project_loaded.emit(self.rd.notes)
