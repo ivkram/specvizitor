@@ -30,7 +30,7 @@ class LazyViewerElement(AbstractWidget):
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
-        self.set_geometry(spacing=self.appearance.spacing, margins=self.appearance.margins)
+        self.set_geometry(spacing=self.appearance.viewer_spacing, margins=self.appearance.viewer_margins)
 
     def populate(self):
         self.layout().addWidget(self.graphics_view, 1, 1, 1, 1)
