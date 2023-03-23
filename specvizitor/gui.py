@@ -38,7 +38,8 @@ class MainWindow(QtWidgets.QMainWindow):
     object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
 
     theme_changed = QtCore.Signal()
-    catalogue_changed = QtCore.Signal(Table)
+    catalogue_changed = QtCore.Signal(object)
+    visible_columns_updated = QtCore.Signal(list)
     dock_layout_updated = QtCore.Signal(dict)
     dock_configuration_updated = QtCore.Signal(Docks)
 
@@ -86,6 +87,15 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.cache.dock_layout:
             self.dock_layout_updated.emit(self.rd.cache.dock_layout)
 
+        # load the catalogue to the memory
+        if self.rd.config.catalogue.filename:
+            self.load_catalogue()
+
+        # update the list of catalogue columns visible in the object info widget
+        # write "is not None" explicitly in case visible_columns == []
+        if self.rd.cat and self.rd.cache.visible_columns is not None:
+            self.visible_columns_updated.emit(self.rd.cache.visible_columns)
+
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
             self.open_file(self.rd.cache.last_inspection_file)
@@ -107,7 +117,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.quick_search_dock.setWidget(self.quick_search)
 
         # create a widget displaying information about the object
-        self.object_info = ObjectInfo(visible_columns=self.rd.cache.visible_columns, parent=self)
+        self.object_info = ObjectInfo(parent=self)
         self.object_info_dock = QtWidgets.QDockWidget('Object Information', self)
         self.object_info_dock.setObjectName('Object Information')
         self.object_info_dock.setWidget(self.object_info)
@@ -228,6 +238,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.theme_changed.connect(self.data_viewer.init_ui)
         self.theme_changed.connect(self.toolbar.set_icons)
         self.catalogue_changed.connect(self.object_info.update_table_items)
+        self.visible_columns_updated.connect(self.object_info.update_visible_columns)
 
         self.dock_layout_updated.connect(self.data_viewer.restore_dock_layout)
         self.dock_configuration_updated.connect(self.data_viewer.update_dock_configuration)
@@ -256,6 +267,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.quick_search_dock)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.object_info_dock)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
+
+    def load_catalogue(self):
+        cat = read_cat(self.rd.config.catalogue.filename, translate=self.rd.config.catalogue.translate)
+        if cat is None:
+            self.rd.config.catalogue.filename = None
+            self.rd.config.save()
+
+        self.update_catalogue(cat)
 
     def restore_window_state(self):
         settings = QtCore.QSettings()
@@ -291,8 +310,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rd.output_path = pathlib.Path(path)
             self.rd.read()
             if self.rd.cat is None:
-                self.update_catalogue(read_cat(self.rd.config.catalogue.filename,
-                                               translate=self.rd.config.catalogue.translate))
+                self.update_catalogue()
             self.load_project()
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
@@ -451,7 +469,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.theme_changed.emit()
 
     @Slot(object)
-    def update_catalogue(self, cat: Table | None):
+    def update_catalogue(self, cat: Table | None = None):
         if cat is None and self.rd.notes is not None:
             self.rd.cat = create_cat(self.rd.notes.ids)
         else:
