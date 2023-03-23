@@ -219,7 +219,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self.data_viewer, self.toolbar, self.quick_search, self.object_info, self.review_form):
             self.project_loaded.connect(w.load_project)
 
-        for w in (self.data_viewer, self.review_form):
+        for w in (self.data_viewer, self.object_info, self.review_form):
             self.data_requested.connect(w.collect)
 
         for w in (self.data_viewer, self.toolbar, self.object_info, self.review_form):
@@ -242,9 +242,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.toolbar.settings_button_clicked.connect(self._settings_action)
 
         self.data_viewer.data_collected.connect(self._save_viewer_data)
+        self.object_info.data_collected.connect(self._save_obj_info_data)
         self.review_form.data_collected.connect(self._save_review_data)
-
-        self.object_info.visible_columns_updated.connect(self._save_obj_info_data)
 
         # connect the child widgets between each other
         self.toolbar.reset_view_button_clicked.connect(self.data_viewer.view_reset.emit)
@@ -465,14 +464,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _):
         self._exit_action()
 
-    @QtCore.Slot(list)
-    def _save_obj_info_data(self, visible_columns: list[str]):
-        self.rd.cache.visible_columns = visible_columns
-        self.rd.cache.save()
-
     @QtCore.Slot(dict)
     def _save_viewer_data(self, layout: dict):
         self.rd.cache.dock_layout = layout
+        self.rd.cache.save()
+
+    @QtCore.Slot(list)
+    def _save_obj_info_data(self, visible_columns: list[str]):
+        self.rd.cache.visible_columns = visible_columns
         self.rd.cache.save()
 
     @QtCore.Slot(str, dict)

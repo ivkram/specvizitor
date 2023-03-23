@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ObjectInfo(AbstractWidget):
-    visible_columns_updated = QtCore.Signal(list)
+    data_collected = QtCore.Signal(list)
 
     def __init__(self, visible_columns: list[str] | None = None, parent=None):
         self.all_columns: list[str] | None = None
@@ -106,8 +106,6 @@ class ObjectInfo(AbstractWidget):
     @QtCore.Slot(list)
     def update_visible_columns(self, visible_columns: list[str]):
         self.visible_columns = visible_columns
-        self.visible_columns_updated.emit(self.visible_columns)
-
         self.update_view()
 
     @QtCore.Slot()
@@ -142,3 +140,7 @@ class ObjectInfo(AbstractWidget):
         dialog.visible_columns_updated.connect(self.update_visible_columns)
         if dialog.exec():
             pass
+
+    @QtCore.Slot()
+    def collect(self):
+        self.data_collected.emit(self.visible_columns)
