@@ -49,6 +49,7 @@ class TableColumns(QtWidgets.QDialog):
         self._uncheck_all = QtWidgets.QPushButton('Uncheck All', self)
 
         self._table = QtWidgets.QTableWidget(len(self.colnames), 2, self)
+        self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self._table.setHorizontalHeaderLabels(('Visible', 'Name'))
         self._table.horizontalHeader().resizeSection(0, 100)
         self._table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
