@@ -1,14 +1,33 @@
-images:
-  Image Cutout:
-    filename_keyword: "beams.fits"
-    scale: 1.0e+21
+spectra:
+  Spectrum 1D:
+    filename_keyword: "1D.fits"
+    redshift_slider:
+      catalogue_name: "redshift"
+      show_text_editor: True
+      min_value: 0
+      max_value: 12
+      step: 0.000001
+      default_value: 6  # overwritten if the input catalogue contains a column with redshifts
+    tracked_lines:
+      Ha:
+        position: right
+        relative_to: Redshift PDF
 
+images:
   Spectrum 2D:
+    position: bottom
+    relative_to: Spectrum 1D
     filename_keyword: "stack.fits"
     data_loader_params:
       extname: "SCI"
       extver: "F444W"
     container: PlotItem
+
+  Image Cutout:
+    position: top
+    relative_to: Spectrum 1D
+    filename_keyword: "beams.fits"
+    scale: 1.0e+21
 
 plots:
   Redshift PDF:
@@ -18,25 +37,10 @@ plots:
     smoothing_slider:
       visible: False
     x_axis:
-      name: zgrid
+      name: "zgrid"
     y_axis:
-      name: pdf
+      name: "pdf"
       scale: log
       limits:
         - -3
         - null
-
-spectra:
-  Spectrum 1D:
-    filename_keyword: "1D.fits"
-    redshift_slider:
-      catalogue_name: "redshift"
-      show_text_editor: True
-      min_value: 0
-      max_value: 10
-      step: 0.000001
-      default_value: 5  # overwritten if the input catalogue contains a column with redshifts
-    tracked_lines:
-      Ha:
-        position: right
-        relative_to: Redshift PDF

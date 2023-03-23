@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class Spec1DItem(Plot1DItem):
-    def __init__(self, spec: Spectrum1D | None = None, lines: SpectralLines | None = None,
+    def __init__(self, lines: SpectralLines | None = None,
                  window: tuple[float, float] | None = None, **kwargs):
 
         super().__init__(**kwargs)

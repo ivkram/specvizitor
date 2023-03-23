@@ -72,23 +72,21 @@ class DataViewer(AbstractWidget):
 
         widgets = {}
 
-        # TODO: create factory
-        # create widgets for images (e.g. image cutouts, 2D spectra)
-        if self.dock_cfg.images is not None:
-            for name, image_cfg in self.dock_cfg.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self.appearance,
-                                        parent=self)
-
-        # create widgets for plots (does not include any spectra!)
-        if self.dock_cfg.plots is not None:
-            for name, plot_cfg in self.dock_cfg.plots.items():
-                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self.appearance, parent=self)
-
         # create widgets for 1D spectra
         if self.dock_cfg.spectra is not None:
             for name, spec_cfg in self.dock_cfg.spectra.items():
                 widgets[name] = Spec1D(lines=self.spectral_lines, cfg=spec_cfg, title=name,
                                        appearance=self.appearance, parent=self)
+
+        # create widgets for images (e.g. image cutouts, 2D spectra)
+        if self.dock_cfg.images is not None:
+            for name, image_cfg in self.dock_cfg.images.items():
+                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self.appearance, parent=self)
+
+        # create widgets for plots (does not include any spectra!)
+        if self.dock_cfg.plots is not None:
+            for name, plot_cfg in self.dock_cfg.plots.items():
+                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self.appearance, parent=self)
 
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
@@ -114,14 +112,12 @@ class DataViewer(AbstractWidget):
                                relativeTo=relative_to)
 
     def _add_docks(self):
-        added_docks = []
+        self.added_docks = []
 
         for widget in self.widgets:
             if widget.cfg.visible:
                 self._add_dock(widget)
-                added_docks.append(widget.title)
-
-        self.added_docks = added_docks
+                self.added_docks.append(widget.title)
 
     @QtCore.Slot()
     def reset_dock_layout(self):
@@ -141,6 +137,8 @@ class DataViewer(AbstractWidget):
         self._create_widgets()
         self._create_docks()
         self._add_docks()
+
+        self.reset_dock_layout()
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())

@@ -72,6 +72,6 @@ class Plugin(PluginCore):
 
     @staticmethod
     def add_current_redshift_line_to_z_pdf(spec_1d: Spec1D, z_pdf: Plot1D):
-        line = pg.InfiniteLine(spec_1d.z_slider.value, pen='r')
+        line = pg.InfiniteLine(spec_1d.z_slider.value, pen='m')
         spec_1d.redshift_changed.connect(lambda z: line.setPos(z))
         z_pdf.plot_1d.addItem(line)
