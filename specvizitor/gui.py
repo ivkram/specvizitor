@@ -53,7 +53,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.was_maximized: bool = False
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        self.setWindowTitle('Specvizitor')  # set the title of the main window
+        self._update_window_title()  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
         # register units
@@ -352,9 +352,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.load_object(self.rd.j)
 
     def _update_window_title(self):
-        self.setWindowTitle(
-            f'{self.rd.output_path.name} – ID {self.rd.notes.get_id(self.rd.j)}'
-            f'[#{self.rd.j + 1}/{self.rd.notes.n_objects}] – Specvizitor')
+        title = ''
+        if self.rd.output_path is not None:
+            title += f'{self.rd.output_path.name} – '
+        if self.rd.j is not None:
+            title += f'ID {self.rd.notes.get_id(self.rd.j)} [#{self.rd.j + 1}/{self.rd.notes.n_objects}] – '
+        title += 'Specvizitor'
+        self.setWindowTitle(title)
 
     @Slot(str)
     def _select_by_id(self, obj_id: str):
@@ -472,10 +476,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd.output_path = path
         self.rd.cache.last_inspection_file = str(self.rd.output_path)
         self.rd.cache.save()
+        self._update_window_title()
 
         if self.rd.notes:
-            self.rd.notes.write(self.rd.output_path)
-            self._update_window_title()
+            self.rd.save()
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
