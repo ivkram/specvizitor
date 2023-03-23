@@ -199,6 +199,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._docks = self._menu.addMenu("&Docks")
 
+        self._add_dock = QtWidgets.QAction("Add...")
+        self._add_dock.setEnabled(False)
+        self._docks.addAction(self._add_dock)
+
+        self._docks.addSeparator()
+
         self._backup_dock_configuration = QtWidgets.QAction("Backup...")
         self._backup_dock_configuration.triggered.connect(self._backup_dock_configuration_action)
         self._docks.addAction(self._backup_dock_configuration)
@@ -207,13 +213,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._restore_dock_configuration.triggered.connect(self._restore_dock_configuration_action)
         self._docks.addAction(self._restore_dock_configuration)
 
-        self._docks.addSeparator()
+        self._tools = self._menu.addMenu("&Tools")
 
         self._screenshot = QtWidgets.QAction("Take Screenshot...")
         self._screenshot.triggered.connect(self._screenshot_action)
-        self._docks.addAction(self._screenshot)
+        self._tools.addAction(self._screenshot)
 
-        self._tools = self._menu.addMenu("&Tools")
+        self._tools.addSeparator()
 
         self._settings = QtWidgets.QAction("Se&ttings...")
         self._settings.triggered.connect(self._settings_action)
