@@ -56,11 +56,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._update_window_title()  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
 
-        # register units
+        # register user-defined units
         if appdata.config.data.user_defined_units is not None:
             add_enabled_aliases(appdata.config.data.user_defined_units)
 
-        # register plugins
+        # "discover" and "register" plugins
         self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
                          for plugin_name in self.rd.config.plugins]
 

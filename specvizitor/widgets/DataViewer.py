@@ -7,6 +7,7 @@ from ..config import config
 from ..config.docks import Docks
 from ..config.spectral_lines import SpectralLines
 from ..io.inspection_data import InspectionData
+from ..plugins.plugin_core import PluginCore
 
 from .AbstractWidget import AbstractWidget
 from .LazyViewerElement import LazyViewerElement
@@ -24,16 +25,13 @@ class DataViewer(AbstractWidget):
                  dock_cfg: Docks,
                  appearance: config.Appearance,
                  spectral_lines: SpectralLines = None,
-                 plugins=None,
+                 plugins: list[PluginCore] | None = None,
                  parent=None):
 
         self.appearance = appearance
         self.dock_cfg = dock_cfg
-
-        # register plugins
-        self._plugins = plugins if plugins is not None else []
-
         self.spectral_lines = spectral_lines
+        self._plugins: list[PluginCore] = plugins if plugins is not None else []
 
         self.dock_area = DockArea()
         self.added_docks: list[str] = []
@@ -52,6 +50,10 @@ class DataViewer(AbstractWidget):
             lazy_widgets.extend(w.lazy_widgets)
 
         return list(self.core_widgets.values()) + lazy_widgets
+
+    @property
+    def active_core_widgets(self) -> dict[str, ViewerElement]:
+        return {title: w for title, w in self.core_widgets.items() if w.data is not None}
 
     def _create_widgets(self):
         # delete previously created widgets
@@ -83,7 +85,6 @@ class DataViewer(AbstractWidget):
 
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
-
         self.core_widgets = widgets
 
     def _create_docks(self):
@@ -165,7 +166,7 @@ class DataViewer(AbstractWidget):
                 self.view_reset.connect(w.reset_view)
 
         for plugin in self._plugins:
-            plugin.link(self.core_widgets, label_style=self.appearance.label_style)
+            plugin.invoke(self.active_core_widgets)
 
         # update the dock titles
         self._update_dock_titles()

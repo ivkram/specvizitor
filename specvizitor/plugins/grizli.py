@@ -1,37 +1,51 @@
 import astropy.units as u
+import pyqtgraph as pg
 from qtpy import QtGui
 
-from ..widgets.ViewerElement import ViewerElement
-from ..widgets.Image2D import Image2D
-from ..widgets.Spec1D import Spec1D
+from specvizitor.plugins.plugin_core import PluginCore
+from specvizitor.widgets.ViewerElement import ViewerElement
+from specvizitor.widgets.Image2D import Image2D
+from specvizitor.widgets.Spec1D import Spec1D
 
 
-class Plugin:
-    # TODO: create BasePlugin
+class Plugin(PluginCore):
+    def invoke(self, widgets: dict[str, ViewerElement]):
+        spec_1d: Spec1D | None = widgets.get("Spectrum 1D")
+        spec_2d: Image2D | None = widgets.get("Spectrum 2D")
+
+        if spec_2d is not None:
+            line = self.add_central_line_to_spec2d(spec_2d)
+
+            if spec_1d is not None:
+                qtransform = self.transform_spec2d(spec_1d, spec_2d)
+                line.setTransform(qtransform)
+                self.link_spec1d_to_spec2d(spec_1d, spec_2d)
+
     @staticmethod
-    def link(widgets: dict[str, ViewerElement], label_style: dict[str, str] | None = None):
+    def transform_spec2d(spec_1d: Spec1D, spec_2d: Image2D) -> QtGui.QTransform:
+        scale = u.Unit('micron') / spec_1d.spec_1d.spec.spectral_axis.unit
 
-        try:
-            spec_1d_widget: Spec1D = widgets["Spectrum 1D"]
-            spec_2d_widget: Image2D = widgets["Spectrum 2D"]
-        except KeyError:
-            return
-
-        if any(w.data is None for w in (spec_1d_widget, spec_2d_widget)):
-            return
-
-        # set x-axis transformation for the 2D spectrum plot
-        scale = u.Unit('micron') / spec_1d_widget.spec_1d.spec.spectral_axis.unit
-
-        dlam = spec_2d_widget.meta['CD1_1'] * scale
-        crval = spec_2d_widget.meta['CRVAL1'] * scale
-        crpix = spec_2d_widget.meta['CRPIX1']
+        dlam = spec_2d.meta['CD1_1'] * scale
+        crval = spec_2d.meta['CRVAL1'] * scale
+        crpix = spec_2d.meta['CRPIX1']
 
         qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
 
-        spec_2d_widget.image_2d.setTransform(qtransform)
-        spec_2d_widget._container.setAspectLocked(True, 1 / dlam)
-        if label_style is None:
-            label_style = {}
-        spec_2d_widget._container.setLabel('bottom', spec_1d_widget.spec_1d.spec.spectral_axis.unit, **label_style)
-        spec_2d_widget._container.setXLink(spec_1d_widget.title)  # link the x-axis range
+        spec_2d.image_2d.setTransform(qtransform)
+        spec_2d.container.setAspectLocked(True, 1 / dlam)
+
+        return qtransform
+
+    @staticmethod
+    def link_spec1d_to_spec2d(spec_1d: Spec1D, spec_2d: Image2D):
+        spec_2d.container.setXLink(spec_1d.title)
+
+    @staticmethod
+    def add_central_line_to_spec2d(spec_2d: Image2D) -> pg.PlotCurveItem:
+        y = spec_2d.meta['NAXIS2'] / 2
+        pen = 'w'
+
+        line = pg.PlotCurveItem([0, spec_2d.meta['NAXIS1']], [y, y], pen=pen)
+        spec_2d.container.addItem(line)
+
+        return line

@@ -49,7 +49,7 @@ class Spec1DItem(pg.PlotItem):
         line_color = (175.68072, 220.68924, 46.59488)
         line_pen = pg.mkPen(color=line_color, width=1)
         for line_name, lambda0 in self.lines.list.items():
-            line = pg.InfiniteLine(angle=90, movable=False, pen=line_pen)
+            line = pg.InfiniteLine(pen=line_pen)
             label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
             self._line_artists[line_name] = {'line': line, 'label': label}
 

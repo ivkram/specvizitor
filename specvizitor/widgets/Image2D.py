@@ -21,7 +21,7 @@ class Image2D(ViewerElement):
         self._cmap = pg.colormap.get('viridis')
 
         self.image_2d: pg.ImageItem | None = None
-        self._container: pg.PlotItem | pg.ViewBox | None = None
+        self.container: pg.PlotItem | pg.ViewBox | None = None
         self._cbar: ColorLegendItem | None = None
 
         super().__init__(cfg=cfg, **kwargs)
@@ -36,19 +36,19 @@ class Image2D(ViewerElement):
         # create an image container
         if self.cfg.container == 'PlotItem':
             # create a plot item
-            self._container = pg.PlotItem(name=self.title)
+            self.container = pg.PlotItem(name=self.title)
             # self.container.hideAxis('left')
-            self._container.showAxes((False, False, False, True), showValues=(False, False, False, True))
-            self._container.hideButtons()
+            self.container.showAxes((False, False, False, True), showValues=(False, False, False, True))
+            self.container.hideButtons()
 
             # add a border to the image
             self.image_2d.setBorder('k')
         else:
             # create a view box
-            self._container = pg.ViewBox()
+            self.container = pg.ViewBox()
 
         # lock the aspect ratio
-        self._container.setAspectLocked(True)
+        self.container.setAspectLocked(True)
 
         # create a color bar
         self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
@@ -58,10 +58,10 @@ class Image2D(ViewerElement):
         super().populate()
 
         # add the image to the container
-        self._container.addItem(self.image_2d)
+        self.container.addItem(self.image_2d)
 
         # add the container to the layout
-        self.graphics_layout.addItem(self._container, 0, 0)
+        self.graphics_layout.addItem(self.container, 0, 0)
 
         # add the color bar to the layout
         self.graphics_layout.addItem(self._cbar, 0, 1)
@@ -83,7 +83,7 @@ class Image2D(ViewerElement):
     def reset_view(self):
         # TODO: allow to choose between min/max and zscale?
         self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
-        self._container.autoRange(padding=0)
+        self.container.autoRange(padding=0)
 
     def clear_content(self):
         self.image_2d.clear()
