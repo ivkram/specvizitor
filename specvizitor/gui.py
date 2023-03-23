@@ -313,11 +313,12 @@ class MainWindow(QtWidgets.QMainWindow):
         @param path: path to the inspection file
         @param cached_index:
         """
-        if pathlib.Path(path).exists():
-            self.rd.output_path = pathlib.Path(path)
+        path = pathlib.Path(path)
+        if path.exists():
+            self.update_output_path(path)
             self.rd.read()
             if self.rd.cat is None:
-                self.update_catalogue()
+                self.update_catalogue(create_cat(self.rd.notes.ids))
             self.load_project(cached_index)
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
@@ -392,6 +393,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='CSV Files (*.csv)')[0]
         if path:
             self.update_output_path(pathlib.Path(path).resolve())
+            self.rd.save()
 
     def _export_action(self):
         path = qtpy.compat.getsavefilename(self, caption='Export To FITS',
@@ -470,22 +472,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.theme_changed.emit()
 
     @Slot(object)
-    def update_catalogue(self, cat: Table | None = None):
-        if cat is None and self.rd.notes is not None:
-            self.rd.cat = create_cat(self.rd.notes.ids)
-        else:
-            self.rd.cat = cat
+    def update_catalogue(self, cat: Table | None):
+        self.rd.cat = cat
         self.catalogue_changed.emit(self.rd.cat)
 
     @Slot(pathlib.Path)
     def update_output_path(self, path: pathlib.Path):
         self.rd.output_path = path
-        self.rd.cache.last_inspection_file = str(self.rd.output_path)
+        self.rd.cache.last_inspection_file = str(path)
         self.rd.cache.save()
         self._update_window_title()
-
-        if self.rd.notes:
-            self.rd.save()
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
