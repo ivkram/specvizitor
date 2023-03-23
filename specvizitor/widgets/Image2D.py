@@ -24,6 +24,8 @@ class Image2D(ViewerElement):
         self.container: pg.PlotItem | pg.ViewBox | None = None
         self._cbar: ColorLegendItem | None = None
 
+        self.added_items: list[pg.GraphicsItem] = []
+
         super().__init__(cfg=cfg, **kwargs)
 
     def init_ui(self):
@@ -50,15 +52,15 @@ class Image2D(ViewerElement):
         # lock the aspect ratio
         self.container.setAspectLocked(True)
 
+        # add the image to the container
+        self.container.addItem(self.image_2d)
+
         # create a color bar
         self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
         self._cbar.setVisible(self.cfg.color_bar.visible)
 
     def populate(self):
         super().populate()
-
-        # add the image to the container
-        self.container.addItem(self.image_2d)
 
         # add the container to the layout
         self.graphics_layout.addItem(self.container, 0, 0)
@@ -87,6 +89,8 @@ class Image2D(ViewerElement):
 
     def clear_content(self):
         self.image_2d.clear()
+        for item in self.added_items:
+            self.container.removeItem(item)
 
     def smooth(self, sigma: float):
         self.image_2d.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data)
