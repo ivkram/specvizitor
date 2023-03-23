@@ -50,7 +50,7 @@ class Spec1DItem(Plot1DItem):
                        padding=0)
 
     def get_line_label_height(self):
-        y_min, y_max = self.data.y.default_limits
+        y_min, y_max = self.data.y.default_lims.values
         return y_min + 0.6 * (y_max - y_min)
 
     def set_line_positions(self, redshift: float = 0):
@@ -181,7 +181,8 @@ class Spec1D(Plot1D):
 
     def init_plot_data(self):
         spec: Spectrum1D = self.data
-        plot_data = PlotData(x=AxisData('wavelength', spec.spectral_axis.value, spec.spectral_axis.unit),
+        plot_data = PlotData(x=AxisData('wavelength', spec.spectral_axis.value, spec.spectral_axis.unit,
+                                        log_allowed=False),
                              y=AxisData('flux', spec.flux.value, spec.flux.unit, spec.uncertainty.array))
         return plot_data
 

@@ -1,5 +1,6 @@
 from astropy.table import Table
 import astropy.units as u
+from astropy.units import UnitConversionError
 import numpy as np
 import pyqtgraph as pg
 from scipy.ndimage import gaussian_filter1d
@@ -10,10 +11,25 @@ import logging
 
 from ..config import config, docks
 from ..utils.table_tools import column_not_found_message
-
 from .ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DefaultLimits:
+    values: tuple[float, float]
+    editable: tuple[bool, bool] = (False, False)
+
+    def set(self, min_value: float | None, max_value: float | None):
+        self.values = (min_value if min_value else self.values[0],
+                       max_value if max_value else self.values[1])
+
+        self.editable = (min_value is None, max_value is None)
+
+    def update(self, limits: tuple[float, float]):
+        self.values = (limits[0] if self.editable[0] else self.values[0],
+                       limits[1] if self.editable[1] else self.values[1])
 
 
 @dataclass
@@ -22,23 +38,18 @@ class AxisData:
     value: np.ndarray
     unit: u.Unit | None = None
     unc: np.ndarray | None = None
-    default_limits: tuple[float, float] = field(init=False)
-    frozen_limits: tuple[bool, bool] = field(init=False)
+    default_lims: DefaultLimits = field(init=False)
+    log_allowed: bool = True
 
     def __post_init__(self):
-        self.reset_default_limits()
+        self.init_default_lims()
+
+    def init_default_lims(self):
+        self.default_lims = DefaultLimits(self.get_min_max(self.value))
 
     @staticmethod
-    def get_limits(data: np.ndarray) -> tuple[float, float]:
+    def get_min_max(data: np.ndarray) -> tuple[float, float]:
         return np.nanmin(data), np.nanmax(data)
-
-    def reset_default_limits(self):
-        self.default_limits = self.get_limits(self.value)
-        self.frozen_limits = (False, False)
-
-    def update_default_limits(self, limits: tuple[float, float]):
-        self.default_limits = (self.default_limits[0] if self.frozen_limits[0] else limits[0],
-                               self.default_limits[1] if self.frozen_limits[1] else limits[1])
 
     @property
     def label(self):
@@ -47,18 +58,47 @@ class AxisData:
             label += f' [{self.unit}]'
         return label
 
-    def apply_scale(self, scale: 'str'):
-        if scale == 'log':
-            self.name = f'log {self.name}'
+    def configure(self, cfg: docks.Axis):
+        if cfg.unit:
+            self.convert_units(cfg.unit)
+        if cfg.scale == 'log':
+            self.apply_log_scale()
+        self.default_lims.set(cfg.limits[0], cfg.limits[1])
+
+    def convert_units(self, new_unit: str):
+        new_unit = u.Unit(new_unit)
+        q = u.Quantity(1 * self.unit)
+
+        try:
+            q = q.to(new_unit).value
+        except UnitConversionError as e:
+            logger.error(e)
+            return
+
+        self.unit = new_unit
+        self.value = self.value * q
+
+        if self.unc is not None:
+            self.unc = self.unc * q
+
+        self.init_default_lims()
+
+    def apply_log_scale(self):
+        if not self.log_allowed:
+            logger.error(f'Axis "{self.name}" cannot be converted to logarithmic scale')
+            return
+
+        self.name = f'log {self.name}'
+        if self.unit:
+            self.name += f' / {self.unit}'
+            self.unit = None
+
+        with np.errstate(invalid='ignore', divide='ignore'):
             self.value = np.log10(self.value)
-            self.unc = None
-        self.reset_default_limits()
+        self.value[self.value == -np.inf] = 0
 
-    def apply_limits(self, min_value: float | None, max_value: float | None):
-        self.default_limits = (self.default_limits[0] if min_value is None else min_value,
-                               self.default_limits[1] if max_value is None else max_value)
-
-        self.frozen_limits = (min_value is not None, max_value is not None)
+        self.unc = None
+        self.init_default_lims()
 
 
 @dataclass
@@ -78,17 +118,14 @@ class Plot1DItem(pg.PlotItem):
         self.data: PlotData | None = None
 
         self._y_plot: pg.PlotDataItem | None = None
-        self._y_err_plot: pg.PlotDataItem | None = None
+        self._y_unc_plot: pg.PlotDataItem | None = None
 
     def set_plot_data(self, data: PlotData):
         self.data = data
 
     def configure_axes(self, x_cfg: docks.Axis, y_cfg: docks.Axis):
-        self.data.x.apply_scale(x_cfg.scale)
-        self.data.y.apply_scale(y_cfg.scale)
-
-        self.data.x.apply_limits(x_cfg.limits[0], x_cfg.limits[1])
-        self.data.y.apply_limits(y_cfg.limits[0], y_cfg.limits[1])
+        self.data.x.configure(x_cfg)
+        self.data.y.configure(y_cfg)
 
     def update_labels(self):
         self.setLabel('bottom', self.data.x.label, **self.appearance.label_style)
@@ -96,12 +133,12 @@ class Plot1DItem(pg.PlotItem):
 
     def add_items(self):
         self._y_plot = self.plot(pen='k' if self.appearance.theme == 'light' else 'w')
-        self._y_err_plot = self.plot(pen='r')
+        self._y_unc_plot = self.plot(pen='r')
 
     def plot_all(self):
         self._y_plot.setData(self.data.x.value, self.data.y.value)
         if self.data.y.unc is not None:
-            self._y_err_plot.setData(self.data.x.value, self.data.y.unc)
+            self._y_unc_plot.setData(self.data.x.value, self.data.y.unc)
 
     def display(self):
         self.update_labels()
@@ -109,10 +146,10 @@ class Plot1DItem(pg.PlotItem):
         self.plot_all()
 
     def reset_x_range(self):
-        self.setXRange(*self.data.x.default_limits, padding=0)
+        self.setXRange(*self.data.x.default_lims.values, padding=0)
 
     def reset_y_range(self):
-        self.setYRange(*self.data.y.default_limits)
+        self.setYRange(*self.data.y.default_lims.values)
 
     def reset(self):
         self.reset_x_range()
@@ -121,7 +158,7 @@ class Plot1DItem(pg.PlotItem):
     def smooth(self, sigma: float):
         y_smoothed = gaussian_filter1d(self.data.y.value, sigma) if sigma > 0 else self.data.y.value
 
-        self.data.y.update_default_limits(AxisData.get_limits(y_smoothed))
+        self.data.y.default_lims.update(AxisData.get_min_max(y_smoothed))
         self._y_plot.setData(self.data.x.value, y_smoothed)
 
 
@@ -176,6 +213,7 @@ class Plot1D(ViewerElement):
         if not plot_data:
             self.data, self.meta = None, None
             return
+
         self.plot_1d.set_plot_data(plot_data)
         self.plot_1d.configure_axes(self.cfg.x_axis, self.cfg.y_axis)
         self.plot_data_loaded.emit(plot_data)
