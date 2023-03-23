@@ -24,8 +24,6 @@ class Image2D(ViewerElement):
         self.container: pg.PlotItem | pg.ViewBox | None = None
         self._cbar: ColorLegendItem | None = None
 
-        self.added_items: list[pg.GraphicsItem] = []
-
         super().__init__(cfg=cfg, **kwargs)
 
     def init_ui(self):
@@ -89,8 +87,6 @@ class Image2D(ViewerElement):
 
     def clear_content(self):
         self.image_2d.clear()
-        for item in self.added_items:
-            self.container.removeItem(item)
 
     def smooth(self, sigma: float):
         self.image_2d.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data)

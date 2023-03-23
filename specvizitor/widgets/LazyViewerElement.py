@@ -14,6 +14,8 @@ class LazyViewerElement(AbstractWidget):
         self.graphics_view: pg.GraphicsView | None = None
         self.graphics_layout: pg.GraphicsLayout | None = None
 
+        self._added_items: list[pg.GraphicsItem] = []
+
         super().__init__(parent=parent)
         self.setEnabled(False)
 
@@ -34,3 +36,11 @@ class LazyViewerElement(AbstractWidget):
 
     def populate(self):
         self.layout().addWidget(self.graphics_view, 1, 1, 1, 1)
+
+    def register_item(self, item: pg.GraphicsItem):
+        self._added_items.append(item)
+
+    def remove_registered_items(self):
+        for item in self._added_items:
+            self.container.removeItem(item)
+        self._added_items = []

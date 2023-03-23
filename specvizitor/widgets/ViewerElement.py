@@ -72,6 +72,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
+            self.remove_registered_items()
 
             for s in self.sliders:
                 s.clear()
