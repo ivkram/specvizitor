@@ -1,8 +1,6 @@
 catalogue:
   translate:
     id: [Id, ID, NUMBER]
-    ra: [Ra, RA]
-    dec: [Dec, DEC]
     redshift: [z, Z, Redshift, REDSHIFT, z_vac, z_map]
 
 review_form:

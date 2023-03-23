@@ -6,7 +6,6 @@ import logging
 import pathlib
 
 from .config import Config, Docks, SpectralLines, Cache
-from .io import catalogue
 from .io.inspection_data import InspectionData
 from .utils.params import LocalFile
 
@@ -67,16 +66,6 @@ class AppData:
             return
 
         self.notes = InspectionData.read(self.output_path)
-
-        if self.cat is None:
-            # load the catalogue
-            cat = catalogue.read_cat(self.config.catalogue.filename, translate=self.config.catalogue.translate)
-
-            # create a catalogue with a single column of IDs
-            if cat is None:
-                cat = catalogue.create_cat(self.notes.ids)
-
-            self.cat = cat
 
     def save(self):
         """ Save inspection data to the output file.

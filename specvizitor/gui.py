@@ -16,7 +16,7 @@ from .appdata import AppData
 from .config import appearance, config, Docks
 from .utils.logs import LogMessageBox
 from .utils.params import save_yaml
-from .io.catalogue import create_cat
+from .io.catalogue import read_cat, create_cat
 from .io.inspection_data import InspectionData
 from .io.viewer_data import add_enabled_aliases
 
@@ -38,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
     object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
 
     theme_changed = QtCore.Signal()
-    catalogue_changed = QtCore.Signal(object)
+    catalogue_changed = QtCore.Signal(Table)
     dock_layout_updated = QtCore.Signal(dict)
     dock_configuration_updated = QtCore.Signal(Docks)
 
@@ -107,7 +107,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.quick_search_dock.setWidget(self.quick_search)
 
         # create a widget displaying information about the object
-        self.object_info = ObjectInfo(cfg=self.rd.config.object_info, parent=self)
+        self.object_info = ObjectInfo(visible_columns=self.rd.cache.visible_columns, parent=self)
         self.object_info_dock = QtWidgets.QDockWidget('Object Information', self)
         self.object_info_dock.setObjectName('Object Information')
         self.object_info_dock.setWidget(self.object_info)
@@ -244,6 +244,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_viewer.data_collected.connect(self._save_viewer_data)
         self.review_form.data_collected.connect(self._save_review_data)
 
+        self.object_info.visible_columns_updated.connect(self._save_obj_info_data)
+
         # connect the child widgets between each other
         self.toolbar.reset_view_button_clicked.connect(self.data_viewer.view_reset.emit)
         self.toolbar.reset_layout_button_clicked.connect(self.data_viewer.reset_dock_layout)
@@ -289,7 +291,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if pathlib.Path(path).exists():
             self.rd.output_path = pathlib.Path(path)
             self.rd.read()
-            self.catalogue_changed.emit(self.rd.cat)
+            if self.rd.cat is None:
+                self.update_catalogue(read_cat(self.rd.config.catalogue.filename,
+                                               translate=self.rd.config.catalogue.translate))
             self.load_project()
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
@@ -460,6 +464,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, _):
         self._exit_action()
+
+    @QtCore.Slot(list)
+    def _save_obj_info_data(self, visible_columns: list[str]):
+        self.rd.cache.visible_columns = visible_columns
+        self.rd.cache.save()
 
     @QtCore.Slot(dict)
     def _save_viewer_data(self, layout: dict):

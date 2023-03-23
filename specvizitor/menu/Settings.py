@@ -92,25 +92,21 @@ class AppearanceWidget(SettingsWidget):
 class CatalogueWidget(SettingsWidget):
     catalogue_selected = QtCore.Signal(object)
 
-    def __init__(self, read_cfg: config.Catalogue, display_cfg: config.ObjectInfo, parent=None):
-        self.read_cfg = read_cfg
-        self.display_cfg = display_cfg
+    def __init__(self, cfg: config.Catalogue, parent=None):
+        self.cfg = cfg
 
         self.cat = None
 
         self._browser: FileBrowser | None = None
-        self._display_section: Section | None = None
+        self._aliases_section: Section | None = None
         self._show_all_checkbox: QtWidgets.QCheckBox | None = None
 
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._browser = cat_browser(self.read_cfg.filename, title='Filename:', parent=self)
+        self._browser = cat_browser(self.cfg.filename, title='Filename:', parent=self)
 
-        self._display_section = Section("Display Options", parent=self)
-
-        self._show_all_checkbox = QtWidgets.QCheckBox("Show All Columns", self)
-        self._show_all_checkbox.setChecked(self.display_cfg.show_all)
+        self._aliases_section = Section("Column aliases", parent=self)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -120,13 +116,12 @@ class CatalogueWidget(SettingsWidget):
         self.layout().addWidget(self._browser)
 
         sub_layout = QtWidgets.QVBoxLayout()
-        sub_layout.addWidget(self._show_all_checkbox)
 
-        self._display_section.set_layout(sub_layout)
-        self.layout().addWidget(self._display_section)
+        self._aliases_section.set_layout(sub_layout)
+        self.layout().addWidget(self._aliases_section)
 
     def get_catalogue(self):
-        return read_cat(self._browser.path, translate=self.read_cfg.translate)
+        return read_cat(self._browser.path, translate=self.cfg.translate)
 
     def validate(self) -> bool:
         if not self._browser.exists(verbose=True):
@@ -140,9 +135,11 @@ class CatalogueWidget(SettingsWidget):
         return True
 
     def accept(self):
-        self.read_cfg.filename = self._browser.path if self.cat else None
-        self.display_cfg.show_all = self._show_all_checkbox.isChecked()
-        self.catalogue_selected.emit(self.cat)
+        cat_filename = self._browser.path if self.cat else None
+
+        if self.cfg.filename != cat_filename:
+            self.cfg.filename = cat_filename
+            self.catalogue_selected.emit(self.cat)
 
 
 class DataSourceWidget(SettingsWidget):
@@ -195,7 +192,7 @@ class Settings(QtWidgets.QDialog):
 
     def create_tabs(self):
         self._tabs = {'Appearance': AppearanceWidget(self.cfg.appearance, self),
-                      'Catalogue': CatalogueWidget(self.cfg.catalogue, self.cfg.object_info, self),
+                      'Catalogue': CatalogueWidget(self.cfg.catalogue, self),
                       'Data Source': DataSourceWidget(self.cfg.data, self)}
         self._tabs['Appearance'].appearance_changed.connect(self.appearance_changed.emit)
         self._tabs['Catalogue'].catalogue_selected.connect(self.catalogue_selected.emit)
@@ -210,11 +207,11 @@ class Settings(QtWidgets.QDialog):
         self.create_tabs()
         self.add_tabs()
 
-        self._info_label = QtWidgets.QLabel(f"Advanced Settings: {user_config_dir('specvizitor')}", parent=self)
+        self._info_label = QtWidgets.QLabel(f"Advanced settings: {user_config_dir('specvizitor')}", self)
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, parent=self)
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)

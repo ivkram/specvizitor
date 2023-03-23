@@ -4,38 +4,38 @@ from qtpy import QtWidgets, QtCore
 
 import logging
 
-from ..config import config
 from ..io.inspection_data import InspectionData
 from ..utils.table_tools import column_not_found_message
+
 from .AbstractWidget import AbstractWidget
+from .TableColumns import TableColumns
 
 
 logger = logging.getLogger(__name__)
 
 
 class ObjectInfo(AbstractWidget):
-    def __init__(self, cfg: config.ObjectInfo, parent=None):
-        self.cfg = cfg
+    visible_columns_updated = QtCore.Signal(list)
 
-        self._search_lineedit: QtWidgets.QLineEdit | None = None
+    def __init__(self, visible_columns: list[str] | None = None, parent=None):
+        self.all_columns: list[str] | None = None
+        self.visible_columns = visible_columns
+        self.auto_reset_visible_columns = False
+
         self._table: QtWidgets.QTableWidget | None = None
-        self._table_items: list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]] | None = None
+        self._table_items: list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]] = []
+
+        self._search_label: QtWidgets.QLabel | None = None
+        self._search_lineedit: QtWidgets.QLineEdit | None = None
+        self._display_options: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
-    def create_table_items(self, cat: Table | None = None):
-        if self.cfg.show_all and cat is not None:
-            items = cat.colnames
-        else:
-            items = self.cfg.items
-
-        if items is None:
-            return []
-
+    def create_table_items(self):
         table_items = []
-        for cname in items:
+        for cname in self.all_columns:
             cname_item = QtWidgets.QTableWidgetItem(cname)
             value_item = QtWidgets.QTableWidgetItem('')
 
@@ -49,14 +49,18 @@ class ObjectInfo(AbstractWidget):
             self._table.setItem(i, 0, row[0])
             self._table.setItem(i, 1, row[1])
 
-    @QtCore.Slot(object)
-    def update_table_items(self, cat: Table | None = None):
-        self.create_table_items(cat=cat)
+    @QtCore.Slot(Table)
+    def update_table_items(self, cat: Table):
+        self.all_columns = cat.colnames
+        self.create_table_items()
         self.set_table_items()
 
-    def init_ui(self):
-        self._search_lineedit = QtWidgets.QLineEdit(self)
+        if self.auto_reset_visible_columns or self.visible_columns is None:
+            self.update_visible_columns(self.all_columns)
+        else:
+            self.update_view()
 
+    def init_ui(self):
         self._table = QtWidgets.QTableWidget(self)
         self._table.setColumnCount(2)
         self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -66,26 +70,49 @@ class ObjectInfo(AbstractWidget):
         # self._table.setHorizontalHeaderLabels(('key', 'value'))
         self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
-        self.update_table_items()
+        self._search_label = QtWidgets.QLabel("Search:", self)
+        self._search_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._search_lineedit = QtWidgets.QLineEdit(self)
+        self._search_lineedit.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Maximum)
+        self._search_lineedit.setMinimumWidth(50)
+        self._display_options = QtWidgets.QPushButton("Columns...", self)
+        self._display_options.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
-        self._search_lineedit.textChanged[str].connect(self.search)
+        self._search_lineedit.textChanged[str].connect(self.update_view)
+        self._display_options.pressed.connect(self._display_options_action)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
 
     def populate(self):
         self.layout().addWidget(self._table)
-        self.layout().addWidget(self._search_lineedit)
 
-    def search(self, keyword):
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.addWidget(self._search_label)
+        sub_layout.addWidget(self._search_lineedit)
+        sub_layout.addWidget(self._display_options)
+
+        self.layout().addLayout(sub_layout)
+
+    @QtCore.Slot()
+    def update_view(self):
         for i, row in enumerate(self._table_items):
-            if keyword in row[0].text():
+            cname = row[0].text()
+            if cname in self.visible_columns and self._search_lineedit.text() in cname:
                 self._table.showRow(i)
             else:
                 self._table.hideRow(i)
 
+    @QtCore.Slot(list)
+    def update_visible_columns(self, visible_columns: list[str]):
+        self.visible_columns = visible_columns
+        self.visible_columns_updated.emit(self.visible_columns)
+
+        self.update_view()
+
     @QtCore.Slot()
     def load_project(self):
+        self.auto_reset_visible_columns = True
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, Table)
@@ -109,3 +136,9 @@ class ObjectInfo(AbstractWidget):
         #     ra, dec = c.to_string('hmsdms').split(' ')
         #     self.ra_label.setText("RA: {}".format(ra))
         #     self.dec_label.setText("Dec: {}".format(dec))
+
+    def _display_options_action(self):
+        dialog = TableColumns(self.all_columns, self.visible_columns, parent=self)
+        dialog.visible_columns_updated.connect(self.update_visible_columns)
+        if dialog.exec():
+            pass

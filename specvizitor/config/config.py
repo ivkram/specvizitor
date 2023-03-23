@@ -26,12 +26,6 @@ class Appearance:
 
 
 @dataclass
-class ObjectInfo:
-    show_all: bool = True
-    items: list[str] | None = field(default_factory=lambda: ['ra', 'dec'])
-
-
-@dataclass
 class ReviewForm:
     default_checkboxes: dict[str, str] | None = None
 
@@ -41,6 +35,5 @@ class Config(Params):
     appearance: Appearance = field(default_factory=lambda: Appearance())
     catalogue: Catalogue = field(default_factory=lambda: Catalogue())
     data: Data = field(default_factory=lambda: Data())
-    object_info: ObjectInfo = field(default_factory=lambda: ObjectInfo())
     review_form: ReviewForm = field(default_factory=lambda: ReviewForm())
     plugins: list[str] = field(default_factory=list)
