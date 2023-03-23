@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerElement(LazyViewerElement, abc.ABC):
-    data_loaded = QtCore.Signal(object)
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal()
@@ -98,6 +97,10 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             self.setEnabled(False)
 
     def _load_data(self, j: int, cat: Table, notes: InspectionData, data_cfg: config.Data):
+        if self.cfg.filename_keyword is None:
+            logger.error(f'Filename keyword not specified (object ID: {self.title})')
+            return
+
         self.filename = get_filename(data_cfg.dir, self.cfg.filename_keyword, notes.get_id(j))
 
         if self.filename is None:
@@ -111,12 +114,17 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         if self.data is None:
             return
 
+        if not self.validate_dtype():
+            self.data, self.meta = None, None
+            return
+
+    def validate_dtype(self):
         if self.allowed_data_types is not None:
             if not any(isinstance(self.data, t) for t in self.allowed_data_types):
                 logger.error(f'Invalid input data type: {type(self.data)} (widget: {self.title}). '
                              'Try to use a different data loader')
-                self.data, self.meta = None, None
-                return
+                return False
+        return True
 
     def setEnabled(self, a0: bool = True):
         super().setEnabled(a0)

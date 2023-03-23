@@ -10,23 +10,33 @@ images:
       extver: "F444W"
     container: PlotItem
 
+plots:
+  Redshift PDF:
+    position: right
+    relative_to: Image Cutout
+    filename_keyword: "full.fits"
+    smoothing_slider:
+      visible: False
+    x_axis:
+      name: zgrid
+    y_axis:
+      name: pdf
+      scale: log
+      limits:
+        - -3
+        - null
+
 spectra:
   Spectrum 1D:
     filename_keyword: "1D.fits"
     redshift_slider:
-      catalogue_name: 'redshift'
+      catalogue_name: "redshift"
       show_text_editor: True
       min_value: 0
       max_value: 10
       step: 0.000001
       default_value: 5  # overwritten if the input catalogue contains a column with redshifts
     tracked_lines:
-      OIII 1:
-        position: right
-        relative_to: Image Cutout
-      OIII 2:
-        position: right
-        relative_to: Spectrum 1D [OIII 1]
       Ha:
         position: right
-        relative_to: Spectrum 1D [OIII 2]
+        relative_to: Redshift PDF

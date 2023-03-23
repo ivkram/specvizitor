@@ -13,6 +13,7 @@ from .AbstractWidget import AbstractWidget
 from .LazyViewerElement import LazyViewerElement
 from .ViewerElement import ViewerElement
 from .Image2D import Image2D
+from .Plot1D import Plot1D
 from .Spec1D import Spec1D
 
 
@@ -71,11 +72,17 @@ class DataViewer(AbstractWidget):
 
         widgets = {}
 
+        # TODO: create factory
         # create widgets for images (e.g. image cutouts, 2D spectra)
         if self.dock_cfg.images is not None:
             for name, image_cfg in self.dock_cfg.images.items():
                 widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self.appearance,
                                         parent=self)
+
+        # create widgets for plots (does not include any spectra!)
+        if self.dock_cfg.plots is not None:
+            for name, plot_cfg in self.dock_cfg.plots.items():
+                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self.appearance, parent=self)
 
         # create widgets for 1D spectra
         if self.dock_cfg.spectra is not None:

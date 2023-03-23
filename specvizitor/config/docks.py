@@ -32,6 +32,11 @@ class LazyViewerElement:
 
 
 @dataclass
+class SpectrumRegion(LazyViewerElement):
+    window_size: str = '200 Angstrom'
+
+
+@dataclass
 class ViewerElement(LazyViewerElement):
     filename_keyword: str | None = None
     data_loader: str = 'auto'
@@ -48,12 +53,21 @@ class Image(ViewerElement):
 
 
 @dataclass
-class SpectrumRegion(LazyViewerElement):
-    window_size: str = '200 Angstrom'
+class Axis:
+    name: str | None = None
+    unit: str | None = None
+    scale: str = 'linear'
+    limits: list[float | None] = field(default_factory=lambda: [None, None])
 
 
 @dataclass
-class Spectrum(ViewerElement):
+class Plot1D(ViewerElement):
+    x_axis: Axis = field(default_factory=lambda: Axis())
+    y_axis: Axis = field(default_factory=lambda: Axis())
+
+
+@dataclass
+class Spectrum(Plot1D):
     data_loader: str = 'specutils'
     redshift_slider: Slider = field(default_factory=lambda: Slider(max_value=10, step=1e-4))
     tracked_lines: dict[str, SpectrumRegion] | None = None
@@ -62,4 +76,5 @@ class Spectrum(ViewerElement):
 @dataclass
 class Docks(Params):
     images: dict[str, Image] | None
+    plots: dict[str, Plot1D] | None
     spectra: dict[str, Spectrum] | None
