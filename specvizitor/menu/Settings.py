@@ -90,7 +90,7 @@ class AppearanceWidget(SettingsWidget):
 
 
 class CatalogueWidget(SettingsWidget):
-    catalogue_selected = QtCore.Signal(object)
+    catalogue_changed = QtCore.Signal(object)
 
     def __init__(self, cfg: config.Catalogue, parent=None):
         self.cfg = cfg
@@ -139,7 +139,7 @@ class CatalogueWidget(SettingsWidget):
 
         if self.cfg.filename != cat_filename:
             self.cfg.filename = cat_filename
-            self.catalogue_selected.emit(self.cat)
+            self.catalogue_changed.emit(self.cat)
 
 
 class DataSourceWidget(SettingsWidget):
@@ -172,7 +172,7 @@ class DataSourceWidget(SettingsWidget):
 
 class Settings(QtWidgets.QDialog):
     appearance_changed = QtCore.Signal(bool)
-    catalogue_selected = QtCore.Signal(object)
+    catalogue_changed = QtCore.Signal(object)
 
     def __init__(self, cfg: config.Config, parent=None):
         self.cfg = cfg
@@ -195,7 +195,7 @@ class Settings(QtWidgets.QDialog):
                       'Catalogue': CatalogueWidget(self.cfg.catalogue, self),
                       'Data Source': DataSourceWidget(self.cfg.data, self)}
         self._tabs['Appearance'].appearance_changed.connect(self.appearance_changed.emit)
-        self._tabs['Catalogue'].catalogue_selected.connect(self.catalogue_selected.emit)
+        self._tabs['Catalogue'].catalogue_changed.connect(self.catalogue_changed.emit)
 
     def add_tabs(self):
         for name, t in self._tabs.items():

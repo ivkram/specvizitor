@@ -98,7 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # read cache and try to load the last active project
         if self.rd.cache.last_inspection_file:
-            self.open_file(self.rd.cache.last_inspection_file)
+            self.open_file(self.rd.cache.last_inspection_file, self.rd.cache.last_object_index)
 
     def init_ui(self):
         # create a central widget
@@ -288,10 +288,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def _new_file_action(self):
         """ Create a new inspection file via the NewFile dialog.
         """
-        dialog = NewFile(self.rd, parent=self)
+        dialog = NewFile(cfg=self.rd.config, parent=self)
+        dialog.catalogue_changed.connect(self.update_catalogue)
+        dialog.output_path_selected.connect(self.update_output_path)
         if dialog.exec():
-            self.rd.cache.last_object_index = 0
-            self.catalogue_changed.emit(self.rd.cat)
+            self.rd.create()
             self.load_project()
 
     def _open_file_action(self):
@@ -299,23 +300,23 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         path = qtpy.compat.getopenfilename(self, caption='Open Inspection File', filters='CSV Files (*.csv)')[0]
         if path:
-            self.rd.cache.last_object_index = 0
             self.open_file(path)
 
-    def open_file(self, path: str):
+    def open_file(self, path: str, cached_index: int | None = None):
         """ Load inspection data from an existing inspection file.
         @param path: path to the inspection file
+        @param cached_index:
         """
         if pathlib.Path(path).exists():
             self.rd.output_path = pathlib.Path(path)
             self.rd.read()
             if self.rd.cat is None:
                 self.update_catalogue()
-            self.load_project()
+            self.load_project(cached_index)
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
 
-    def load_project(self):
+    def load_project(self, j: int | None = None):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
         for w in (self._save, self._save_as, self._export, self._reset_view, self._reset_dock_layout):
@@ -323,13 +324,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.project_loaded.emit(self.rd.notes)
 
-        # cache the inspection file name
-        self.rd.cache.last_inspection_file = str(self.rd.output_path)
-        self.rd.cache.save()
-
-        # try to display the object with an index stored in cache
-        j = self.rd.cache.last_object_index
-        if j and 0 <= j < self.rd.notes.n_objects:
+        if j is not None and 0 <= j < self.rd.notes.n_objects:
             self.load_object(int(j))
         else:
             self.load_object(0)
@@ -386,11 +381,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            basedir=str(self.rd.output_path),
                                            filters='CSV Files (*.csv)')[0]
         if path:
-            self.rd.output_path = pathlib.Path(path).resolve()
-            self.rd.notes.write(self.rd.output_path)
-            self.rd.cache.last_inspection_file = str(self.rd.output_path)
-            self.rd.cache.save()
-            self._update_window_title()
+            self.update_output_path(pathlib.Path(path).resolve())
 
     def _export_action(self):
         path = qtpy.compat.getsavefilename(self, caption='Export To FITS',
@@ -458,7 +449,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _settings_action(self):
         dialog = Settings(self.rd.config, parent=self)
         dialog.appearance_changed.connect(self.update_appearance)
-        dialog.catalogue_selected.connect(self.update_catalogue)
+        dialog.catalogue_changed.connect(self.update_catalogue)
         if dialog.exec():
             self.reload()
 
@@ -475,6 +466,16 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.rd.cat = cat
         self.catalogue_changed.emit(self.rd.cat)
+
+    @Slot(pathlib.Path)
+    def update_output_path(self, path: pathlib.Path):
+        self.rd.output_path = path
+        self.rd.cache.last_inspection_file = str(self.rd.output_path)
+        self.rd.cache.save()
+
+        if self.rd.notes:
+            self.rd.notes.write(self.rd.output_path)
+            self._update_window_title()
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
