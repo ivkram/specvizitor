@@ -80,7 +80,7 @@ class Plot1D(ViewerElement):
 
 @dataclass
 class SpectrumRegion(LazyViewerElement):
-    window_size: str = '200 Angstrom'
+    window_size: str = '300 Angstrom'
 
 
 @dataclass
@@ -92,6 +92,6 @@ class Spectrum(Plot1D):
 
 @dataclass
 class Docks(Params):
-    spectra: dict[str, Spectrum] | None
     images: dict[str, Image] | None
     plots: dict[str, Plot1D] | None
+    spectra: dict[str, Spectrum] | None
