@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DefaultAxisLimits:
     values: tuple[float, float]
-    editable: tuple[bool, bool] = (False, False)
+    editable: tuple[bool, bool] = (True, True)
 
     @classmethod
     def init_from_array(cls, data: np.ndarray):
@@ -249,6 +249,9 @@ class Plot1D(ViewerElement):
     def redraw(self):
         self.plot_item.plot_all()
         self.plot_refreshed.emit()
+
+        for s in self.sliders:
+            s.update_from_slider()
 
     def reset_view(self):
         self.plot_item.reset()
