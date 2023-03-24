@@ -103,10 +103,11 @@ class Plugin(PluginCore):
             t.field('flat')
         except KeyError:
             logger.error('Failed to convert the flux unit to physical: `flat` column not found')
+            return
 
         # check that the original units are correct
         plot_data = spec_1d.plot_item.data
-        if not plot_data.y.unit.is_equivalent(u.Unit('ct / s')):
+        if not plot_data.y.unit or not plot_data.y.unit.is_equivalent(u.Unit('ct / s')):
             return
 
         # convert fluxes to physical units
