@@ -120,15 +120,9 @@ class Plugin(PluginCore):
         plot_data.y.scale(scale)
 
         # update the y-axis limits based on uncertainties
-        if plot_data.y.unc is not None:
-            flux = plot_data.y.value.copy()
-            unc_cutoff = 0.25
-            unc = plot_data.y.unc.copy()
-            unc[np.isnan(unc)] = 1E10  # NaNs have to be replaced before applying a gaussian filter
-            flux[(gaussian_filter1d(unc, 3) > unc_cutoff)] = np.nan
-            plot_data.y.set_value(flux)
-        else:
-            logger.warning('Failed to shrink the y-axis limits: flux uncertainty not found')
+        unc_cutoff = spec_1d.cfg.y_axis.unc_cutoff
+        if unc_cutoff is not None:
+            plot_data.y.apply_unc_cutoff(unc_cutoff)
 
         # update labels and redraw the plot
         spec_1d.update_labels()

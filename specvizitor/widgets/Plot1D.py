@@ -67,24 +67,17 @@ class AxisData:
             label += f' [{self.unit}]'.replace('Angstrom', 'Å')
         return label
 
-    def apply_settings(self, cfg: docks.Axis):
-        if cfg.unit:
-            try:
-                new_unit = u.Unit(cfg.unit)
-            except ValueError:
-                logger.error(f'Invalid unit: {cfg.unit}')
-            else:
-                self.convert_units(new_unit)
-        if cfg.scale == 'log':
-            self.apply_log_scale()
-        self.default_lims.set(cfg.limits.min, cfg.limits.max)
-
     def scale(self, scaling_factor: float):
         self.set_value(self.value * scaling_factor)
         if self.unc is not None:
             self.unc = self.unc * scaling_factor
 
-    def convert_units(self, new_unit: u.Unit):
+    def convert_units(self, new_unit: u.Unit | str):
+        try:
+            new_unit = u.Unit(new_unit)
+        except ValueError:
+            logger.error(f'Invalid unit: {new_unit}')
+
         if self.unit is None:
             logger.error(f'Unit conversion failed: axis unit not found (axis name: {self.name})')
             return
@@ -99,7 +92,7 @@ class AxisData:
         self.unit = new_unit
         self.scale(q.value)
 
-    def apply_log_scale(self):
+    def _apply_log_scale(self):
         if not self.log_allowed:
             logger.error(f'Axis `{self.name}` cannot be converted to logarithmic scale')
             return
@@ -115,6 +108,41 @@ class AxisData:
 
         self.set_value(new_value)
         self.unc = None
+
+    def apply_scale(self, scale: str):
+        supported_scales = ('linear', 'log')
+        if scale not in supported_scales:
+            logger.error(f'Unknown axis scale: {scale}. Supported scales: {supported_scales}')
+        elif scale == 'log':
+            self._apply_log_scale()
+
+    def apply_unc_cutoff(self, cutoff: float):
+        if self.unc is None:
+            logger.error(f'Failed to apply uncertainty cutoff: uncertainties not found (axis name: {self.name})')
+            return
+
+        flux = self.value.copy()
+        unc = self.unc.copy()
+
+        unc[np.isnan(unc)] = 1E10  # NaNs have to be replaced before applying a gaussian filter
+        flux[(gaussian_filter1d(unc, 3) > cutoff)] = np.nan
+
+        self.set_value(flux)
+
+    def apply_settings(self, cfg: docks.Axis):
+        # apply unit transformation
+        if cfg.unit is not None:
+            self.convert_units(cfg.unit)
+
+        # scale axis
+        self.apply_scale(cfg.scale)
+
+        # override default limits
+        self.default_lims.set(cfg.limits.min, cfg.limits.max)
+
+        # apply uncertainty cutoff
+        if cfg.unc_cutoff is not None:
+            self.apply_unc_cutoff(cfg.unc_cutoff)
 
 
 @dataclass
