@@ -42,9 +42,9 @@ class AxisData:
     log_allowed: bool = True
 
     def __post_init__(self):
-        self.init_default_lims()
+        self.reset_default_lims()
 
-    def init_default_lims(self):
+    def reset_default_lims(self):
         self.default_lims = DefaultLimits(self.get_min_max(self.value))
 
     @staticmethod
@@ -63,7 +63,7 @@ class AxisData:
             self.convert_units(cfg.unit)
         if cfg.scale == 'log':
             self.apply_log_scale()
-        self.default_lims.set(cfg.limits[0], cfg.limits[1])
+        self.default_lims.set(cfg.limits.min, cfg.limits.max)
 
     def convert_units(self, new_unit: str):
         new_unit = u.Unit(new_unit)
@@ -81,7 +81,7 @@ class AxisData:
         if self.unc is not None:
             self.unc = self.unc * q
 
-        self.init_default_lims()
+        self.reset_default_lims()
 
     def apply_log_scale(self):
         if not self.log_allowed:
@@ -90,7 +90,7 @@ class AxisData:
 
         self.name = f'log {self.name}'
         if self.unit:
-            self.name += f' / {self.unit}'
+            self.name += f' / ({self.unit})'
             self.unit = None
 
         with np.errstate(invalid='ignore', divide='ignore'):
@@ -98,7 +98,7 @@ class AxisData:
         self.value[self.value == -np.inf] = 0
 
         self.unc = None
-        self.init_default_lims()
+        self.reset_default_lims()
 
 
 @dataclass
@@ -123,13 +123,13 @@ class Plot1DItem(pg.PlotItem):
     def set_plot_data(self, data: PlotData):
         self.data = data
 
-    def configure_axes(self, x_cfg: docks.Axis, y_cfg: docks.Axis):
+    def configure_plot_data(self, x_cfg: docks.Axis, y_cfg: docks.Axis):
         self.data.x.configure(x_cfg)
         self.data.y.configure(y_cfg)
 
-    def update_labels(self):
-        self.setLabel('bottom', self.data.x.label, **self.appearance.label_style)
-        self.setLabel('right', self.data.y.label, **self.appearance.label_style)
+    def update_labels(self, x_label: docks.Label, y_label: docks.Label):
+        self.setLabel('bottom' if x_label.position is None else x_label.position, self.data.x.label)
+        self.setLabel('left' if y_label.position is None else y_label.position, self.data.y.label)
 
     def add_items(self):
         self._y_plot = self.plot(pen='k' if self.appearance.theme == 'light' else 'w')
@@ -141,7 +141,6 @@ class Plot1DItem(pg.PlotItem):
             self._y_unc_plot.setData(self.data.x.value, self.data.y.unc)
 
     def display(self):
-        self.update_labels()
         self.add_items()
         self.plot_all()
 
@@ -164,6 +163,7 @@ class Plot1DItem(pg.PlotItem):
 
 class Plot1D(ViewerElement):
     plot_data_loaded = QtCore.Signal(object)
+    labels_updated = QtCore.Signal(docks.Label, docks.Label)
 
     def __init__(self, cfg: docks.Plot1D, **kwargs):
         self.cfg = cfg
@@ -215,8 +215,12 @@ class Plot1D(ViewerElement):
             return
 
         self.plot_1d.set_plot_data(plot_data)
-        self.plot_1d.configure_axes(self.cfg.x_axis, self.cfg.y_axis)
+        self.plot_1d.configure_plot_data(self.cfg.x_axis, self.cfg.y_axis)
         self.plot_data_loaded.emit(plot_data)
+
+        label_cfg = self.cfg.x_axis.label, self.cfg.y_axis.label
+        self.plot_1d.update_labels(*label_cfg)
+        self.labels_updated.emit(*label_cfg)
 
     def add_content(self):
         self.plot_1d.display()

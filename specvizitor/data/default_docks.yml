@@ -1,6 +1,9 @@
 spectra:
   Spectrum 1D:
     filename_keyword: "1D.fits"
+    y_axis:
+      label:
+        position: right
     redshift_slider:
       catalogue_name: "redshift"
       show_text_editor: True
@@ -42,5 +45,4 @@ plots:
       name: "pdf"
       scale: log
       limits:
-        - -3
-        - null
+        min: -3

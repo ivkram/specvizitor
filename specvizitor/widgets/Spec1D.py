@@ -158,6 +158,7 @@ class Spec1D(Plot1D):
         # connect region items and region widgets between each other
         for i, (w, lr) in enumerate(zip(self.lazy_widgets, self.region_items)):
             self.plot_data_loaded.connect(w.spec_1d.set_plot_data)
+            self.labels_updated.connect(w.spec_1d.update_labels)
             self.content_added.connect(w.spec_1d.display)
             self.view_reset.connect(w.spec_1d.reset)
             self.content_cleared.connect(w.spec_1d.clear)

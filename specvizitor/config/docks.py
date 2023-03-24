@@ -53,11 +53,23 @@ class Image(ViewerElement):
 
 
 @dataclass
+class Limits:
+    min: float | None = None
+    max: float | None = None
+
+
+@dataclass
+class Label:
+    position: str | None = None
+
+
+@dataclass
 class Axis:
     name: str | None = None
     unit: str | None = None
     scale: str = 'linear'
-    limits: list[float | None] = field(default_factory=lambda: [None, None])
+    limits: Limits = field(default_factory=lambda: Limits())
+    label: Label = field(default_factory=lambda: Label())
 
 
 @dataclass

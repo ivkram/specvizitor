@@ -22,7 +22,6 @@ class Appearance:
     antialiasing: bool = False
     viewer_spacing: int = 5
     viewer_margins: int = 5
-    label_style: dict[str, str] = field(default_factory=lambda: {})
 
 
 @dataclass
