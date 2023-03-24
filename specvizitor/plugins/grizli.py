@@ -120,9 +120,7 @@ class Plugin(PluginCore):
         plot_data.y.scale(scale)
 
         # update the y-axis limits based on uncertainties
-        unc_cutoff = spec_1d.cfg.y_axis.unc_cutoff
-        if unc_cutoff is not None:
-            plot_data.y.apply_unc_cutoff(unc_cutoff)
+        plot_data.y.apply_unc_cutoff(0.25)
 
         # update labels and redraw the plot
         spec_1d.update_labels()

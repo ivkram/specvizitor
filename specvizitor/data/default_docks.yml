@@ -38,7 +38,6 @@ spectra:
       filename_keyword: "1D.fits"
       loader: 'specutils'
     y_axis:
-      unc_cutoff: 0.25
       label:
         position: right
     redshift_slider:
