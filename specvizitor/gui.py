@@ -330,17 +330,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.project_loaded.emit(self.rd.notes)
 
-        if j is not None and 0 <= j < self.rd.notes.n_objects:
-            self.load_object(int(j))
-        else:
-            self.load_object(0)
+        if j is None or (j < 0 or j >= self.rd.notes.n_objects):
+            j = 0
+
+        self.load_object(j, request_data=False)
 
     @Slot(int)
-    def load_object(self, j: int):
+    def load_object(self, j: int, request_data=True):
         """ Load a new object to the central widget.
         @param j: the index of the object to display
+        @param request_data:
         """
-        if self.rd.j is not None:
+        if request_data:
             self.data_requested.emit()
 
         self.rd.j = j
