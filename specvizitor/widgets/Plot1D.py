@@ -64,7 +64,7 @@ class AxisData:
         label = self.name
         if self.unit is not None:
             # TODO: convert to inline unicode after next astropy release
-            label += f' [{self.unit}]'
+            label += f' [{self.unit}]'.replace('Angstrom', 'Å')
         return label
 
     def apply_settings(self, cfg: docks.Axis):
