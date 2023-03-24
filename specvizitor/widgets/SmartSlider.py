@@ -69,16 +69,16 @@ class SmartSliderWithEditor(AbstractWidget):
     value_changed = QtCore.Signal(float)
 
     def __init__(self, parameter: str = 'x', full_name: str | None = None, action: str | None = None,
-                 visible: bool = True, catalogue_name: str | None = None, show_text_editor: bool = False,
-                 text_editor_precision: int = 6, parent=None, **kwargs):
+                 visible: bool = True, column_name: str | None = None, show_text_editor: bool = False,
+                 num_decimal_places: int = 6, parent=None, **kwargs):
 
-        self.parameter = parameter if catalogue_name is None else catalogue_name
+        self.parameter = parameter if column_name is None else column_name
         self.full_name = parameter if full_name is None else full_name
         self.action = f"change {self.full_name}" if action is None else action
 
-        self.cat_name = catalogue_name
-        self.text_editor = show_text_editor
-        self.precision = text_editor_precision
+        self.column_name = column_name
+        self.show_text_editor = show_text_editor
+        self.num_decimal_places = num_decimal_places
 
         self._slider_kwargs = kwargs
 
@@ -93,7 +93,7 @@ class SmartSliderWithEditor(AbstractWidget):
 
     def init_ui(self):
         # create a slider
-        if self.text_editor:
+        if self.show_text_editor:
             orientation = QtCore.Qt.Orientation.Horizontal
         else:
             orientation = QtCore.Qt.Orientation.Vertical
@@ -108,8 +108,8 @@ class SmartSliderWithEditor(AbstractWidget):
         self._editor = QtWidgets.QLineEdit(self)
         self._editor.setMaximumWidth(120)
 
-        self._label.setHidden(not self.text_editor)
-        self._editor.setHidden(not self.text_editor)
+        self._label.setHidden(not self.show_text_editor)
+        self._editor.setHidden(not self.show_text_editor)
 
         self._slider.value_changed.connect(self.update_from_slider)
         self._editor.returnPressed.connect(self._update_from_editor)
@@ -128,7 +128,8 @@ class SmartSliderWithEditor(AbstractWidget):
         return self._slider.value
 
     def _update_editor_text(self):
-        self._editor.setText('{value:.{precision}f}'.format(value=self.value, precision=self.precision))
+        self._editor.setText('{value:.{num_decimal_places}f}'.format(value=self.value,
+                                                                     num_decimal_places=self.num_decimal_places))
 
     def update_from_slider(self):
         self._update_editor_text()
@@ -147,9 +148,9 @@ class SmartSliderWithEditor(AbstractWidget):
 
     def update_default_value(self, cat: Table, object_id):
         try:
-            self._slider.default_value = cat.loc[object_id][self.cat_name]
+            self._slider.default_value = cat.loc[object_id][self.column_name]
         except KeyError:
-            logger.warning(column_not_found_message(self.cat_name, cat.meta.get('aliases')))
+            logger.warning(column_not_found_message(self.column_name, cat.meta.get('aliases')))
             self._slider.default_value = self._default_value_backup
 
     def reset(self):

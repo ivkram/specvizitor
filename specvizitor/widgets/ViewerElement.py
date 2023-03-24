@@ -53,7 +53,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
 
         # add vertical sliders
         for s in self.sliders:
-            if not s.text_editor:
+            if not s.show_text_editor:
                 sub_layout.addWidget(s)
         sub_layout.addWidget(self.graphics_view)  # add the central widget
         self.layout().addLayout(sub_layout, 1, 1, 1, 1)
@@ -62,7 +62,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
 
         # add horizontal sliders
         for s in self.sliders:
-            if s.text_editor:
+            if s.show_text_editor:
                 sub_layout.addWidget(s)
         self.layout().addLayout(sub_layout, 2, 1, 1, 1)
 
@@ -78,7 +78,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
 
         # load catalogue values to the sliders
         for s in self.sliders:
-            if s.cat_name is not None:
+            if s.column_name is not None:
                 s.update_default_value(cat, notes.get_id(j))
 
         # load data to the widget

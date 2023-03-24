@@ -5,12 +5,12 @@ spectra:
       label:
         position: right
     redshift_slider:
-      catalogue_name: "redshift"
-      show_text_editor: True
       min_value: 0
       max_value: 12
       step: 0.000001
-      default_value: 6  # overwritten if the input catalogue contains a column with redshifts
+      default_value: 6
+      column_name: "redshift"
+      show_text_editor: True
     tracked_lines:
       Ha:
         position: right

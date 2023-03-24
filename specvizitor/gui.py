@@ -317,8 +317,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if path.exists():
             self.update_output_path(path)
             self.rd.read()
-            if self.rd.cat is None:
-                self.update_catalogue(create_cat(self.rd.notes.ids))
+            self.update_catalogue(self.rd.cat)  # in case the catalogue hasn't been initialized before
             self.load_project(cached_index)
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
@@ -473,7 +472,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @Slot(object)
     def update_catalogue(self, cat: Table | None):
-        self.rd.cat = cat
+        if cat is None and self.rd.notes is not None:
+            self.rd.cat = create_cat(self.rd.notes.ids)
+        else:
+            self.rd.cat = cat
         self.catalogue_changed.emit(self.rd.cat)
 
     @Slot(pathlib.Path)
