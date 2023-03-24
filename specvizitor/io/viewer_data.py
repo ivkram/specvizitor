@@ -63,6 +63,8 @@ class GenericFITSLoader(BaseLoader):
         else:
             data = hdu.data
 
+        hdul.close()
+
         return data, meta
 
 
@@ -79,7 +81,10 @@ class PILLoader(BaseLoader):
 
         image = ImageOps.flip(image)
 
-        return np.array(image), image.info
+        data, meta = np.array(image), image.info
+        image.close()
+
+        return data, meta
 
 
 @dataclass
@@ -89,7 +94,7 @@ class SpecutilsLoader(BaseLoader):
     def load(self, filename: pathlib.Path, **kwargs):
         try:
             with warnings.catch_warnings():
-                # warnings.simplefilter('ignore', AstropyWarning)
+                warnings.simplefilter('ignore', AstropyWarning)
                 spec: Spectrum1D = Spectrum1D.read(filename, **kwargs)
         except Exception as e:
             self.raise_error(e)

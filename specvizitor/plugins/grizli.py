@@ -1,8 +1,8 @@
 from astropy.table import Table
-from astropy.visualization import ZScaleInterval
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
+from scipy.ndimage import gaussian_filter1d
 from qtpy import QtGui
 
 from specvizitor.plugins.plugin_core import PluginCore
@@ -86,25 +86,32 @@ class Plugin(PluginCore):
     @staticmethod
     def convert_spec1d_flux_units(spec_1d: Spec1D):
         if not isinstance(spec_1d.data, Table):
-            return
+            t = Table.read(spec_1d.filename)
+        else:
+            t = spec_1d.data
 
+        # check that the original units are correct
         plot_data = spec_1d.plot_item.data
-        if not plot_data.y.unit:
+        if not plot_data.y.unit.is_equivalent(u.Unit('ct / s')):
             return
 
-        flat = spec_1d.data['flat'].to('1e19 AA cm2 ct / erg')
+        # convert fluxes to physical units
+        flat = t['flat'].to('1e19 AA cm2 ct / erg')
         plot_data.y.unit = plot_data.y.unit / flat.unit
 
         with np.errstate(divide='ignore'):
             scale = 1 / flat.value
-        scale[scale == np.inf] = 0
+        scale[scale == np.inf] = np.nan
         plot_data.y.scale(scale)
 
-        limits = ZScaleInterval().get_limits(plot_data.y.value)
+        # update the y-axis limits based on uncertainties
         flux = plot_data.y.value.copy()
-        additional_mask = (spec_1d.data['npix'].value < 1E5)
-        flux[((flux < limits[0]) | (flux > limits[1])) & additional_mask] = 0
+        unc_cutoff = 0.25
+        unc = plot_data.y.unc.copy()
+        unc[np.isnan(unc)] = 1E10  # NaNs have to be replaced before applying a gaussian filter
+        flux[(gaussian_filter1d(unc, 3) > unc_cutoff)] = np.nan
         plot_data.y.set_value(flux)
 
+        # update labels and redraw the plot
         spec_1d.update_labels()
         spec_1d.redraw()

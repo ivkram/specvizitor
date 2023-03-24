@@ -26,8 +26,11 @@ class DefaultAxisLimits:
         return cls(cls.get_min_max(data))
 
     @staticmethod
-    def get_min_max(data: np.ndarray) -> tuple[float, float]:
-        return np.nanmin(data), np.nanmax(data)
+    def get_min_max(data: np.ndarray) -> tuple[float, float] | None:
+        if np.sum(~np.isnan(data)) == 0:
+            return 0, 1
+        else:
+            return np.nanmin(data), np.nanmax(data)
 
     def set(self, min_value: float | None, max_value: float | None):
         self.values = (min_value if min_value else self.values[0],
