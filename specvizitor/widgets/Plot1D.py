@@ -86,7 +86,7 @@ class AxisData:
 
     def convert_units(self, new_unit: u.Unit):
         if self.unit is None:
-            logger.error(f'Axis unit not found; unit conversion failed (axis: {self.name})')
+            logger.error(f'Unit conversion failed: axis unit not found (axis: {self.name})')
 
         q = u.Quantity(1 * self.unit)
         try:
