@@ -56,11 +56,12 @@ class GenericFITSLoader(BaseLoader):
             self.raise_error(f'Extension `{index}` not found (filename: {filename.name})')
             return None, None
 
-        data = hdu.data
         meta = hdu.header
 
         if meta['XTENSION'] in ('TABLE', 'BINTABLE'):
-            data = Table(data)
+            data = Table.read(hdu)
+        else:
+            data = hdu.data
 
         return data, meta
 
@@ -88,7 +89,7 @@ class SpecutilsLoader(BaseLoader):
     def load(self, filename: pathlib.Path, **kwargs):
         try:
             with warnings.catch_warnings():
-                warnings.simplefilter('ignore', AstropyWarning)
+                # warnings.simplefilter('ignore', AstropyWarning)
                 spec: Spectrum1D = Spectrum1D.read(filename, **kwargs)
         except Exception as e:
             self.raise_error(e)
@@ -96,7 +97,7 @@ class SpecutilsLoader(BaseLoader):
 
         try:
             # specutils treats "pix" as a valid spectral axis unit
-            spec.spectral_axis.unit.to(u.Unit('AA'))
+            spec.spectral_axis.to('AA')
         except UnitConversionError:
             self.raise_error(f'Invalid spectral axis unit: {spec.spectral_axis.unit}')
             return None, None

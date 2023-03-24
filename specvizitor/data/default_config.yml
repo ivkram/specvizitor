@@ -3,6 +3,10 @@ catalogue:
     id: [Id, ID, NUMBER]
     redshift: [z, Z, Redshift, REDSHIFT, z_vac, z_map]
 
+data:
+  user_defined_units:
+    ANGSTROMS: AA
+
 review_form:
   default_checkboxes:
     contamination: "Contamination"

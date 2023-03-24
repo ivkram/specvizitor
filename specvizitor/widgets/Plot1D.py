@@ -53,8 +53,9 @@ class AxisData:
 
     @property
     def label(self):
-        label = f'{self.name}'
+        label = self.name
         if self.unit is not None:
+            # TODO: convert to inline unicode after next astropy release
             label += f' [{self.unit}]'
         return label
 
@@ -64,6 +65,13 @@ class AxisData:
         if cfg.scale == 'log':
             self.apply_log_scale()
         self.default_lims.set(cfg.limits.min, cfg.limits.max)
+
+    def scale(self, scaling_factor: float):
+        self.value = self.value * scaling_factor
+        if self.unc is not None:
+            self.unc = self.unc * scaling_factor
+
+        self.reset_default_lims()
 
     def convert_units(self, new_unit: str):
         new_unit = u.Unit(new_unit)
@@ -76,12 +84,7 @@ class AxisData:
             return
 
         self.unit = new_unit
-        self.value = self.value * q
-
-        if self.unc is not None:
-            self.unc = self.unc * q
-
-        self.reset_default_lims()
+        self.scale(q)
 
     def apply_log_scale(self):
         if not self.log_allowed:
@@ -163,6 +166,7 @@ class Plot1DItem(pg.PlotItem):
 
 class Plot1D(ViewerElement):
     plot_data_loaded = QtCore.Signal(object)
+    plot_refreshed = QtCore.Signal()
     labels_updated = QtCore.Signal(docks.Label, docks.Label)
 
     def __init__(self, cfg: docks.Plot1D, **kwargs):
@@ -184,23 +188,21 @@ class Plot1D(ViewerElement):
         super().populate()
         self.graphics_layout.addItem(self.plot_1d)
 
-    def init_plot_data(self):
+    def init_plot_data(self) -> PlotData | None:
         t: Table = self.data
-        x_cname = self.cfg.x_axis.name
-        y_cname = self.cfg.y_axis.name
+        col_names = []
 
-        if x_cname is None:
-            x_cname = t.colnames[0]
-        if y_cname is None:
-            y_cname = t.colnames[1]
+        for i, cname in enumerate((self.cfg.x_axis.name, self.cfg.y_axis.name)):
+            if cname is None:
+                col_names.append(t.colnames[i])
+            else:
+                if cname not in t.colnames:
+                    logger.error(column_not_found_message(cname))
+                    return
+                col_names.append(cname)
 
-        for cname in (x_cname, y_cname):
-            if cname not in t.colnames:
-                logger.error(column_not_found_message(cname))
-                return False
-
-        plot_data = PlotData(x=AxisData(x_cname, t[x_cname]),
-                             y=AxisData(y_cname, t[y_cname]))
+        axes_data = [AxisData(cname, t[cname].value, unit=t[cname].unit) for cname in col_names]
+        plot_data = PlotData(x=axes_data[0], y=axes_data[1])
 
         return plot_data
 
@@ -218,6 +220,9 @@ class Plot1D(ViewerElement):
         self.plot_1d.configure_plot_data(self.cfg.x_axis, self.cfg.y_axis)
         self.plot_data_loaded.emit(plot_data)
 
+        self.update_labels()
+
+    def update_labels(self):
         label_cfg = self.cfg.x_axis.label, self.cfg.y_axis.label
         self.plot_1d.update_labels(*label_cfg)
         self.labels_updated.emit(*label_cfg)
@@ -229,6 +234,10 @@ class Plot1D(ViewerElement):
     def clear_content(self):
         self.plot_1d.clear()
         self.content_cleared.emit()
+
+    def redraw(self):
+        self.plot_1d.plot_all()
+        self.plot_refreshed.emit()
 
     def reset_view(self):
         self.plot_1d.reset()

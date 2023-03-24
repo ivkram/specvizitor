@@ -1,4 +1,6 @@
+from astropy.table import Table
 from astropy import units as u
+from astropy.units.core import UnitConversionError
 import pyqtgraph as pg
 from qtpy import QtCore
 from specutils import Spectrum1D
@@ -104,7 +106,7 @@ class Spec1D(Plot1D):
         self.lines = lines
         self.cfg = cfg
 
-        self.allowed_data_types = (Spectrum1D,)
+        self.allowed_data_types = (Spectrum1D, Table)
 
         self.z_slider: SmartSliderWithEditor | None = None
         self.plot_1d: Spec1DItem | None = None
@@ -160,6 +162,7 @@ class Spec1D(Plot1D):
             self.plot_data_loaded.connect(w.spec_1d.set_plot_data)
             self.labels_updated.connect(w.spec_1d.update_labels)
             self.content_added.connect(w.spec_1d.display)
+            self.plot_refreshed.connect(w.spec_1d.plot_all)
             self.view_reset.connect(w.spec_1d.reset)
             self.content_cleared.connect(w.spec_1d.clear)
             self.smoothing_applied.connect(w.spec_1d.smooth)
@@ -180,11 +183,30 @@ class Spec1D(Plot1D):
     def _region_widget_changed_action(self, n: int):
         self.region_items[n].setRegion(self.lazy_widgets[n].spec_1d.getViewBox().viewRange()[0])
 
-    def init_plot_data(self):
-        spec: Spectrum1D = self.data
-        plot_data = PlotData(x=AxisData('wavelength', spec.spectral_axis.value, spec.spectral_axis.unit,
-                                        log_allowed=False),
-                             y=AxisData('flux', spec.flux.value, spec.flux.unit, spec.uncertainty.array))
+    def init_plot_data(self) -> PlotData | None:
+        # init plot data from Spectrum 1D
+        if isinstance(self.data, Spectrum1D):
+            spec = self.data
+            plot_data = PlotData(x=AxisData('wavelength', spec.spectral_axis.value, spec.spectral_axis.unit,
+                                            log_allowed=False),
+                                 y=AxisData('flux', spec.flux.value, spec.flux.unit, spec.uncertainty.array))
+            return plot_data
+
+        # init plot data from Table
+        plot_data = super().init_plot_data()
+        if plot_data is None:
+            return plot_data
+
+        # make sure that the spectral axis units are correct
+        try:
+            q = u.Quantity(plot_data.x.value)
+            if plot_data.x.unit is not None:
+                q *= plot_data.x.unit
+            q.to('AA')
+        except UnitConversionError:
+            logger.error(f'Invalid spectral axis unit: {plot_data.x.unit}')
+            return None
+
         return plot_data
 
     def add_content(self):
