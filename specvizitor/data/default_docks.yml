@@ -1,6 +1,8 @@
 spectra:
   Spectrum 1D:
-    filename_keyword: "1D.fits"
+    data:
+      filename_keyword: "1D.fits"
+      loader: 'specutils'
     y_axis:
       label:
         position: right
@@ -20,23 +22,26 @@ images:
   Spectrum 2D:
     position: bottom
     relative_to: Spectrum 1D
-    filename_keyword: "stack.fits"
-    data_loader_params:
-      extname: "SCI"
-      extver: "F444W"
+    data:
+      filename_keyword: "stack.fits"
+      loader_params:
+        extname: "SCI"
+        extver: "F444W"
     container: PlotItem
 
   Image Cutout:
     position: top
     relative_to: Spectrum 1D
-    filename_keyword: "beams.fits"
+    data:
+      filename_keyword: "beams.fits"
     scale: 1.0e+21
 
 plots:
   Redshift PDF:
     position: right
     relative_to: Image Cutout
-    filename_keyword: "full.fits"
+    data:
+      filename_keyword: "full.fits"
     smoothing_slider:
       visible: False
     x_axis:

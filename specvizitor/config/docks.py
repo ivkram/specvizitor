@@ -24,35 +24,6 @@ class ColorBar:
 
 
 @dataclass
-class LazyViewerElement:
-    visible: bool = True
-
-    position: str | None = None
-    relative_to: str | None = None
-
-
-@dataclass
-class SpectrumRegion(LazyViewerElement):
-    window_size: str = '200 Angstrom'
-
-
-@dataclass
-class ViewerElement(LazyViewerElement):
-    filename_keyword: str | None = None
-    data_loader: str = 'auto'
-    data_loader_params: dict[str, Any] | None = None
-    smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
-
-
-@dataclass
-class Image(ViewerElement):
-    rotate: int = 0
-    scale: float = 1
-    container: str = 'ViewBox'
-    color_bar: ColorBar = field(default_factory=lambda: ColorBar())
-
-
-@dataclass
 class Limits:
     min: float | None = None
     max: float | None = None
@@ -68,19 +39,53 @@ class Axis:
     name: str | None = None
     unit: str | None = None
     scale: str = 'linear'
-    limits: Limits = field(default_factory=lambda: Limits())
-    label: Label = field(default_factory=lambda: Label())
+    limits: Limits = field(default_factory=Limits)
+    label: Label = field(default_factory=Label)
+
+
+@dataclass
+class LazyViewerElement:
+    visible: bool = True
+
+    position: str | None = None
+    relative_to: str | None = None
+
+
+@dataclass
+class DataElement:
+    filename_keyword: str | None = None
+    loader: str = 'auto'
+    loader_params: dict[str, Any] | None = None
+
+
+@dataclass
+class ViewerElement(LazyViewerElement):
+    data: DataElement = field(default_factory=DataElement)
+    smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
+
+
+@dataclass
+class Image(ViewerElement):
+    rotate: int = 0
+    scale: float = 1
+    container: str = 'ViewBox'
+    color_bar: ColorBar = field(default_factory=ColorBar)
 
 
 @dataclass
 class Plot1D(ViewerElement):
-    x_axis: Axis = field(default_factory=lambda: Axis())
-    y_axis: Axis = field(default_factory=lambda: Axis())
+    x_axis: Axis = field(default_factory=Axis)
+    y_axis: Axis = field(default_factory=Axis)
+
+
+@dataclass
+class SpectrumRegion(LazyViewerElement):
+    window_size: str = '200 Angstrom'
 
 
 @dataclass
 class Spectrum(Plot1D):
-    data_loader: str = 'specutils'
+    data: DataElement = field(default_factory=lambda: DataElement(loader='specutils'))
     redshift_slider: Slider = field(default_factory=lambda: Slider(max_value=10, step=1e-4))
     tracked_lines: dict[str, SpectrumRegion] | None = None
 

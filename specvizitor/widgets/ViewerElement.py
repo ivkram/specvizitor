@@ -97,20 +97,20 @@ class ViewerElement(LazyViewerElement, abc.ABC):
             self.setEnabled(False)
 
     def _load_data(self, j: int, cat: Table, notes: InspectionData, data_cfg: config.Data):
-        if self.cfg.filename_keyword is None:
+        if self.cfg.data.filename_keyword is None:
             logger.error(f'Filename keyword not specified (object ID: {self.title})')
             return
 
-        self.filename = get_filename(data_cfg.dir, self.cfg.filename_keyword, notes.get_id(j))
+        self.filename = get_filename(data_cfg.dir, self.cfg.data.filename_keyword, notes.get_id(j))
 
         if self.filename is None:
             logger.error('{} not found (object ID: {})'.format(self.title, notes.get_id(j)))
             self.data, self.meta = None, None
             return
 
-        loader_config = {} if self.cfg.data_loader_params is None else self.cfg.data_loader_params
+        loader_config = {} if self.cfg.data.loader_params is None else self.cfg.data.loader_params
 
-        self.data, self.meta = load(self.cfg.data_loader, self.filename, self.title, **loader_config)
+        self.data, self.meta = load(self.cfg.data.loader, self.filename, self.title, **loader_config)
         if self.data is None:
             return
 
