@@ -1,5 +1,7 @@
 from astropy.table import Table
+from astropy.visualization import ZScaleInterval
 import astropy.units as u
+import numpy as np
 import pyqtgraph as pg
 from qtpy import QtGui
 
@@ -39,7 +41,7 @@ class Plugin(PluginCore):
 
     @staticmethod
     def transform_spec2d(spec_1d: Spec1D, spec_2d: Image2D) -> QtGui.QTransform:
-        scale = (1 * u.Unit('micron')).to(spec_1d.plot_1d.data.x.unit).value
+        scale = (1 * u.Unit('micron')).to(spec_1d.plot_item.data.x.unit).value
 
         dlam = spec_2d.meta['CD1_1'] * scale
         crval = spec_2d.meta['CRVAL1'] * scale
@@ -47,14 +49,14 @@ class Plugin(PluginCore):
 
         qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
 
-        spec_2d.image_2d.setTransform(qtransform)
+        spec_2d.image_item.setTransform(qtransform)
         spec_2d.container.setAspectLocked(True, 1 / dlam)
 
         return qtransform
 
     @staticmethod
     def reset_spec2d_transform(spec_2d: Image2D):
-        spec_2d.image_2d.resetTransform()
+        spec_2d.image_item.resetTransform()
         spec_2d.container.setAspectLocked(True, 1)
 
     @staticmethod
@@ -79,17 +81,30 @@ class Plugin(PluginCore):
     def add_current_redshift_line_to_z_pdf(spec_1d: Spec1D, z_pdf: Plot1D):
         line = pg.InfiniteLine(spec_1d.z_slider.value, pen='m')
         spec_1d.redshift_changed.connect(lambda z: line.setPos(z))
-        z_pdf.plot_1d.addItem(line)
+        z_pdf.plot_item.addItem(line)
 
     @staticmethod
     def convert_spec1d_flux_units(spec_1d: Spec1D):
-        if isinstance(spec_1d.data, Table):
-            plot_data = spec_1d.plot_1d.data
+        if not isinstance(spec_1d.data, Table):
+            return
 
-            plot_data.y.unit = u.Unit('1e-19 erg cm-2 s-1 AA-1')
-            plot_data.y.scale(1E19 / spec_1d.data['flat'])
-            plot_data.y.configure(spec_1d.cfg.y_axis)
-            spec_1d.plot_data_loaded.emit(plot_data)
+        plot_data = spec_1d.plot_item.data
+        if not plot_data.y.unit:
+            return
 
-            spec_1d.update_labels()
-            spec_1d.redraw()
+        flat = spec_1d.data['flat'].to('1e19 AA cm2 ct / erg')
+        plot_data.y.unit = plot_data.y.unit / flat.unit
+
+        with np.errstate(divide='ignore'):
+            scale = 1 / flat.value
+        scale[scale == np.inf] = 0
+        plot_data.y.scale(scale)
+
+        limits = ZScaleInterval().get_limits(plot_data.y.value)
+        flux = plot_data.y.value.copy()
+        additional_mask = (spec_1d.data['npix'].value < 1E5)
+        flux[((flux < limits[0]) | (flux > limits[1])) & additional_mask] = 0
+        plot_data.y.set_value(flux)
+
+        spec_1d.update_labels()
+        spec_1d.redraw()

@@ -17,9 +17,17 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class DefaultLimits:
+class DefaultAxisLimits:
     values: tuple[float, float]
     editable: tuple[bool, bool] = (False, False)
+
+    @classmethod
+    def init_from_array(cls, data: np.ndarray):
+        return cls(cls.get_min_max(data))
+
+    @staticmethod
+    def get_min_max(data: np.ndarray) -> tuple[float, float]:
+        return np.nanmin(data), np.nanmax(data)
 
     def set(self, min_value: float | None, max_value: float | None):
         self.values = (min_value if min_value else self.values[0],
@@ -38,18 +46,15 @@ class AxisData:
     value: np.ndarray
     unit: u.Unit | None = None
     unc: np.ndarray | None = None
-    default_lims: DefaultLimits = field(init=False)
+    default_lims: DefaultAxisLimits = field(init=False)
     log_allowed: bool = True
 
     def __post_init__(self):
-        self.reset_default_lims()
+        self.default_lims = DefaultAxisLimits.init_from_array(self.value)
 
-    def reset_default_lims(self):
-        self.default_lims = DefaultLimits(self.get_min_max(self.value))
-
-    @staticmethod
-    def get_min_max(data: np.ndarray) -> tuple[float, float]:
-        return np.nanmin(data), np.nanmax(data)
+    def set_value(self, value: np.ndarray):
+        self.value = value
+        self.default_lims = DefaultAxisLimits.init_from_array(self.value)
 
     @property
     def label(self):
@@ -59,36 +64,40 @@ class AxisData:
             label += f' [{self.unit}]'
         return label
 
-    def configure(self, cfg: docks.Axis):
+    def apply_settings(self, cfg: docks.Axis):
         if cfg.unit:
-            self.convert_units(cfg.unit)
+            try:
+                new_unit = u.Unit(cfg.unit)
+            except ValueError:
+                logger.error(f'Invalid unit: {cfg.unit}')
+            else:
+                self.convert_units(new_unit)
         if cfg.scale == 'log':
             self.apply_log_scale()
         self.default_lims.set(cfg.limits.min, cfg.limits.max)
 
     def scale(self, scaling_factor: float):
-        self.value = self.value * scaling_factor
+        self.set_value(self.value * scaling_factor)
         if self.unc is not None:
             self.unc = self.unc * scaling_factor
 
-        self.reset_default_lims()
+    def convert_units(self, new_unit: u.Unit):
+        if self.unit is None:
+            logger.error(f'Axis unit not found; unit conversion failed (axis: {self.name})')
 
-    def convert_units(self, new_unit: str):
-        new_unit = u.Unit(new_unit)
         q = u.Quantity(1 * self.unit)
-
         try:
-            q = q.to(new_unit).value
+            q = q.to(new_unit)
         except UnitConversionError as e:
             logger.error(e)
             return
 
         self.unit = new_unit
-        self.scale(q)
+        self.scale(q.value)
 
     def apply_log_scale(self):
         if not self.log_allowed:
-            logger.error(f'Axis "{self.name}" cannot be converted to logarithmic scale')
+            logger.error(f'Axis `{self.name}` cannot be converted to logarithmic scale')
             return
 
         self.name = f'log {self.name}'
@@ -97,11 +106,11 @@ class AxisData:
             self.unit = None
 
         with np.errstate(invalid='ignore', divide='ignore'):
-            self.value = np.log10(self.value)
-        self.value[self.value == -np.inf] = 0
+            new_value = np.log10(self.value)
+        new_value[new_value == -np.inf] = 0
 
+        self.set_value(new_value)
         self.unc = None
-        self.reset_default_lims()
 
 
 @dataclass
@@ -125,10 +134,6 @@ class Plot1DItem(pg.PlotItem):
 
     def set_plot_data(self, data: PlotData):
         self.data = data
-
-    def configure_plot_data(self, x_cfg: docks.Axis, y_cfg: docks.Axis):
-        self.data.x.configure(x_cfg)
-        self.data.y.configure(y_cfg)
 
     def update_labels(self, x_label: docks.Label, y_label: docks.Label):
         self.setLabel('bottom' if x_label.position is None else x_label.position, self.data.x.label)
@@ -160,7 +165,7 @@ class Plot1DItem(pg.PlotItem):
     def smooth(self, sigma: float):
         y_smoothed = gaussian_filter1d(self.data.y.value, sigma) if sigma > 0 else self.data.y.value
 
-        self.data.y.default_lims.update(AxisData.get_min_max(y_smoothed))
+        self.data.y.default_lims.update(DefaultAxisLimits.get_min_max(y_smoothed))
         self._y_plot.setData(self.data.x.value, y_smoothed)
 
 
@@ -173,12 +178,13 @@ class Plot1D(ViewerElement):
         self.cfg = cfg
         self.allowed_data_types = (Table,)
 
-        self.plot_1d: Plot1DItem | None = None
+        self.plot_item: Plot1DItem | None = None
+        self.plot_data: PlotData | None = None
 
         super().__init__(cfg=cfg, **kwargs)
 
     def create_plot_item(self):
-        self.plot_1d = Plot1DItem(name=self.title, appearance=self.appearance)
+        self.plot_item = Plot1DItem(name=self.title, appearance=self.appearance)
 
     def init_ui(self):
         super().init_ui()
@@ -186,7 +192,7 @@ class Plot1D(ViewerElement):
 
     def populate(self):
         super().populate()
-        self.graphics_layout.addItem(self.plot_1d)
+        self.graphics_layout.addItem(self.plot_item)
 
     def init_plot_data(self) -> PlotData | None:
         t: Table = self.data
@@ -206,43 +212,48 @@ class Plot1D(ViewerElement):
 
         return plot_data
 
-    def _load_data(self, *args, **kwargs):
-        super()._load_data(*args, **kwargs)
-        if self.data is None:
-            return
-
-        plot_data = self.init_plot_data()
-        if not plot_data:
-            self.data, self.meta = None, None
-            return
-
-        self.plot_1d.set_plot_data(plot_data)
-        self.plot_1d.configure_plot_data(self.cfg.x_axis, self.cfg.y_axis)
-        self.plot_data_loaded.emit(plot_data)
-
-        self.update_labels()
+    def set_plot_data(self):
+        self.plot_item.set_plot_data(self.plot_data)
+        self.plot_data_loaded.emit(self.plot_data)
 
     def update_labels(self):
         label_cfg = self.cfg.x_axis.label, self.cfg.y_axis.label
-        self.plot_1d.update_labels(*label_cfg)
+        self.plot_item.update_labels(*label_cfg)
         self.labels_updated.emit(*label_cfg)
 
+    def _load_data(self, *args, **kwargs):
+        super()._load_data(*args, **kwargs)
+        if self.data is None:
+            self.plot_data = None
+            return
+
+        self.plot_data = self.init_plot_data()
+        if not self.plot_data:
+            self.data, self.meta = None, None
+            return
+
+        self.plot_data.x.apply_settings(self.cfg.x_axis)
+        self.plot_data.y.apply_settings(self.cfg.y_axis)
+
+        self.set_plot_data()
+        self.update_labels()
+
     def add_content(self):
-        self.plot_1d.display()
+        self.plot_item.display()
         self.content_added.emit()
 
     def clear_content(self):
-        self.plot_1d.clear()
+        self.plot_item.clear()
         self.content_cleared.emit()
 
     def redraw(self):
-        self.plot_1d.plot_all()
+        self.plot_item.plot_all()
         self.plot_refreshed.emit()
 
     def reset_view(self):
-        self.plot_1d.reset()
+        self.plot_item.reset()
         self.view_reset.emit()
 
     def smooth(self, sigma: float):
-        self.plot_1d.smooth(sigma)
+        self.plot_item.smooth(sigma)
         self.smoothing_applied.emit(sigma)

@@ -105,11 +105,10 @@ class Spec1D(Plot1D):
     def __init__(self, cfg: docks.Spectrum, lines: SpectralLines | None = None, **kwargs):
         self.lines = lines
         self.cfg = cfg
-
         self.allowed_data_types = (Spectrum1D, Table)
 
+        self.plot_item: Spec1DItem | None = None
         self.z_slider: SmartSliderWithEditor | None = None
-        self.plot_1d: Spec1DItem | None = None
 
         self.lazy_widgets: list[Spec1DRegion] = []
         self.region_items: list[pg.LinearRegionItem] = []
@@ -117,7 +116,7 @@ class Spec1D(Plot1D):
         super().__init__(cfg=cfg, **kwargs)
 
     def create_plot_item(self):
-        self.plot_1d = Spec1DItem(lines=self.lines, name=self.title, appearance=self.appearance)
+        self.plot_item = Spec1DItem(lines=self.lines, name=self.title, appearance=self.appearance)
 
     def create_spectral_regions(self):
         if self.lines is None or self.cfg.tracked_lines is None:
@@ -172,13 +171,13 @@ class Spec1D(Plot1D):
             lr.sigRegionChanged.connect(partial(self._region_item_changed_action, i))
 
     def _redshift_changed_action(self, redshift: float):
-        self.plot_1d.set_line_positions(redshift)
+        self.plot_item.set_line_positions(redshift)
         self.redshift_changed.emit(redshift)
 
     def _region_item_changed_action(self, n: int):
         region = self.region_items[n].getRegion()
-        self.lazy_widgets[n].spec_1d.fit_in_window((region[0] * self.plot_1d.data.x.unit,
-                                                    region[1] * self.plot_1d.data.x.unit))
+        self.lazy_widgets[n].spec_1d.fit_in_window((region[0] * self.plot_item.data.x.unit,
+                                                    region[1] * self.plot_item.data.x.unit))
 
     def _region_widget_changed_action(self, n: int):
         self.region_items[n].setRegion(self.lazy_widgets[n].spec_1d.getViewBox().viewRange()[0])
@@ -211,7 +210,7 @@ class Spec1D(Plot1D):
 
     def add_content(self):
         for lr in self.region_items:
-            self.plot_1d.addItem(lr)
+            self.plot_item.addItem(lr)
         super().add_content()
 
     def reset_view(self):

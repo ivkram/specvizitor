@@ -20,7 +20,7 @@ class Image2D(ViewerElement):
         # set up the color map
         self._cmap = pg.colormap.get('viridis')
 
-        self.image_2d: pg.ImageItem | None = None
+        self.image_item: pg.ImageItem | None = None
         self.container: pg.PlotItem | pg.ViewBox | None = None
         self._cbar: ColorLegendItem | None = None
 
@@ -30,8 +30,8 @@ class Image2D(ViewerElement):
         super().init_ui()
 
         # create an image item
-        self.image_2d = pg.ImageItem()
-        self.image_2d.setLookupTable(self._cmap.getLookupTable())
+        self.image_item = pg.ImageItem()
+        self.image_item.setLookupTable(self._cmap.getLookupTable())
 
         # create an image container
         if self.cfg.container == 'PlotItem':
@@ -42,7 +42,7 @@ class Image2D(ViewerElement):
             self.container.hideButtons()
 
             # add a border to the image
-            self.image_2d.setBorder('k')
+            self.image_item.setBorder('k')
         else:
             # create a view box
             self.container = pg.ViewBox()
@@ -51,10 +51,10 @@ class Image2D(ViewerElement):
         self.container.setAspectLocked(True)
 
         # add the image to the container
-        self.container.addItem(self.image_2d)
+        self.container.addItem(self.image_item)
 
         # create a color bar
-        self._cbar = ColorLegendItem(imageItem=self.image_2d, showHistogram=True, histHeightPercentile=99.0)
+        self._cbar = ColorLegendItem(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
         self._cbar.setVisible(self.cfg.color_bar.visible)
 
     def populate(self):
@@ -78,7 +78,7 @@ class Image2D(ViewerElement):
         self.scale(self.cfg.scale)
 
     def add_content(self):
-        self.image_2d.setImage(self.data)
+        self.image_item.setImage(self.data)
 
     def reset_view(self):
         # TODO: allow to choose between min/max and zscale?
@@ -86,10 +86,10 @@ class Image2D(ViewerElement):
         self.container.autoRange(padding=0)
 
     def clear_content(self):
-        self.image_2d.clear()
+        self.image_item.clear()
 
     def smooth(self, sigma: float):
-        self.image_2d.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data)
+        self.image_item.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data)
 
     def rotate(self, angle: int):
         self.data = np.rot90(self.data, k=angle // 90)
