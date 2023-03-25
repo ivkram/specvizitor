@@ -2,7 +2,6 @@ from astropy.table import Table
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
-from scipy.ndimage import gaussian_filter1d
 from qtpy import QtGui
 
 import logging

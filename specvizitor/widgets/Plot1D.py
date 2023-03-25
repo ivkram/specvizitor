@@ -22,23 +22,31 @@ class DefaultAxisLimits:
     editable: tuple[bool, bool] = (True, True)
 
     @classmethod
-    def init_from_array(cls, data: np.ndarray):
-        return cls(cls.get_min_max(data))
+    def init_from_arr(cls, data: np.ndarray):
+        return cls(cls.get_limits_from_arr(data))
 
     @staticmethod
-    def get_min_max(data: np.ndarray) -> tuple[float, float] | None:
-        if np.sum(~np.isnan(data)) == 0:
+    def get_limits_from_arr(data: np.ndarray) -> tuple[float, float]:
+        if np.isnan(data).all():
             return 0, 1
         else:
             return np.nanmin(data), np.nanmax(data)
 
-    def set(self, min_value: float | None, max_value: float | None):
-        self.values = (min_value if min_value else self.values[0],
-                       max_value if max_value else self.values[1])
+    def freeze(self, limits: tuple[float | None, float | None]) -> None:
+        """
+        Override axis limits and prevent their modification in the future (e.g. after smoothing of axis data).
+        @param limits: new axis limits; if a new limit value is None, leave the limit editable
+        """
+        self.values = (limits[0] if limits[0] else self.values[0],
+                       limits[1] if limits[1] else self.values[1])
 
-        self.editable = (min_value is None, max_value is None)
+        self.editable = (limits[0] is None, limits[1] is None)
 
-    def update(self, limits: tuple[float, float]):
+    def update(self, limits: tuple[float, float]) -> None:
+        """
+        Override editable axis limits.
+        @param limits: new axis limits
+        """
         self.values = (limits[0] if self.editable[0] else self.values[0],
                        limits[1] if self.editable[1] else self.values[1])
 
