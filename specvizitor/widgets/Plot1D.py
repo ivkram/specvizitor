@@ -61,11 +61,11 @@ class AxisData:
     log_allowed: bool = True
 
     def __post_init__(self):
-        self.default_lims = DefaultAxisLimits.init_from_array(self.value)
+        self.default_lims = DefaultAxisLimits.init_from_arr(self.value)
 
     def set_value(self, value: np.ndarray):
         self.value = value
-        self.default_lims = DefaultAxisLimits.init_from_array(self.value)
+        self.default_lims = DefaultAxisLimits.init_from_arr(self.value)
 
     @property
     def label(self):
@@ -146,7 +146,7 @@ class AxisData:
         self.apply_scale(cfg.scale)
 
         # override default limits
-        self.default_lims.set(cfg.limits.min, cfg.limits.max)
+        self.default_lims.freeze((cfg.limits.min, cfg.limits.max))
 
         # apply uncertainty cutoff
         if cfg.unc_cutoff is not None:
@@ -205,7 +205,7 @@ class Plot1DItem(pg.PlotItem):
     def smooth(self, sigma: float):
         y_smoothed = gaussian_filter1d(self.data.y.value, sigma) if sigma > 0 else self.data.y.value
 
-        self.data.y.default_lims.update(DefaultAxisLimits.get_min_max(y_smoothed))
+        self.data.y.default_lims.update(DefaultAxisLimits.get_limits_from_arr(y_smoothed))
         self._y_plot.setData(self.data.x.value, y_smoothed)
 
 
