@@ -69,16 +69,16 @@ class SmartSliderWithEditor(AbstractWidget):
     value_changed = QtCore.Signal(float)
 
     def __init__(self, parameter: str = 'x', full_name: str | None = None, action: str | None = None,
-                 visible: bool = True, column_name: str | None = None, show_text_editor: bool = False,
-                 num_decimal_places: int = 6, parent=None, **kwargs):
+                 visible: bool = True, name_in_catalogue: str | None = None, show_text_editor: bool = False,
+                 n_decimal_places: int = 6, parent=None, **kwargs):
 
-        self.parameter = parameter if column_name is None else column_name
+        self.parameter = parameter if name_in_catalogue is None else name_in_catalogue
         self.full_name = parameter if full_name is None else full_name
         self.action = f"change {self.full_name}" if action is None else action
 
-        self.column_name = column_name
+        self.name_in_catalogue = name_in_catalogue
         self.show_text_editor = show_text_editor
-        self.num_decimal_places = num_decimal_places
+        self.n_decimal_places = n_decimal_places
 
         self._slider_kwargs = kwargs
 
@@ -129,7 +129,7 @@ class SmartSliderWithEditor(AbstractWidget):
 
     def _update_editor_text(self):
         self._editor.setText('{value:.{num_decimal_places}f}'.format(value=self.value,
-                                                                     num_decimal_places=self.num_decimal_places))
+                                                                     num_decimal_places=self.n_decimal_places))
 
     def update_from_slider(self):
         self._update_editor_text()
@@ -148,9 +148,9 @@ class SmartSliderWithEditor(AbstractWidget):
 
     def update_default_value(self, cat: Table, object_id):
         try:
-            self._slider.default_value = cat.loc[object_id][self.column_name]
+            self._slider.default_value = cat.loc[object_id][self.name_in_catalogue]
         except KeyError:
-            logger.warning(column_not_found_message(self.column_name, cat.meta.get('aliases')))
+            logger.warning(column_not_found_message(self.name_in_catalogue, cat.meta.get('aliases')))
             self._slider.default_value = self._default_value_backup
 
     def reset(self):

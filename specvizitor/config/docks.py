@@ -13,9 +13,9 @@ class Slider:
     step: float = 1
     default_value: float = 0
 
-    column_name: str | None = None
+    name_in_catalogue: str | None = None
     show_text_editor: bool = False
-    num_decimal_places: int = 6
+    n_decimal_places: int = 6
 
 
 @dataclass

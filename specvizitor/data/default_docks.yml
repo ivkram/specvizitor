@@ -1,17 +1,17 @@
 images:
   Image Cutout:
     data:
-      filename_keyword: "beams.fits"
+      filename_keyword: beams.fits
     scale: 1.0e+21
 
   Spectrum 2D:
     position: bottom
     relative_to: Image Cutout
     data:
-      filename_keyword: "stack.fits"
+      filename_keyword: stack.fits
       loader_params:
-        extname: "SCI"
-        extver: "F444W"
+        extname: SCI
+        extver: F444W
     container: PlotItem
 
 plots:
@@ -19,13 +19,13 @@ plots:
     position: right
     relative_to: Image Cutout
     data:
-      filename_keyword: "full.fits"
+      filename_keyword: full.fits
     smoothing_slider:
       visible: False
     x_axis:
-      name: "zgrid"
+      name: zgrid
     y_axis:
-      name: "pdf"
+      name: pdf
       scale: log
       limits:
         min: -3
@@ -35,8 +35,8 @@ spectra:
     position: bottom
     relative_to: Spectrum 2D
     data:
-      filename_keyword: "1D.fits"
-      loader: 'specutils'
+      filename_keyword: 1D.fits
+      loader: specutils
     y_axis:
       label:
         position: right
@@ -45,7 +45,7 @@ spectra:
       max_value: 12
       step: 0.000001
       default_value: 6
-      column_name: "redshift"
+      name_in_catalogue: redshift
       show_text_editor: True
     tracked_lines:
       Ha:

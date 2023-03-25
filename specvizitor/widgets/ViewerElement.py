@@ -78,7 +78,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
 
         # load catalogue values to the sliders
         for s in self.sliders:
-            if s.column_name is not None:
+            if s.name_in_catalogue is not None:
                 s.update_default_value(cat, notes.get_id(j))
 
         # load data to the widget
