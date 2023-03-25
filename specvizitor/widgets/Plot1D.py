@@ -53,6 +53,7 @@ class DefaultAxisLimits:
 
 @dataclass
 class AxisData:
+    # TODO: break this class into Axis and PlotData, and use Controller (or Axes) to connect them
     name: str
     value: np.ndarray
     unit: u.Unit | None = None
@@ -147,10 +148,6 @@ class AxisData:
 
         # override default limits
         self.default_lims.freeze((cfg.limits.min, cfg.limits.max))
-
-        # apply uncertainty cutoff
-        if cfg.unc_cutoff is not None:
-            self.apply_unc_cutoff(cfg.unc_cutoff)
 
 
 @dataclass

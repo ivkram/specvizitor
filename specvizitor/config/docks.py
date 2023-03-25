@@ -40,7 +40,6 @@ class Axis:
     unit: str | None = None
     scale: str = 'linear'
     limits: Limits = field(default_factory=Limits)
-    unc_cutoff: float | None = None
     label: Label = field(default_factory=Label)
 
 
