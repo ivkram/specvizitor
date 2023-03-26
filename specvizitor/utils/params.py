@@ -2,7 +2,7 @@ import dacite
 from dacite.exceptions import WrongTypeError, MissingValueError
 from dictdiffer import diff, patch, swap
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, field
 from functools import wraps
 import logging
 import pathlib

@@ -34,7 +34,7 @@ class InspectionData:
     default_columns: list[str] = field(default_factory=lambda: ['starred', 'comment'])
 
     @classmethod
-    def create(cls, ids, flags: list[str] | None):
+    def create(cls, ids, flags: list[str] | None = None):
         """ Create a new instance of the InspectionData class with a Pandas dataframe containing:
               - a column of IDs;
               - a column for comments;

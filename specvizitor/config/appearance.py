@@ -4,7 +4,7 @@ import qdarktheme
 from .config import Appearance
 
 
-def configure(cfg: Appearance):
+def set_up_appearance(cfg: Appearance):
     pg.setConfigOption('antialias', cfg.antialiasing)
 
     # set up the theme

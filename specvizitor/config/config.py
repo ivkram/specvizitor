@@ -13,7 +13,7 @@ class Catalogue:
 class Data:
     dir: str = '.'
     id_pattern: str = r'\d+'
-    user_defined_units: dict[str, str] | None = None
+    enabled_unit_aliases: dict[str, str] | None = None
 
 
 @dataclass

@@ -25,13 +25,13 @@ class DataViewer(AbstractWidget):
     def __init__(self,
                  dock_cfg: Docks,
                  appearance: config.Appearance,
-                 spectral_lines: SpectralLines = None,
+                 spectral_lines: SpectralLines | None = None,
                  plugins: list[PluginCore] | None = None,
                  parent=None):
 
-        self.appearance = appearance
-        self.dock_cfg = dock_cfg
-        self.spectral_lines = spectral_lines
+        self._appearance = appearance
+        self._dock_cfg = dock_cfg
+        self._spectral_lines = spectral_lines
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
 
         self.dock_area = DockArea()
@@ -73,20 +73,20 @@ class DataViewer(AbstractWidget):
         widgets = {}
 
         # create widgets for images (e.g. image cutouts, 2D spectra)
-        if self.dock_cfg.images is not None:
-            for name, image_cfg in self.dock_cfg.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self.appearance, parent=self)
+        if self._dock_cfg.images is not None:
+            for name, image_cfg in self._dock_cfg.images.items():
+                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance, parent=self)
 
         # create widgets for plots (does not include any spectra!)
-        if self.dock_cfg.plots is not None:
-            for name, plot_cfg in self.dock_cfg.plots.items():
-                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self.appearance, parent=self)
+        if self._dock_cfg.plots is not None:
+            for name, plot_cfg in self._dock_cfg.plots.items():
+                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance, parent=self)
 
         # create widgets for 1D spectra
-        if self.dock_cfg.spectra is not None:
-            for name, spec_cfg in self.dock_cfg.spectra.items():
-                widgets[name] = Spec1D(lines=self.spectral_lines, cfg=spec_cfg, title=name,
-                                       appearance=self.appearance, parent=self)
+        if self._dock_cfg.spectra is not None:
+            for name, spec_cfg in self._dock_cfg.spectra.items():
+                widgets[name] = Spec1D(lines=self._spectral_lines, cfg=spec_cfg, title=name,
+                                       appearance=self._appearance, parent=self)
 
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
@@ -149,7 +149,7 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(Docks)
     def update_dock_configuration(self, dock_cfg: Docks):
-        self.dock_cfg = dock_cfg
+        self._dock_cfg = dock_cfg
         self.init_ui()
 
     @QtCore.Slot()

@@ -1,32 +1,28 @@
 from astropy.table import Table
-import pyqtgraph as pg
 import qtpy.compat
-from qtpy import QtGui, QtWidgets, QtCore
-from qtpy.QtCore import Slot
+from qtpy import QtWidgets, QtCore, QtGui
 
-import argparse
 from dataclasses import asdict
-import importlib
 from importlib.metadata import version
 import logging
 import pathlib
-import sys
 
-from .appdata import AppData
-from .config import appearance, config, Docks
-from .utils.logs import LogMessageBox
-from .utils.params import save_yaml
-from .io.catalogue import read_cat, create_cat
-from .io.inspection_data import InspectionData
-from .io.viewer_data import add_enabled_aliases
+from ..appdata import AppData
+from ..config import config as cfg
+from ..config.appearance import set_up_appearance
+from ..config import Config, Cache, Docks, SpectralLines
+from ..io.catalogue import read_cat, create_cat
+from ..io.inspection_data import InspectionData
+from ..utils.logs import LogMessageBox
+from ..utils.params import save_yaml
 
-from .widgets.DataViewer import DataViewer
-from .widgets.NewFile import NewFile
-from .widgets.ObjectInfo import ObjectInfo
-from .widgets.QuickSearch import QuickSearch
-from .widgets.ReviewForm import ReviewForm
-from .widgets.Settings import Settings
-from .widgets.ToolBar import ToolBar
+from .DataViewer import DataViewer
+from .NewFile import NewFile
+from .ObjectInfo import ObjectInfo
+from .QuickSearch import QuickSearch
+from .ReviewForm import ReviewForm
+from .Settings import Settings
+from .ToolBar import ToolBar
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +30,7 @@ logger = logging.getLogger(__name__)
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
-    object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
+    object_selected = QtCore.Signal(int, InspectionData, Table, cfg.Data)
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
@@ -44,24 +40,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
     screenshot_path_selected = QtCore.Signal(str)
 
-    def __init__(self, appdata: AppData, parent=None):
+    def __init__(self, config: Config, cache: Cache, docks: Docks, spectral_lines: SpectralLines | None = None,
+                 plugins=None, parent=None):
         super().__init__(parent)
 
-        self.rd = appdata
+        self.rd = AppData()
+        
+        self._config = config
+        self._cache = cache
+
+        self._dock_cfg = docks
+        self._spectral_lines = spectral_lines
+
+        self._plugins = plugins
 
         self.was_maximized: bool = False
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self._update_window_title()  # set the title of the main window
         # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
-
-        # register user-defined units
-        if appdata.config.data.user_defined_units is not None:
-            add_enabled_aliases(appdata.config.data.user_defined_units)
-
-        # "discover" and "register" plugins
-        self._plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
-                         for plugin_name in self.rd.config.plugins]
 
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
@@ -83,29 +80,29 @@ class MainWindow(QtWidgets.QMainWindow):
         self.restore_window_state()
 
         # restore the dock state (= the layout of the data viewer) from cache
-        if self.rd.cache.dock_layout:
-            self.dock_layout_updated.emit(self.rd.cache.dock_layout)
+        if self._cache.dock_layout:
+            self.dock_layout_updated.emit(self._cache.dock_layout)
 
         # load the catalogue to the memory
-        if self.rd.config.catalogue.filename:
+        if self._config.catalogue.filename:
             self.load_catalogue()
 
         # update the list of catalogue columns visible in the object info widget
         # write "is not None" explicitly in case visible_columns == []
-        if self.rd.cat and self.rd.cache.visible_columns is not None:
-            self.visible_columns_updated.emit(self.rd.cache.visible_columns)
+        if self.rd.cat and self._cache.visible_columns is not None:
+            self.visible_columns_updated.emit(self._cache.visible_columns)
 
         # read cache and try to load the last active project
-        if self.rd.cache.last_inspection_file:
-            self.open_file(self.rd.cache.last_inspection_file, self.rd.cache.last_object_index)
+        if self._cache.last_inspection_file:
+            self.open_file(self._cache.last_inspection_file, self._cache.last_object_index)
 
     def init_ui(self):
         # create a central widget
-        self.data_viewer = DataViewer(self.rd.docks, self.rd.config.appearance,
-                                      spectral_lines=self.rd.lines, plugins=self._plugins, parent=self)
+        self.data_viewer = DataViewer(self._dock_cfg, self._config.appearance,
+                                      spectral_lines=self._spectral_lines, plugins=self._plugins, parent=self)
 
         # create a toolbar
-        self.toolbar = ToolBar(self.rd, self.rd.config.appearance, parent=self)
+        self.toolbar = ToolBar(self.rd, self._config.appearance, parent=self)
         self.toolbar.setObjectName('Toolbar')
         self.toolbar.setEnabled(True)
 
@@ -122,7 +119,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.object_info_dock.setWidget(self.object_info)
 
         # create a widget for writing comments
-        self.review_form = ReviewForm(cfg=self.rd.config.review_form, parent=self)
+        self.review_form = ReviewForm(cfg=self._config.review_form, parent=self)
         self.review_form_dock = QtWidgets.QDockWidget('Review Form', self)
         self.review_form_dock.setObjectName('Review Form')
         self.review_form_dock.setWidget(self.review_form)
@@ -274,10 +271,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
 
     def load_catalogue(self):
-        cat = read_cat(self.rd.config.catalogue.filename, translate=self.rd.config.catalogue.translate)
+        cat = read_cat(self._config.catalogue.filename, translate=self._config.catalogue.translate)
         if cat is None:
-            self.rd.config.catalogue.filename = None
-            self.rd.config.save()
+            self._config.catalogue.filename = None
+            self._config.save()
 
         self.update_catalogue(cat)
 
@@ -293,11 +290,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def _new_file_action(self):
         """ Create a new inspection file via the NewFile dialog.
         """
-        dialog = NewFile(cfg=self.rd.config, parent=self)
+        dialog = NewFile(cfg=self._config, parent=self)
         dialog.catalogue_changed.connect(self.update_catalogue)
         dialog.output_path_selected.connect(self.update_output_path)
         if dialog.exec():
-            self.rd.create()
+            self.rd.create(flags=self._config.review_form.default_checkboxes)
             self.load_project()
 
     def _open_file_action(self):
@@ -334,7 +331,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.load_object(j, request_data=False)
 
-    @Slot(int)
+    @QtCore.Slot(int)
     def load_object(self, j: int, request_data=True):
         """ Load a new object to the central widget.
         @param j: the index of the object to display
@@ -346,10 +343,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd.j = j
 
         # cache the index of the object
-        self.rd.cache.last_object_index = j
-        self.rd.cache.save()
+        self._cache.last_object_index = j
+        self._cache.save()
 
-        self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self.rd.config.data)
+        self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self._config.data)
 
         self._update_window_title()
 
@@ -366,13 +363,13 @@ class MainWindow(QtWidgets.QMainWindow):
         title += 'Specvizitor'
         self.setWindowTitle(title)
 
-    @Slot(str)
+    @QtCore.Slot(str)
     def _select_by_id(self, obj_id: str):
         if self.rd.notes.validate_id(obj_id):
             self.setFocus()
             self.load_object(self.rd.notes.get_id_loc(obj_id))
 
-    @Slot(int)
+    @QtCore.Slot(int)
     def _select_by_index(self, index: int):
         if self.rd.notes.validate_index(index):
             self.setFocus()
@@ -418,14 +415,14 @@ class MainWindow(QtWidgets.QMainWindow):
         path = qtpy.compat.getopenfilename(self, caption='Open Dock Configuration',
                                            filters='YAML Files (*.yml)')[0]
         if path:
-            new_docks = self.rd.docks.replace_params(pathlib.Path(path))
+            new_docks = self._dock_cfg.replace_params(pathlib.Path(path))
             if new_docks is None:
                 logger.error('Failed to restore the dock configuration')
             else:
-                self.rd.docks = new_docks
-                self.rd.docks.save()
+                self._dock_cfg = new_docks
+                self._dock_cfg.save()
 
-                self.dock_configuration_updated.emit(self.rd.docks)
+                self.dock_configuration_updated.emit(self._dock_cfg)
 
                 self.reload()
 
@@ -437,7 +434,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='YAML Files (*.yml)')[0]
 
         if path:
-            save_yaml(path, asdict(self.rd.docks))
+            save_yaml(path, asdict(self._dock_cfg))
             logger.info('Dock configuration saved')
 
     def _enter_fullscreen(self):
@@ -458,19 +455,19 @@ class MainWindow(QtWidgets.QMainWindow):
             self.screenshot_path_selected.emit(path)
 
     def _settings_action(self):
-        dialog = Settings(self.rd.config, parent=self)
+        dialog = Settings(self._config, parent=self)
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
         if dialog.exec():
             self.reload()
 
-    @Slot(bool)
+    @QtCore.Slot(bool)
     def update_appearance(self, theme_changed: bool = False):
-        appearance.configure(self.rd.config.appearance)
+        set_up_appearance(self._config.appearance)
         if theme_changed:
             self.theme_changed.emit()
 
-    @Slot(object)
+    @QtCore.Slot(object)
     def update_catalogue(self, cat: Table | None):
         if cat is None and self.rd.notes is not None:
             self.rd.cat = create_cat(self.rd.notes.ids)
@@ -478,11 +475,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rd.cat = cat
         self.catalogue_changed.emit(self.rd.cat)
 
-    @Slot(pathlib.Path)
+    @QtCore.Slot(pathlib.Path)
     def update_output_path(self, path: pathlib.Path):
         self.rd.output_path = path
-        self.rd.cache.last_inspection_file = str(path)
-        self.rd.cache.save()
+        self._cache.last_inspection_file = str(path)
+        self._cache.save()
         self._update_window_title()
 
     def _about_action(self):
@@ -493,13 +490,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(dict)
     def _save_viewer_data(self, layout: dict):
-        self.rd.cache.dock_layout = layout
-        self.rd.cache.save()
+        self._cache.dock_layout = layout
+        self._cache.save()
 
     @QtCore.Slot(list)
     def _save_obj_info_data(self, visible_columns: list[str]):
-        self.rd.cache.visible_columns = visible_columns
-        self.rd.cache.save()
+        self._cache.visible_columns = visible_columns
+        self._cache.save()
 
     @QtCore.Slot(str, dict)
     def _save_review_data(self, comments: str, checkboxes: dict[str, bool]):
@@ -507,39 +504,3 @@ class MainWindow(QtWidgets.QMainWindow):
         for cname, is_checked in checkboxes.items():
             self.rd.notes.update_value(self.rd.j, cname, is_checked)
         self.rd.save()
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--verbose', action='store_true')
-    parser.add_argument('--purge', action='store_true')
-
-    args = parser.parse_args()
-
-    # logging configuration
-    level = logging.INFO if args.verbose else logging.WARNING
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
-
-    # initialize the application data
-    appdata = AppData.init_from_disk(purge=args.purge)
-
-    # start the application
-    app = QtWidgets.QApplication(sys.argv)
-    app.setOrganizationName('FRESCO')
-    app.setApplicationName('Specvizitor')
-    logger.info("Application started")
-
-    # pyqtgraph configuration
-    pg.setConfigOption('imageAxisOrder', 'row-major')
-
-    # GUI appearance
-    appearance.configure(cfg=appdata.config.appearance)
-
-    # initialize the main window
-    window = MainWindow(appdata=appdata)
-    window.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()

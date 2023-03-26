@@ -4,7 +4,7 @@ catalogue:
     redshift: [z, Z, Redshift, REDSHIFT, z_vac, z_map]
 
 data:
-  user_defined_units:
+  enabled_unit_aliases:
     ANGSTROMS: AA
 
 review_form:
