@@ -63,15 +63,15 @@ class MainWindow(QtWidgets.QMainWindow):
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
 
-        self.data_viewer: DataViewer | None = None
-        self.toolbar: ToolBar | None = None
-        self.quick_search: QuickSearch | None = None
-        self.object_info: ObjectInfo | None = None
-        self.review_form: ReviewForm | None = None
+        self._data_viewer: DataViewer | None = None
+        self._commands_bar: ToolBar | None = None
+        self._quick_search: QuickSearch | None = None
+        self._object_info: ObjectInfo | None = None
+        self._review_form: ReviewForm | None = None
 
-        self.quick_search_dock: QtWidgets.QDockWidget | None = None
-        self.object_info_dock: QtWidgets.QDockWidget | None = None
-        self.review_form_dock: QtWidgets.QDockWidget | None = None
+        self._quick_search_dock: QtWidgets.QDockWidget | None = None
+        self._object_info_dock: QtWidgets.QDockWidget | None = None
+        self._review_form_dock: QtWidgets.QDockWidget | None = None
 
         self.init_ui()
         self.populate()
@@ -98,31 +98,31 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self.data_viewer = DataViewer(self._dock_cfg, self._config.appearance,
-                                      spectral_lines=self._spectral_lines, plugins=self._plugins, parent=self)
+        self._data_viewer = DataViewer(self._dock_cfg, self._config.appearance,
+                                       spectral_lines=self._spectral_lines, plugins=self._plugins, parent=self)
 
         # create a toolbar
-        self.toolbar = ToolBar(self.rd, self._config.appearance, parent=self)
-        self.toolbar.setObjectName('Toolbar')
-        self.toolbar.setEnabled(True)
+        self._commands_bar = ToolBar(self.rd, self._config.appearance, parent=self)
+        self._commands_bar.setObjectName('Toolbar')
+        self._commands_bar.setEnabled(True)
 
         # create a quick search widget
-        self.quick_search = QuickSearch(parent=self)
-        self.quick_search_dock = QtWidgets.QDockWidget('Quick Search', self)
-        self.quick_search_dock.setObjectName('Quick Search')
-        self.quick_search_dock.setWidget(self.quick_search)
+        self._quick_search = QuickSearch(parent=self)
+        self._quick_search_dock = QtWidgets.QDockWidget('Quick Search', self)
+        self._quick_search_dock.setObjectName('Quick Search')
+        self._quick_search_dock.setWidget(self._quick_search)
 
         # create a widget displaying information about the object
-        self.object_info = ObjectInfo(parent=self)
-        self.object_info_dock = QtWidgets.QDockWidget('Object Information', self)
-        self.object_info_dock.setObjectName('Object Information')
-        self.object_info_dock.setWidget(self.object_info)
+        self._object_info = ObjectInfo(parent=self)
+        self._object_info_dock = QtWidgets.QDockWidget('Object Information', self)
+        self._object_info_dock.setObjectName('Object Information')
+        self._object_info_dock.setWidget(self._object_info)
 
         # create a widget for writing comments
-        self.review_form = ReviewForm(cfg=self._config.review_form, parent=self)
-        self.review_form_dock = QtWidgets.QDockWidget('Review Form', self)
-        self.review_form_dock.setObjectName('Review Form')
-        self.review_form_dock.setWidget(self.review_form)
+        self._review_form = ReviewForm(cfg=self._config.review_form, parent=self)
+        self._review_form_dock = QtWidgets.QDockWidget('Review Form', self)
+        self._review_form_dock.setObjectName('Review Form')
+        self._review_form_dock.setWidget(self._review_form)
 
         self._init_menu()
 
@@ -174,12 +174,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setShortcut('F5')
         self._reset_view.setEnabled(False)
-        self._reset_view.triggered.connect(self.data_viewer.view_reset.emit)
+        self._reset_view.triggered.connect(self._data_viewer.view_reset.emit)
         self._view.addAction(self._reset_view)
 
         self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
         self._reset_dock_layout.setEnabled(False)
-        self._reset_dock_layout.triggered.connect(self.data_viewer.reset_dock_layout)
+        self._reset_dock_layout.triggered.connect(self._data_viewer.reset_dock_layout)
         self._view.addAction(self._reset_dock_layout)
 
         self._view.addSeparator()
@@ -228,47 +228,47 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def connect(self):
         # connect the main window to the child widgets
-        for w in (self.data_viewer, self.toolbar, self.quick_search, self.object_info, self.review_form):
+        for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._review_form):
             self.project_loaded.connect(w.load_project)
 
-        for w in (self.data_viewer, self.object_info, self.review_form):
+        for w in (self._data_viewer, self._object_info, self._review_form):
             self.data_requested.connect(w.collect)
 
-        for w in (self.data_viewer, self.toolbar, self.object_info, self.review_form):
+        for w in (self._data_viewer, self._commands_bar, self._object_info, self._review_form):
             self.object_selected.connect(w.load_object)
 
-        self.theme_changed.connect(self.data_viewer.init_ui)
-        self.theme_changed.connect(self.toolbar.set_icons)
-        self.catalogue_changed.connect(self.object_info.update_table_items)
-        self.visible_columns_updated.connect(self.object_info.update_visible_columns)
+        self.theme_changed.connect(self._data_viewer.init_ui)
+        self.theme_changed.connect(self._commands_bar.set_icons)
+        self.catalogue_changed.connect(self._object_info.update_table_items)
+        self.visible_columns_updated.connect(self._object_info.update_visible_columns)
 
-        self.dock_layout_updated.connect(self.data_viewer.restore_dock_layout)
-        self.dock_configuration_updated.connect(self.data_viewer.update_dock_configuration)
+        self.dock_layout_updated.connect(self._data_viewer.restore_dock_layout)
+        self.dock_configuration_updated.connect(self._data_viewer.update_dock_configuration)
 
-        self.screenshot_path_selected.connect(self.data_viewer.take_screenshot)
+        self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
         # connect the child widgets to the main window
-        self.quick_search.id_selected.connect(self._select_by_id)
-        self.quick_search.index_selected.connect(self._select_by_index)
-        self.toolbar.object_selected.connect(self.load_object)
-        self.toolbar.screenshot_button_clicked.connect(self._screenshot_action)
-        self.toolbar.settings_button_clicked.connect(self._settings_action)
+        self._quick_search.id_selected.connect(self._select_by_id)
+        self._quick_search.index_selected.connect(self._select_by_index)
+        self._commands_bar.object_selected.connect(self.load_object)
+        self._commands_bar.screenshot_button_clicked.connect(self._screenshot_action)
+        self._commands_bar.settings_button_clicked.connect(self._settings_action)
 
-        self.data_viewer.data_collected.connect(self._save_viewer_data)
-        self.object_info.data_collected.connect(self._save_obj_info_data)
-        self.review_form.data_collected.connect(self._save_review_data)
+        self._data_viewer.data_collected.connect(self._save_viewer_data)
+        self._object_info.data_collected.connect(self._save_obj_info_data)
+        self._review_form.data_collected.connect(self._save_review_data)
 
         # connect the child widgets between each other
-        self.toolbar.reset_view_button_clicked.connect(self.data_viewer.view_reset.emit)
-        self.toolbar.reset_layout_button_clicked.connect(self.data_viewer.reset_dock_layout)
+        self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.view_reset.emit)
+        self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.reset_dock_layout)
 
     def populate(self):
-        self.setCentralWidget(self.data_viewer)
+        self.setCentralWidget(self._data_viewer)
 
-        self.addToolBar(QtCore.Qt.TopToolBarArea, self.toolbar)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.quick_search_dock)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.object_info_dock)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.review_form_dock)
+        self.addToolBar(QtCore.Qt.TopToolBarArea, self._commands_bar)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._quick_search_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._object_info_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._review_form_dock)
 
     def load_catalogue(self):
         cat = read_cat(self._config.catalogue.filename, translate=self._config.catalogue.translate)
