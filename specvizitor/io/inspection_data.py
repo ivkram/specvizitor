@@ -88,6 +88,7 @@ class InspectionData:
 
         if writers.get(fmt):
             writers[fmt]().write(self.df, filename)
+            logger.info(f'Project saved (path: {filename})')
         else:
             logger.error(f"Unknown output format: {fmt}")
 

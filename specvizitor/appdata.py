@@ -19,21 +19,19 @@ class AppData:
     j: int = None  # the index of the current object
 
     def create(self, **kwargs):
-        """ Create an object for storing inspection data.
+        """ Initialize the inspection data object.
         """
         if self.cat is None:
-            logger.error("Failed to create a new object for storing inspection data: the catalogue is not loaded"
-                         "to the memory")
+            logger.error("Failed to initialize inspection data: the catalogue not loaded to the memory")
             return
 
         self.notes = InspectionData.create(self.cat['id'], **kwargs)
 
     def read(self):
-        """ Read the inspection file. If the catalogue hasn't been already initialized, load it from the disk. If
-        unsuccessful, create a new catalogue with a single column of IDs given by the inspection file.
+        """ Read the inspection file.
         """
         if self.output_path is None:
-            logger.error("Failed to read the inspection file: the file path is not specified")
+            logger.error("Failed to read the inspection file: the file path not specified")
             return
 
         self.notes = InspectionData.read(self.output_path)
@@ -42,8 +40,7 @@ class AppData:
         """ Save inspection data to the output file.
         """
         if self.output_path is None:
-            logger.error("Failed to save the inspection data: the output path is not specified")
+            logger.error("Failed to save the inspection data: the output path not specified")
             return
 
         self.notes.write(self.output_path)
-        logger.info('Project saved (path: {})'.format(self.output_path))
