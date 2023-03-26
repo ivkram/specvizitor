@@ -20,14 +20,13 @@ from .io.catalogue import read_cat, create_cat
 from .io.inspection_data import InspectionData
 from .io.viewer_data import add_enabled_aliases
 
-from .menu.NewFile import NewFile
-from .menu.Settings import Settings
-
 from .widgets.DataViewer import DataViewer
-from .widgets.ToolBar import ToolBar
-from .widgets.QuickSearch import QuickSearch
+from .widgets.NewFile import NewFile
 from .widgets.ObjectInfo import ObjectInfo
+from .widgets.QuickSearch import QuickSearch
 from .widgets.ReviewForm import ReviewForm
+from .widgets.Settings import Settings
+from .widgets.ToolBar import ToolBar
 
 logger = logging.getLogger(__name__)
 

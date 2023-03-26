@@ -9,9 +9,9 @@ from ..io.catalogue import read_cat, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
 
-from ..widgets.AbstractWidget import AbstractWidget
-from ..widgets.Section import Section
-from ..widgets.FileBrowser import FileBrowser
+from .AbstractWidget import AbstractWidget
+from .FileBrowser import FileBrowser
+from .Section import Section
 
 logger = logging.getLogger(__name__)
 
