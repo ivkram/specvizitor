@@ -324,9 +324,9 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._save, self._save_as, self._export, self._reset_view, self._reset_dock_layout):
             w.setEnabled(True)
 
-        self.project_loaded.emit(self.rd.notes)
+        self.project_loaded.emit(self.rd.review)
 
-        if j is None or (j < 0 or j >= self.rd.notes.n_objects):
+        if j is None or (j < 0 or j >= self.rd.review.n_objects):
             j = 0
 
         self.load_object(j, request_data=False)
@@ -346,7 +346,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.last_object_index = j
         self._cache.save()
 
-        self.object_selected.emit(self.rd.j, self.rd.notes, self.rd.cat, self._config.data)
+        self.object_selected.emit(self.rd.j, self.rd.review, self.rd.cat, self._config.data)
 
         self._update_window_title()
 
@@ -359,19 +359,19 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.output_path is not None:
             title += f'{self.rd.output_path.name} – '
         if self.rd.j is not None:
-            title += f'ID {self.rd.notes.get_id(self.rd.j)} [#{self.rd.j + 1}/{self.rd.notes.n_objects}] – '
+            title += f'ID {self.rd.review.get_id(self.rd.j)} [#{self.rd.j + 1}/{self.rd.review.n_objects}] – '
         title += 'Specvizitor'
         self.setWindowTitle(title)
 
     @QtCore.Slot(str)
     def _select_by_id(self, obj_id: str):
-        if self.rd.notes.validate_id(obj_id):
+        if self.rd.review.validate_id(obj_id):
             self.setFocus()
-            self.load_object(self.rd.notes.get_id_loc(obj_id))
+            self.load_object(self.rd.review.get_id_loc(obj_id))
 
     @QtCore.Slot(int)
     def _select_by_index(self, index: int):
-        if self.rd.notes.validate_index(index):
+        if self.rd.review.validate_index(index):
             self.setFocus()
             self.load_object(index - 1)
 
@@ -397,7 +397,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='FITS Files (*.fits)')[0]
 
         if path:
-            self.rd.notes.write(self.rd.output_path.with_suffix('.fits'), 'fits')
+            self.rd.review.write(self.rd.output_path.with_suffix('.fits'), 'fits')
 
     def _exit_action(self):
         if self.rd.j is not None:
@@ -447,7 +447,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showMaximized()
 
     def _screenshot_action(self):
-        default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.notes.get_id(self.rd.j)}.png'
+        default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.review.get_id(self.rd.j)}.png'
         path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
                                                       basedir=str(pathlib.Path().resolve() / default_filename),
                                                       filters='Images (*.png)')
@@ -469,8 +469,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(object)
     def update_catalogue(self, cat: Table | None):
-        if cat is None and self.rd.notes is not None:
-            self.rd.cat = create_cat(self.rd.notes.ids)
+        if cat is None and self.rd.review is not None:
+            self.rd.cat = create_cat(self.rd.review.ids)
         else:
             self.rd.cat = cat
         self.catalogue_changed.emit(self.rd.cat)
@@ -500,7 +500,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(str, dict)
     def _save_review_data(self, comments: str, checkboxes: dict[str, bool]):
-        self.rd.notes.update_value(self.rd.j, 'comment', comments)
+        self.rd.review.update_value(self.rd.j, 'comment', comments)
         for cname, is_checked in checkboxes.items():
-            self.rd.notes.update_value(self.rd.j, cname, is_checked)
+            self.rd.review.update_value(self.rd.j, cname, is_checked)
         self.rd.save()

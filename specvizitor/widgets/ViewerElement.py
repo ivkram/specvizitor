@@ -67,7 +67,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.layout().addLayout(sub_layout, 2, 1, 1, 1)
 
     @QtCore.Slot(int, InspectionData, Table, config.Data)
-    def load_object(self, j: int, notes: InspectionData, cat: Table, data_cfg: config.Data):
+    def load_object(self, j: int, review: InspectionData, cat: Table, data_cfg: config.Data):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
@@ -79,10 +79,10 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # load catalogue values to the sliders
         for s in self.sliders:
             if s.name_in_catalogue is not None:
-                s.update_default_value(cat, notes.get_id(j))
+                s.update_default_value(cat, review.get_id(j))
 
         # load data to the widget
-        self._load_data(j=j, cat=cat, notes=notes, data_cfg=data_cfg)
+        self._load_data(j=j, cat=cat, review=review, data_cfg=data_cfg)
 
         # display the data
         if self.data is not None:
@@ -96,15 +96,15 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         else:
             self.setEnabled(False)
 
-    def _load_data(self, j: int, cat: Table, notes: InspectionData, data_cfg: config.Data):
+    def _load_data(self, j: int, cat: Table, review: InspectionData, data_cfg: config.Data):
         if self.cfg.data.filename_keyword is None:
             logger.error(f'Filename keyword not specified (object ID: {self.title})')
             return
 
-        self.filename = get_filename(data_cfg.dir, self.cfg.data.filename_keyword, notes.get_id(j))
+        self.filename = get_filename(data_cfg.dir, self.cfg.data.filename_keyword, review.get_id(j))
 
         if self.filename is None:
-            logger.error('{} not found (object ID: {})'.format(self.title, notes.get_id(j)))
+            logger.error('{} not found (object ID: {})'.format(self.title, review.get_id(j)))
             self.data, self.meta = None, None
             return
 

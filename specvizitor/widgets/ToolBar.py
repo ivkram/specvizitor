@@ -138,19 +138,19 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
             b.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData)
-    def load_object(self, j: int, notes: InspectionData):
-        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(notes.get_value(j, 'starred'))))
+    def load_object(self, j: int, review: InspectionData):
+        self._star_button.setIcon(self.get_icon(self.get_star_icon_name(review.get_value(j, 'starred'))))
 
-        self._pn_buttons['previous starred'].setEnabled(notes.has_starred)
-        self._pn_buttons['next starred'].setEnabled(notes.has_starred)
+        self._pn_buttons['previous starred'].setEnabled(review.has_starred)
+        self._pn_buttons['next starred'].setEnabled(review.has_starred)
 
     def previous_next_object(self, command: str, starred: bool):
-        j_upd = self.update_index(self.rd.j, self.rd.notes.n_objects, command)
+        j_upd = self.update_index(self.rd.j, self.rd.review.n_objects, command)
 
         if starred:
-            if self.rd.notes.has_starred:
-                while not self.rd.notes.get_value(j_upd, 'starred'):
-                    j_upd = self.update_index(j_upd, self.rd.notes.n_objects, command)
+            if self.rd.review.has_starred:
+                while not self.rd.review.get_value(j_upd, 'starred'):
+                    j_upd = self.update_index(j_upd, self.rd.review.n_objects, command)
             else:
                 return
 
@@ -186,10 +186,10 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         return QtGui.QIcon(str(self.get_icon_abs_path(icon_name)))
 
     def star(self):
-        starred = not self.rd.notes.get_value(self.rd.j, 'starred')
+        starred = not self.rd.review.get_value(self.rd.j, 'starred')
 
-        self.rd.notes.update_value(self.rd.j, 'starred', starred)
+        self.rd.review.update_value(self.rd.j, 'starred', starred)
         self._star_button.setIcon(self.get_icon(self.get_star_icon_name(starred)))
 
-        self._pn_buttons['previous starred'].setEnabled(self.rd.notes.has_starred)
-        self._pn_buttons['next starred'].setEnabled(self.rd.notes.has_starred)
+        self._pn_buttons['previous starred'].setEnabled(self.rd.review.has_starred)
+        self._pn_buttons['next starred'].setEnabled(self.rd.review.has_starred)

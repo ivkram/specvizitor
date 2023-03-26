@@ -20,15 +20,15 @@ class ReviewForm(AbstractWidget):
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
-    def create_checkbox_widgets(self, notes: InspectionData | None = None):
+    def create_checkbox_widgets(self, review: InspectionData | None = None):
         if self._checkbox_widgets is not None:
             for w in self._checkbox_widgets.values():
                 w.deleteLater()
 
-        if notes is None:
+        if review is None:
             checkboxes = self.cfg.default_checkboxes
         else:
-            checkboxes = notes.get_checkboxes(self.cfg.default_checkboxes)
+            checkboxes = review.get_checkboxes(self.cfg.default_checkboxes)
 
         if checkboxes is None:
             return {}
@@ -54,17 +54,17 @@ class ReviewForm(AbstractWidget):
         self.layout().addWidget(self._comments_widget, len(self._checkbox_widgets) + 2, 1, 1, 1)
 
     @QtCore.Slot(InspectionData)
-    def load_project(self, notes: InspectionData):
+    def load_project(self, review: InspectionData):
         self.setEnabled(True)
 
-        self.create_checkbox_widgets(notes=notes)
+        self.create_checkbox_widgets(review=review)
         self.repopulate()
 
     @QtCore.Slot(int, InspectionData)
-    def load_object(self, j: int, notes: InspectionData):
-        self._comments_widget.setText(notes.get_value(j, 'comment'))
+    def load_object(self, j: int, review: InspectionData):
+        self._comments_widget.setText(review.get_value(j, 'comment'))
         for cname, widget in self._checkbox_widgets.items():
-            widget.setChecked(notes.get_value(j, cname))
+            widget.setChecked(review.get_value(j, cname))
 
     @QtCore.Slot()
     def collect(self):

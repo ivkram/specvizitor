@@ -113,17 +113,17 @@ class ObjectInfo(AbstractWidget):
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, Table)
-    def load_object(self, j: int, notes: InspectionData, cat: Table):
+    def load_object(self, j: int, review: InspectionData, cat: Table):
         try:
-            cat.loc[notes.get_id(j)]
+            cat.loc[review.get_id(j)]
         except KeyError:
-            logger.warning('Object not found in the catalogue (ID: {})'.format(notes.get_id(j)))
+            logger.warning('Object not found in the catalogue (ID: {})'.format(review.get_id(j)))
             return
 
         for row in self._table_items:
             cname = row[0].text()
             try:
-                row[1].setText(str(cat.loc[notes.get_id(j)][cname]))
+                row[1].setText(str(cat.loc[review.get_id(j)][cname]))
             except KeyError:
                 logger.warning(column_not_found_message(cname, cat.meta.get('aliases')))
                 row[1].setText('')

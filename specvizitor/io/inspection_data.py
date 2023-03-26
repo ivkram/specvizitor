@@ -69,10 +69,10 @@ class InspectionData:
 
         df['comment'] = '' if 'comment' not in df.columns else df['comment'].fillna('')
 
-        notes = cls(df=df)
-        notes.reorder_columns()
+        review = cls(df=df)
+        review.reorder_columns()
 
-        return notes
+        return review
 
     def write(self, filename: pathlib.Path, fmt: str = 'csv'):
         """ Write inspection data to the output file.
