@@ -4,7 +4,7 @@
 
 ### Installing `specvizitor` using pip
 
-Set up a local environment and run
+Set up a local environment (Python 3.10+) and run
 
         $ pip install specvizitor
 
@@ -15,7 +15,7 @@ Set up a local environment and run
         $ git clone https://github.com/ivkram/specvizitor
         $ cd specvizitor
 
-2. Set up a local environment and run
+2. Set up a local environment (Python 3.10+) and run
 
         $ pip install -e .
 
