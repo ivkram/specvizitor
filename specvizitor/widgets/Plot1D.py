@@ -72,8 +72,8 @@ class AxisData:
     def label(self):
         label = self.name
         if self.unit is not None:
-            # TODO: convert to inline unicode after next astropy release
-            label += f' [{self.unit}]'.replace('Angstrom', 'Å')
+            unit_repr = self.unit.to_string('unicode')
+            label += f' [{unit_repr}]'
         return label
 
     def scale(self, scaling_factor: float):
