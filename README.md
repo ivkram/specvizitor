@@ -10,7 +10,7 @@ Specvizitor is a Python GUI application for a visual inspection of astronomical 
 
 Set up a local environment (Python **3.10+**) and run
 
-```
+```shell
 $ pip install specvizitor
 ```
 
@@ -18,22 +18,22 @@ $ pip install specvizitor
 
 1. Clone the public repository:
 
-```
-$ git clone https://github.com/ivkram/specvizitor
-$ cd specvizitor
-```
+    ```shell
+    $ git clone https://github.com/ivkram/specvizitor
+    $ cd specvizitor
+    ```
 
 2. Set up a local environment (Python **3.10+**) and run
 
-```
-$ pip install -e .
-```
+    ```shell
+    $ pip install -e .
+    ```
 
 ## Starting `specvizitor`
     
 To start `specvizitor`, activate the local environment and run this command in your terminal:
 
-```
+```shell
 $ specvizitor
 ```
 
@@ -47,21 +47,21 @@ Open `lines.yml` and add an entry with the name of the spectral line and its res
 
 ```yaml
 list:
-  ...
+  # ...
   PaG: 10938.086
 ```
 
-By default, all wavelengths are represented in angstroms, which is controlled by the `wave_unit` parameter in the same file.
+By default, all wavelengths are represented in angstroms. The wavelength unit is controlled by the `wave_unit` parameter in `lines.yml`.
 
-### Editing the layout of the data viewer
+### Configuring the data viewer
 
-TBU
+The content of the data viewer is described in `docks.yml`. There are three types of data that can be displayed in the data viewer: `images`, `plots` and `spectra`. 
 
 ## Troubleshooting
 
 To reset `specvizitor` to its initial state, run the script with the `--purge` option:
 
-```
+```shell
 $ specvizitor --purge
 ```
 
