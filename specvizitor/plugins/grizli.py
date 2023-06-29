@@ -23,7 +23,6 @@ class Plugin(PluginCore):
 
         if spec_2d is not None:
             line = self.add_axis_of_symmetry_to_spec2d(spec_2d)
-            spec_2d.register_item(line)
 
             if spec_1d is not None:
                 qtransform = self.transform_spec2d_x_axis(spec_2d, spec_1d)
@@ -76,7 +75,7 @@ class Plugin(PluginCore):
         pen = 'w'
 
         line = pg.PlotCurveItem([0, spec_2d.meta['NAXIS1']], [y, y], pen=pen)
-        spec_2d.container.addItem(line)
+        spec_2d.register_item(line)
 
         return line
 

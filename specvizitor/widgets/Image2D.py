@@ -87,6 +87,7 @@ class Image2D(ViewerElement):
 
     def clear_content(self):
         self.image_item.clear()
+        self.remove_registered_items()
 
     def smooth(self, sigma: float):
         self.image_item.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data)
@@ -96,3 +97,12 @@ class Image2D(ViewerElement):
 
     def scale(self, scale: float):
         self.data *= scale
+
+    def register_item(self, item: pg.GraphicsItem):
+        self.container.addItem(item)
+        self._added_items.append(item)
+
+    def remove_registered_items(self):
+        for item in self._added_items:
+            self.container.removeItem(item)
+        self._added_items = []
