@@ -2,7 +2,7 @@ from astropy.table import Table
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
-from qtpy import QtGui
+from qtpy import QtGui, QtCore
 
 import logging
 
@@ -85,13 +85,13 @@ class Plugin(PluginCore):
 
     @staticmethod
     def add_crosshair_to_image_cutout(image: Image2D) -> tuple[pg.PlotCurveItem, pg.PlotCurveItem]:
-        pen = 'w'
+        pen = pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
 
         x0, y0 = image.data.shape[0] // 2, image.data.shape[1] // 2
-        dx, dy = 0.1 * x0, 0.1 * y0
+        dx, dy = 0.15 * x0, 0.15 * y0
 
-        crosshair_x = pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen)
-        crosshair_y = pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen)
+        crosshair_x = pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen)
+        crosshair_y = pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen)
 
         image.register_item(crosshair_x)
         image.register_item(crosshair_y)
