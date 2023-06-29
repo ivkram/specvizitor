@@ -19,6 +19,7 @@ class Plugin(PluginCore):
     def invoke(self, widgets: dict[str, ViewerElement]):
         spec_1d: Spec1D | None = widgets.get("Spectrum 1D")
         spec_2d: Image2D | None = widgets.get("Spectrum 2D")
+        image: Image2D | None = widgets.get("Image Cutout")
         z_pdf: Plot1D | None = widgets.get("Redshift PDF")
 
         if spec_2d is not None:
@@ -33,6 +34,9 @@ class Plugin(PluginCore):
                 self.reset_spec2d_transformation(spec_2d)
                 self.unlink_spec2d(spec_2d)
                 spec_2d.reset_view()
+
+        if image is not None:
+            self.add_crosshair_to_image_cutout(image)
 
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)
@@ -78,6 +82,21 @@ class Plugin(PluginCore):
         spec_2d.register_item(line)
 
         return line
+
+    @staticmethod
+    def add_crosshair_to_image_cutout(image: Image2D) -> tuple[pg.PlotCurveItem, pg.PlotCurveItem]:
+        pen = 'w'
+
+        x0, y0 = image.data.shape[0] // 2, image.data.shape[1] // 2
+        dx, dy = 0.1 * x0, 0.1 * y0
+
+        crosshair_x = pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen)
+        crosshair_y = pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen)
+
+        image.register_item(crosshair_x)
+        image.register_item(crosshair_y)
+
+        return crosshair_x, crosshair_y
 
     @staticmethod
     def add_current_redshift_to_z_pdf(spec_1d: Spec1D, z_pdf: Plot1D):
