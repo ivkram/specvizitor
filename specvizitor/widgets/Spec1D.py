@@ -34,7 +34,7 @@ class Spec1DItem(Plot1DItem):
         # TODO: store colors in config
         line_color = (175.68072, 220.68924, 46.59488)
         line_pen = pg.mkPen(color=line_color, width=1)
-        for line_name, lambda0 in self.lines.list.items():
+        for line_name, lambda0 in self.lines.wavelengths.items():
             line = pg.InfiniteLine(pen=line_pen)
             label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
             self._line_artists[line_name] = {'line': line, 'label': label}
@@ -60,7 +60,7 @@ class Spec1DItem(Plot1DItem):
         label_height = self.get_line_label_height()
 
         for line_name, line_artist in self._line_artists.items():
-            line_wave = (self.lines.list[line_name] * u.Unit(self.lines.wave_unit)).to(self.data.x.unit)
+            line_wave = (self.lines.wavelengths[line_name] * u.Unit(self.lines.wave_unit)).to(self.data.x.unit)
             line_wave = line_wave.value * scale0
             line_artist['line'].setPos(line_wave)
             line_artist['label'].setPos(QtCore.QPointF(line_wave, label_height))
@@ -91,7 +91,7 @@ class Spec1DRegion(LazyViewerElement):
     def init_ui(self):
         super().init_ui()
 
-        lines = SpectralLines(wave_unit=self.line[1].unit, list={self.line[0]: self.line[1].value})
+        lines = SpectralLines(wave_unit=self.line[1].unit, wavelengths={self.line[0]: self.line[1].value})
         self.spec_1d = Spec1DItem(lines=lines, window=self.window, name=self.title, appearance=self.appearance)
 
     def populate(self):
@@ -126,9 +126,9 @@ class Spec1D(Plot1D):
         region_items = []
 
         for line, line_cfg in self.cfg.tracked_lines.items():
-            if line in self.lines.list.keys():
+            if line in self.lines.wavelengths.keys():
                 spec_region = Spec1DRegion(title=f"{self.title} [{line}]",
-                                           line=(line, self.lines.list[line] * u.Unit(self.lines.wave_unit)),
+                                           line=(line, self.lines.wavelengths[line] * u.Unit(self.lines.wave_unit)),
                                            cfg=line_cfg, appearance=self.appearance,
                                            parent=self.parent())
 
