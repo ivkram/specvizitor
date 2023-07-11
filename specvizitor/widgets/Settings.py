@@ -1,5 +1,5 @@
 from platformdirs import user_config_dir
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 
 from abc import abstractmethod
 import logging
@@ -208,6 +208,7 @@ class Settings(QtWidgets.QDialog):
         self.add_tabs()
 
         self._info_label = QtWidgets.QLabel(f"Advanced settings: {user_config_dir('specvizitor')}", self)
+        self._info_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(
