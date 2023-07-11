@@ -1,8 +1,9 @@
 images:
   Image Cutout:
     data:
-      filename_keyword: beams.fits
-    scale: 1.0e+21
+      filename_keyword: full.fits
+      loader_params:
+        extname: DSCI
 
   Spectrum 2D:
     position: bottom
