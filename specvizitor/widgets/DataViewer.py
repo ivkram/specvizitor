@@ -188,6 +188,17 @@ class DataViewer(AbstractWidget):
         for core_widget in self.core_widgets.values():
             for w in (core_widget,) + tuple(core_widget.lazy_widgets):
                 if core_widget.filename is not None and core_widget.data is not None:
-                    self.docks[w.title].setTitle(core_widget.filename.name)
+                    title = core_widget.filename.name
+
+                    # adding EXTNAME and EXTVER to the dock title
+                    fits_meta = core_widget.meta.get('EXTNAME'), core_widget.meta.get('EXTVER')
+                    j = 0
+                    while j < len(fits_meta) and fits_meta[j] is not None:
+                        j += 1
+                    title_extra = ', '.join(fits_meta[:j])
+                    if title_extra:
+                        title += f' [{title_extra}]'
+
+                    self.docks[w.title].setTitle(title)
                 else:
                     self.docks[w.title].setTitle(w.title)
