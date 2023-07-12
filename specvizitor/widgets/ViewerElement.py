@@ -102,13 +102,15 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         self.filename = get_filename(data_cfg.dir, self.cfg.data.filename_keyword, review.get_id(j))
 
         if self.filename is None:
-            logger.error('{} not found (object ID: {})'.format(self.title, review.get_id(j)))
+            if not self.cfg.data.silent:
+                logger.error('{} not found (object ID: {})'.format(self.title, review.get_id(j)))
             self.data, self.meta = None, None
             return
 
         loader_config = {} if self.cfg.data.loader_params is None else self.cfg.data.loader_params
 
-        self.data, self.meta = load(self.cfg.data.loader, self.filename, self.title, **loader_config)
+        self.data, self.meta = load(self.cfg.data.loader, self.filename, self.title, self.cfg.data.silent,
+                                    **loader_config)
         if self.data is None:
             return
 

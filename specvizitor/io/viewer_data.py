@@ -121,7 +121,12 @@ class SpecutilsLoader(BaseLoader):
         return spec, spec.meta
 
 
-def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, **kwargs):
+def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, silent=False, **kwargs):
+    if silent:
+        logger.disabled = True
+    else:
+        logger.disabled = False
+
     registered_loaders: dict[str, BaseLoader] =\
         {loader.name: loader for loader in (GenericFITSLoader(), PILLoader(), SpecutilsLoader())}
 

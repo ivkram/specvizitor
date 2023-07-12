@@ -56,6 +56,7 @@ class DataElement:
     filename_keyword: str | None = None
     loader: str = 'auto'
     loader_params: dict[str, Any] | None = None
+    silent: bool = False
 
 
 @dataclass
