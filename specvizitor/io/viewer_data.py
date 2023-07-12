@@ -121,8 +121,8 @@ class SpecutilsLoader(BaseLoader):
         return spec, spec.meta
 
 
-def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, silent=False, **kwargs):
-    if silent:
+def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, **kwargs):
+    if kwargs.get('silent'):
         logger.disabled = True
     else:
         logger.disabled = False
