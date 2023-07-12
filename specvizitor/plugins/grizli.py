@@ -2,6 +2,7 @@ from astropy.table import Table
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph.dockarea.Dock import Dock
 from qtpy import QtGui, QtCore
 
 import logging
@@ -16,11 +17,23 @@ logger = logging.getLogger(__name__)
 
 
 class Plugin(PluginCore):
-    def invoke(self, widgets: dict[str, ViewerElement]):
-        spec_1d: Spec1D | None = widgets.get("Spectrum 1D")
-        spec_2d: Image2D | None = widgets.get("Spectrum 2D")
-        image: Image2D | None = widgets.get("Image Cutout")
-        z_pdf: Plot1D | None = widgets.get("Redshift PDF")
+    def override_widget_configs(self, widgets: dict[str, ViewerElement]):
+        lm: Image2D
+
+        i = 1
+        while lm := widgets.get(f'Line Map {i}'):
+            if i > 1:
+                lm.cfg.relative_to = f'Line Map {i - 1}'
+                lm.cfg.position = 'below'
+            lm.cfg.data.loader_params['extver_index'] = i - 1  # EXTVER indexing starts with 0
+            i += 1
+
+    def tweak_widgets(self, widgets: dict[str, ViewerElement]):
+        spec_1d: Spec1D | None = widgets.get('Spectrum 1D')
+        spec_2d: Image2D | None = widgets.get('Spectrum 2D')
+        image: Image2D | None = widgets.get('Image Cutout')
+        z_pdf: Plot1D | None = widgets.get('Redshift PDF')
+        lm: Image2D
 
         if spec_2d is not None:
             line = self.add_axis_of_symmetry_to_spec2d(spec_2d)
@@ -44,6 +57,13 @@ class Plugin(PluginCore):
         if spec_1d is not None:
             self.convert_spec1d_flux_unit_to_physical(spec_1d)
             spec_1d.reset_view()
+
+    def refine_dock_titles(self, docks: dict[str, Dock], widgets: dict[str, ViewerElement]):
+        i = 1
+        while lm := widgets.get(f'Line Map {i}'):
+            if extver := lm.meta.get('EXTVER'):
+                docks[lm.title].setTitle(extver)
+            i += 1
 
     @staticmethod
     def transform_spec2d_x_axis(spec_2d: Image2D, spec_1d: Spec1D) -> QtGui.QTransform:

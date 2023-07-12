@@ -15,10 +15,24 @@ images:
         extver: F444W
     container: PlotItem
 
+  Line Map 1: &linemap_defaults
+    position: right
+    relative_to: Image Cutout
+    data:
+      filename_keyword: full.fits
+      loader_params:
+        extname: LINE
+  Line Map 2: *linemap_defaults
+  Line Map 3: *linemap_defaults
+  Line Map 4: *linemap_defaults
+  Line Map 5: *linemap_defaults
+  Line Map 6: *linemap_defaults
+  Line Map 7: *linemap_defaults
+
 plots:
   Redshift PDF:
     position: right
-    relative_to: Image Cutout
+    relative_to: Line Map 7
     data:
       filename_keyword: full.fits
     smoothing_slider:

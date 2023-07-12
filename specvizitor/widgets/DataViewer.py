@@ -92,6 +92,9 @@ class DataViewer(AbstractWidget):
             self.object_selected.connect(w.load_object)
         self.core_widgets = widgets
 
+        for plugin in self._plugins:
+            plugin.override_widget_configs(self.core_widgets)
+
     def _create_docks(self):
         # delete previously added docks
         for dock_name in self.added_docks:
@@ -170,11 +173,11 @@ class DataViewer(AbstractWidget):
             if w.data is not None:
                 self.view_reset.connect(w.reset_view)
 
-        for plugin in self._plugins:
-            plugin.invoke(self.active_core_widgets)
-
         # update the dock titles
         self._update_dock_titles()
+
+        for plugin in self._plugins:
+            plugin.tweak_widgets(self.active_core_widgets)
 
     @QtCore.Slot()
     def collect(self):
@@ -202,3 +205,6 @@ class DataViewer(AbstractWidget):
                     self.docks[w.title].setTitle(title)
                 else:
                     self.docks[w.title].setTitle(w.title)
+
+        for plugin in self._plugins:
+            plugin.refine_dock_titles(self.docks, self.active_core_widgets)

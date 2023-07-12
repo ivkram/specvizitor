@@ -35,7 +35,7 @@ class BaseLoader(abc.ABC):
 class GenericFITSLoader(BaseLoader):
     name: str = 'generic_fits'
 
-    def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, **kwargs):
+    def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, extver_index: int = None, **kwargs):
 
         try:
             hdul = fits.open(filename, **kwargs)
@@ -43,10 +43,21 @@ class GenericFITSLoader(BaseLoader):
             self.raise_error(e)
             return None, None
 
-        if extname is not None and extver is None:
-            index = extname
-        elif extname is not None and extver is not None:
+        if extname is not None and extver is not None:
             index = (extname, extver)
+        elif extname is not None and extver_index is not None:
+            extname_matching_mask = ['EXTNAME' in hdu.header and hdu.header['EXTNAME'] == extname for hdu in hdul]
+            index = 0
+            counter = -1
+            while counter != extver_index:
+                index += 1
+                if index >= len(extname_matching_mask):
+                    self.raise_error(f'EXTVER `{extver_index}` out of range (filename: {filename.name})')
+                    return None, None
+                if extname_matching_mask[index]:
+                    counter += 1
+        elif extname is not None:
+            index = extname
         else:
             index = 1
 
