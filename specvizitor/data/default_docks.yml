@@ -4,6 +4,7 @@ images:
       filename_keyword: full.fits
       loader_params:
         extname: DSCI
+    crosshair: true
 
   Spectrum 2D:
     position: bottom
@@ -14,6 +15,7 @@ images:
         extname: SCI
         extver: F444W
     container: PlotItem
+    central_axes: x
 
   Line Map 1: &linemap_defaults
     position: right
@@ -23,6 +25,7 @@ images:
       loader_params:
         extname: LINE
         silent: true
+    crosshair: true
   Line Map 2: *linemap_defaults
   Line Map 3: *linemap_defaults
   Line Map 4: *linemap_defaults

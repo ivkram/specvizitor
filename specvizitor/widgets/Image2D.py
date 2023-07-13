@@ -3,6 +3,7 @@ import numpy as np
 import pyqtgraph as pg
 from pgcolorbar.colorlegend import ColorLegendItem
 from scipy.ndimage import gaussian_filter
+from qtpy import QtGui, QtCore
 
 import logging
 
@@ -72,13 +73,41 @@ class Image2D(ViewerElement):
             return
 
         # rotate the image
-        self.rotate(self.cfg.rotate)
+        if self.cfg.rotate is not None:
+            self.rotate(self.cfg.rotate)
 
         # scale the data points
-        self.scale(self.cfg.scale)
+        if self.cfg.scale is not None:
+            self.scale(self.cfg.scale)
 
     def add_content(self):
         self.image_item.setImage(self.data)
+
+        # add axes of symmetry to the image
+        if self.cfg.central_axes in ('x', 'y', 'xy'):
+            pen = 'w'
+            x, y = self.data.shape[1], self.data.shape[0]
+
+            axes = []
+            if 'x' in self.cfg.central_axes:
+                axes.append(pg.PlotCurveItem([0, x], [y // 2, y // 2], pen=pen))
+            if 'y' in self.cfg.central_axes:
+                axes.append(pg.PlotCurveItem([x // 2, x // 2], [0, y], pen=pen))
+
+            for ax in axes:
+                self.register_item(ax)
+
+        # add a crosshair to the image
+        if self.cfg.crosshair:
+            pen = pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
+            x0, y0 = self.data.shape[1] // 2, self.data.shape[0] // 2
+            dx, dy = 0.15 * x0, 0.15 * y0
+
+            crosshair_x = pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen)
+            crosshair_y = pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen)
+
+            self.register_item(crosshair_x)
+            self.register_item(crosshair_y)
 
     def reset_view(self):
         # TODO: allow to choose between min/max and zscale?
@@ -101,6 +130,11 @@ class Image2D(ViewerElement):
     def register_item(self, item: pg.GraphicsItem):
         self.container.addItem(item)
         self._added_items.append(item)
+
+    def apply_qtransform(self, qtransform: QtGui.QTransform):
+        self.image_item.setTransform(qtransform)
+        for item in self._added_items:
+           item.setTransform(qtransform)
 
     def remove_registered_items(self):
         for item in self._added_items:

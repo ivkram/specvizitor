@@ -66,10 +66,12 @@ class ViewerElement(LazyViewerElement):
 
 @dataclass
 class Image(ViewerElement):
-    rotate: int = 0
-    scale: float = 1
+    rotate: int | None = None
+    scale: float | None = None
     container: str = 'ViewBox'
     color_bar: ColorBar = field(default_factory=ColorBar)
+    central_axes: str | None = None
+    crosshair: bool = False
 
 
 @dataclass

@@ -3,7 +3,7 @@ import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Dock import Dock
-from qtpy import QtGui, QtCore
+from qtpy import QtGui
 
 import logging
 
@@ -31,25 +31,17 @@ class Plugin(PluginCore):
     def tweak_widgets(self, widgets: dict[str, ViewerElement]):
         spec_1d: Spec1D | None = widgets.get('Spectrum 1D')
         spec_2d: Image2D | None = widgets.get('Spectrum 2D')
-        image: Image2D | None = widgets.get('Image Cutout')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
-        lm: Image2D
 
         if spec_2d is not None:
-            line = self.add_axis_of_symmetry_to_spec2d(spec_2d)
-
             if spec_1d is not None:
-                qtransform = self.transform_spec2d_x_axis(spec_2d, spec_1d)
-                line.setTransform(qtransform)
+                self.transform_spec2d_x_axis(spec_2d, spec_1d)
                 self.link_spec2d_to_spec1d(spec_2d, spec_1d)
                 spec_1d.reset_view()
             else:
                 self.reset_spec2d_transformation(spec_2d)
                 self.unlink_spec2d(spec_2d)
                 spec_2d.reset_view()
-
-        if image is not None:
-            self.add_crosshair_to_image_cutout(image)
 
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)
@@ -59,6 +51,8 @@ class Plugin(PluginCore):
             spec_1d.reset_view()
 
     def refine_dock_titles(self, docks: dict[str, Dock], widgets: dict[str, ViewerElement]):
+        lm: Image2D
+
         i = 1
         while lm := widgets.get(f'Line Map {i}'):
             if extver := lm.meta.get('EXTVER'):
@@ -75,7 +69,7 @@ class Plugin(PluginCore):
 
         qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
 
-        spec_2d.image_item.setTransform(qtransform)
+        spec_2d.apply_qtransform(qtransform)
         spec_2d.container.setAspectLocked(True, 1 / dlam)
 
         return qtransform
@@ -92,31 +86,6 @@ class Plugin(PluginCore):
     @staticmethod
     def unlink_spec2d(spec_2d: Image2D):
         spec_2d.container.setXLink(None)
-
-    @staticmethod
-    def add_axis_of_symmetry_to_spec2d(spec_2d: Image2D) -> pg.PlotCurveItem:
-        y = spec_2d.meta['NAXIS2'] / 2
-        pen = 'w'
-
-        line = pg.PlotCurveItem([0, spec_2d.meta['NAXIS1']], [y, y], pen=pen)
-        spec_2d.register_item(line)
-
-        return line
-
-    @staticmethod
-    def add_crosshair_to_image_cutout(image: Image2D) -> tuple[pg.PlotCurveItem, pg.PlotCurveItem]:
-        pen = pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
-
-        x0, y0 = image.data.shape[0] // 2, image.data.shape[1] // 2
-        dx, dy = 0.15 * x0, 0.15 * y0
-
-        crosshair_x = pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen)
-        crosshair_y = pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen)
-
-        image.register_item(crosshair_x)
-        image.register_item(crosshair_y)
-
-        return crosshair_x, crosshair_y
 
     @staticmethod
     def add_current_redshift_to_z_pdf(spec_1d: Spec1D, z_pdf: Plot1D):
