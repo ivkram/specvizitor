@@ -93,7 +93,7 @@ class DataViewer(AbstractWidget):
         self.core_widgets = widgets
 
         for plugin in self._plugins:
-            plugin.override_widget_configs(self.core_widgets)
+            plugin.overwrite_widget_configs(self.core_widgets)
 
     def _create_docks(self):
         # delete previously added docks

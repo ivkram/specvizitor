@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class Plugin(PluginCore):
-    def override_widget_configs(self, widgets: dict[str, ViewerElement]):
+    def overwrite_widget_configs(self, widgets: dict[str, ViewerElement]):
         lm: Image2D
 
         i = 1

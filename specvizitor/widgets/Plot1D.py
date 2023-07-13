@@ -34,7 +34,7 @@ class DefaultAxisLimits:
 
     def freeze(self, limits: tuple[float | None, float | None]) -> None:
         """
-        Override axis limits and prevent their modification in the future (e.g. after smoothing of axis data).
+        overwrite axis limits and prevent their modification in the future (e.g. after smoothing of axis data).
         @param limits: new axis limits; if a new limit value is None, leave the limit editable
         """
         self.values = (limits[0] if limits[0] else self.values[0],
@@ -44,7 +44,7 @@ class DefaultAxisLimits:
 
     def update(self, limits: tuple[float, float]) -> None:
         """
-        Override editable axis limits.
+        overwrite editable axis limits.
         @param limits: new axis limits
         """
         self.values = (limits[0] if self.editable[0] else self.values[0],
@@ -146,7 +146,7 @@ class AxisData:
         # scale axis
         self.apply_scale(cfg.scale)
 
-        # override default limits
+        # overwrite default limits
         self.default_lims.freeze((cfg.limits.min, cfg.limits.max))
 
 
