@@ -26,16 +26,14 @@ class ReviewForm(AbstractWidget):
                 w.deleteLater()
 
         if review is None:
-            checkboxes = self.cfg.default_checkboxes
+            flags = self.cfg.default_flags
         else:
-            checkboxes = review.get_checkboxes(self.cfg.default_checkboxes)
-
-        if checkboxes is None:
-            return {}
+            flags = review.flag_columns
 
         checkbox_widgets = {}
-        for i, (cname, label) in enumerate(checkboxes.items()):
-            checkbox_widgets[cname] = QtWidgets.QCheckBox(label, self)
+        if flags is not None:
+            for flag_name in flags:
+                checkbox_widgets[flag_name] = QtWidgets.QCheckBox(flag_name, self)
 
         self._checkbox_widgets = checkbox_widgets
 

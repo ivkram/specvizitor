@@ -294,7 +294,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.catalogue_changed.connect(self.update_catalogue)
         dialog.output_path_selected.connect(self.update_output_path)
         if dialog.exec():
-            self.rd.create(flags=self._config.review_form.default_checkboxes)
+            self.rd.create(flags=self._config.review_form.default_flags)
             self.load_project()
 
     def _open_file_action(self):

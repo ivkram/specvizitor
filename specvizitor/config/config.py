@@ -26,7 +26,7 @@ class Appearance:
 
 @dataclass
 class ReviewForm:
-    default_checkboxes: dict[str, str] | None = None
+    default_flags: list[str] | None = None
 
 
 @dataclass

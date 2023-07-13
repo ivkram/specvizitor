@@ -8,9 +8,9 @@ data:
     ANGSTROMS: AA
 
 review_form:
-  default_checkboxes:
-    contamination: "Contamination"
-    extended: "Extended emission"
+  default_flags:
+    - contamination
+    - extended
 
 plugins:
   - grizli

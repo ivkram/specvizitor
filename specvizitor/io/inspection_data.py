@@ -143,26 +143,6 @@ class InspectionData:
 
         return self.df.index.get_loc(obj_id)
 
-    def get_checkboxes(self, default_checkboxes: dict[str, str] | None = None) -> dict[str, str]:
-        """ Get the full description of checkboxes to be displayed in the review form (column name + label). By default,
-        each checkbox is automatically assigned a label by a simple capitalization of the column name, e.g. a flag named
-        `extended` would become a checkbox with a label `Extended`. The `default_checkboxes` parameter is used as a
-        lookup table to overrides these labels.
-        @param default_checkboxes: the description of default checkboxes used to override automatically created labels
-        @return: a dictionary describing the checkboxes to be displayed in the review form
-        """
-
-        checkboxes = {}
-
-        for cname in self.flag_columns:
-            checkboxes[cname] = cname.capitalize()
-
-        if default_checkboxes is not None:
-            checkboxes.update({key: value for key, value in default_checkboxes.items()
-                               if key in self.user_defined_columns})
-
-        return checkboxes
-
     def update_value(self, j: int, cname: str, value):
         self.df.iat[j, self.df.columns.get_loc(cname)] = value
 
