@@ -46,7 +46,6 @@ class Axis:
 @dataclass
 class LazyViewerElement:
     visible: bool = True
-
     position: str | None = None
     relative_to: str | None = None
 
@@ -93,7 +92,7 @@ class Spectrum(Plot1D):
 
 
 @dataclass
-class Docks(Params):
+class DataWidgets(Params):
     images: dict[str, Image] | None
     plots: dict[str, Plot1D] | None
     spectra: dict[str, Spectrum] | None

@@ -4,11 +4,12 @@ from qtpy import QtWidgets
 import argparse
 import importlib
 import logging
+import pathlib
 from platformdirs import user_config_dir, user_cache_dir
 import sys
 
 from .config.appearance import set_up_appearance
-from .config import Config, Docks, SpectralLines, Cache
+from .config import Config, DataWidgets, SpectralLines, Cache
 from .io.viewer_data import add_enabled_aliases
 from .utils.params import LocalFile
 
@@ -39,20 +40,24 @@ def main():
 
     # read local config files
     local_files: dict[str, LocalFile] = {
-        'config': LocalFile(CONFIG_DIR, full_name='Settings file'),
-        'cache': LocalFile(CACHE_DIR, full_name='Cache file', auto_backup=False),
-        'docks': LocalFile(CONFIG_DIR, filename='docks.yml', full_name='Dock configuration file'),
-        'lines': LocalFile(CONFIG_DIR, filename='lines.yml', full_name='List of spectral lines'),
+        'config': LocalFile(CONFIG_DIR, filename='config.yml', full_name='General GUI settings'),
+        'cache': LocalFile(CACHE_DIR, full_name='Cache', auto_backup=False),
+        'widgets': LocalFile(CONFIG_DIR, filename='data_widgets.yml', full_name='Data viewer configuration'),
+        'lines': LocalFile(CONFIG_DIR, filename='spectral_lines.yml', full_name='List of spectral lines'),
     }
 
     if args.purge:
-        for f in local_files.values():
-            f.delete()
+        # deleting old configuration files which are no longer in use
+        with open(pathlib.Path(__file__).parent / 'data' / 'presets' / 'legacy.txt', 'r') as file:
+            for line in file:
+                legacy_config = pathlib.Path(CONFIG_DIR) / line.rstrip()
+                legacy_config.unlink(missing_ok=True)
+                (legacy_config.parent / (legacy_config.name + '.bak')).unlink(missing_ok=True)
 
-    config = Config.read_user_params(local_files['config'], default='default_config.yml')
-    docks = Docks.read_user_params(local_files['docks'], default='default_docks.yml')
-    lines = SpectralLines.read_user_params(local_files['lines'], default='default_lines.yml')
-    cache = Cache.read_user_params(local_files['cache'])
+        for f in local_files.values():
+            f.delete()  # safe delete
+
+    config = Config.read_user_params(local_files['config'], default='config.yml')
 
     # register unit aliases
     if config.data.enabled_unit_aliases is not None:
@@ -72,7 +77,12 @@ def main():
                for plugin_name in config.plugins]
 
     # create the main window
-    window = MainWindow(config=config, cache=cache, docks=docks, spectral_lines=lines, plugins=plugins)
+    window = MainWindow(config=config,
+                        cache=Cache.read_user_params(local_files['cache']),
+                        viewer_cfg=DataWidgets.read_user_params(local_files['widgets'], default='data_widgets.yml'),
+                        spectral_lines=SpectralLines.read_user_params(local_files['lines'],
+                                                                      default='spectral_lines.yml'),
+                        plugins=plugins)
     window.show()
 
     sys.exit(app.exec_())

@@ -10,7 +10,7 @@ import pathlib
 from ..appdata import AppData
 from ..config import config as cfg
 from ..config.appearance import set_up_appearance
-from ..config import Config, Cache, Docks, SpectralLines
+from ..config import Config, Cache, DataWidgets, SpectralLines
 from ..io.catalogue import read_cat, create_cat
 from ..io.inspection_data import InspectionData
 from ..utils.logs import LogMessageBox
@@ -36,12 +36,12 @@ class MainWindow(QtWidgets.QMainWindow):
     catalogue_changed = QtCore.Signal(object)
     visible_columns_updated = QtCore.Signal(list)
     dock_layout_updated = QtCore.Signal(dict)
-    dock_configuration_updated = QtCore.Signal(Docks)
+    viewer_configuration_updated = QtCore.Signal(DataWidgets)
 
     screenshot_path_selected = QtCore.Signal(str)
 
-    def __init__(self, config: Config, cache: Cache, docks: Docks, spectral_lines: SpectralLines | None = None,
-                 plugins=None, parent=None):
+    def __init__(self, config: Config, cache: Cache, viewer_cfg: DataWidgets,
+                 spectral_lines: SpectralLines | None = None, plugins=None, parent=None):
         super().__init__(parent)
 
         self.rd = AppData()
@@ -49,7 +49,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._config = config
         self._cache = cache
 
-        self._dock_cfg = docks
+        self._viewer_cfg = viewer_cfg
         self._spectral_lines = spectral_lines
 
         self._plugins = plugins
@@ -98,7 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self._data_viewer = DataViewer(self._dock_cfg, self._config.appearance,
+        self._data_viewer = DataViewer(self._viewer_cfg, self._config.appearance,
                                        spectral_lines=self._spectral_lines, plugins=self._plugins, parent=self)
 
         # create a toolbar
@@ -193,21 +193,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self._shortcut_fullscreen = QtWidgets.QShortcut('Esc', self)
         self._shortcut_fullscreen.activated.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
-        self._docks = self._menu.addMenu("&Docks")
+        self._widgets = self._menu.addMenu("&Widgets")
 
-        self._add_dock = QtWidgets.QAction("Add...")
-        self._add_dock.setEnabled(False)
-        self._docks.addAction(self._add_dock)
+        self._add_widget = QtWidgets.QAction("Add...")
+        self._add_widget.setEnabled(False)
+        self._widgets.addAction(self._add_widget)
 
-        self._docks.addSeparator()
+        self._widgets.addSeparator()
 
-        self._backup_dock_configuration = QtWidgets.QAction("Backup...")
-        self._backup_dock_configuration.triggered.connect(self._backup_dock_configuration_action)
-        self._docks.addAction(self._backup_dock_configuration)
+        self._backup_viewer_config = QtWidgets.QAction("Backup...")
+        self._backup_viewer_config.triggered.connect(self._backup_viewer_config_action)
+        self._widgets.addAction(self._backup_viewer_config)
 
-        self._restore_dock_configuration = QtWidgets.QAction("Restore...")
-        self._restore_dock_configuration.triggered.connect(self._restore_dock_configuration_action)
-        self._docks.addAction(self._restore_dock_configuration)
+        self._restore_viewer_config = QtWidgets.QAction("Restore...")
+        self._restore_viewer_config.triggered.connect(self._restore_viewer_config_action)
+        self._widgets.addAction(self._restore_viewer_config)
 
         self._tools = self._menu.addMenu("&Tools")
 
@@ -243,7 +243,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.visible_columns_updated.connect(self._object_info.update_visible_columns)
 
         self.dock_layout_updated.connect(self._data_viewer.restore_dock_layout)
-        self.dock_configuration_updated.connect(self._data_viewer.update_dock_configuration)
+        self.viewer_configuration_updated.connect(self._data_viewer.update_viewer_configuration)
 
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
@@ -411,31 +411,31 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
         logger.info("Application closed")
 
-    def _restore_dock_configuration_action(self):
-        path = qtpy.compat.getopenfilename(self, caption='Open Dock Configuration',
+    def _restore_viewer_config_action(self):
+        path = qtpy.compat.getopenfilename(self, caption='Open Viewer Configuration',
                                            filters='YAML Files (*.yml)')[0]
         if path:
-            new_docks = self._dock_cfg.replace_params(pathlib.Path(path))
-            if new_docks is None:
-                logger.error('Failed to restore the dock configuration')
+            new_viewer_cfg = self._viewer_cfg.replace_params(pathlib.Path(path))
+            if new_viewer_cfg is None:
+                logger.error('Failed to restore the viewer configuration')
             else:
-                self._dock_cfg = new_docks
-                self._dock_cfg.save()
+                self._viewer_cfg = new_viewer_cfg
+                self._viewer_cfg.save()
 
-                self.dock_configuration_updated.emit(self._dock_cfg)
+                self.viewer_configuration_updated.emit(self._viewer_cfg)
 
                 self.reload()
 
-                logger.info('Dock configuration restored')
+                logger.info('Viewer configuration restored')
 
-    def _backup_dock_configuration_action(self):
-        path = qtpy.compat.getsavefilename(self, caption='Save Dock Configuration',
-                                           basedir=str(pathlib.Path() / 'docks.yml'),
+    def _backup_viewer_config_action(self):
+        path = qtpy.compat.getsavefilename(self, caption='Save Viewer Configuration',
+                                           basedir=str(pathlib.Path() / 'data_widgets.yml'),
                                            filters='YAML Files (*.yml)')[0]
 
         if path:
-            save_yaml(path, asdict(self._dock_cfg))
-            logger.info('Dock configuration saved')
+            save_yaml(path, asdict(self._viewer_cfg))
+            logger.info('Viewer configuration saved')
 
     def _enter_fullscreen(self):
         self.was_maximized = True if self.isMaximized() else False

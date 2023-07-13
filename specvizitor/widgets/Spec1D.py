@@ -9,7 +9,7 @@ from dataclasses import asdict
 from functools import partial
 import logging
 
-from ..config import docks
+from ..config import data_widgets
 from ..config.spectral_lines import SpectralLines
 
 from .LazyViewerElement import LazyViewerElement
@@ -75,7 +75,7 @@ class Spec1DItem(Plot1DItem):
 
 
 class Spec1DRegion(LazyViewerElement):
-    def __init__(self, title: str, line: tuple[str, u.Quantity], cfg: docks.SpectrumRegion, **kwargs):
+    def __init__(self, title: str, line: tuple[str, u.Quantity], cfg: data_widgets.SpectrumRegion, **kwargs):
 
         self.cfg = cfg
         self.line = line
@@ -102,7 +102,7 @@ class Spec1DRegion(LazyViewerElement):
 class Spec1D(Plot1D):
     redshift_changed = QtCore.Signal(float)
 
-    def __init__(self, cfg: docks.Spectrum, lines: SpectralLines | None = None, **kwargs):
+    def __init__(self, cfg: data_widgets.Spectrum, lines: SpectralLines | None = None, **kwargs):
         self.lines = lines
         self.cfg = cfg
         self.allowed_data_types = (Spectrum1D, Table)

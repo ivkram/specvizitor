@@ -7,14 +7,14 @@ from qtpy import QtGui, QtCore
 
 import logging
 
-from ..config import docks
+from ..config import data_widgets
 from .ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
 
 
 class Image2D(ViewerElement):
-    def __init__(self, cfg: docks.Image, **kwargs):
+    def __init__(self, cfg: data_widgets.Image, **kwargs):
         self.cfg = cfg
         self.allowed_data_types = (np.ndarray,)
 

@@ -1,12 +1,12 @@
 import pyqtgraph as pg
 from qtpy import QtWidgets
 
-from ..config import docks, config
+from ..config import data_widgets, config
 from .AbstractWidget import AbstractWidget
 
 
 class LazyViewerElement(AbstractWidget):
-    def __init__(self, title: str, cfg: docks.LazyViewerElement, appearance: config.Appearance, parent=None):
+    def __init__(self, title: str, cfg: data_widgets.LazyViewerElement, appearance: config.Appearance, parent=None):
         self.title = title
         self.cfg = cfg
         self.appearance = appearance

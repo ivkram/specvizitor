@@ -73,7 +73,7 @@ class Params:
 
     @classmethod
     def read_default_params(cls, filename: str):
-        return cls._read(pathlib.Path(__file__).parent.parent / 'data' / filename)
+        return cls._read(pathlib.Path(__file__).parent.parent / 'data' / 'presets' / filename)
 
     @classmethod
     def read_user_params(cls, file: LocalFile, default: str | None = None):

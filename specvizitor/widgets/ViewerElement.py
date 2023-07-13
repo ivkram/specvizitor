@@ -7,7 +7,7 @@ from dataclasses import asdict
 import logging
 import pathlib
 
-from ..config import config, docks
+from ..config import config, data_widgets
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filename, load
 
@@ -23,7 +23,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
     content_cleared = QtCore.Signal()
     smoothing_applied = QtCore.Signal(float)
 
-    def __init__(self, cfg: docks.ViewerElement, **kwargs):
+    def __init__(self, cfg: data_widgets.ViewerElement, **kwargs):
         self.cfg = cfg
 
         self.filename: pathlib.Path | None = None

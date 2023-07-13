@@ -9,7 +9,7 @@ from qtpy import QtCore
 from dataclasses import dataclass, field
 import logging
 
-from ..config import config, docks
+from ..config import config, data_widgets
 from ..utils.table_tools import column_not_found_message
 from .ViewerElement import ViewerElement
 
@@ -138,7 +138,7 @@ class AxisData:
 
         self.set_value(flux)
 
-    def apply_settings(self, cfg: docks.Axis):
+    def apply_settings(self, cfg: data_widgets.Axis):
         # apply unit transformation
         if cfg.unit is not None:
             self.convert_units(cfg.unit)
@@ -172,7 +172,7 @@ class Plot1DItem(pg.PlotItem):
     def set_plot_data(self, data: PlotData):
         self.data = data
 
-    def update_labels(self, x_label: docks.Label, y_label: docks.Label):
+    def update_labels(self, x_label: data_widgets.Label, y_label: data_widgets.Label):
         self.setLabel('bottom' if x_label.position is None else x_label.position, self.data.x.label)
         self.setLabel('left' if y_label.position is None else y_label.position, self.data.y.label)
 
@@ -209,9 +209,9 @@ class Plot1DItem(pg.PlotItem):
 class Plot1D(ViewerElement):
     plot_data_loaded = QtCore.Signal(object)
     plot_refreshed = QtCore.Signal()
-    labels_updated = QtCore.Signal(docks.Label, docks.Label)
+    labels_updated = QtCore.Signal(data_widgets.Label, data_widgets.Label)
 
-    def __init__(self, cfg: docks.Plot1D, **kwargs):
+    def __init__(self, cfg: data_widgets.Plot1D, **kwargs):
         self.cfg = cfg
         self.allowed_data_types = (Table,)
 
