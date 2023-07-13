@@ -10,7 +10,7 @@ data:
 review_form:
   default_flags:
     - contamination
-    - extended
+    - broad_line
 
 plugins:
   - grizli
