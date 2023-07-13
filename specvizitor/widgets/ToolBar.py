@@ -74,6 +74,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         # create a `star` button
         self._star_button = QtWidgets.QAction(self)
+        self._star_button.setShortcut('S')
         self._star_button.setToolTip('Star the object')
 
         # create a `screenshot` button
@@ -82,6 +83,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         # create a `reset view` button
         self._reset_view_button = QtWidgets.QAction(self)
+        self._reset_view_button.setShortcut('R')
         self._reset_view_button.setToolTip('Reset the view')
 
         # create a `reset layout` button

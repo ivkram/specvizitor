@@ -172,7 +172,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._view = self._menu.addMenu("&View")
 
         self._reset_view = QtWidgets.QAction("Reset View")
-        self._reset_view.setShortcut('F5')
         self._reset_view.setEnabled(False)
         self._reset_view.triggered.connect(self._data_viewer.view_reset.emit)
         self._view.addAction(self._reset_view)
