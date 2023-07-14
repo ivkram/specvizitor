@@ -21,11 +21,13 @@ class Plugin(PluginCore):
         lm: Image2D
 
         i = 1
-        while lm := widgets.get(f'Line Map {i}'):
+        lm_title = 'Line Map {}'
+        while widgets.get(lm_title.format(i)):
+            lm = widgets.get(lm_title.format(i))
             if i > 1:
-                lm.cfg.relative_to = f'Line Map {i - 1}'
+                lm.cfg.relative_to = lm_title.format(i - 1)
                 lm.cfg.position = 'below'
-            lm.cfg.data.loader_params['extver_index'] = i - 1  # EXTVER indexing starts with 0
+            lm.cfg.data.loader_params['extver_index'] = i - 1  # EXTVER indexing starts at 0
             i += 1
 
     def tweak_widgets(self, widgets: dict[str, ViewerElement]):
@@ -49,15 +51,6 @@ class Plugin(PluginCore):
         if spec_1d is not None:
             self.convert_spec1d_flux_unit_to_physical(spec_1d)
             spec_1d.reset_view()
-
-    def refine_dock_titles(self, docks: dict[str, Dock], widgets: dict[str, ViewerElement]):
-        lm: Image2D
-
-        i = 1
-        while lm := widgets.get(f'Line Map {i}'):
-            if extver := lm.meta.get('EXTVER'):
-                docks[lm.title].setTitle(extver)
-            i += 1
 
     @staticmethod
     def transform_spec2d_x_axis(spec_2d: Image2D, spec_1d: Spec1D) -> QtGui.QTransform:

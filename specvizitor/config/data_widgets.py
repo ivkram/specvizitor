@@ -61,6 +61,7 @@ class DataElement:
 class ViewerElement(LazyViewerElement):
     data: DataElement = field(default_factory=DataElement)
     smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
+    dock_title_fmt: str | None = None
 
 
 @dataclass

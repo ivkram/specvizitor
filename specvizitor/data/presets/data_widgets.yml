@@ -25,6 +25,7 @@ images:
       loader_params:
         extname: LINE
         silent: true
+    dock_title_fmt: short
     crosshair: true
   Line Map 2: *linemap_defaults
   Line Map 3: *linemap_defaults

@@ -127,7 +127,7 @@ class Spec1D(Plot1D):
 
         for line, line_cfg in self.cfg.tracked_lines.items():
             if line in self.lines.wavelengths.keys():
-                spec_region = Spec1DRegion(title=f"{self.title} [{line}]",
+                spec_region = Spec1DRegion(title=f"{self.title} - {line}",
                                            line=(line, self.lines.wavelengths[line] * u.Unit(self.lines.wave_unit)),
                                            cfg=line_cfg, appearance=self.appearance,
                                            parent=self.parent())

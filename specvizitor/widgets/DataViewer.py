@@ -3,6 +3,8 @@ from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
 
+from typing import Callable
+
 from ..config import config
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLines
@@ -173,7 +175,6 @@ class DataViewer(AbstractWidget):
             if w.data is not None:
                 self.view_reset.connect(w.reset_view)
 
-        # update the dock titles
         self._update_dock_titles()
 
         for plugin in self._plugins:
@@ -189,22 +190,26 @@ class DataViewer(AbstractWidget):
 
     def _update_dock_titles(self):
         for core_widget in self.core_widgets.values():
-            for w in (core_widget,) + tuple(core_widget.lazy_widgets):
-                if core_widget.filename is not None and core_widget.data is not None:
-                    title = core_widget.filename.name
+            if core_widget.filename is not None and core_widget.data is not None:
+                title = core_widget.filename.name
 
-                    # adding EXTNAME and EXTVER to the dock title
-                    fits_meta = core_widget.meta.get('EXTNAME'), core_widget.meta.get('EXTVER')
-                    j = 0
-                    while j < len(fits_meta) and fits_meta[j] is not None:
-                        j += 1
-                    title_extra = ', '.join(fits_meta[:j])
-                    if title_extra:
+                # adding EXTNAME and EXTVER to the dock title
+                fits_meta = core_widget.meta.get('EXTNAME'), core_widget.meta.get('EXTVER')
+                j = 0
+                while j < len(fits_meta) and fits_meta[j] is not None:
+                    j += 1
+                title_extra = ', '.join(fits_meta[:j])
+
+                if title_extra:
+                    if core_widget.cfg.dock_title_fmt == 'short':
+                        title = fits_meta[j - 1]
+                    else:
                         title += f' [{title_extra}]'
 
+                for w in (core_widget,) + tuple(core_widget.lazy_widgets):
                     self.docks[w.title].setTitle(title)
-                else:
+
+            else:
+                for w in (core_widget,) + tuple(core_widget.lazy_widgets):
                     self.docks[w.title].setTitle(w.title)
 
-        for plugin in self._plugins:
-            plugin.refine_dock_titles(self.docks, self.active_core_widgets)

@@ -13,7 +13,3 @@ class PluginCore(ABC):
     @abstractmethod
     def tweak_widgets(self, widgets: dict[str, ViewerElement]):
         pass
-
-    @abstractmethod
-    def refine_dock_titles(self, docks: dict[str, Dock], widgets: dict[str, ViewerElement]):
-        pass
