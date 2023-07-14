@@ -32,9 +32,13 @@ class ReviewForm(AbstractWidget):
 
         checkbox_widgets = {}
         if flags is not None:
-            for flag_name in flags:
+            for i, flag_name in enumerate(flags):
                 # TODO: overwrite the keyPressEvent method of QtWidgets.QCheckBox to add shortcuts
-                checkbox_widgets[flag_name] = QtWidgets.QCheckBox(flag_name, self)
+                checkbox_widget = QtWidgets.QCheckBox(flag_name, self)
+                checkbox_widgets[flag_name] = checkbox_widget
+                
+                if i < 9:
+                    checkbox_widget.setShortcut(str(i + 1))
 
         self._checkbox_widgets = checkbox_widgets
 
