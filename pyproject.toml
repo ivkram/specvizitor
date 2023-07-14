@@ -24,7 +24,7 @@ scipy = "^1.10.1"
 specutils = "^1.9.1"
 
 [tool.poetry.scripts]
-specvizitor = 'specvizitor.gui:main'
+specvizitor = 'specvizitor.main:main'
 
 [build-system]
 requires = ["poetry-core"]
