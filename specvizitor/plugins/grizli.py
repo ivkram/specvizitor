@@ -17,18 +17,40 @@ logger = logging.getLogger(__name__)
 
 
 class Plugin(PluginCore):
+    LM_NAME = 'Line Map {}'
+
     def overwrite_widget_configs(self, widgets: dict[str, ViewerElement]):
         lm: Image2D
 
         i = 1
-        lm_title = 'Line Map {}'
-        while widgets.get(lm_title.format(i)):
-            lm = widgets.get(lm_title.format(i))
+        while widgets.get(self.LM_NAME.format(i)):
+            lm = widgets.get(self.LM_NAME.format(i))
             if i > 1:
-                lm.cfg.relative_to = lm_title.format(i - 1)
+                lm.cfg.relative_to = self.LM_NAME.format(i - 1)
                 lm.cfg.position = 'below'
             lm.cfg.data.loader_params['extver_index'] = i - 1  # EXTVER indexing starts at 0
             i += 1
+
+    def tweak_docks(self, docks: dict[str, Dock]):
+
+        first_lm_dock = docks.get(self.LM_NAME.format(1))
+        if not first_lm_dock:
+            return
+
+        # raise the first line map dock to the top
+        first_lm_dock.raiseDock()
+
+        '''
+        * patching a pyqtgraph bug *
+        when the dock area state is restored, the current active widget of the line map stack is changed to Line Map 1,
+        however the last Line Map remains active (i.e. its label is still highlighted). therefore, when Line Map 1 is
+        raised to the top, the last Line Map remains active
+        '''
+        n = 1
+        while docks.get(self.LM_NAME.format(n + 1)):
+            n += 1
+        if n > 1:
+            docks.get(self.LM_NAME.format(n)).label.setDim(True)
 
     def tweak_widgets(self, widgets: dict[str, ViewerElement]):
         spec_1d: Spec1D | None = widgets.get('Spectrum 1D')

@@ -3,7 +3,7 @@ from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
 
-from typing import Callable
+import logging
 
 from ..config import config
 from ..config.data_widgets import DataWidgets
@@ -17,6 +17,8 @@ from .ViewerElement import ViewerElement
 from .Image2D import Image2D
 from .Plot1D import Plot1D
 from .Spec1D import Spec1D
+
+logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
@@ -124,8 +126,11 @@ class DataViewer(AbstractWidget):
                 self._add_dock(widget)
                 self.added_docks.append(widget.title)
 
+        for plugin in self._plugins:
+            plugin.tweak_docks(self.docks)
+
     @QtCore.Slot()
-    def reset_dock_layout(self):
+    def init_docks(self):
         self._create_docks()
         self._add_docks()
         self._update_dock_titles()
@@ -135,15 +140,18 @@ class DataViewer(AbstractWidget):
         try:
             # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `layout`
             self.dock_area.restoreState(layout, missing='ignore', extra=None)
+            logger.info('Dock layout restored')
+
+            for plugin in self._plugins:
+                plugin.tweak_docks(self.docks)
+
         except (KeyError, ValueError, TypeError):
-            self.reset_dock_layout()
+            self.init_docks()  # to reset the dock layout
+            logger.error('Failed to restore the dock layout')
 
     def init_ui(self):
         self._create_widgets()
-        self._create_docks()
-        self._add_docks()
-
-        self.reset_dock_layout()
+        self.init_docks()
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())

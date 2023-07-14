@@ -178,7 +178,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
         self._reset_dock_layout.setEnabled(False)
-        self._reset_dock_layout.triggered.connect(self._data_viewer.reset_dock_layout)
+        self._reset_dock_layout.triggered.connect(self._data_viewer.init_docks)
         self._view.addAction(self._reset_dock_layout)
 
         self._view.addSeparator()
@@ -259,7 +259,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # connect the child widgets between each other
         self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.view_reset.emit)
-        self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.reset_dock_layout)
+        self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.init_docks)
 
     def populate(self):
         self.setCentralWidget(self._data_viewer)

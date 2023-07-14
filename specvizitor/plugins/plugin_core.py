@@ -11,5 +11,9 @@ class PluginCore(ABC):
         pass
 
     @abstractmethod
+    def tweak_docks(self, docks: dict[str, Dock]):
+        pass
+
+    @abstractmethod
     def tweak_widgets(self, widgets: dict[str, ViewerElement]):
         pass
