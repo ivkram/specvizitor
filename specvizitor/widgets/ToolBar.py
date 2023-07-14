@@ -103,7 +103,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         # connect button signals to slots
         for pn_text, b in self._pn_buttons.items():
-            b.triggered.connect(partial(self.previous_next_object, pn_text.split(' ')[0], 'starred' in pn_text))
+            b.triggered.connect(partial(self.change_object, pn_text.split(' ')[0], 'starred' in pn_text))
 
         self._star_button.triggered.connect(self.star)
         self._reset_view_button.triggered.connect(self.reset_view_button_clicked.emit)
@@ -146,7 +146,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._pn_buttons['previous starred'].setEnabled(review.has_starred)
         self._pn_buttons['next starred'].setEnabled(review.has_starred)
 
-    def previous_next_object(self, command: str, starred: bool):
+    def change_object(self, command: str, starred: bool):
         j_upd = self.update_index(self.rd.j, self.rd.review.n_objects, command)
 
         if starred:

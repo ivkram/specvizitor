@@ -3,8 +3,9 @@ import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Dock import Dock
-from qtpy import QtGui
+from qtpy import QtCore, QtGui
 
+from functools import partial
 import logging
 
 from specvizitor.plugins.plugin_core import PluginCore
@@ -33,12 +34,18 @@ class Plugin(PluginCore):
 
     def tweak_docks(self, docks: dict[str, Dock]):
 
-        first_lm_dock = docks.get(self.LM_NAME.format(1))
-        if not first_lm_dock:
+        i = 1
+        lm_docks = []
+        while docks.get(self.LM_NAME.format(i)):
+            lm_docks.append(docks.get(self.LM_NAME.format(i)))
+            i += 1
+
+        stacked_lm_docks = self.get_stacked_lm_docks(lm_docks)
+        if not stacked_lm_docks:
             return
 
         # raise the first line map dock to the top
-        first_lm_dock.raiseDock()
+        stacked_lm_docks[0].raiseDock()
 
         '''
         * patching a pyqtgraph bug *
@@ -46,11 +53,41 @@ class Plugin(PluginCore):
         however the last Line Map remains active (i.e. its label is still highlighted). therefore, when Line Map 1 is
         raised to the top, the last Line Map remains active
         '''
-        n = 1
-        while docks.get(self.LM_NAME.format(n + 1)):
-            n += 1
-        if n > 1:
-            docks.get(self.LM_NAME.format(n)).label.setDim(True)
+        if len(stacked_lm_docks) > 1:
+            stacked_lm_docks[-1].label.setDim(True)
+
+        # add shortcuts
+        stack = stacked_lm_docks[0].container().stack  # TODO: restore shortcuts when the stack is destroyed
+        QtGui.QShortcut(QtCore.Qt.Key_Up, stack, partial(self.change_current_linemap, lm_docks, -1))
+        QtGui.QShortcut(QtCore.Qt.Key_Down, stack, partial(self.change_current_linemap, lm_docks, 1))
+
+    def change_current_linemap(self, lm_docks: list[Dock], delta_index: int):
+        stacked_lm_docks = self.get_stacked_lm_docks(lm_docks)  # find stacked docks in case the stack is changed
+        if stacked_lm_docks:
+            stack = stacked_lm_docks[0].container().stack
+            stacked_lm_docks[(stack.currentIndex() + delta_index) % stack.count()].raiseDock()
+
+    @staticmethod
+    def get_stacked_lm_docks(lm_docks: list[Dock]) -> list[Dock]:
+        if not lm_docks:
+            return []
+
+        # locate the line map stack, if exists
+        i0 = 0
+        while not hasattr(lm_docks[i0].container(), 'stack'):
+            i0 += 1
+            if i0 == len(lm_docks):
+                return []
+
+        stack = lm_docks[i0].container().stack
+
+        stacked_lm_docks = []
+        for i in range(stack.count()):
+            w = stack.widget(i)
+            if isinstance(w, Dock):
+                stacked_lm_docks.append(w)
+
+        return stacked_lm_docks
 
     def tweak_widgets(self, widgets: dict[str, ViewerElement]):
         spec_1d: Spec1D | None = widgets.get('Spectrum 1D')

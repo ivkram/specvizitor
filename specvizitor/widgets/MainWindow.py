@@ -189,8 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._fullscreen.setShortcut('F11')
         self._view.addAction(self._fullscreen)
 
-        exit_fullscreen_shortcut = QtWidgets.QShortcut('Esc', self)
-        exit_fullscreen_shortcut.activated.connect(lambda: self._exit_fullscreen() if self.isFullScreen() else None)
+        QtWidgets.QShortcut('Esc', self, lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._widgets = self._menu.addMenu("&Widgets")
 
