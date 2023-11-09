@@ -121,10 +121,14 @@ class Image2D(ViewerElement):
 
     def smooth(self, sigma: float):
         if sigma > 0:
+            # create a smoothing kernel
             gauss_kernel = Gaussian2DKernel(sigma)
-            smoothed_data = convolve_fft(self.data, gauss_kernel)
+
+            # FFT algorithm is faster for large arrays (n > 500), which is a typical case for astronomy images
+            smoothed_data = convolve_fft(self.data, gauss_kernel, preserve_nan=True)
         else:
             smoothed_data = self.data
+
         self.image_item.setImage(smoothed_data, autoLevels=False)
 
     def rotate(self, angle: int):
