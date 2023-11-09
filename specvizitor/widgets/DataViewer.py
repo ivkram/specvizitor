@@ -93,6 +93,9 @@ class DataViewer(AbstractWidget):
                                        appearance=self._appearance, parent=self)
 
         for w in widgets.values():
+            w.post_init()
+
+        for w in widgets.values():
             self.object_selected.connect(w.load_object)
         self.core_widgets = widgets
 

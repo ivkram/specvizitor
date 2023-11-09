@@ -66,6 +66,12 @@ class ViewerElement(LazyViewerElement, abc.ABC):
                 sub_layout.addWidget(s)
         self.layout().addLayout(sub_layout, 2, 1, 1, 1)
 
+    @abc.abstractmethod
+    def post_init(self):
+        """ This method is evoked after initializing all data widgets and can be used e.g. to link views
+        """
+        pass
+
     @QtCore.Slot(int, InspectionData, Table, config.Data)
     def load_object(self, j: int, review: InspectionData, cat: Table, data_cfg: config.Data):
         # clear the widget content

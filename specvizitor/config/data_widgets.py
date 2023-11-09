@@ -69,6 +69,7 @@ class Image(ViewerElement):
     rotate: int | None = None
     scale: float | None = None
     container: str = 'ViewBox'
+    link_view: dict[str, str] | None = None
     color_bar: ColorBar = field(default_factory=ColorBar)
     central_axes: str | None = None
     crosshair: bool = False

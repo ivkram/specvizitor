@@ -231,6 +231,9 @@ class Plot1D(ViewerElement):
         super().populate()
         self.graphics_layout.addItem(self.plot_item)
 
+    def post_init(self):
+        pass
+
     def init_plot_data(self) -> PlotData | None:
         t: Table = self.data
         col_names = []

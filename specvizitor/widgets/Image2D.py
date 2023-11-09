@@ -67,6 +67,15 @@ class Image2D(ViewerElement):
         # add the color bar to the layout
         self.graphics_layout.addItem(self._cbar, 0, 1)
 
+    def post_init(self):
+        # link view(s)
+        if self.cfg.link_view:
+            for axis, widget_title in self.cfg.link_view.items():
+                if axis == 'x':
+                    self.container.setXLink(widget_title)
+                elif axis == 'y':
+                    self.container.setYLink(widget_title)
+
     def _load_data(self, *args, **kwargs):
         super()._load_data(*args, **kwargs)
         if self.data is None:
