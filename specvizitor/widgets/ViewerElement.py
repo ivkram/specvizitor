@@ -86,7 +86,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
                 s.update_default_value(cat, review.get_id(j))
 
         # load data to the widget
-        self.data, self.meta = self.load_data(obj_id=review.get_id(j), data_files=cache.discovered_data_files)
+        self.load_data(obj_id=review.get_id(j), data_files=cache.discovered_data_files)
 
         # display the data
         if self.data is not None:
@@ -103,7 +103,8 @@ class ViewerElement(LazyViewerElement, abc.ABC):
     def load_data(self, obj_id: str | int, data_files: list[str]):
         if self.cfg.data.filename_keyword is None:
             logger.error(f'Filename keyword not specified (object ID: {self.title})')
-            return None, None
+            self.data, self.meta = None, None
+            return
 
         loader_params = {} if self.cfg.data.loader_params is None else self.cfg.data.loader_params
 
@@ -111,14 +112,13 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         if self.filename is None:
             if not loader_params.get('silent'):
                 logger.error('{} not found (object ID: {})'.format(self.title, obj_id))
-            return None, None
+            self.data, self.meta = None, None
+            return
 
-        data, meta = load(self.cfg.data.loader, self.filename, self.title, **loader_params)
+        self.data, self.meta = load(self.cfg.data.loader, self.filename, self.title, **loader_params)
 
-        if not self.validate_dtype(data):
-            return None, None
-
-        return data, meta
+        if not self.validate_dtype(self.data):
+            self.data, self.meta = None, None
 
     def validate_dtype(self, data) -> bool:
         if self.allowed_data_types is not None:

@@ -80,8 +80,8 @@ class Image2D(ViewerElement):
                 elif axis == 'y':
                     self.container.setYLink(widget_title)
 
-    def _load_data(self, *args, **kwargs):
-        super()._load_data(*args, **kwargs)
+    def load_data(self, *args, **kwargs):
+        super().load_data(*args, **kwargs)
         if self.data is None:
             return
 

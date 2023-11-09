@@ -261,8 +261,8 @@ class Plot1D(ViewerElement):
         self.plot_item.update_labels(*label_cfg)
         self.labels_updated.emit(*label_cfg)
 
-    def _load_data(self, *args, **kwargs):
-        super()._load_data(*args, **kwargs)
+    def load_data(self, *args, **kwargs):
+        super().load_data(*args, **kwargs)
         if self.data is None:
             self.plot_data = None
             return
