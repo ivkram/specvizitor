@@ -206,7 +206,7 @@ class DataViewer(AbstractWidget):
                 j = 0
                 while j < len(fits_meta) and fits_meta[j] is not None:
                     j += 1
-                title_extra = ', '.join(fits_meta[:j])
+                title_extra = ', '.join(map(str, fits_meta[:j]))
 
                 if title_extra:
                     if core_widget.cfg.dock_title_fmt == 'short':
