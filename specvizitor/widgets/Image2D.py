@@ -2,7 +2,7 @@ from astropy.visualization import ZScaleInterval
 import numpy as np
 import pyqtgraph as pg
 from pgcolorbar.colorlegend import ColorLegendItem
-from scipy.ndimage import gaussian_filter
+from astropy.convolution import convolve_fft, Gaussian2DKernel
 from qtpy import QtGui, QtCore
 
 import logging
@@ -120,7 +120,12 @@ class Image2D(ViewerElement):
         self.remove_registered_items()
 
     def smooth(self, sigma: float):
-        self.image_item.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data, autoLevels=False)
+        if sigma > 0:
+            gauss_kernel = Gaussian2DKernel(sigma)
+            smoothed_data = convolve_fft(self.data, gauss_kernel)
+        else:
+            smoothed_data = self.data
+        self.image_item.setImage(smoothed_data, autoLevels=False)
 
     def rotate(self, angle: int):
         self.data = np.rot90(self.data, k=angle // 90)
