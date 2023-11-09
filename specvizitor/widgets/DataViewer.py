@@ -5,7 +5,7 @@ from qtpy import QtWidgets, QtCore
 
 import logging
 
-from ..config import config
+from ..config import Cache, config
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLines
 from ..io.inspection_data import InspectionData
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
+    object_selected = QtCore.Signal(int, InspectionData, Table, Cache)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
@@ -172,7 +172,7 @@ class DataViewer(AbstractWidget):
     def load_project(self):
         self.setEnabled(True)
 
-    @QtCore.Slot(int, InspectionData, Table, config.Data)
+    @QtCore.Slot(int, InspectionData, Table, Cache)
     def load_object(self, *args):
 
         # load the object to the widgets

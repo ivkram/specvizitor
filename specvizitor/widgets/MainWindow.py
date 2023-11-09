@@ -8,11 +8,11 @@ import logging
 import pathlib
 
 from ..appdata import AppData
-from ..config import config as cfg
 from ..config.appearance import set_up_appearance
 from ..config import Config, Cache, DataWidgets, SpectralLines
 from ..io.catalogue import read_cat, create_cat
 from ..io.inspection_data import InspectionData
+from ..io.viewer_data import get_filenames_from_id
 from ..utils.logs import LogMessageBox
 from ..utils.params import save_yaml
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
-    object_selected = QtCore.Signal(int, InspectionData, Table, cfg.Data)
+    object_selected = QtCore.Signal(int, InspectionData, Table, Cache)
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
@@ -342,9 +342,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # cache the index of the object
         self._cache.last_object_index = j
+
+        # perform search for files containing the object ID in their filename
+        self._cache.discovered_data_files = get_filenames_from_id(self._config.data.dir, self.rd.review.get_id(j))
+
         self._cache.save()
 
-        self.object_selected.emit(self.rd.j, self.rd.review, self.rd.cat, self._config.data)
+        self.object_selected.emit(self.rd.j, self.rd.review, self.rd.cat, self._cache)
 
         self._update_window_title()
 

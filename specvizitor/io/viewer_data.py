@@ -149,34 +149,6 @@ def add_enabled_aliases(units: dict[str, str]):
     u.add_enabled_aliases({alias: u.Unit(unit) for alias, unit in units.items()})
 
 
-def get_filename(directory, pattern: str, object_id) -> pathlib.Path | None:
-    """ Find a file for a given pattern and a given object ID. If more than one file name is matched to the pattern,
-    return the first item from an alphabetically ordered list of matched file names.
-
-    @param directory: the directory where the search is performed
-    @param pattern: the pattern used to match file names
-    @param object_id: the object ID
-    @return: the file name matched to the pattern
-    """
-
-    # match to the object ID
-    matched_to_id = sorted(pathlib.Path(directory).glob(f'*{object_id}*'))
-
-    # match to the pattern
-    matched = [p for p in matched_to_id if re.search(pattern, p.name)]
-
-    if isinstance(object_id, int):
-        # make sure that we don't match e.g. '1123' or '1234' to '123' (but match '0123')
-        matched_ids = [re.findall(r'\d*{}\d*'.format(object_id), p.name) for p in matched]
-        matched = [p for i, p in enumerate(matched)
-                   if matched_ids[i] and str(max(matched_ids[i], key=len)).lstrip('0') == str(object_id)]
-
-    if matched:
-        return matched[0]
-    else:
-        return
-
-
 def get_id_from_filename(filename, pattern: str) -> str | None:
     """ Extract the object ID from a file name using a pattern. If more than one ID is matched to the pattern, return
     the longest match (a typical case for integer IDs).
@@ -222,6 +194,42 @@ def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
         return
 
     return ids
+
+
+def get_filenames_from_id(directory: str, object_id: str | int) -> list[str]:
+    filenames = sorted(pathlib.Path(directory).glob(f'*{object_id}*'))
+
+    if isinstance(object_id, int):
+        # make sure that we don't match e.g. '1123' or '1234' to '123' (but match '0123')
+        matched_ids = [re.findall(r'\d*{}\d*'.format(object_id), p.name) for p in filenames]
+        filenames = [p for i, p in enumerate(filenames)
+                     if matched_ids[i] and str(max(matched_ids[i], key=len)).lstrip('0') == str(object_id)]
+
+    # convert pathlib.Path to str to store in cache
+    filenames = list(map(str, filenames))
+
+    return filenames
+
+
+def get_matching_filename(filenames: list[str], pattern: str) -> pathlib.Path | None:
+    """ Find a file name matching to pattern. If more than one file name is matched to the pattern,
+    return the first item from an alphabetically ordered list of matched file names.
+
+    @param filenames: the file names to which the pattern is being matched
+    @param pattern: the pattern used to match file names
+    @return: the file name matched to the pattern
+    """
+
+    # convert to pathlib.Path
+    filenames = [pathlib.Path(p) for p in filenames]
+
+    # match to the pattern
+    matched = [p for p in filenames if re.search(pattern, p.name)]
+
+    if matched:
+        return matched[0]
+    else:
+        return
 
 
 def data_browser(default_path, **kwargs) -> FileBrowser:

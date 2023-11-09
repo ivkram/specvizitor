@@ -7,15 +7,15 @@ from dataclasses import asdict
 import logging
 import pathlib
 
-from ..config import config, data_widgets
+from ..config import Cache, data_widgets
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import get_filename, load
+from ..io.viewer_data import get_matching_filename, load
 
 from .LazyViewerElement import LazyViewerElement
 from .SmartSlider import SmartSliderWithEditor
 
 logger = logging.getLogger(__name__)
-import pathlib
+
 
 class ViewerElement(LazyViewerElement, abc.ABC):
     content_added = QtCore.Signal()
@@ -72,8 +72,8 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         """
         pass
 
-    @QtCore.Slot(int, InspectionData, Table, config.Data)
-    def load_object(self, j: int, review: InspectionData, cat: Table, global_data_cfg: config.Data):
+    @QtCore.Slot(int, InspectionData, Table, Cache)
+    def load_object(self, j: int, review: InspectionData, cat: Table, cache: Cache):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
@@ -86,7 +86,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
                 s.update_default_value(cat, review.get_id(j))
 
         # load data to the widget
-        self.data, self.meta = self.load_data(obj_id=review.get_id(j), directory=global_data_cfg.dir)
+        self.data, self.meta = self.load_data(obj_id=review.get_id(j), data_files=cache.discovered_data_files)
 
         # display the data
         if self.data is not None:
@@ -100,14 +100,14 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         else:
             self.setEnabled(False)
 
-    def load_data(self, obj_id: str | int, directory: str):
+    def load_data(self, obj_id: str | int, data_files: list[str]):
         if self.cfg.data.filename_keyword is None:
             logger.error(f'Filename keyword not specified (object ID: {self.title})')
             return None, None
 
         loader_params = {} if self.cfg.data.loader_params is None else self.cfg.data.loader_params
 
-        self.filename = get_filename(directory, self.cfg.data.filename_keyword, obj_id)
+        self.filename = get_matching_filename(data_files, self.cfg.data.filename_keyword)
         if self.filename is None:
             if not loader_params.get('silent'):
                 logger.error('{} not found (object ID: {})'.format(self.title, obj_id))
