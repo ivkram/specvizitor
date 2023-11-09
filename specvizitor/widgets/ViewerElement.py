@@ -15,7 +15,7 @@ from .LazyViewerElement import LazyViewerElement
 from .SmartSlider import SmartSliderWithEditor
 
 logger = logging.getLogger(__name__)
-
+import pathlib
 
 class ViewerElement(LazyViewerElement, abc.ABC):
     content_added = QtCore.Signal()
@@ -73,7 +73,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         pass
 
     @QtCore.Slot(int, InspectionData, Table, config.Data)
-    def load_object(self, j: int, review: InspectionData, cat: Table, data_cfg: config.Data):
+    def load_object(self, j: int, review: InspectionData, cat: Table, global_data_cfg: config.Data):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
@@ -86,7 +86,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
                 s.update_default_value(cat, review.get_id(j))
 
         # load data to the widget
-        self._load_data(j=j, cat=cat, review=review, data_cfg=data_cfg)
+        self.data, self.meta = self.load_data(obj_id=review.get_id(j), directory=global_data_cfg.dir)
 
         # display the data
         if self.data is not None:
@@ -100,32 +100,30 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         else:
             self.setEnabled(False)
 
-    def _load_data(self, j: int, cat: Table, review: InspectionData, data_cfg: config.Data):
+    def load_data(self, obj_id: str | int, directory: str):
         if self.cfg.data.filename_keyword is None:
             logger.error(f'Filename keyword not specified (object ID: {self.title})')
-            return
+            return None, None
 
         loader_params = {} if self.cfg.data.loader_params is None else self.cfg.data.loader_params
 
-        self.filename = get_filename(data_cfg.dir, self.cfg.data.filename_keyword, review.get_id(j))
+        self.filename = get_filename(directory, self.cfg.data.filename_keyword, obj_id)
         if self.filename is None:
             if not loader_params.get('silent'):
-                logger.error('{} not found (object ID: {})'.format(self.title, review.get_id(j)))
-            self.data, self.meta = None, None
-            return
+                logger.error('{} not found (object ID: {})'.format(self.title, obj_id))
+            return None, None
 
-        self.data, self.meta = load(self.cfg.data.loader, self.filename, self.title, **loader_params)
-        if self.data is None:
-            return
+        data, meta = load(self.cfg.data.loader, self.filename, self.title, **loader_params)
 
-        if not self.validate_dtype():
-            self.data, self.meta = None, None
-            return
+        if not self.validate_dtype(data):
+            return None, None
 
-    def validate_dtype(self):
+        return data, meta
+
+    def validate_dtype(self, data) -> bool:
         if self.allowed_data_types is not None:
-            if not any(isinstance(self.data, t) for t in self.allowed_data_types):
-                logger.error(f'Invalid input data type: {type(self.data)} (widget: {self.title}). '
+            if not any(isinstance(data, t) for t in self.allowed_data_types):
+                logger.error(f'Invalid input data type: {type(data)} (widget: {self.title}). '
                              'Try to use a different data loader')
                 return False
         return True
