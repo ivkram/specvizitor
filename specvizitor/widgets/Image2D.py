@@ -81,7 +81,7 @@ class Image2D(ViewerElement):
             self.scale(self.cfg.scale)
 
     def add_content(self):
-        self.image_item.setImage(self.data)
+        self.image_item.setImage(self.data, autoLevels=False)
 
         # add axes of symmetry to the image
         if self.cfg.central_axes in ('x', 'y', 'xy'):
@@ -111,7 +111,8 @@ class Image2D(ViewerElement):
 
     def reset_view(self):
         # TODO: allow to choose between min/max and zscale?
-        self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
+        if np.any(np.isfinite(self.data)):
+            self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
         self.container.autoRange(padding=0)
 
     def clear_content(self):
@@ -119,7 +120,7 @@ class Image2D(ViewerElement):
         self.remove_registered_items()
 
     def smooth(self, sigma: float):
-        self.image_item.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data)
+        self.image_item.setImage(gaussian_filter(self.data, sigma) if sigma > 0 else self.data, autoLevels=False)
 
     def rotate(self, angle: int):
         self.data = np.rot90(self.data, k=angle // 90)
