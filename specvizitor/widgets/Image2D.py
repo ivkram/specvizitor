@@ -27,6 +27,10 @@ class Image2D(ViewerElement):
 
         super().__init__(cfg=cfg, **kwargs)
 
+    @property
+    def levels(self):
+        return 0
+
     def init_ui(self):
         super().init_ui()
 
@@ -119,9 +123,10 @@ class Image2D(ViewerElement):
             self.register_item(crosshair_y)
 
     def reset_view(self):
-        # TODO: allow to choose between min/max and zscale?
         if np.any(np.isfinite(self.data)):
-            self._cbar.setLevels(ZScaleInterval().get_limits(self.data))
+            # TODO: allow to choose between min/max and zscale?
+            self._cbar.setLevels(ZScaleInterval().get_limits(self.data[np.nonzero(self.data)]))
+            self._cbar._updateHistogram()  # the histogram is calculated using the current image levels
         self.container.autoRange(padding=0)
 
     def clear_content(self):
