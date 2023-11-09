@@ -1,13 +1,13 @@
+from astropy.convolution import convolve_fft, Gaussian2DKernel
 from astropy.visualization import ZScaleInterval
 import numpy as np
 import pyqtgraph as pg
-from pgcolorbar.colorlegend import ColorLegendItem
-from astropy.convolution import convolve_fft, Gaussian2DKernel
 from qtpy import QtGui, QtCore
 
 import logging
 
 from ..config import data_widgets
+from .ColorBar import ColorBar
 from .ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class Image2D(ViewerElement):
 
         self.image_item: pg.ImageItem | None = None
         self.container: pg.PlotItem | pg.ViewBox | None = None
-        self._cbar: ColorLegendItem | None = None
+        self._cbar: ColorBar | None = None
 
         super().__init__(cfg=cfg, **kwargs)
 
@@ -55,7 +55,7 @@ class Image2D(ViewerElement):
         self.container.addItem(self.image_item)
 
         # create a color bar
-        self._cbar = ColorLegendItem(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
+        self._cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
         self._cbar.setVisible(self.cfg.color_bar.visible)
 
     def populate(self):
@@ -153,7 +153,7 @@ class Image2D(ViewerElement):
     def apply_qtransform(self, qtransform: QtGui.QTransform):
         self.image_item.setTransform(qtransform)
         for item in self._added_items:
-           item.setTransform(qtransform)
+            item.setTransform(qtransform)
 
     def remove_registered_items(self):
         for item in self._added_items:
