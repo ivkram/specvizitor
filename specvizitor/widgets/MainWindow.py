@@ -356,7 +356,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.output_path is not None:
             title += f'{self.rd.output_path.name} – '
         if self.rd.j is not None:
-            title += f'ID {self.rd.review.get_id(self.rd.j)} [#{self.rd.j + 1}/{self.rd.review.n_objects}] – '
+            title += (f'ID {self.rd.review.get_id(self.rd.j, full=True)}'
+                      f' [#{self.rd.j + 1}/{self.rd.review.n_objects}] – ')
         title += 'Specvizitor'
         self.setWindowTitle(title)
 

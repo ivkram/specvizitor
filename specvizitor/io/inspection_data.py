@@ -43,7 +43,10 @@ class InspectionData:
         @return: an instance of the InspectionData class
         """
 
-        index = pd.MultiIndex.from_arrays(args, names=['id'] + [f'id{i + 1}' for i in range(1, len(args))])
+        if len(args) == 1:
+            index = pd.Index(args[0], name='id')
+        else:
+            index = pd.MultiIndex.from_arrays(args, names=['id'] + [f'id{i + 1}' for i in range(1, len(args))])
 
         df = (pd.DataFrame(index=index)).sort_index()
         df['starred'] = False
@@ -139,14 +142,14 @@ class InspectionData:
     def get_value(self, j: int, cname: str):
         return self.df.iat[j, self.df.columns.get_loc(cname)]
 
-    def get_id(self, j: int, full=False) -> str | int | None:
+    def get_id(self, j: int, full=False) -> str | int | tuple | None:
         try:
             obj_id = self.ids[j] if not full else self.ids_full[j]
         except (TypeError, IndexError):
             return
 
-        if not full and self.ids_are_int:
-            # convert from int64 to int
+        if self.ids_are_int and not isinstance(obj_id, tuple):
+            # convert int64 to int
             obj_id = int(obj_id)
 
         return obj_id
