@@ -77,7 +77,7 @@ def main():
                for plugin_name in config.plugins]
 
     # create the main window
-    window = MainWindow(config=config,
+    window = MainWindow(global_cfg=config,
                         cache=Cache.read_user_params(local_files['cache']),
                         viewer_cfg=DataWidgets.read_user_params(local_files['widgets'], default='data_widgets.yml'),
                         spectral_lines=SpectralLines.read_user_params(local_files['lines'],

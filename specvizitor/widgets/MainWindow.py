@@ -8,11 +8,10 @@ import logging
 import pathlib
 
 from ..appdata import AppData
+from ..config import config, Config, Cache, DataWidgets, SpectralLines
 from ..config.appearance import set_up_appearance
-from ..config import Config, Cache, DataWidgets, SpectralLines
 from ..io.catalogue import read_cat, create_cat
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import get_filenames_from_id
 from ..utils.logs import LogMessageBox
 from ..utils.params import save_yaml
 
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
-    object_selected = QtCore.Signal(int, InspectionData, Table, Cache)
+    object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
@@ -40,13 +39,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     screenshot_path_selected = QtCore.Signal(str)
 
-    def __init__(self, config: Config, cache: Cache, viewer_cfg: DataWidgets,
+    def __init__(self, global_cfg: Config, cache: Cache, viewer_cfg: DataWidgets,
                  spectral_lines: SpectralLines | None = None, plugins=None, parent=None):
         super().__init__(parent)
 
         self.rd = AppData()
         
-        self._config = config
+        self._config = global_cfg
         self._cache = cache
 
         self._viewer_cfg = viewer_cfg
@@ -342,13 +341,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # cache the index of the object
         self._cache.last_object_index = j
-
-        # perform search for files containing the object ID in their filename
-        self._cache.discovered_data_files = get_filenames_from_id(self._config.data.dir, self.rd.review.get_id(j))
-
         self._cache.save()
 
-        self.object_selected.emit(self.rd.j, self.rd.review, self.rd.cat, self._cache)
+        self.object_selected.emit(self.rd.j, self.rd.review, self.rd.cat, self._config.data)
 
         self._update_window_title()
 

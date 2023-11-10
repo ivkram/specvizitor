@@ -5,10 +5,11 @@ from qtpy import QtWidgets, QtCore
 
 import logging
 
-from ..config import Cache, config
+from ..config import config
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLines
 from ..io.inspection_data import InspectionData
+from ..io.viewer_data import get_filenames_from_id
 from ..plugins.plugin_core import PluginCore
 
 from .AbstractWidget import AbstractWidget
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(int, InspectionData, Table, Cache)
+    object_selected = QtCore.Signal(int, InspectionData, Table, list)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
@@ -172,11 +173,13 @@ class DataViewer(AbstractWidget):
     def load_project(self):
         self.setEnabled(True)
 
-    @QtCore.Slot(int, InspectionData, Table, Cache)
-    def load_object(self, *args):
+    @QtCore.Slot(int, InspectionData, Table, config.Data)
+    def load_object(self, j: int, review: InspectionData, cat: Table, data_cfg: config.Data):
+        # perform search for files containing the object ID in their filename
+        discovered_data_files = get_filenames_from_id(data_cfg.dir, review.get_id(j))
 
         # load the object to the widgets
-        self.object_selected.emit(*args)
+        self.object_selected.emit(j, review, cat, discovered_data_files)
 
         try:
             self.view_reset.disconnect()

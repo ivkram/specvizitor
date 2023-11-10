@@ -72,8 +72,8 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         """
         pass
 
-    @QtCore.Slot(int, InspectionData, Table, Cache)
-    def load_object(self, j: int, review: InspectionData, cat: Table, cache: Cache):
+    @QtCore.Slot(int, InspectionData, Table, list)
+    def load_object(self, j: int, review: InspectionData, cat: Table, data_files: list[str]):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
@@ -86,7 +86,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
                 s.update_default_value(cat, review.get_id(j))
 
         # load data to the widget
-        self.load_data(obj_id=review.get_id(j), data_files=cache.discovered_data_files)
+        self.load_data(obj_id=review.get_id(j), data_files=data_files)
 
         # display the data
         if self.data is not None:

@@ -9,4 +9,3 @@ class Cache(Params):
     last_object_index: int | None = None
     visible_columns: list[str] | None = None
     dock_layout: dict | None = None
-    discovered_data_files: list[str] | None = None
