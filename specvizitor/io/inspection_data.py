@@ -19,7 +19,7 @@ class WriterBase(ABC):
 
 class CSVWriter(WriterBase):
     def write(self, df: pd.DataFrame, filename: pathlib.Path):
-        df.to_csv(filename, index_label='id')
+        df.to_csv(filename)
 
 
 class FITSWriter(WriterBase):
@@ -34,17 +34,18 @@ class InspectionData:
     default_columns: list[str] = field(default_factory=lambda: ['starred', 'comment'])
 
     @classmethod
-    def create(cls, ids, flags: list[str] | None = None):
+    def create(cls, *args, flags: list[str] | None = None):
         """ Create a new instance of the InspectionData class with a Pandas dataframe containing:
               - a column of IDs;
               - a column for comments;
               - one column per each user-defined flag.
-        @param ids: the list of IDs
         @param flags: the list of user-defined flags
         @return: an instance of the InspectionData class
         """
 
-        df = pd.DataFrame(index=ids).sort_index()
+        index = pd.MultiIndex.from_arrays(args, names=['id'] + [f'id{i + 1}' for i in range(1, len(args))])
+
+        df = (pd.DataFrame(index=index)).sort_index()
         df['starred'] = False
         df['comment'] = ''
 
@@ -63,6 +64,11 @@ class InspectionData:
 
         # TODO: validate the input
         df = pd.read_csv(filename, index_col='id')
+
+        i = 1
+        while f'id{i + 1}' in df.columns:
+            df.set_index(f'id{i + 1}', append=True, inplace=True)
+            i += 1
 
         if 'starred' not in df.columns:
             df['starred'] = False
@@ -100,12 +106,20 @@ class InspectionData:
         return len(self.df)
 
     @property
-    def ids(self) -> np.array:
+    def ids(self):
+        """ Primary IDs.
+        """
+        return self.df.index.get_level_values(0)
+
+    @property
+    def ids_full(self):
+        """ All available IDs.
+        """
         return self.df.index.values
 
     @property
     def ids_are_int(self) -> bool:
-        return pd.api.types.is_integer_dtype(self.df.index)
+        return pd.api.types.is_integer_dtype(self.ids)
 
     @property
     def user_defined_columns(self) -> list[str]:
@@ -125,23 +139,27 @@ class InspectionData:
     def get_value(self, j: int, cname: str):
         return self.df.iat[j, self.df.columns.get_loc(cname)]
 
-    def get_id(self, j: int) -> int | str | None:
+    def get_id(self, j: int, full=False) -> str | int | None:
         try:
-            obj_id = self.ids[j]
+            obj_id = self.ids[j] if not full else self.ids_full[j]
         except (TypeError, IndexError):
             return
 
-        if self.ids_are_int:
+        if not full and self.ids_are_int:
             # convert from int64 to int
             obj_id = int(obj_id)
 
         return obj_id
 
-    def get_id_loc(self, obj_id: str):
+    def get_id_loc(self, obj_id: str | int):
         if self.ids_are_int:
             obj_id = int(obj_id)
 
-        return self.df.index.get_loc(obj_id)
+        j = self.df.index.get_loc(obj_id)
+        if isinstance(j, slice):
+            j = j.start  # use the first available secondary ID
+
+        return j
 
     def update_value(self, j: int, cname: str, value):
         self.df.iat[j, self.df.columns.get_loc(cname)] = value

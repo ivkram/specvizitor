@@ -1,6 +1,7 @@
 catalogue:
   translate:
     id: [Id, ID, NUMBER]
+    id2: [ID_EMLINE]
     redshift: [z, Z, Redshift, REDSHIFT, z_vac, z_map]
 
 data:

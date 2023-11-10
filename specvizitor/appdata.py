@@ -14,7 +14,7 @@ class AppData:
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
     cat: Table | None = None                 # the catalogue
-    review: InspectionData | None = None      # inspection results
+    review: InspectionData | None = None     # inspection results
 
     j: int = None  # the index of the current object
 
@@ -25,7 +25,8 @@ class AppData:
             logger.error("Failed to initialize inspection data: the catalogue not loaded to the memory")
             return
 
-        self.review = InspectionData.create(self.cat['id'], **kwargs)
+        # for some reason it's quite difficult to retrieve indices from Astropy Table...
+        self.review = InspectionData.create(*[list(ind.index.columns[0]) for ind in self.cat.indices], **kwargs)
 
     def read(self):
         """ Read the inspection file.

@@ -15,7 +15,6 @@ def read_cat(filename=None,
              translate: dict[str, list[str]] | None = None,
              data_dir=None,
              id_pattern=r'\d+') -> [Table, None]:
-
     """ Read and filter the catalogue.
     @param filename: the catalogue filename
     @param translate:
@@ -44,7 +43,6 @@ def read_cat(filename=None,
     if 'id' not in cat.colnames:
         logger.error(table_tools.column_not_found_message('id', translate))
         return
-    cat.add_index('id')
 
     if data_dir is not None:
         ids = get_ids_from_dir(data_dir, id_pattern)
@@ -57,6 +55,11 @@ def read_cat(filename=None,
     if len(cat) == 0:
         logger.error('The processed catalogue is empty')
         return
+
+    # adding indices
+    cat.add_index('id')
+    if 'id2' in cat.colnames:
+        cat.add_index('id2')
 
     return cat
 

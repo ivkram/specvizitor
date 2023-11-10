@@ -6,6 +6,7 @@ from ..utils.params import Params
 @dataclass
 class Catalogue:
     filename: str | None = None
+    use_secondary_ids: bool = False
     translate: dict[str, list[str]] | None = None
 
 
