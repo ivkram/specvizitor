@@ -46,7 +46,7 @@ class InspectionData:
         if len(args) == 1:
             index = pd.Index(args[0], name='id')
         else:
-            index = pd.MultiIndex.from_arrays(args, names=['id'] + [f'id{i + 1}' for i in range(1, len(args))])
+            index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
 
         df = (pd.DataFrame(index=index)).sort_index()
         df['starred'] = False

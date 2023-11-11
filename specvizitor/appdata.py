@@ -5,6 +5,7 @@ import logging
 import pathlib
 
 from .io.inspection_data import InspectionData
+from .utils.table_tools import get_table_indices
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,7 @@ class AppData:
             logger.error("Failed to initialize inspection data: the catalogue not loaded to the memory")
             return
 
-        # for some reason it's quite difficult to retrieve indices from Astropy Table...
-        self.review = InspectionData.create(*[list(ind.index.columns[0]) for ind in self.cat.indices], **kwargs)
+        self.review = InspectionData.create(*[list(self.cat[ind]) for ind in get_table_indices(self.cat)], **kwargs)
 
     def read(self):
         """ Read the inspection file.

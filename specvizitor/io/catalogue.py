@@ -1,5 +1,5 @@
 from astropy.io import fits
-from astropy.table import Table
+from astropy.table import Table, Row
 import numpy as np
 
 import logging
@@ -65,10 +65,32 @@ def read_cat(filename=None,
 
 
 def create_cat(ids) -> Table:
-    cat = Table([ids], names=('id',))
-    cat.add_index('id')
+    colnames = ('id',)
+    if isinstance(ids[0], tuple):
+        colnames += tuple(f'id{i + 1}' for i in range(1, len(ids[0])))
+
+    cat = Table(list(zip(*ids)), names=colnames)
+
+    for cname in colnames:
+        cat.add_index(cname)
 
     return cat
+
+
+def get_obj_cat(cat: Table, obj_id: str | int | tuple) -> Row | None:
+    obj_cat = None
+    try:
+        obj_cat = table_tools.loc_full(cat, obj_id)
+    except KeyError:
+        logger.error(f'Object not found in the catalogue (ID: {obj_id})')
+    except TypeError as msg:
+        logger.error(msg)
+
+    if isinstance(obj_cat, Table):
+        logger.error(f'Object corresponds to multiple entries in the catalogue (ID: {obj_id})')
+        obj_cat = None
+
+    return obj_cat
 
 
 def cat_browser(default_path, **kwargs) -> FileBrowser:

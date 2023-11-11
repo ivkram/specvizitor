@@ -10,7 +10,7 @@ import pathlib
 from ..appdata import AppData
 from ..config import config, Config, Cache, DataWidgets, SpectralLines
 from ..config.appearance import set_up_appearance
-from ..io.catalogue import read_cat, create_cat
+from ..io.catalogue import read_cat, create_cat, get_obj_cat
 from ..io.inspection_data import InspectionData
 from ..utils.logs import LogMessageBox
 from ..utils.params import save_yaml
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
-    object_selected = QtCore.Signal(int, InspectionData, Table, config.Data)
+    object_selected = QtCore.Signal(int, InspectionData, object, config.Data)
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
@@ -343,7 +343,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.last_object_index = j
         self._cache.save()
 
-        self.object_selected.emit(self.rd.j, self.rd.review, self.rd.cat, self._config.data)
+        # get object data from the catalogue
+        obj_id = self.rd.review.get_id(j, full=True)
+        obj_cat = get_obj_cat(self.rd.cat, obj_id)
+
+        self.object_selected.emit(self.rd.j, self.rd.review, obj_cat, self._config.data)
 
         self._update_window_title()
 
@@ -468,7 +472,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot(object)
     def update_catalogue(self, cat: Table | None):
         if cat is None and self.rd.review is not None:
-            self.rd.cat = create_cat(self.rd.review.ids)
+            self.rd.cat = create_cat(self.rd.review.ids_full)
         else:
             self.rd.cat = cat
         self.catalogue_changed.emit(self.rd.cat)

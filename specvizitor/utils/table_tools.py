@@ -1,4 +1,32 @@
-from astropy.table import Table
+from astropy.table import Table, Row
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def get_table_indices(t: Table) -> tuple:
+    return tuple(ind.columns[0].name for ind in t.indices)
+
+
+def loc_full(t: Table | Row, obj_id: str | int | tuple, indices: tuple | None = None):
+    """ Retrieve rows by (multi)index.
+    """
+
+    if isinstance(obj_id, str) or isinstance(obj_id, int):
+        return t.loc[obj_id]
+    elif isinstance(obj_id, tuple):
+        if not obj_id or (isinstance(t, Row) and t[indices[0]] == obj_id[0]):
+            return t
+
+        if indices is None:
+            indices = get_table_indices(t)
+            if len(indices) != len(obj_id):
+                raise KeyError
+
+        return loc_full(t.loc[indices[0], obj_id[0]], obj_id[1:], indices[1:])
+    else:
+        raise TypeError(f'Unknown object ID type: {type(obj_id)}')
 
 
 def translate(t: Table, dictionary: dict):

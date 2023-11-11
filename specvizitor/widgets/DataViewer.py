@@ -1,4 +1,4 @@
-from astropy.table import Table
+from astropy.table import Row
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(int, InspectionData, Table, list)
+    object_selected = QtCore.Signal(int, InspectionData, object, list)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
@@ -173,13 +173,13 @@ class DataViewer(AbstractWidget):
     def load_project(self):
         self.setEnabled(True)
 
-    @QtCore.Slot(int, InspectionData, Table, config.Data)
-    def load_object(self, j: int, review: InspectionData, cat: Table, data_cfg: config.Data):
+    @QtCore.Slot(int, InspectionData, object, config.Data)
+    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_cfg: config.Data):
         # perform search for files containing the object ID in their filename
         discovered_data_files = get_filenames_from_id(data_cfg.dir, review.get_id(j))
 
         # load the object to the widgets
-        self.object_selected.emit(j, review, cat, discovered_data_files)
+        self.object_selected.emit(j, review, obj_cat, discovered_data_files)
 
         try:
             self.view_reset.disconnect()

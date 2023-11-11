@@ -1,4 +1,4 @@
-from astropy.table import Table
+from astropy.table import Row
 import numpy as np
 from qtpy import QtWidgets, QtCore
 
@@ -146,11 +146,15 @@ class SmartSliderWithEditor(AbstractWidget):
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
 
-    def update_default_value(self, cat: Table, object_id):
+    def update_default_value(self, obj_cat: Row | None):
+        if obj_cat is None:
+            self._slider.default_value = self._default_value_backup
+            return
+
         try:
-            self._slider.default_value = cat.loc[object_id][self.name_in_catalogue]
+            self._slider.default_value = obj_cat[self.name_in_catalogue]
         except KeyError:
-            logger.warning(column_not_found_message(self.name_in_catalogue, cat.meta.get('aliases')))
+            logger.warning(column_not_found_message(self.name_in_catalogue, obj_cat.meta.get('aliases')))
             self._slider.default_value = self._default_value_backup
 
     def reset(self):

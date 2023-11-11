@@ -1,5 +1,5 @@
 from astropy.io.fits.header import Header
-from astropy.table import Table
+from astropy.table import Row
 from qtpy import QtWidgets, QtCore
 
 import abc
@@ -7,7 +7,7 @@ from dataclasses import asdict
 import logging
 import pathlib
 
-from ..config import Cache, data_widgets
+from ..config import data_widgets
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_matching_filename, load
 
@@ -72,8 +72,8 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         """
         pass
 
-    @QtCore.Slot(int, InspectionData, Table, list)
-    def load_object(self, j: int, review: InspectionData, cat: Table, data_files: list[str]):
+    @QtCore.Slot(int, InspectionData, object, list)
+    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_files: list[str]):
         # clear the widget content
         if self.data is not None:
             self.clear_content()
@@ -83,7 +83,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # load catalogue values to the sliders
         for s in self.sliders:
             if s.name_in_catalogue is not None:
-                s.update_default_value(cat, review.get_id(j))
+                s.update_default_value(obj_cat)
 
         # load data to the widget
         self.load_data(obj_id=review.get_id(j), data_files=data_files)

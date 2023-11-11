@@ -1,5 +1,5 @@
 from astropy.coordinates import SkyCoord
-from astropy.table import Table
+from astropy.table import Table, Row
 from qtpy import QtWidgets, QtCore
 
 import logging
@@ -112,20 +112,20 @@ class ObjectInfo(AbstractWidget):
     def load_project(self):
         self.setEnabled(True)
 
-    @QtCore.Slot(int, InspectionData, Table)
-    def load_object(self, j: int, review: InspectionData, cat: Table):
-        try:
-            cat.loc[review.get_id(j)]
-        except KeyError:
-            logger.warning('Object not found in the catalogue (ID: {})'.format(review.get_id(j)))
+    @QtCore.Slot(int, InspectionData, object)
+    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None):
+
+        if obj_cat is None:
+            for row in self._table_items:
+                row[1].setText('')
             return
 
         for row in self._table_items:
             cname = row[0].text()
             try:
-                row[1].setText(str(cat.loc[review.get_id(j)][cname]))
+                row[1].setText(str(obj_cat[cname]))
             except KeyError:
-                logger.warning(column_not_found_message(cname, cat.meta.get('aliases')))
+                logger.warning(column_not_found_message(cname, obj_cat.meta.get('aliases')))
                 row[1].setText('')
 
         # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:
