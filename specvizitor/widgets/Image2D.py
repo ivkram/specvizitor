@@ -4,6 +4,7 @@ import numpy as np
 import pyqtgraph as pg
 from qtpy import QtGui, QtCore
 
+from dataclasses import dataclass
 import logging
 
 from ..config import data_widgets
@@ -11,6 +12,16 @@ from .ColorBar import ColorBar
 from .ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Image2DRange:
+    x: tuple[float, float] | None = None
+    y: tuple[float, float] | None = None
+
+    def reset(self):
+        self.x = None
+        self.y = None
 
 
 class Image2D(ViewerElement):
@@ -25,11 +36,9 @@ class Image2D(ViewerElement):
         self.container: pg.PlotItem | pg.ViewBox | None = None
         self._cbar: ColorBar | None = None
 
-        super().__init__(cfg=cfg, **kwargs)
+        self._default_range = Image2DRange()
 
-    @property
-    def levels(self):
-        return 0
+        super().__init__(cfg=cfg, **kwargs)
 
     def init_ui(self):
         super().init_ui()
@@ -122,16 +131,28 @@ class Image2D(ViewerElement):
             self.register_item(crosshair_x)
             self.register_item(crosshair_y)
 
+    def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None):
+        if xrange:
+            self._default_range.x = xrange
+        if yrange:
+            self._default_range.y = yrange
+
     def reset_view(self):
         if np.any(np.isfinite(self.data)):
             # TODO: allow to choose between min/max and zscale?
             self._cbar.setLevels(ZScaleInterval().get_limits(self.data[np.nonzero(self.data)]))
             self._cbar._updateHistogram()  # the histogram is calculated using the current image levels
-        self.container.autoRange(padding=0)
+
+        if self._default_range.x is None and self._default_range.y is None:
+            self.container.autoRange(padding=0)
+        else:
+            self.container.setRange(xRange=self._default_range.x, yRange=self._default_range.y, padding=0)
 
     def clear_content(self):
         self.image_item.clear()
         self.remove_registered_items()
+
+        self._default_range.reset()
 
     def smooth(self, sigma: float):
         if sigma > 0:

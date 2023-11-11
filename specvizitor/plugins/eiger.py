@@ -28,6 +28,7 @@ class Plugin(PluginCore):
         x0, y0 = self.get_emline_coords(obj_cat)
         if x0 is not None and y0 is not None:
             dx, dy = 5, 5
+            zoom = 25
 
             for spec_2d in (spec_2d_stack,) + spec_2d_mods:
                 if spec_2d is None:
@@ -35,11 +36,12 @@ class Plugin(PluginCore):
 
                 pen = pg.mkPen('r', width=2, style=QtCore.Qt.DashLine)
 
-                crosshair_x = pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen)
-                crosshair_y = pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen)
+                spec_2d.register_item(pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen))
+                spec_2d.register_item(pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen))
 
-                spec_2d.register_item(crosshair_x)
-                spec_2d.register_item(crosshair_y)
+                spec_2d.set_default_range(xrange=(x0 - zoom * dx, x0 + zoom * dx),
+                                          yrange=(y0 - dy, y0 + dy))
+                spec_2d.reset_view()
 
     @staticmethod
     def get_emline_coords(obj_cat: Row | None) -> tuple[float | None, float | None]:
