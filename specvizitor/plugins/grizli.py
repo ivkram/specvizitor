@@ -1,4 +1,4 @@
-from astropy.table import Table
+from astropy.table import Table, Row
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
@@ -89,7 +89,7 @@ class Plugin(PluginCore):
 
         return stacked_lm_docks
 
-    def tweak_widgets(self, widgets: dict[str, ViewerElement]):
+    def tweak_widgets(self, widgets: dict[str, ViewerElement], obj_cat: Row | None = None):
         spec_1d: Spec1D | None = widgets.get('Spectrum 1D')
         spec_2d: Image2D | None = widgets.get('Spectrum 2D')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')

@@ -192,7 +192,7 @@ class DataViewer(AbstractWidget):
         self._update_dock_titles()
 
         for plugin in self._plugins:
-            plugin.tweak_widgets(self.active_core_widgets)
+            plugin.tweak_widgets(self.active_core_widgets, obj_cat)
 
     @QtCore.Slot()
     def collect(self):

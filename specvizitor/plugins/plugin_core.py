@@ -1,3 +1,4 @@
+from astropy.table import Row
 from pyqtgraph.dockarea.Dock import Dock
 
 from abc import ABC, abstractmethod
@@ -15,5 +16,5 @@ class PluginCore(ABC):
         pass
 
     @abstractmethod
-    def tweak_widgets(self, widgets: dict[str, ViewerElement]):
+    def tweak_widgets(self, widgets: dict[str, ViewerElement], obj_cat: Row | None = None):
         pass
