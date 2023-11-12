@@ -16,6 +16,8 @@ class ReviewForm(AbstractWidget):
         self._checkbox_widgets: dict[str, QtWidgets.QCheckBox] | None = None
         self._comments_widget: QtWidgets.QTextEdit | None = None
 
+        self._edit_flags: QtWidgets.QPushButton | None = None
+
         super().__init__(parent=parent)
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
@@ -46,6 +48,9 @@ class ReviewForm(AbstractWidget):
         self.create_checkbox_widgets()
         self._comments_widget = QtWidgets.QTextEdit(self)
 
+        self._edit_flags = QtWidgets.QPushButton("Edit...", self)
+        self._edit_flags.pressed.connect(self._edit_flags_action)
+
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
 
@@ -55,6 +60,8 @@ class ReviewForm(AbstractWidget):
 
         self.layout().addWidget(QtWidgets.QLabel('Comments:', self), len(self._checkbox_widgets) + 1, 1, 1, 1)
         self.layout().addWidget(self._comments_widget, len(self._checkbox_widgets) + 2, 1, 1, 1)
+
+        self.layout().addWidget(self._edit_flags, len(self._checkbox_widgets) + 3, 1, 1, 1)
 
     @QtCore.Slot(InspectionData)
     def load_project(self, review: InspectionData):
@@ -75,3 +82,6 @@ class ReviewForm(AbstractWidget):
         checkboxes = {cname: widget.isChecked() for cname, widget in self._checkbox_widgets.items()}
 
         self.data_collected.emit(comment, checkboxes)
+
+    def _edit_flags_action(self):
+        pass
