@@ -88,7 +88,7 @@ class ViewerElement(LazyViewerElement, abc.ABC):
         # load data to the widget
         self.load_data(obj_id=review.get_id(j), data_files=data_files)
 
-        # display the data
+        # display the object
         if self.data is not None:
             self.setEnabled(True)
             self.add_content()

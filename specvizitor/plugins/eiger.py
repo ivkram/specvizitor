@@ -39,9 +39,13 @@ class Plugin(PluginCore):
                 spec_2d.register_item(pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen))
                 spec_2d.register_item(pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen))
 
-                spec_2d.set_default_range(xrange=(x0 - zoom * dx, x0 + zoom * dx),
-                                          yrange=(y0 - dy, y0 + dy))
-                spec_2d.reset_view()
+                x1, x2 = x0 - zoom * dx, x0 + zoom * dx
+                y1, y2 = y0 - dy, y0 + dy
+
+                x1, y1 = spec_2d.qtransform.map(x1, y1)
+                x2, y2 = spec_2d.qtransform.map(x2, y2)
+                
+                spec_2d.set_default_range(xrange=(x1, x2), yrange=(y1, y2), update=True)
 
     @staticmethod
     def get_emline_coords(obj_cat: Row | None) -> tuple[float | None, float | None]:

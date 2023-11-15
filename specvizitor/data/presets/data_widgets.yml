@@ -15,6 +15,8 @@ images:
         extname: SCI
         extver: F444W
     container: PlotItem
+    link_view:
+      x: Spectrum 1D
     central_axes: x
 
   Line Map 1: &linemap_defaults

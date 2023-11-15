@@ -1,5 +1,6 @@
 from astropy.convolution import convolve_fft, Gaussian2DKernel
 from astropy.visualization import ZScaleInterval
+from astropy.wcs import WCS
 import numpy as np
 import pyqtgraph as pg
 from qtpy import QtGui, QtCore
@@ -20,9 +21,15 @@ class Image2DRange:
     x: tuple[float, float] | None = None
     y: tuple[float, float] | None = None
 
-    def reset(self):
-        self.x = None
-        self.y = None
+    @property
+    def is_set(self) -> bool:
+        return not (self.x is None and self.y is None)
+
+
+@dataclass
+class Image2DLevels:
+    min: float = 0
+    max: float = 1
 
 
 class Image2D(ViewerElement):
@@ -37,7 +44,10 @@ class Image2D(ViewerElement):
         self.container: pg.PlotItem | pg.ViewBox | None = None
         self._cbar: ColorBar | None = None
 
+        self.qtransform = QtGui.QTransform()
+
         self._default_range = Image2DRange()
+        self._default_levels = Image2DLevels()
 
         super().__init__(cfg=cfg, **kwargs)
 
@@ -95,16 +105,29 @@ class Image2D(ViewerElement):
         if self.data is None:
             return
 
-        # rotate the image
-        if self.cfg.rotate is not None:
-            self.rotate(self.cfg.rotate)
-
-        # scale the data points
+        # scale the data
         if self.cfg.scale is not None:
             self.scale(self.cfg.scale)
 
+        # create a transformation matrix from the WCS object
+        if self.cfg.wcs_transform:
+            w = WCS(self.meta)
+
+            transformation_matrix = np.zeros((3, 3))
+            transformation_matrix[:2, :2] = w.pixel_scale_matrix
+            # transformation_matrix[:2, 2] = w.wcs.crpix
+            transformation_matrix[2, :2] = w.wcs.crval
+            transformation_matrix[2, 2] = 1.0
+
+            self.qtransform.setMatrix(*transformation_matrix.flatten())
+
+        if np.any(np.isfinite(self.data)):
+            # TODO: allow to choose between min/max and zscale?
+            self.set_default_levels(ZScaleInterval().get_limits(self.data[np.nonzero(self.data)]))
+
     def add_content(self):
         self.image_item.setImage(self.data, autoLevels=False)
+        self.apply_qtransform()
 
         # add axes of symmetry to the image
         if self.cfg.central_axes in ('x', 'y', 'xy'):
@@ -132,28 +155,54 @@ class Image2D(ViewerElement):
             self.register_item(crosshair_x)
             self.register_item(crosshair_y)
 
-    def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None):
+    def apply_qtransform(self):
+        self.image_item.setTransform(self.qtransform)
+        self.container.setAspectLocked(lock=True, ratio=self.qtransform.m22() / self.qtransform.m11())
+        for item in self._added_items:
+            item.setTransform(self.qtransform)
+    
+    def reset_range(self):
+        if self._default_range.is_set:
+            self.container.setRange(xRange=self._default_range.x, yRange=self._default_range.y, padding=0)
+        else:
+            self.container.autoRange(padding=0)
+
+    def reset_levels(self):
+        self._cbar.setLevels((self._default_levels.min, self._default_levels.max))
+        self._cbar._updateHistogram()  # the histogram is calculated using the current image levels
+
+    def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
+                          update: bool = False):
         if xrange:
             self._default_range.x = xrange
         if yrange:
             self._default_range.y = yrange
 
-    def reset_view(self):
-        if np.any(np.isfinite(self.data)):
-            # TODO: allow to choose between min/max and zscale?
-            self._cbar.setLevels(ZScaleInterval().get_limits(self.data[np.nonzero(self.data)]))
-            self._cbar._updateHistogram()  # the histogram is calculated using the current image levels
+        if update:
+            self.reset_range()
 
-        if self._default_range.x is None and self._default_range.y is None:
-            self.container.autoRange(padding=0)
-        else:
-            self.container.setRange(xRange=self._default_range.x, yRange=self._default_range.y, padding=0)
+    def set_default_levels(self, levels: tuple[float, float], update: bool = False):
+        self._default_levels.min = levels[0]
+        self._default_levels.max = levels[1]
+
+        if update:
+            self.reset_levels()
+
+    def reset_view(self):
+        self.reset_range()
+        self.reset_levels()
 
     def clear_content(self):
         self.image_item.clear()
         self.remove_registered_items()
 
-        self._default_range.reset()
+        self.qtransform = QtGui.QTransform()
+
+        self._default_range = Image2DRange()
+        self._default_levels = Image2DLevels()
+    
+    def scale(self, scale: float):
+        self.data *= scale
 
     def smooth(self, sigma: float):
         if sigma > 0:
@@ -167,20 +216,10 @@ class Image2D(ViewerElement):
 
         self.image_item.setImage(smoothed_data, autoLevels=False)
 
-    def rotate(self, angle: int):
-        self.data = np.rot90(self.data, k=angle // 90)
-
-    def scale(self, scale: float):
-        self.data *= scale
-
     def register_item(self, item: pg.GraphicsItem):
+        item.setTransform(self.qtransform)
         self.container.addItem(item)
         self._added_items.append(item)
-
-    def apply_qtransform(self, qtransform: QtGui.QTransform):
-        self.image_item.setTransform(qtransform)
-        for item in self._added_items:
-            item.setTransform(qtransform)
 
     def remove_registered_items(self):
         for item in self._added_items:

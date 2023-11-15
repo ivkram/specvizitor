@@ -94,15 +94,9 @@ class Plugin(PluginCore):
         spec_2d: Image2D | None = widgets.get('Spectrum 2D')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
 
-        if spec_2d is not None:
-            if spec_1d is not None:
-                self.transform_spec2d_x_axis(spec_2d, spec_1d)
-                self.link_spec2d_to_spec1d(spec_2d, spec_1d)
-                spec_1d.reset_view()
-            else:
-                self.reset_spec2d_transformation(spec_2d)
-                self.unlink_spec2d(spec_2d)
-                spec_2d.reset_view()
+        if spec_2d is not None and spec_1d is not None:
+            self.transform_spec2d(spec_2d, spec_1d)
+            spec_2d.reset_view()
 
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)
@@ -112,32 +106,16 @@ class Plugin(PluginCore):
             spec_1d.reset_view()
 
     @staticmethod
-    def transform_spec2d_x_axis(spec_2d: Image2D, spec_1d: Spec1D) -> QtGui.QTransform:
-        scale = (1 * u.Unit('micron')).to(spec_1d.plot_item.data.x.unit).value
+    def transform_spec2d(spec_2d: Image2D, spec_1d: Spec1D):
+        wave_unit = spec_1d.plot_item.data.x.unit
+        scale = (1 * u.Unit('micron')).to(wave_unit).value
 
         dlam = spec_2d.meta['CD1_1'] * scale
         crval = spec_2d.meta['CRVAL1'] * scale
         crpix = spec_2d.meta['CRPIX1']
 
-        qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
-
-        spec_2d.apply_qtransform(qtransform)
-        spec_2d.container.setAspectLocked(True, 1 / dlam)
-
-        return qtransform
-
-    @staticmethod
-    def reset_spec2d_transformation(spec_2d: Image2D):
-        spec_2d.image_item.resetTransform()
-        spec_2d.container.setAspectLocked(True, 1)
-
-    @staticmethod
-    def link_spec2d_to_spec1d(spec_2d: Image2D, spec_1d: Spec1D):
-        spec_2d.container.setXLink(spec_1d.title)
-
-    @staticmethod
-    def unlink_spec2d(spec_2d: Image2D):
-        spec_2d.container.setXLink(None)
+        spec_2d.qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
+        spec_2d.apply_qtransform()
 
     @staticmethod
     def add_current_redshift_to_z_pdf(spec_1d: Spec1D, z_pdf: Plot1D):

@@ -178,16 +178,16 @@ class DataViewer(AbstractWidget):
         # perform search for files containing the object ID in their filename
         discovered_data_files = get_filenames_from_id(data_cfg.dir, review.get_id(j))
 
-        # load the object to the widgets
+        # load the object data to the widgets
         self.object_selected.emit(j, review, obj_cat, discovered_data_files)
 
+        # connecting the `view_reset` signal to activate core widgets
         try:
             self.view_reset.disconnect()
         except TypeError:
             pass
-        for w in self.core_widgets.values():
-            if w.data is not None:
-                self.view_reset.connect(w.reset_view)
+        for w in self.active_core_widgets.values():
+            self.view_reset.connect(w.reset_view)
 
         self._update_dock_titles()
 

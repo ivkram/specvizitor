@@ -68,8 +68,11 @@ def create_cat(ids) -> Table:
     colnames = ('id',)
     if isinstance(ids[0], tuple):
         colnames += tuple(f'id{i + 1}' for i in range(1, len(ids[0])))
+        table_data = list(zip(*ids))
+    else:
+        table_data = [ids]
 
-    cat = Table(list(zip(*ids)), names=colnames)
+    cat = Table(table_data, names=colnames)
 
     for cname in colnames:
         cat.add_index(cname)

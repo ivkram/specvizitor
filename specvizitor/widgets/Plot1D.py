@@ -199,6 +199,10 @@ class Plot1DItem(pg.PlotItem):
         self.reset_x_range()
         self.reset_y_range()
 
+    def clear(self):
+        self.setLabels(left='', bottom='', right='', top='')
+        super().clear()
+
     def smooth(self, sigma: float):
         y_smoothed = gaussian_filter1d(self.data.y.value, sigma) if sigma > 0 else self.data.y.value
 
