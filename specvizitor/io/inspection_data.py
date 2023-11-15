@@ -154,7 +154,7 @@ class InspectionData:
 
         return obj_id
 
-    def get_id_loc(self, obj_id: str | int):
+    def get_id_loc(self, obj_id: str | int) -> int:
         if self.ids_are_int:
             obj_id = int(obj_id)
 
@@ -162,7 +162,7 @@ class InspectionData:
         if isinstance(j, slice):
             j = j.start  # use the first available secondary ID
 
-        return j
+        return int(j)
 
     def update_value(self, j: int, cname: str, value):
         self.df.iat[j, self.df.columns.get_loc(cname)] = value
