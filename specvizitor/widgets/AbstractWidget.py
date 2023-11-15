@@ -2,7 +2,7 @@ from qtpy import QtWidgets
 
 import abc
 
-from ..utils.widget_tools import get_widgets
+from ..utils.qt_tools import get_widgets
 
 
 class QtAbcMeta(type(QtWidgets.QWidget), type(abc.ABC)):

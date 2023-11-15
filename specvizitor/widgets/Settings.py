@@ -1,5 +1,5 @@
 from platformdirs import user_config_dir
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 
 from abc import abstractmethod
 import logging
@@ -8,10 +8,10 @@ from ..config import config
 from ..io.catalogue import read_cat, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
+from ..utils.widgets import Section
 
 from .AbstractWidget import AbstractWidget
 from .FileBrowser import FileBrowser
-from .Section import Section
 
 logger = logging.getLogger(__name__)
 

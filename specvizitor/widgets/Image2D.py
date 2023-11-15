@@ -8,7 +8,8 @@ from dataclasses import dataclass
 import logging
 
 from ..config import data_widgets
-from .ColorBar import ColorBar
+from ..utils.widgets import ColorBar
+
 from .ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
