@@ -1,4 +1,3 @@
-from astropy.coordinates import SkyCoord
 from astropy.table import Table, Row
 from qtpy import QtWidgets, QtCore
 
@@ -32,7 +31,7 @@ class ObjectInfo(AbstractWidget):
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
-    def create_table_items(self):
+    def _create_table_items(self):
         if self.all_columns is None:
             self._table_items = []
             return
@@ -46,7 +45,7 @@ class ObjectInfo(AbstractWidget):
 
         self._table_items = table_items
 
-    def set_table_items(self):
+    def _set_table_items(self):
         self._table.setRowCount(len(self._table_items))
         for i, row in enumerate(self._table_items):
             self._table.setItem(i, 0, row[0])
@@ -55,8 +54,8 @@ class ObjectInfo(AbstractWidget):
     @QtCore.Slot(object)
     def update_table_items(self, cat: Table | None):
         self.all_columns = cat.colnames if cat is not None else None
-        self.create_table_items()
-        self.set_table_items()
+        self._create_table_items()
+        self._set_table_items()
 
         self.update_visible_columns(self.all_columns)
 
@@ -113,7 +112,7 @@ class ObjectInfo(AbstractWidget):
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, object)
-    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None):
+    def load_object(self, _, __, obj_cat: Row | None):
 
         if obj_cat is None:
             for row in self._table_items:
@@ -127,12 +126,6 @@ class ObjectInfo(AbstractWidget):
             except KeyError:
                 logger.warning(column_not_found_message(cname, obj_cat.meta.get('aliases')))
                 row[1].setText('')
-
-        # if 'ra' in self._cat.colnames and 'dec' in self._cat.colnames:
-        #     c = SkyCoord(ra=self._cat['ra'][self._j], dec=self._cat['dec'][self._j], frame='icrs', unit='deg')
-        #     ra, dec = c.to_string('hmsdms').split(' ')
-        #     self.ra_label.setText("RA: {}".format(ra))
-        #     self.dec_label.setText("Dec: {}".format(dec))
 
     @QtCore.Slot()
     def collect(self):
