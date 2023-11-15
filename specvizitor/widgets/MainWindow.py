@@ -37,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
     dock_layout_updated = QtCore.Signal(dict)
     viewer_configuration_updated = QtCore.Signal(DataWidgets)
 
+    starred_state_updated = QtCore.Signal(bool, bool)
     screenshot_path_selected = QtCore.Signal(str)
 
     def __init__(self, global_cfg: Config, cache: Cache, viewer_cfg: DataWidgets,
@@ -101,7 +102,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                        spectral_lines=self._spectral_lines, plugins=self._plugins, parent=self)
 
         # create a toolbar
-        self._commands_bar = ToolBar(self.rd, self._config.appearance, parent=self)
+        self._commands_bar = ToolBar(self._config.appearance, parent=self)
         self._commands_bar.setObjectName('Toolbar')
         self._commands_bar.setEnabled(True)
 
@@ -235,25 +236,26 @@ class MainWindow(QtWidgets.QMainWindow):
             self.object_selected.connect(w.load_object)
 
         self.theme_changed.connect(self._data_viewer.init_ui)
-        self.theme_changed.connect(self._commands_bar.set_icons)
+        self.theme_changed.connect(self._commands_bar._set_icons)
         self.catalogue_changed.connect(self._object_info.update_table_items)
         self.visible_columns_updated.connect(self._object_info.update_visible_columns)
-
         self.dock_layout_updated.connect(self._data_viewer.restore_dock_layout)
         self.viewer_configuration_updated.connect(self._data_viewer.update_viewer_configuration)
 
+        self.starred_state_updated.connect(self._commands_bar.update_star_button_icon)
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
         # connect the child widgets to the main window
-        self._quick_search.id_selected.connect(self._select_by_id)
-        self._quick_search.index_selected.connect(self._select_by_index)
-        self._commands_bar.object_selected.connect(self.load_object)
+        self._quick_search.id_selected.connect(self.load_by_id)
+        self._quick_search.index_selected.connect(self.load_by_index)
+        self._commands_bar.navigation_button_clicked.connect(self.switch_object)
+        self._commands_bar.star_button_clicked.connect(self.update_starred_state)
         self._commands_bar.screenshot_button_clicked.connect(self._screenshot_action)
         self._commands_bar.settings_button_clicked.connect(self._settings_action)
 
-        self._data_viewer.data_collected.connect(self._save_viewer_data)
-        self._object_info.data_collected.connect(self._save_obj_info_data)
-        self._review_form.data_collected.connect(self._save_review_data)
+        self._data_viewer.data_collected.connect(self.save_viewer_data)
+        self._object_info.data_collected.connect(self.save_obj_info_data)
+        self._review_form.data_collected.connect(self.save_review_data)
 
         # connect the child widgets between each other
         self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.view_reset.emit)
@@ -351,7 +353,47 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._update_window_title()
 
-    def reload(self):
+    @QtCore.Slot(str, bool)
+    def switch_object(self, command: str, find_starred: bool):
+        if command not in ('next', 'previous'):
+            logger.error(f'Unknown command: {command}')
+            return
+
+        if find_starred and not self.rd.review.has_starred:
+            logger.error('No starred objects found')
+            return
+
+        j_upd = self._update_index(self.rd.j, command)
+        if find_starred:
+            while not self.rd.review.get_value(j_upd, 'starred'):
+                j_upd = self._update_index(j_upd, command)
+
+        self.load_object(j_upd)
+
+    def _update_index(self, obj_index: int, command: str) -> int:
+        j_upd = obj_index
+
+        if command == 'next':
+            j_upd += 1
+        elif command == 'previous':
+            j_upd -= 1
+
+        j_upd = j_upd % self.rd.review.n_objects
+        return j_upd
+
+    @QtCore.Slot(str)
+    def load_by_id(self, obj_id: str):
+        if self.rd.review.validate_id(obj_id):
+            self.setFocus()
+            self.load_object(self.rd.review.get_id_loc(obj_id))
+
+    @QtCore.Slot(int)
+    def load_by_index(self, index: int):
+        if self.rd.review.validate_index(index):
+            self.setFocus()
+            self.load_object(index - 1)
+
+    def _reload(self):
         if self.rd.j is not None:
             self.load_object(self.rd.j)
 
@@ -364,18 +406,6 @@ class MainWindow(QtWidgets.QMainWindow):
                       f' [#{self.rd.j + 1}/{self.rd.review.n_objects}] – ')
         title += 'Specvizitor'
         self.setWindowTitle(title)
-
-    @QtCore.Slot(str)
-    def _select_by_id(self, obj_id: str):
-        if self.rd.review.validate_id(obj_id):
-            self.setFocus()
-            self.load_object(self.rd.review.get_id_loc(obj_id))
-
-    @QtCore.Slot(int)
-    def _select_by_index(self, index: int):
-        if self.rd.review.validate_index(index):
-            self.setFocus()
-            self.load_object(index - 1)
 
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
@@ -426,7 +456,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 self.viewer_configuration_updated.emit(self._viewer_cfg)
 
-                self.reload()
+                self._reload()
 
                 logger.info('Viewer configuration restored')
 
@@ -461,7 +491,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
         if dialog.exec():
-            self.reload()
+            self._reload()
 
     @QtCore.Slot(bool)
     def update_appearance(self, theme_changed: bool = False):
@@ -490,18 +520,25 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _):
         self._exit_action()
 
+    @QtCore.Slot()
+    def update_starred_state(self):
+        starred = not self.rd.review.get_value(self.rd.j, 'starred')
+        self.rd.review.update_value(self.rd.j, 'starred', starred)
+
+        self.starred_state_updated.emit(starred, self.rd.review.has_starred)
+
     @QtCore.Slot(dict)
-    def _save_viewer_data(self, layout: dict):
+    def save_viewer_data(self, layout: dict):
         self._cache.dock_layout = layout
         self._cache.save()
 
     @QtCore.Slot(list)
-    def _save_obj_info_data(self, visible_columns: list[str]):
+    def save_obj_info_data(self, visible_columns: list[str]):
         self._cache.visible_columns = visible_columns
         self._cache.save()
 
     @QtCore.Slot(str, dict)
-    def _save_review_data(self, comments: str, checkboxes: dict[str, bool]):
+    def save_review_data(self, comments: str, checkboxes: dict[str, bool]):
         self.rd.review.update_value(self.rd.j, 'comment', comments)
         for cname, is_checked in checkboxes.items():
             self.rd.review.update_value(self.rd.j, cname, is_checked)

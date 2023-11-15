@@ -1,4 +1,4 @@
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 from ..config import config
 from ..io.inspection_data import InspectionData
@@ -22,15 +22,12 @@ class ReviewForm(AbstractWidget):
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
-    def create_checkbox_widgets(self, review: InspectionData | None = None):
+    def _create_checkbox_widgets(self, review: InspectionData | None = None):
         if self._checkbox_widgets is not None:
             for w in self._checkbox_widgets.values():
                 w.deleteLater()
 
-        if review is None:
-            flags = self.cfg.default_flags
-        else:
-            flags = review.flag_columns
+        flags = self.cfg.default_flags if review is None else review.flag_columns
 
         checkbox_widgets = {}
         if flags is not None:
@@ -45,7 +42,7 @@ class ReviewForm(AbstractWidget):
         self._checkbox_widgets = checkbox_widgets
 
     def init_ui(self):
-        self.create_checkbox_widgets()
+        self._create_checkbox_widgets()
         self._comments_widget = QtWidgets.QTextEdit(self)
 
         self._edit_flags = QtWidgets.QPushButton("Edit...", self)
@@ -67,7 +64,7 @@ class ReviewForm(AbstractWidget):
     def load_project(self, review: InspectionData):
         self.setEnabled(True)
 
-        self.create_checkbox_widgets(review=review)
+        self._create_checkbox_widgets(review=review)
         self.repopulate()
 
     @QtCore.Slot(int, InspectionData)
