@@ -91,15 +91,15 @@ class Params:
         except yaml.YAMLError:
             logger.error(f'Failed to parse `{file.path}`. The file will be overwritten.')
         else:
-            # TODO: patch the user config file using dictdiffer
             try:
+                # TODO: patch the user config file using dictdiffer
                 user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
             except (WrongTypeError, MissingValueError):
                 user_params = None
                 logger.error(f'Failed to create a dataclass from `{file.path}`. The file will be overwritten.')
 
         if user_params is None:
-            file.backup()
+            file.delete()
         else:
             params = user_params
 
@@ -135,7 +135,7 @@ class Params:
 
 def read_yaml(filename) -> dict:
     with open(filename, "r") as yaml_file:
-        return yaml.safe_load(yaml_file)
+        return yaml.safe_load(yaml_file) or {}  # return empty dictionary if the file is empty
 
 
 def filter_none_values(data):
