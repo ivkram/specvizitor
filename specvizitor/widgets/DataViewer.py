@@ -204,7 +204,7 @@ class DataViewer(AbstractWidget):
 
     def _update_dock_titles(self):
         for core_widget in self.core_widgets.values():
-            if core_widget.filename is not None and core_widget.data is not None:
+            if core_widget.filename is not None and core_widget.meta is not None:
                 title = core_widget.filename.name
 
                 # adding EXTNAME and EXTVER to the dock title

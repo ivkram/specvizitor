@@ -1,12 +1,13 @@
 from astropy.convolution import convolve_fft, Gaussian2DKernel
 from astropy.visualization import ZScaleInterval
-from astropy.wcs import WCS
+from astropy.wcs import WCS, FITSFixedWarning
 import numpy as np
 import pyqtgraph as pg
 from qtpy import QtGui, QtCore
 
 from dataclasses import dataclass
 import logging
+import warnings
 
 from ..config import data_widgets
 from ..utils.widgets import ColorBar
@@ -110,8 +111,10 @@ class Image2D(ViewerElement):
             self.scale(self.cfg.scale)
 
         # create a transformation matrix from the WCS object
-        if self.cfg.wcs_transform:
-            w = WCS(self.meta)
+        if self.cfg.wcs_transform and self.meta is not None:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                w = WCS(self.meta)
 
             transformation_matrix = np.zeros((3, 3))
             transformation_matrix[:2, :2] = w.pixel_scale_matrix
