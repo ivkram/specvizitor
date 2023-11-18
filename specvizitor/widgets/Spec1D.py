@@ -5,46 +5,30 @@ import pyqtgraph as pg
 from qtpy import QtCore
 from specutils import Spectrum1D
 
-from dataclasses import asdict
 from functools import partial
 import logging
 
 from ..config import data_widgets
-from ..config.spectral_lines import SpectralLines
+from ..config.spectral_lines import SpectralLineData
 
-from .LazyViewerElement import LazyViewerElement
 from .Plot1D import AxisData, PlotData, Plot1D, Plot1DItem
-from .SmartSlider import SmartSliderWithEditor
+from .ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
 
 
 class Spec1DItem(Plot1DItem):
-    def __init__(self, lines: SpectralLines | None = None,
+    def __init__(self, lines: SpectralLineData | None = None,
                  window: tuple[float, float] | None = None, **kwargs):
 
         super().__init__(**kwargs)
         self.showAxes((True, True, True, True), showValues=(True, False, True, True))
 
-        self.lines = SpectralLines() if lines is None else lines
+        self.lines = SpectralLineData() if lines is None else lines
         self.window = window
 
         # set up the spectral lines
         self._line_artists = {}
-        # TODO: store colors in config
-        line_color = (175.68072, 220.68924, 46.59488)
-        line_pen = pg.mkPen(color=line_color, width=1)
-        for line_name, lambda0 in self.lines.wavelengths.items():
-            line = pg.InfiniteLine(pen=line_pen)
-            label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
-            self._line_artists[line_name] = {'line': line, 'label': label}
-
-    def add_items(self):
-        for line_name, line_artist in self._line_artists.items():
-            self.addItem(line_artist['line'], ignoreBounds=True)
-            self.addItem(line_artist['label'])
-
-        super().add_items()
 
     def fit_in_window(self, window):
         self.setXRange(window[0].to(self.data.x.unit).value,
@@ -74,7 +58,7 @@ class Spec1DItem(Plot1DItem):
             super().reset_x_range()
 
 
-class Spec1DRegion(LazyViewerElement):
+class Spec1DRegion(ViewerElement):
     def __init__(self, title: str, line: tuple[str, u.Quantity], cfg: data_widgets.SpectrumRegion, **kwargs):
 
         self.cfg = cfg
@@ -91,7 +75,7 @@ class Spec1DRegion(LazyViewerElement):
     def init_ui(self):
         super().init_ui()
 
-        lines = SpectralLines(wave_unit=self.line[1].unit, wavelengths={self.line[0]: self.line[1].value})
+        lines = SpectralLineData(wave_unit=self.line[1].unit, wavelengths={self.line[0]: self.line[1].value})
         self.spec_1d = Spec1DItem(lines=lines, window=self.window, name=self.title, appearance=self.appearance)
 
     def populate(self):
@@ -102,13 +86,12 @@ class Spec1DRegion(LazyViewerElement):
 class Spec1D(Plot1D):
     redshift_changed = QtCore.Signal(float)
 
-    def __init__(self, cfg: data_widgets.Spectrum, lines: SpectralLines | None = None, **kwargs):
-        self.lines = lines
+    ALLOWED_DATA_TYPES = (Spectrum1D, Table)
+
+    def __init__(self, cfg: data_widgets.Spectrum, **kwargs):
         self.cfg = cfg
-        self.allowed_data_types = (Spectrum1D, Table)
 
         self.plot_item: Spec1DItem | None = None
-        self.z_slider: SmartSliderWithEditor | None = None
 
         self.lazy_widgets: list[Spec1DRegion] = []
         self.region_items: list[pg.LinearRegionItem] = []
@@ -116,19 +99,19 @@ class Spec1D(Plot1D):
         super().__init__(cfg=cfg, **kwargs)
 
     def create_plot_item(self):
-        self.plot_item = Spec1DItem(lines=self.lines, name=self.title, appearance=self.appearance)
+        self.plot_item = Spec1DItem(lines=self._spectral_lines, name=self.title, appearance=self.appearance)
 
     def create_spectral_regions(self):
-        if self.lines is None or self.cfg.tracked_lines is None:
+        if self._spectral_lines is None or self.cfg.tracked_lines is None:
             return
 
         region_widgets = []
         region_items = []
 
         for line, line_cfg in self.cfg.tracked_lines.items():
-            if line in self.lines.wavelengths.keys():
+            if line in self._spectral_lines.wavelengths.keys():
                 spec_region = Spec1DRegion(title=f"{self.title} - {line}",
-                                           line=(line, self.lines.wavelengths[line] * u.Unit(self.lines.wave_unit)),
+                                           line=(line, self._spectral_lines.wavelengths[line] * u.Unit(self._spectral_lines.wave_unit)),
                                            cfg=line_cfg, appearance=self.appearance,
                                            parent=self.parent())
 
@@ -145,16 +128,8 @@ class Spec1D(Plot1D):
     def init_ui(self):
         super().init_ui()
 
-        # create a redshift slider
-        self.z_slider = SmartSliderWithEditor(parameter='z', full_name='redshift', parent=self,
-                                              **asdict(self.cfg.redshift_slider))
-        self.sliders.append(self.z_slider)
-
         # create widgets zoomed on selected spectral lines
         self.create_spectral_regions()
-
-        # connect signals from the redshift slider to slots
-        self.z_slider.value_changed[float].connect(self._redshift_changed_action)
 
         # connect region items and region widgets between each other
         for i, (w, lr) in enumerate(zip(self.lazy_widgets, self.region_items)):
@@ -171,7 +146,6 @@ class Spec1D(Plot1D):
             lr.sigRegionChanged.connect(partial(self._region_item_changed_action, i))
 
     def _redshift_changed_action(self, redshift: float):
-        self.plot_item.set_line_positions(redshift)
         self.redshift_changed.emit(redshift)
 
     def _region_item_changed_action(self, n: int):
@@ -212,8 +186,3 @@ class Spec1D(Plot1D):
         for lr in self.region_items:
             self.plot_item.addItem(lr)
         super().add_content()
-
-    def reset_view(self):
-        self.z_slider.reset()
-        self._redshift_changed_action(self.z_slider.value)
-        super().reset_view()

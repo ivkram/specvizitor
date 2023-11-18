@@ -5,6 +5,11 @@ from ..utils.params import Params
 
 
 @dataclass
+class SpectralLines:
+    visible: bool = False
+
+
+@dataclass
 class Slider:
     visible: bool = True
 
@@ -13,7 +18,8 @@ class Slider:
     step: float = 1
     default_value: float = 0
 
-    name_in_catalogue: str | None = None
+    source: str | None = None
+    source_type: str | None = None
     show_text_editor: bool = False
     n_decimal_places: int = 6
 
@@ -44,13 +50,6 @@ class Axis:
 
 
 @dataclass
-class LazyViewerElement:
-    visible: bool = True
-    position: str | None = None
-    relative_to: str | None = None
-
-
-@dataclass
 class DataElement:
     filename_keyword: str | None = None
     loader: str = 'auto'
@@ -58,21 +57,28 @@ class DataElement:
 
 
 @dataclass
-class ViewerElement(LazyViewerElement):
-    data: DataElement = field(default_factory=DataElement)
-    smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
+class ViewerElement:
+    visible: bool = True
+    position: str | None = None
+    relative_to: str | None = None
     dock_title_fmt: str | None = None
+
+    data: DataElement = field(default_factory=DataElement)
+
+    container: str = 'PlotItem'
+    link_view: dict[str, str] | None = None
+    spectral_lines: SpectralLines = field(default_factory=SpectralLines)
+    smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
+    redshift_slider: Slider = field(default_factory=lambda: Slider(visible=False, max_value=10, step=1e-6,
+                                                                   show_text_editor=True))
 
 
 @dataclass
 class Image(ViewerElement):
-    container: str = 'ViewBox'
-    scale: float | None = None
     wcs_transform: bool = False
-    link_view: dict[str, str] | None = None
     color_bar: ColorBar = field(default_factory=ColorBar)
     central_axes: str | None = None
-    crosshair: bool = False
+    central_crosshair: bool = False
 
 
 @dataclass
@@ -82,14 +88,12 @@ class Plot1D(ViewerElement):
 
 
 @dataclass
-class SpectrumRegion(LazyViewerElement):
+class SpectrumRegion(ViewerElement):
     window_size: str = '300 Angstrom'
 
 
 @dataclass
 class Spectrum(Plot1D):
-    data: DataElement = field(default_factory=lambda: DataElement(loader='specutils'))
-    redshift_slider: Slider = field(default_factory=lambda: Slider(max_value=10, step=1e-4))
     tracked_lines: dict[str, SpectrumRegion] | None = None
 
 

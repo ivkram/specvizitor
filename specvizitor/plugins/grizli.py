@@ -114,12 +114,12 @@ class Plugin(PluginCore):
         crval = spec_2d.meta['CRVAL1'] * scale
         crpix = spec_2d.meta['CRPIX1']
 
-        spec_2d.qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
+        spec_2d._qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
         spec_2d.apply_qtransform()
 
     @staticmethod
     def add_current_redshift_to_z_pdf(spec_1d: Spec1D, z_pdf: Plot1D):
-        line = pg.InfiniteLine(spec_1d.z_slider.value, pen='m')
+        line = pg.InfiniteLine(spec_1d.redshift_slider.value, pen='m')
         spec_1d.redshift_changed.connect(lambda z: line.setPos(z))
         z_pdf.plot_item.addItem(line)
 

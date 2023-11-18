@@ -7,13 +7,12 @@ import logging
 
 from ..config import config
 from ..config.data_widgets import DataWidgets
-from ..config.spectral_lines import SpectralLines
+from ..config.spectral_lines import SpectralLineData
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filenames_from_id
 from ..plugins.plugin_core import PluginCore
 
 from .AbstractWidget import AbstractWidget
-from .LazyViewerElement import LazyViewerElement
 from .ViewerElement import ViewerElement
 from .Image2D import Image2D
 from .Plot1D import Plot1D
@@ -30,7 +29,7 @@ class DataViewer(AbstractWidget):
     def __init__(self,
                  viewer_cfg: DataWidgets,
                  appearance: config.Appearance,
-                 spectral_lines: SpectralLines | None = None,
+                 spectral_lines: SpectralLineData | None = None,
                  plugins: list[PluginCore] | None = None,
                  parent=None):
 
@@ -50,7 +49,7 @@ class DataViewer(AbstractWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
     @property
-    def widgets(self) -> list[LazyViewerElement]:
+    def widgets(self) -> list[ViewerElement]:
         lazy_widgets = []
         for w in self.core_widgets.values():
             lazy_widgets.extend(w.lazy_widgets)
@@ -72,7 +71,7 @@ class DataViewer(AbstractWidget):
                 pass
 
             for w in self.widgets:
-                w.graphics_layout.clear()
+                w._graphics_layout.clear()
                 w.deleteLater()
 
         widgets = {}
@@ -80,28 +79,51 @@ class DataViewer(AbstractWidget):
         # create widgets for images (e.g. image cutouts, 2D spectra)
         if self._viewer_cfg.images is not None:
             for name, image_cfg in self._viewer_cfg.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance, parent=self)
+                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
+                                        spectral_lines=self._spectral_lines, parent=self)
 
         # create widgets for plots (does not include any spectra!)
-        if self._viewer_cfg.plots is not None:
-            for name, plot_cfg in self._viewer_cfg.plots.items():
-                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance, parent=self)
+        # if self._viewer_cfg.plots is not None:
+        #     for name, plot_cfg in self._viewer_cfg.plots.items():
+        #         widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
+        #                                spectral_lines=self._spectral_lines, parent=self)
 
         # create widgets for 1D spectra
-        if self._viewer_cfg.spectra is not None:
-            for name, spec_cfg in self._viewer_cfg.spectra.items():
-                widgets[name] = Spec1D(lines=self._spectral_lines, cfg=spec_cfg, title=name,
-                                       appearance=self._appearance, parent=self)
+        # if self._viewer_cfg.spectra is not None:
+        #     for name, spec_cfg in self._viewer_cfg.spectra.items():
+        #         widgets[name] = Spec1D(title=name, cfg=spec_cfg, appearance=self._appearance,
+        #                                spectral_lines=self._spectral_lines, parent=self)
 
+        self._connect_widgets(widgets)
+
+        for plugin in self._plugins:
+            plugin.overwrite_widget_configs(widgets)
+
+        self.core_widgets = widgets
+
+    def _connect_widgets(self, widgets: dict[str, ViewerElement]):
         for w in widgets.values():
-            w.post_init()
+            # link view(s)
+            if w.cfg.link_view:
+                for axis, widget_title in w.cfg.link_view.items():
+                    if axis == 'x':
+                        w.container.setXLink(widget_title)
+                    elif axis == 'y':
+                        w.container.setYLink(widget_title)
+
+            # link sliders
+            for slider_name, slider in w.sliders.items():
+                if slider.source and slider.source_type == 'widget':
+                    try:
+                        source_slider = widgets[slider.source].sliders[slider_name]
+                    except KeyError:
+                        logger.error(f'Failed to link sliders (source: {slider.source}, slider: {slider_name})')
+                    else:
+                        source_slider.value_changed[float].connect(slider.set_value)
+                        slider.value_changed[float].connect(source_slider.set_value)
 
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
-        self.core_widgets = widgets
-
-        for plugin in self._plugins:
-            plugin.overwrite_widget_configs(self.core_widgets)
 
     def _create_docks(self):
         # delete previously added docks
@@ -114,7 +136,7 @@ class DataViewer(AbstractWidget):
 
         self.docks = docks
 
-    def _add_dock(self, widget: LazyViewerElement):
+    def _add_dock(self, widget: ViewerElement):
         position = widget.cfg.position if widget.cfg.position is not None else 'bottom'
         relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self.added_docks else None
 

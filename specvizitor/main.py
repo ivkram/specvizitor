@@ -9,7 +9,7 @@ from platformdirs import user_config_dir, user_cache_dir
 import sys
 
 from .config.appearance import set_up_appearance
-from .config import Config, DataWidgets, SpectralLines, Cache
+from .config import Config, DataWidgets, SpectralLineData, Cache
 from .io.viewer_data import add_enabled_aliases
 from .utils.params import LocalFile
 
@@ -80,8 +80,8 @@ def main():
     window = MainWindow(global_cfg=config,
                         cache=Cache.read_user_params(local_files['cache']),
                         viewer_cfg=DataWidgets.read_user_params(local_files['widgets'], default='data_widgets.yml'),
-                        spectral_lines=SpectralLines.read_user_params(local_files['lines'],
-                                                                      default='spectral_lines.yml'),
+                        spectral_lines=SpectralLineData.read_user_params(local_files['lines'],
+                                                                         default='spectral_lines.yml'),
                         plugins=plugins)
     window.show()
 

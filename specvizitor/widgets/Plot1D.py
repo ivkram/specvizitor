@@ -215,9 +215,10 @@ class Plot1D(ViewerElement):
     plot_refreshed = QtCore.Signal()
     labels_updated = QtCore.Signal(data_widgets.Label, data_widgets.Label)
 
+    ALLOWED_DATA_TYPES = (Table,)
+
     def __init__(self, cfg: data_widgets.Plot1D, **kwargs):
         self.cfg = cfg
-        self.allowed_data_types = (Table,)
 
         self.plot_item: Plot1DItem | None = None
         self.plot_data: PlotData | None = None
@@ -230,10 +231,6 @@ class Plot1D(ViewerElement):
     def init_ui(self):
         super().init_ui()
         self.create_plot_item()
-
-    def populate(self):
-        super().populate()
-        self.graphics_layout.addItem(self.plot_item)
 
     def post_init(self):
         pass

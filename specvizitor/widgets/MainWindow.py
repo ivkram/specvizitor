@@ -8,7 +8,7 @@ import logging
 import pathlib
 
 from ..appdata import AppData
-from ..config import config, Config, Cache, DataWidgets, SpectralLines
+from ..config import config, Config, Cache, DataWidgets, SpectralLineData
 from ..config.appearance import set_up_appearance
 from ..io.catalogue import read_cat, create_cat, get_obj_cat
 from ..io.inspection_data import InspectionData
@@ -41,7 +41,7 @@ class MainWindow(QtWidgets.QMainWindow):
     screenshot_path_selected = QtCore.Signal(str)
 
     def __init__(self, global_cfg: Config, cache: Cache, viewer_cfg: DataWidgets,
-                 spectral_lines: SpectralLines | None = None, plugins=None, parent=None):
+                 spectral_lines: SpectralLineData | None = None, plugins=None, parent=None):
         super().__init__(parent)
 
         self.rd = AppData()
