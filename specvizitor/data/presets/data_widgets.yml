@@ -65,7 +65,7 @@ spectra:
     redshift_slider:
       max_value: 12
       default_value: 6
-      source: redshift
+      name_in_catalogue: redshift
       show_text_editor: True
     tracked_lines:
       Ha:

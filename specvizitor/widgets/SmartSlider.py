@@ -69,19 +69,19 @@ class SmartSlider(AbstractWidget):
     value_changed = QtCore.Signal(float)
 
     def __init__(self, short_name: str = 'x', full_name: str | None = None, action: str | None = None,
-                 visible: bool = True, source: str | None = None, source_type: str | None = None,
+                 visible: bool = True, name_in_catalogue: str | None = None, link_to: str | None = None,
                  show_text_editor: bool = False, n_decimal_places: int = 6, parent=None, **kwargs):
 
-        if source is not None and source_type == 'catalogue':
-            self.short_name = source
+        if name_in_catalogue is not None:
+            self.short_name = name_in_catalogue
         else:
             self.short_name = short_name
 
         self.full_name = short_name if full_name is None else full_name
         self.action = f"change {self.full_name}" if action is None else action
 
-        self.source = source
-        self.source_type = source_type
+        self.name_in_catalogue = name_in_catalogue
+        self.link_to = link_to
         self.show_text_editor = show_text_editor
         self.n_decimal_places = n_decimal_places
 
@@ -151,18 +151,18 @@ class SmartSlider(AbstractWidget):
             self.reset()
 
     def update_default_value(self, obj_cat: Row | None):
-        if obj_cat is None or self.source is None or self.source_type != 'catalogue':
+        if obj_cat is None or self.name_in_catalogue is None:
             self._slider.default_value = self._default_value_fallback
             return
 
         try:
-            self._slider.default_value = obj_cat[self.source]
+            self._slider.default_value = obj_cat[self.name_in_catalogue]
         except KeyError:
-            logger.warning(column_not_found_message(self.source, obj_cat.meta.get('aliases')))
+            logger.warning(column_not_found_message(self.name_in_catalogue, obj_cat.meta.get('aliases')))
             self._slider.default_value = self._default_value_fallback
 
     def reset(self):
-        if self.source_type == 'widget':
+        if self.link_to is not None:
             return
 
         self._slider.reset()

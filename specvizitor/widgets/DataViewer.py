@@ -113,11 +113,11 @@ class DataViewer(AbstractWidget):
 
             # link sliders
             for slider_name, slider in w.sliders.items():
-                if slider.source and slider.source_type == 'widget':
+                if slider.link_to is not None:
                     try:
-                        source_slider = widgets[slider.source].sliders[slider_name]
+                        source_slider = widgets[slider.link_to].sliders[slider_name]
                     except KeyError:
-                        logger.error(f'Failed to link sliders (source: {slider.source}, slider: {slider_name})')
+                        logger.error(f'Failed to link sliders (source: {slider.link_to}, slider: {slider_name})')
                     else:
                         source_slider.value_changed[float].connect(slider.set_value)
                         slider.value_changed[float].connect(source_slider.set_value)

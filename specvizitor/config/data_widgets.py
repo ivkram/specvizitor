@@ -18,8 +18,8 @@ class Slider:
     step: float = 1
     default_value: float = 0
 
-    source: str | None = None
-    source_type: str | None = None
+    name_in_catalogue: str | None = None
+    link_to: str | None = None
     show_text_editor: bool = False
     n_decimal_places: int = 6
 
@@ -27,6 +27,7 @@ class Slider:
 @dataclass
 class ColorBar:
     visible: bool = True
+    link_to: str | None = None
 
 
 @dataclass
