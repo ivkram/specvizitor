@@ -30,8 +30,8 @@ def read_cat(filename=None,
     # load the catalogue
     try:
         cat = Table(fits.getdata(filename))
-    except OSError:
-        logger.error('Failed to load the catalogue')
+    except OSError as e:
+        logger.error(f'Failed to load the catalogue: {e}')
         return
 
     # rename columns
