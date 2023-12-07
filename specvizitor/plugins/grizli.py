@@ -80,6 +80,7 @@ class Plugin(PluginCore):
                 return []
 
         stack = lm_docks[i0].container().stack
+        logger.info(type(stack))
 
         stacked_lm_docks = []
         for i in range(stack.count()):

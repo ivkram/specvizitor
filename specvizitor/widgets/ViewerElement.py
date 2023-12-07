@@ -48,7 +48,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.meta: dict | Header | None = None
 
         self._graphics_view: pg.GraphicsView | None = None
-        self._graphics_layout: pg.GraphicsLayout | None = None
+        self.graphics_layout: pg.GraphicsLayout | None = None
 
         # graphics items
         self.container: pg.PlotItem | pg.ViewBox | None = None
@@ -92,8 +92,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._graphics_view = pg.GraphicsView(parent=self)
 
         # create the graphics layout
-        self._graphics_layout = pg.GraphicsLayout()
-        self._graphics_view.setCentralItem(self._graphics_layout)
+        self.graphics_layout = pg.GraphicsLayout()
+        self._graphics_view.setCentralItem(self.graphics_layout)
 
         # create the graphics container
         if self.cfg.container == 'PlotItem':
@@ -108,7 +108,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             return
 
         self.container.setAspectLocked(True)
-        self._graphics_layout.addItem(self.container, 0, 0)
+        self.graphics_layout.addItem(self.container, 0, 0)
 
         # add spectral lines to the container
         self._create_line_artists()
@@ -133,8 +133,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
         super().set_geometry(spacing=spacing, margins=margins)
 
-        self._graphics_layout.setSpacing(spacing)
-        self._graphics_layout.setContentsMargins(0, 0, 5, 5)
+        self.graphics_layout.setSpacing(spacing)
+        self.graphics_layout.setContentsMargins(0, 0, 5, 5)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())

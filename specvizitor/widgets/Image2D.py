@@ -55,7 +55,7 @@ class Image2D(ViewerElement):
         super().populate()
 
         # add the color bar to the layout
-        self._graphics_layout.addItem(self._cbar, 0, 1)
+        self.graphics_layout.addItem(self._cbar, 0, 1)
 
     def load_data(self, *args, **kwargs):
         super().load_data(*args, **kwargs)

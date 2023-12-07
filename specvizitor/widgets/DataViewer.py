@@ -36,7 +36,7 @@ class DataViewer(AbstractWidget):
         self._spectral_lines = spectral_lines
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
 
-        self.dock_area = DockArea()
+        self.dock_area: DockArea | None = None
         self.added_docks: list[str] = []
 
         self.core_widgets: dict[str, ViewerElement] = {}
@@ -61,15 +61,15 @@ class DataViewer(AbstractWidget):
     def _create_widgets(self):
         # delete previously created widgets
         if self.widgets:
+            # disconnect signals
             self.object_selected.disconnect()
-
             try:
                 self.view_reset.disconnect()
             except TypeError:
                 pass
 
             for w in self.widgets:
-                w._graphics_layout.clear()
+                w.graphics_layout.clear()
                 w.deleteLater()
 
         widgets = {}
@@ -174,6 +174,8 @@ class DataViewer(AbstractWidget):
             logger.error('Failed to restore the dock layout')
 
     def init_ui(self):
+        if self.dock_area is None:
+            self.dock_area = DockArea(parent=self)
         self._create_widgets()
         self.init_docks()
 
