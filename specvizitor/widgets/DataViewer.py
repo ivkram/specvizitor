@@ -124,9 +124,10 @@ class DataViewer(AbstractWidget):
             self.object_selected.connect(w.load_object)
 
     def _create_docks(self):
-        # delete previously added docks
-        for dock_name in self.added_docks:
-            self.docks[dock_name].close()
+        # delete previously created docks
+        for d in list(self.docks.values())[:-1]:
+            # pyqtgraph bug: d.close() would leave a floating TContainer (created when docks are stacked)
+            d.container().close()
 
         docks = {}
         for widget in self.widgets:
@@ -141,6 +142,7 @@ class DataViewer(AbstractWidget):
         self.dock_area.addDock(dock=self.docks[widget.title],
                                position=position,
                                relativeTo=relative_to)
+        self.added_docks.append(widget.title)
 
     def _add_docks(self):
         self.added_docks = []
@@ -148,7 +150,6 @@ class DataViewer(AbstractWidget):
         for widget in self.widgets:
             if widget.cfg.visible:
                 self._add_dock(widget)
-                self.added_docks.append(widget.title)
 
         for plugin in self._plugins:
             plugin.tweak_docks(self.docks)
