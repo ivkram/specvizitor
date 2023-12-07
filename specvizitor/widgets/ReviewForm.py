@@ -2,8 +2,7 @@ from qtpy import QtCore, QtWidgets
 
 from ..config import config
 from ..io.inspection_data import InspectionData
-
-from .AbstractWidget import AbstractWidget
+from ..utils.widgets import AbstractWidget
 
 
 class ReviewForm(AbstractWidget):

@@ -12,11 +12,9 @@ from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filenames_from_id
 from ..plugins.plugin_core import PluginCore
 
-from .AbstractWidget import AbstractWidget
+from ..utils.widgets import AbstractWidget
 from .ViewerElement import ViewerElement
 from .Image2D import Image2D
-from .Plot1D import Plot1D
-from .Spec1D import Spec1D
 
 logger = logging.getLogger(__name__)
 

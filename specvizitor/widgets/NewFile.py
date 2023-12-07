@@ -7,8 +7,7 @@ from ..config import config
 from ..io.catalogue import read_cat, create_cat, cat_browser
 from ..io.viewer_data import get_ids_from_dir, data_browser
 from ..utils.logs import qlog
-
-from .FileBrowser import FileBrowser
+from ..utils.widgets import FileBrowser
 
 logger = logging.getLogger(__name__)
 

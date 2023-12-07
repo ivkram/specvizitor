@@ -2,7 +2,8 @@ from qtpy import QtWidgets, QtCore
 
 import logging
 
-from .AbstractWidget import AbstractWidget
+from ..utils.widgets import AbstractWidget
+
 
 logger = logging.getLogger(__name__)
 

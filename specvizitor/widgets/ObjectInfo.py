@@ -5,10 +5,9 @@ import logging
 
 from ..io.inspection_data import InspectionData
 from ..utils.table_tools import column_not_found_message
+from ..utils.widgets import AbstractWidget
 
-from .AbstractWidget import AbstractWidget
 from .TableColumns import TableColumns
-
 
 logger = logging.getLogger(__name__)
 

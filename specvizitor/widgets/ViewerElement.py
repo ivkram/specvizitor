@@ -12,8 +12,8 @@ from ..config import config, data_widgets
 from ..config import SpectralLineData
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_matching_filename, load
+from ..utils.widgets import AbstractWidget
 
-from .AbstractWidget import AbstractWidget
 from .SmartSlider import SmartSlider
 
 logger = logging.getLogger(__name__)

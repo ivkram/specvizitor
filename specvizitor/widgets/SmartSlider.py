@@ -5,8 +5,7 @@ from qtpy import QtWidgets, QtCore
 import logging
 
 from ..utils.table_tools import column_not_found_message
-from .AbstractWidget import AbstractWidget
-
+from ..utils.widgets import AbstractWidget
 
 logger = logging.getLogger(__name__)
 

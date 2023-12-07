@@ -5,7 +5,7 @@ import pathlib
 
 from ..config import config
 from ..io.inspection_data import InspectionData
-from .AbstractWidget import AbstractWidget
+from ..utils.widgets import AbstractWidget
 
 logger = logging.getLogger(__name__)
 

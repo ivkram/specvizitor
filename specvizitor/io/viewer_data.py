@@ -14,7 +14,7 @@ import pathlib
 import re
 import warnings
 
-from ..widgets.FileBrowser import FileBrowser
+from ..utils.widgets import FileBrowser
 
 logger = logging.getLogger(__name__)
 

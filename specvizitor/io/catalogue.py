@@ -6,7 +6,7 @@ import logging
 
 from .viewer_data import get_ids_from_dir
 from ..utils import table_tools
-from ..widgets.FileBrowser import FileBrowser
+from ..utils.widgets import FileBrowser
 
 logger = logging.getLogger(__name__)
 
