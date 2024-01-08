@@ -199,6 +199,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
             return
 
         self.data, self.meta = load(self.cfg.data.loader, self.filename, self.title, **loader_params)
+        if self.data is None:
+            return
 
         if not self.validate_dtype(self.data):
             self.data, self.meta = None, None

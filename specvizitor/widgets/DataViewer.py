@@ -11,10 +11,11 @@ from ..config.spectral_lines import SpectralLineData
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filenames_from_id
 from ..plugins.plugin_core import PluginCore
-
 from ..utils.widgets import AbstractWidget
+
 from .ViewerElement import ViewerElement
 from .Image2D import Image2D
+from .Plot1D import Plot1D
 
 logger = logging.getLogger(__name__)
 
@@ -81,10 +82,10 @@ class DataViewer(AbstractWidget):
                                         spectral_lines=self._spectral_lines, parent=self)
 
         # create widgets for plots (does not include any spectra!)
-        # if self._viewer_cfg.plots is not None:
-        #     for name, plot_cfg in self._viewer_cfg.plots.items():
-        #         widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
-        #                                spectral_lines=self._spectral_lines, parent=self)
+        if self._viewer_cfg.plots is not None:
+            for name, plot_cfg in self._viewer_cfg.plots.items():
+                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
+                                       spectral_lines=self._spectral_lines, parent=self)
 
         # create widgets for 1D spectra
         # if self._viewer_cfg.spectra is not None:
