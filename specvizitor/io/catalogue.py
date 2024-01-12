@@ -58,8 +58,9 @@ def read_cat(filename=None,
 
     # adding indices
     cat.add_index('id')
-    if 'id2' in cat.colnames:
-        cat.add_index('id2')
+    for i in range(2, 11):
+        if f'id{i}' in cat.colnames:
+            cat.add_index(f'id{i}')
 
     return cat
 
