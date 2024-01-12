@@ -3,6 +3,7 @@ from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
 
+from functools import partial
 import logging
 
 from ..config import config
@@ -102,6 +103,9 @@ class DataViewer(AbstractWidget):
 
     def _connect_widgets(self, widgets: dict[str, ViewerElement]):
         for w in widgets.values():
+            self.object_selected.connect(w.load_object)
+
+        for w in widgets.values():
             # link view(s)
             if w.cfg.link_view:
                 for axis, widget_title in w.cfg.link_view.items():
@@ -116,13 +120,21 @@ class DataViewer(AbstractWidget):
                     try:
                         source_slider = widgets[slider.link_to].sliders[slider_name]
                     except KeyError:
-                        logger.error(f'Failed to link sliders (source: {slider.link_to}, slider: {slider_name})')
+                        logger.error(f'Failed to link sliders (source widget: {slider.link_to}, slider: {slider_name})')
                     else:
                         source_slider.value_changed[float].connect(slider.set_value)
                         slider.value_changed[float].connect(source_slider.set_value)
 
-        for w in widgets.values():
-            self.object_selected.connect(w.load_object)
+        images: dict[str, Image2D] = {title: w for title, w in widgets.items() if isinstance(w, Image2D)}
+        for w in images.values():
+            if w.cfg.color_bar.link_to is not None:
+                try:
+                    source_widget = widgets[w.cfg.color_bar.link_to]
+                except KeyError:
+                    logger.error(f'Failed to link color bars (source widget: {w.cfg.color_bar.link_to})')
+                else:
+                    source_widget.cbar.sigLevelsChanged[tuple].connect(partial(w.set_default_levels, update=True))
+                    w.cbar.sigLevelsChanged[tuple].connect(partial(source_widget.set_default_levels, update=True))
 
     def _create_docks(self):
         # delete previously created docks

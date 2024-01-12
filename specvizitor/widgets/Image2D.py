@@ -33,7 +33,7 @@ class Image2D(ViewerElement):
         self.image_item: pg.ImageItem | None = None
 
         self._cmap = pg.colormap.get('viridis')
-        self._cbar: ColorBar | None = None
+        self.cbar: ColorBar | None = None
         self._default_levels: Image2DLevels | None = None
 
         super().__init__(cfg=cfg, **kwargs)
@@ -48,14 +48,14 @@ class Image2D(ViewerElement):
             self.image_item.setBorder('k')  # add a border to the image
 
         # create a color bar
-        self._cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
-        self._cbar.setVisible(self.cfg.color_bar.visible)
+        self.cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
+        self.cbar.setVisible(self.cfg.color_bar.visible)
 
     def populate(self):
         super().populate()
 
         # add the color bar to the layout
-        self.graphics_layout.addItem(self._cbar, 0, 1)
+        self.graphics_layout.addItem(self.cbar, 0, 1)
 
     def load_data(self, *args, **kwargs):
         super().load_data(*args, **kwargs)
@@ -119,8 +119,8 @@ class Image2D(ViewerElement):
             self.reset_levels()
 
     def reset_levels(self):
-        self._cbar.setLevels((self._default_levels.min, self._default_levels.max))
-        self._cbar._updateHistogram()  # the histogram is calculated using the current image levels
+        self.cbar.setLevels((self._default_levels.min, self._default_levels.max))
+        self.cbar._updateHistogram()  # the histogram is calculated using the current image levels
 
     def reset_view(self):
         super().reset_view()
