@@ -246,7 +246,16 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._default_range = ContainerRange()
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
-                          update: bool = False):
+                          apply_qtransform=False, update: bool = False):
+        if apply_qtransform:
+            if not xrange or not yrange:
+                raise ValueError('Cannot apply transformation to missing axis limits')
+
+            x1, y1 = self._qtransform.map(xrange[0], yrange[0])
+            x2, y2 = self._qtransform.map(xrange[1], yrange[1])
+
+            xrange, yrange = (x1, x2), (y1, y2)
+
         if xrange:
             self._default_range.x = xrange
         if yrange:

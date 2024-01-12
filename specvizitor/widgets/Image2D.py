@@ -71,7 +71,7 @@ class Image2D(ViewerElement):
             transformation_matrix = get_qtransform_matrix_from_wcs(w)
             self._qtransform.setMatrix(*transformation_matrix.flatten())
 
-        self.set_default_range((0, self.data.shape[1]), (0, self.data.shape[0]))
+        self.set_default_range((0, self.data.shape[1]), (0, self.data.shape[0]), apply_qtransform=True)
 
         # compute default image levels
         if np.any(np.isfinite(self.data)):

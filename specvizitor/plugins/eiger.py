@@ -41,11 +41,8 @@ class Plugin(PluginCore):
 
                 x1, x2 = x0 - zoom * dx, x0 + zoom * dx
                 y1, y2 = y0 - dy, y0 + dy
-
-                x1, y1 = spec_2d._qtransform.map(x1, y1)
-                x2, y2 = spec_2d._qtransform.map(x2, y2)
                 
-                spec_2d.set_default_range(xrange=(x1, x2), yrange=(y1, y2), update=True)
+                spec_2d.set_default_range(xrange=(x1, x2), yrange=(y1, y2), apply_qtransform=True, update=True)
 
     @staticmethod
     def get_emline_coords(obj_cat: Row | None) -> tuple[float | None, ...]:
