@@ -29,6 +29,8 @@ class ColorBar:
     visible: bool = True
     link_to: str | None = None
 
+    zscale_fraction: float = 1
+
 
 @dataclass
 class Limits:
