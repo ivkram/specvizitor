@@ -25,48 +25,44 @@ class Plugin(PluginCore):
         spec_2d_mods: tuple[Image2D | None, Image2D | None] = (widgets.get(f'Spectrum 2D [Module A]'),
                                                                widgets.get(f'Spectrum 2D [Module B]'))
 
-        x0, y0 = self.get_emline_coords(obj_cat)
-        if x0 is not None and y0 is not None:
-            dx, dy = 5, 5
-            zoom = 25
+        spec_2d_array = tuple(spec_2d for spec_2d in (spec_2d_stack,) + spec_2d_mods if spec_2d is not None)
 
-            for spec_2d in (spec_2d_stack,) + spec_2d_mods:
-                if spec_2d is None:
-                    continue
+        coords = self.get_emline_coords(obj_cat)
+        for i, c in enumerate(coords):
+            self.mark_emline(c[0], c[1], spec_2d_array, zoom=True if len(coords) == 1 else False,
+                             color='r' if i == 0 else 'white')
 
-                pen = pg.mkPen('r', width=2, style=QtCore.Qt.DashLine)
+    @staticmethod
+    def mark_emline(x0: float, y0: float, spec2d_array: tuple[Image2D], zoom=False, color='r'):
+        zoom_level = 25
+        dx, dy = 5, 5
+        x1, x2 = x0 - zoom_level * dx, x0 + zoom_level * dx
+        y1, y2 = y0 - dy, y0 + dy
 
-                spec_2d.register_item(pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen))
-                spec_2d.register_item(pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen))
+        for spec_2d in spec2d_array:
+            pen = pg.mkPen(color, width=4, style=QtCore.Qt.DashLine)
 
-                x1, x2 = x0 - zoom * dx, x0 + zoom * dx
-                y1, y2 = y0 - dy, y0 + dy
-                
+            spec_2d.register_item(pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen))
+            spec_2d.register_item(pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen))
+
+            if zoom:
                 spec_2d.set_default_range(xrange=(x1, x2), yrange=(y1, y2), apply_qtransform=True, update=True)
 
     @staticmethod
-    def get_emline_coords(obj_cat: Row | None) -> tuple[float | None, ...]:
+    def get_emline_coords(obj_cat: Row | None) -> list[tuple[float, float]]:
         if obj_cat is None:
-            return None, None
+            return []
 
-        coords = ()
-        keywords = ('X_IMAGE', 'Y_IMAGE')
+        coords_array = []
+        coord_colnames = [('X_IMAGE', 'Y_IMAGE')] + list((f'X_IMAGE_{i}', f'Y_IMAGE_{i}') for i in range(11))
 
-        for i, coord_keyword in enumerate(keywords):
-            coord = None
+        for i, cname_pair in enumerate(coord_colnames):
+            if cname_pair[0] in obj_cat.colnames and cname_pair[1] in obj_cat.colnames:
+                try:
+                    line_coords = (float(obj_cat[cname_pair[0]]), float(obj_cat[cname_pair[1]]))
+                except TypeError as msg:
+                    logger.error(msg)
+                else:
+                    coords_array.append(line_coords)
 
-            for cname in obj_cat.colnames:
-                if coord_keyword in cname:
-                    try:
-                        coord = float(obj_cat[cname])
-                    except TypeError as msg:
-                        logger.error(msg)
-                    break
-
-            if coord is None:
-                logger.error(f'Object coordinates not found (coordinate: {coord_keyword})')
-                return None, None
-            else:
-                coords += (coord,)
-
-        return coords
+        return coords_array
