@@ -76,10 +76,10 @@ class Image2D(ViewerElement):
         # compute default image levels
         if np.any(np.isfinite(self.data)):
             l1, l2 = ZScaleInterval().get_limits(self.data[np.nonzero(self.data)])
-            dl = self.cfg.color_bar.zscale_fraction * (l2 - l1)
-            lm = (l1 + l2) / 2
-            l1, l2 = lm - dl / 2, lm + dl / 2
-
+            if self.cfg.color_bar.vmin is not None:
+                l1 = self.cfg.color_bar.vmin
+            if self.cfg.color_bar.vmax is not None:
+                l2 = self.cfg.color_bar.vmax
             self.set_default_levels((l1, l2))
 
     def add_content(self):
