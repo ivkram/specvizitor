@@ -1,18 +1,14 @@
 from astropy.io import fits
 from astropy.table import Table
 import astropy.units as u
-from astropy.units.core import UnitConversionError
-from astropy.utils.exceptions import AstropyWarning
 import numpy as np
 from PIL import Image, ImageOps
-from specutils import Spectrum1D
 
 import abc
 from dataclasses import dataclass
 import logging
 import pathlib
 import re
-import warnings
 
 from ..utils.widgets import FileBrowser
 
@@ -67,11 +63,14 @@ class GenericFITSLoader(BaseLoader):
             self.raise_error(f'Extension `{index}` not found (filename: {filename.name})')
             return None, None
 
+        # reading the header
         meta = hdu.header
 
         if meta['XTENSION'] in ('TABLE', 'BINTABLE'):
+            # reading table data
             data = Table.read(hdu)
         else:
+            # reading image data
             data = hdu.data
 
         hdul.close()
@@ -98,37 +97,10 @@ class PILLoader(BaseLoader):
         return data, meta
 
 
-@dataclass
-class SpecutilsLoader(BaseLoader):
-    name: str = 'specutils'
-
-    def load(self, filename: pathlib.Path, **kwargs):
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', AstropyWarning)
-                spec: Spectrum1D = Spectrum1D.read(filename, **kwargs)
-        except Exception as e:
-            self.raise_error(e)
-            return None, None
-
-        try:
-            # specutils treats "pix" as a valid spectral axis unit
-            spec.spectral_axis.to('AA')
-        except UnitConversionError:
-            self.raise_error(f'Invalid spectral axis unit: {spec.spectral_axis.unit}')
-            return None, None
-
-        return spec, spec.meta
-
-
 def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, **kwargs):
-    if kwargs.get('silent'):
-        logger.disabled = True
-    else:
-        logger.disabled = False
+    logger.disabled = True if kwargs.get('silent') else False
 
-    registered_loaders: dict[str, BaseLoader] =\
-        {loader.name: loader for loader in (GenericFITSLoader(), PILLoader(), SpecutilsLoader())}
+    registered_loaders: dict[str, BaseLoader] = {loader.name: loader for loader in (GenericFITSLoader(), PILLoader())}
 
     allowed_loader_names = ('auto',) + tuple(loader.name for loader in registered_loaders.values())
     if loader_name not in allowed_loader_names:
@@ -137,10 +109,7 @@ def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, **kw
         return None, None
 
     if loader_name == 'auto':
-        if filename.suffix == '.fits':
-            loader_name = 'generic_fits'
-        else:
-            loader_name = 'pil'
+        loader_name = 'generic_fits' if filename.suffix == '.fits' else 'pil'
 
     return registered_loaders[loader_name].load(filename, **kwargs)
 

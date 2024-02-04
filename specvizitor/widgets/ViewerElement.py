@@ -21,12 +21,14 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ContainerRange:
-    x: tuple[float, float] | None = None
-    y: tuple[float, float] | None = None
+    x: tuple[float, float] = (0, 1)
+    y: tuple[float, float] = (0, 1)
+    pad: float = 0
 
-    @property
-    def is_set(self) -> bool:
-        return not (self.x is None and self.y is None)
+    def padded(self, lims) -> tuple[float, float]:
+        w = lims[1] - lims[0]
+        pad_abs = self.pad * w
+        return lims[0] - pad_abs, lims[1] + pad_abs
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
@@ -51,7 +53,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.graphics_layout: pg.GraphicsLayout | None = None
 
         # graphics items
-        self.container: pg.PlotItem | pg.ViewBox | None = None
+        self.container: pg.PlotItem | None = None
         self._registered_items: list[pg.GraphicsItem] = []
 
         self._spectral_lines = spectral_lines if spectral_lines is not None else SpectralLineData()
@@ -96,18 +98,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._graphics_view.setCentralItem(self.graphics_layout)
 
         # create the graphics container
-        if self.cfg.container == 'PlotItem':
-            self.container = pg.PlotItem(name=self.title)
-            # self.container.hideAxis('left')
-            self.container.showAxes((False, False, False, True), showValues=(False, False, False, True))
-            self.container.hideButtons()
-        elif self.cfg.container == 'ViewBox':
-            self.container = pg.ViewBox()
-        else:
-            logger.error(f'Unknown container: {self.cfg.container}')
-            return
+        self.container = pg.PlotItem(name=self.title)
+        self.container.showAxes((self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible),
+                                showValues=(self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible))
+        self.container.hideButtons()
+        self.container.setMouseEnabled(True, True)
 
-        self.container.setAspectLocked(True)
         self.graphics_layout.addItem(self.container, 0, 0)
 
         # add spectral lines to the container
@@ -156,28 +152,41 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 sub_layout.addWidget(s)
         self.layout().addLayout(sub_layout, 2, 1, 1, 1)
 
+    def setEnabled(self, a0: bool = True):
+        super().setEnabled(a0)
+        for line_artist in self._spectral_line_artists.values():
+            line_artist[0].setVisible(a0)
+            line_artist[1].setVisible(a0)
+        for s in self.sliders.values():
+            s.setEnabled(a0)
+        for w in self.lazy_widgets:
+            w.setEnabled(a0)
+
     @QtCore.Slot(int, InspectionData, object, list)
     def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_files: list[str]):
-        # clear the widget content
+        # clear widget contents
         if self.data is not None:
             self.clear_content()
             for s in self.sliders.values():
                 s.clear()
 
-        # load catalogue values to the sliders
-        for s in self.sliders.values():
-            s.update_default_value(obj_cat)
-
         # load data to the widget
         self.load_data(obj_id=review.get_id(j), data_files=data_files)
 
-        # display the object
+        # display the data
         if self.data is not None:
-            self.apply_qtransform()
             self.add_content()
-            for s in self.sliders.values():
-                s.update_from_slider()
 
+            # set up the view *after* adding content because content determines axes limits
+            self.setup_view()
+            self.apply_qtransform()
+
+            # process sliders
+            for s in self.sliders.values():
+                s.update_default_value(obj_cat)  # load the catalog value to the slider
+                s.update_from_slider()  # update the widget according to the slider state
+
+            # final preparations
             self.reset_view()
             self.setEnabled(True)
         else:
@@ -213,16 +222,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 return False
         return True
 
-    def setEnabled(self, a0: bool = True):
-        super().setEnabled(a0)
-        for line_artist in self._spectral_line_artists.values():
-            line_artist[0].setVisible(a0)
-            line_artist[1].setVisible(a0)
-        for s in self.sliders.values():
-            s.setEnabled(a0)
-        for w in self.lazy_widgets:
-            w.setEnabled(a0)
-
     @abc.abstractmethod
     def add_content(self):
         pass
@@ -232,21 +231,17 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.container.addItem(item, **kwargs)
         self._registered_items.append(item)
 
-    def remove_registered_items(self):
-        while self._registered_items:
-            item = self._registered_items.pop()
-            self.container.removeItem(item)
+    def setup_view(self):
+        xlim = (self.cfg.x_axis.lims.min, self.cfg.x_axis.lims.max)
+        ylim = (self.cfg.y_axis.lims.min, self.cfg.y_axis.lims.max)
 
-    def clear_content(self):
-        self.remove_registered_items()
-        self.reset_default_display_settings()
+        xlim = tuple(xlim[i] if xlim[i] is not None else self._default_range.x[i] for i in range(2))
+        ylim = tuple(ylim[i] if ylim[i] is not None else self._default_range.y[i] for i in range(2))
 
-    def reset_default_display_settings(self):
-        self._qtransform = QtGui.QTransform()
-        self._default_range = ContainerRange()
+        self.set_default_range(xrange=xlim, yrange=ylim)
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
-                          apply_qtransform=False, update: bool = False):
+                          padding: float | None = None, apply_qtransform=False, update: bool = False):
         if apply_qtransform:
             if not xrange or not yrange:
                 raise ValueError('Cannot apply transformation to missing axis limits')
@@ -260,26 +255,18 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self._default_range.x = xrange
         if yrange:
             self._default_range.y = yrange
+        if padding:
+            self._default_range.pad = padding
 
         if update:
             self.reset_range()
 
-    def apply_qtransform(self):
-        self.container.setAspectLocked(lock=True, ratio=self._qtransform.m22() / self._qtransform.m11())
+    def apply_qtransform(self, apply_to_default_range=False):
+        if apply_to_default_range:
+            self.set_default_range(self._default_range.x, self._default_range.y, apply_qtransform=True)
+
         for item in self._registered_items:
             item.setTransform(self._qtransform)
-
-    def reset_range(self):
-        if self._default_range.is_set:
-            self.container.setRange(xRange=self._default_range.x, yRange=self._default_range.y, padding=0)
-        else:
-            self.container.autoRange(padding=0)
-
-    def reset_view(self):
-        self.reset_range()
-
-        self.redshift_slider.reset()
-        self.redshift_changed_action(self.redshift_slider.value)
 
     @abc.abstractmethod
     def smooth(self, sigma: float):
@@ -297,3 +284,27 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     def redshift_changed_action(self, redshift: float):
         self.set_spectral_line_positions(redshift)
+
+    def reset_default_display_settings(self):
+        self._qtransform = QtGui.QTransform()
+        self._default_range = ContainerRange()
+
+    def reset_range(self):
+        self.container.setRange(xRange=self._default_range.padded(self._default_range.x),
+                                yRange=self._default_range.padded(self._default_range.y), padding=0)
+        # self.container.autoRange(padding=0)
+
+    def reset_view(self):
+        self.reset_range()
+
+        self.redshift_slider.reset()
+        self.redshift_changed_action(self.redshift_slider.value)
+
+    def remove_registered_items(self):
+        while self._registered_items:
+            item = self._registered_items.pop()
+            self.container.removeItem(item)
+
+    def clear_content(self):
+        self.remove_registered_items()
+        self.reset_default_display_settings()

@@ -72,9 +72,19 @@ def main():
     # set up the GUI appearance
     set_up_appearance(cfg=config.appearance)
 
-    # "discover" and "register" plugins (to be updated)
-    plugins = [importlib.import_module("specvizitor.plugins." + plugin_name).Plugin()
-               for plugin_name in config.plugins]
+    # "discover" and "register" plugins
+    plugins = []
+    if config.plugins:
+        undiscovered_plugins = []
+        for plugin_name in config.plugins:
+            try:
+                plugins.append(importlib.import_module("specvizitor.plugins." + plugin_name).Plugin())
+            except ModuleNotFoundError:
+                logger.warning(f'Plugin not found: {plugin_name}')
+                undiscovered_plugins.append(plugin_name)
+
+        config.plugins = [plugin_name for plugin_name in config.plugins if plugin_name not in undiscovered_plugins]
+        config.save()
 
     # create the main window
     window = MainWindow(global_cfg=config,

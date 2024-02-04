@@ -11,7 +11,6 @@ import logging
 from specvizitor.plugins.plugin_core import PluginCore
 from specvizitor.widgets.ViewerElement import ViewerElement
 from specvizitor.widgets.Image2D import Image2D
-from specvizitor.widgets.Spec1D import Spec1D
 from specvizitor.widgets.Plot1D import Plot1D
 
 logger = logging.getLogger(__name__)
@@ -90,24 +89,24 @@ class Plugin(PluginCore):
         return stacked_lm_docks
 
     def tweak_widgets(self, widgets: dict[str, ViewerElement], obj_cat: Row | None = None):
-        spec_1d: Spec1D | None = widgets.get('Spectrum 1D')
+        spec_1d: Plot1D | None = widgets.get('Spectrum 1D')
         spec_2d: Image2D | None = widgets.get('Spectrum 2D')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
 
         if spec_2d is not None and spec_1d is not None:
-            self.transform_spec2d(spec_2d, spec_1d)
-            spec_2d.reset_view()
+           self.transform_spec2d(spec_2d, spec_1d)
+           spec_2d.reset_view()
 
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)
 
-        if spec_1d is not None:
-            self.convert_spec1d_flux_unit_to_physical(spec_1d)
-            spec_1d.reset_view()
+        # if spec_1d is not None:
+        #     self.convert_spec1d_flux_unit_to_physical(spec_1d)
+        #     spec_1d.reset_view()
 
     @staticmethod
-    def transform_spec2d(spec_2d: Image2D, spec_1d: Spec1D):
-        wave_unit = spec_1d.plot_item.data.x.unit
+    def transform_spec2d(spec_2d: Image2D, spec_1d: Plot1D):
+        wave_unit = 'AA'
         scale = (1 * u.Unit('micron')).to(wave_unit).value
 
         dlam = spec_2d.meta['CD1_1'] * scale
@@ -115,16 +114,16 @@ class Plugin(PluginCore):
         crpix = spec_2d.meta['CRPIX1']
 
         spec_2d._qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
-        spec_2d.apply_qtransform()
+        spec_2d.apply_qtransform(apply_to_default_range=True)
 
     @staticmethod
-    def add_current_redshift_to_z_pdf(spec_1d: Spec1D, z_pdf: Plot1D):
+    def add_current_redshift_to_z_pdf(spec_1d: Plot1D, z_pdf: Plot1D):
         line = pg.InfiniteLine(spec_1d.redshift_slider.value, pen='m')
-        spec_1d.redshift_changed.connect(lambda z: line.setPos(z))
-        z_pdf.plot_item.addItem(line)
+        spec_1d.redshift_slider.value_changed[float].connect(lambda z: line.setPos(z))
+        z_pdf.register_item(line)
 
     @staticmethod
-    def convert_spec1d_flux_unit_to_physical(spec_1d: Spec1D):
+    def convert_spec1d_flux_unit_to_physical(spec_1d: Plot1D):
         if not isinstance(spec_1d.data, Table):
             try:
                 t: Table = Table.read(spec_1d.filename)
@@ -142,7 +141,7 @@ class Plugin(PluginCore):
             return
 
         # check that the original units are correct
-        plot_data = spec_1d.plot_item.data
+        plot_data = spec_1d.plot_data_items.data
         if not plot_data.y.unit or not plot_data.y.unit.is_equivalent(u.Unit('ct / s')):
             return
 

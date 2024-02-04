@@ -13,5 +13,5 @@ def set_up_appearance(cfg: Appearance):
         pg.setConfigOption('background', "#1d2023")
         pg.setConfigOption('foreground', '#eff0f1')
     else:
-        pg.setConfigOption('background', "w")
+        pg.setConfigOption('background', 'w')
         pg.setConfigOption('foreground', 'k')

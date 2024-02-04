@@ -36,4 +36,4 @@ class Config(Params):
     catalogue: Catalogue = field(default_factory=lambda: Catalogue())
     data: Data = field(default_factory=lambda: Data())
     review_form: ReviewForm = field(default_factory=lambda: ReviewForm())
-    plugins: list[str] = field(default_factory=list)
+    plugins: list[str] | None = None

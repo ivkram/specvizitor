@@ -68,18 +68,18 @@ class SmartSlider(AbstractWidget):
     value_changed = QtCore.Signal(float)
 
     def __init__(self, short_name: str = 'x', full_name: str | None = None, action: str | None = None,
-                 visible: bool = True, name_in_catalogue: str | None = None, link_to: str | None = None,
+                 visible: bool = True, catalog_name: str | None = None, link_to: str | None = None,
                  show_text_editor: bool = False, n_decimal_places: int = 6, parent=None, **kwargs):
 
-        if name_in_catalogue is not None:
-            self.short_name = name_in_catalogue
+        if catalog_name is not None:
+            self.short_name = catalog_name
         else:
             self.short_name = short_name
 
         self.full_name = short_name if full_name is None else full_name
         self.action = f"change {self.full_name}" if action is None else action
 
-        self.name_in_catalogue = name_in_catalogue
+        self.catalog_name = catalog_name
         self.link_to = link_to
         self.show_text_editor = show_text_editor
         self.n_decimal_places = n_decimal_places
@@ -150,14 +150,14 @@ class SmartSlider(AbstractWidget):
             self.reset()
 
     def update_default_value(self, obj_cat: Row | None):
-        if obj_cat is None or self.name_in_catalogue is None:
+        if obj_cat is None or self.catalog_name is None:
             self._slider.default_value = self._default_value_fallback
             return
 
         try:
-            self._slider.default_value = obj_cat[self.name_in_catalogue]
+            self._slider.default_value = obj_cat[self.catalog_name]
         except KeyError:
-            logger.warning(column_not_found_message(self.name_in_catalogue, obj_cat.meta.get('aliases')))
+            logger.warning(column_not_found_message(self.catalog_name, obj_cat.meta.get('aliases')))
             self._slider.default_value = self._default_value_fallback
 
     def reset(self):

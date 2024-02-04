@@ -82,17 +82,11 @@ class DataViewer(AbstractWidget):
                 widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
                                         spectral_lines=self._spectral_lines, parent=self)
 
-        # create widgets for plots (does not include any spectra!)
+        # create widgets for plots, including 1D spectra
         if self._viewer_cfg.plots is not None:
             for name, plot_cfg in self._viewer_cfg.plots.items():
                 widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
                                        spectral_lines=self._spectral_lines, parent=self)
-
-        # create widgets for 1D spectra
-        # if self._viewer_cfg.spectra is not None:
-        #     for name, spec_cfg in self._viewer_cfg.spectra.items():
-        #         widgets[name] = Spec1D(title=name, cfg=spec_cfg, appearance=self._appearance,
-        #                                spectral_lines=self._spectral_lines, parent=self)
 
         self._connect_widgets(widgets)
 
@@ -107,12 +101,10 @@ class DataViewer(AbstractWidget):
 
         for w in widgets.values():
             # link view(s)
-            if w.cfg.link_view:
-                for axis, widget_title in w.cfg.link_view.items():
-                    if axis == 'x':
-                        w.container.setXLink(widget_title)
-                    elif axis == 'y':
-                        w.container.setYLink(widget_title)
+            if w.cfg.x_axis.link_to:
+                w.container.setXLink(w.cfg.x_axis.link_to)
+            if w.cfg.y_axis.link_to:
+                w.container.setYLink(w.cfg.y_axis.link_to)
 
             # link sliders
             for slider_name, slider in w.sliders.items():

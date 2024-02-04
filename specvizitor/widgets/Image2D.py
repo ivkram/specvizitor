@@ -41,11 +41,13 @@ class Image2D(ViewerElement):
     def init_ui(self):
         super().init_ui()
 
+        # lock the aspect ratio of the container
+        self.container.setAspectLocked(True)
+
         # create an image item
         self.image_item = pg.ImageItem()
         self.image_item.setLookupTable(self._cmap.getLookupTable())
-        if self.cfg.container == 'PlotItem':
-            self.image_item.setBorder('k')  # add a border to the image
+        self.image_item.setBorder('k')  # add a border to the image
 
         # create a color bar
         self.cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
@@ -57,34 +59,7 @@ class Image2D(ViewerElement):
         # add the color bar to the layout
         self.graphics_layout.addItem(self.cbar, 0, 1)
 
-    def load_data(self, *args, **kwargs):
-        super().load_data(*args, **kwargs)
-        if self.data is None:
-            return
-
-        # create a transformation matrix from metadata
-        if self.cfg.wcs_transform and self.meta is not None:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', FITSFixedWarning)
-                w = WCS(self.meta)
-
-            transformation_matrix = get_qtransform_matrix_from_wcs(w)
-            self._qtransform.setMatrix(*transformation_matrix.flatten())
-
-        self.set_default_range((0, self.data.shape[1]), (0, self.data.shape[0]), apply_qtransform=True)
-
-        # compute default image levels
-        if np.any(np.isfinite(self.data)):
-            l1, l2 = ZScaleInterval().get_limits(self.data[np.nonzero(self.data)])
-            if self.cfg.color_bar.vmin is not None:
-                l1 = self.cfg.color_bar.vmin
-            if self.cfg.color_bar.vmax is not None:
-                l2 = self.cfg.color_bar.vmax
-            self.set_default_levels((l1, l2))
-
     def add_content(self):
-        super().add_content()
-
         self.image_item.setImage(self.data, autoLevels=False)
         self.register_item(self.image_item)
 
@@ -107,9 +82,29 @@ class Image2D(ViewerElement):
             self.register_item(pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen))
             self.register_item(pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen))
 
-    def reset_default_display_settings(self):
-        super().reset_default_display_settings()
-        self._default_levels = Image2DLevels()
+    def setup_view(self):
+        # create a transformation matrix from metadata
+        if self.cfg.wcs_transform and self.meta is not None:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                w = WCS(self.meta)
+
+            transformation_matrix = get_qtransform_matrix_from_wcs(w)
+            self._qtransform.setMatrix(*transformation_matrix.flatten())
+
+        self.set_default_range((0., float(self.data.shape[1])), (0., float(self.data.shape[0])),
+                               apply_qtransform=True)
+
+        # compute default image levels
+        if np.any(np.isfinite(self.data)) and np.any(np.nonzero(self.data)):
+            l1, l2 = ZScaleInterval().get_limits(self.data[np.nonzero(self.data)])
+            if self.cfg.color_bar.vmin is not None:
+                l1 = self.cfg.color_bar.vmin
+            if self.cfg.color_bar.vmax is not None:
+                l2 = self.cfg.color_bar.vmax
+            self.set_default_levels((l1, l2))
+
+        super().setup_view()
 
     def set_default_levels(self, levels: tuple[float, float], update: bool = False):
         self._default_levels.min = levels[0]
@@ -118,13 +113,9 @@ class Image2D(ViewerElement):
         if update:
             self.reset_levels()
 
-    def reset_levels(self):
-        self.cbar.setLevels((self._default_levels.min, self._default_levels.max))
-        self.cbar._updateHistogram()  # the histogram is calculated using the current image levels
-
-    def reset_view(self):
-        super().reset_view()
-        self.reset_levels()
+    def apply_qtransform(self, **kwargs):
+        super().apply_qtransform(**kwargs)
+        self.container.setAspectLocked(lock=True, ratio=self._qtransform.m22() / self._qtransform.m11())
 
     def smooth(self, sigma: float):
         if sigma > 0:
@@ -137,3 +128,15 @@ class Image2D(ViewerElement):
             smoothed_data = self.data
 
         self.image_item.setImage(smoothed_data, autoLevels=False)
+
+    def reset_default_display_settings(self):
+        super().reset_default_display_settings()
+        self._default_levels = Image2DLevels()
+
+    def reset_levels(self):
+        self.cbar.setLevels((self._default_levels.min, self._default_levels.max))
+        self.cbar._updateHistogram()  # the histogram is calculated using the current image levels
+
+    def reset_view(self):
+        super().reset_view()
+        self.reset_levels()
