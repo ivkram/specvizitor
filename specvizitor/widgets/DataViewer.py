@@ -130,9 +130,13 @@ class DataViewer(AbstractWidget):
 
     def _create_docks(self):
         # delete previously created docks
-        for d in list(self.docks.values())[:-1]:
-            # pyqtgraph bug: d.close() would leave a floating TContainer (created when docks are stacked)
-            d.container().close()
+        docks = list(self.docks.values())
+        if len(docks) == 1:
+            docks[0].close()
+        else:
+            for d in docks[:-1]:
+                # pyqtgraph bug: d.close() would leave a floating TContainer (created when docks are stacked)
+                d.container().close()
 
         docks = {}
         for widget in self.widgets:
