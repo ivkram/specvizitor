@@ -94,8 +94,8 @@ class Plugin(PluginCore):
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
 
         if spec_2d is not None and spec_1d is not None:
-           self.transform_spec2d(spec_2d, spec_1d)
-           spec_2d.reset_view()
+            self.transform_spec2d(spec_2d, spec_1d)
+            spec_2d.reset_view()
 
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)

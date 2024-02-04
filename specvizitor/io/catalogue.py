@@ -29,7 +29,7 @@ def read_cat(filename=None,
 
     # load the catalogue
     try:
-        cat = Table(fits.getdata(filename))
+        cat = Table.read(filename)
     except OSError as e:
         logger.error(f'Failed to load the catalogue: {e}')
         return

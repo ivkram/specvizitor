@@ -7,3 +7,7 @@ catalogue:
 data:
   enabled_unit_aliases:
     ANGSTROMS: AA
+
+plugins:
+  - sviz-grizli
+  - sviz-eiger
