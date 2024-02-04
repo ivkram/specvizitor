@@ -232,8 +232,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._registered_items.append(item)
 
     def setup_view(self):
-        xlim = (self.cfg.x_axis.lims.min, self.cfg.x_axis.lims.max)
-        ylim = (self.cfg.y_axis.lims.min, self.cfg.y_axis.lims.max)
+        xlim = (self.cfg.x_axis.limits.min, self.cfg.x_axis.limits.max)
+        ylim = (self.cfg.y_axis.limits.min, self.cfg.y_axis.limits.max)
 
         xlim = tuple(xlim[i] if xlim[i] is not None else self._default_range.x[i] for i in range(2))
         ylim = tuple(ylim[i] if ylim[i] is not None else self._default_range.y[i] for i in range(2))

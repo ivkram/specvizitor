@@ -26,6 +26,7 @@ class Image2DLevels:
 
 class Image2D(ViewerElement):
     ALLOWED_DATA_TYPES = (np.ndarray,)
+    ALLOWED_CBAR_LIMS = ('minmax', 'zscale', 'user')
 
     def __init__(self, cfg: data_widgets.Image, **kwargs):
         self.cfg = cfg
@@ -97,12 +98,20 @@ class Image2D(ViewerElement):
 
         # compute default image levels
         if np.any(np.isfinite(self.data)) and np.any(np.nonzero(self.data)):
-            l1, l2 = ZScaleInterval().get_limits(self.data[np.nonzero(self.data)])
-            if self.cfg.color_bar.vmin is not None:
-                l1 = self.cfg.color_bar.vmin
-            if self.cfg.color_bar.vmax is not None:
-                l2 = self.cfg.color_bar.vmax
-            self.set_default_levels((l1, l2))
+            limits_cfg = self.cfg.color_bar.limits
+            if limits_cfg.type not in self.ALLOWED_CBAR_LIMS:
+                logger.error(f'Unknown type of colorbar limits: {limits_cfg}.'
+                             f'Supported types: {self.ALLOWED_CBAR_LIMS}')
+            else:
+                if limits_cfg.type == 'minmax':
+                    l1, l2 = np.nanmin(self.data), np.nanmin(self.data)
+                elif limits_cfg.type == 'zscale':
+                    l1, l2 = ZScaleInterval().get_limits(self.data)
+                else:
+                    l1 = limits_cfg.min if limits_cfg.min is not None else np.nanmin(self.data)
+                    l2 = limits_cfg.max if limits_cfg.max is not None else np.nanmax(self.data)
+
+                self.set_default_levels((l1, l2))
 
         super().setup_view()
 

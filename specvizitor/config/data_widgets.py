@@ -5,8 +5,14 @@ from ..utils.params import Params
 
 
 @dataclass
-class SpectralLines:
-    visible: bool = False
+class Limits:
+    min: float | None = None
+    max: float | None = None
+
+
+@dataclass
+class ColorBarLimits(Limits):
+    type: str = 'zscale'
 
 
 @dataclass
@@ -29,8 +35,12 @@ class ColorBar:
     visible: bool = True
     link_to: str | None = None
 
-    vmin: float | None = None
-    vmax: float | None = None
+    limits: ColorBarLimits = field(default_factory=ColorBarLimits)
+
+
+@dataclass
+class SpectralLines:
+    visible: bool = False
 
 
 @dataclass
@@ -42,12 +52,6 @@ class LinePlot:
 
 
 @dataclass
-class Limits:
-    min: float | None = None
-    max: float | None = None
-
-
-@dataclass
 class Axis:
     visible: bool = True
     link_to: str | None = None
@@ -55,7 +59,7 @@ class Axis:
     unit: str | None = None
     scale: str | None = None
     label: str | None = None
-    lims: Limits = field(default_factory=Limits)
+    limits: Limits = field(default_factory=Limits)
 
 
 @dataclass

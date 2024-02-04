@@ -17,8 +17,10 @@ images:
     x_axis:
       link_to: Spectrum 1D
     color_bar: &cbar_defaults
-      vmin: -0.015
-      vmax: 0.015
+      limits:
+        type: user
+        min: -0.015
+        max: 0.015
     central_axes: x
 
   Line Map 1: &linemap_defaults
@@ -54,7 +56,7 @@ plots:
         hide_label: true
     y_axis:
       scale: log
-      lims:
+      limits:
         min: -3
 
   Spectrum 1D:
@@ -63,7 +65,7 @@ plots:
     data:
       filename_keyword: 1D.fits
     y_axis:
-      lims:
+      limits:
         max: 0.15
 
     plots:
