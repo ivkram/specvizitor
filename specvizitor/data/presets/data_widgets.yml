@@ -4,6 +4,10 @@ images:
       filename_keyword: full.fits
       loader_params:
         extname: DSCI
+    x_axis:
+      visible: false
+    y_axis:
+      visible: false
     color_bar:
       limits:
         type: 'zscale'
@@ -19,6 +23,8 @@ images:
         extver: F444W
     x_axis:
       link_to: Spectrum 1D
+    y_axis:
+      visible: false
     color_bar: &cbar_defaults
       limits:
         type: user
@@ -36,6 +42,10 @@ images:
         extname: LINE
         silent: true
     dock_title_fmt: short
+    x_axis:
+      visible: false
+    y_axis:
+      visible: false
     color_bar: *cbar_defaults
     central_crosshair: true
   Line Map 2: *linemap_defaults
