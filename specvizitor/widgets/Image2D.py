@@ -149,3 +149,13 @@ class Image2D(ViewerElement):
     def reset_view(self):
         super().reset_view()
         self.reset_levels()
+
+    @QtCore.Slot()
+    def hide_interface(self):
+        super().hide_interface()
+        self.cbar.setVisible(False)
+
+    @QtCore.Slot()
+    def update_visibility(self):
+        super().update_visibility()
+        self.cbar.setVisible(self.cfg.color_bar.visible)

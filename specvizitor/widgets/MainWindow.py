@@ -40,6 +40,9 @@ class MainWindow(QtWidgets.QMainWindow):
     starred_state_updated = QtCore.Signal(bool, bool)
     screenshot_path_selected = QtCore.Signal(str)
 
+    zen_mode_activated = QtCore.Signal()
+    zen_mode_deactivated = QtCore.Signal()
+
     def __init__(self, global_cfg: Config, cache: Cache, viewer_cfg: DataWidgets,
                  spectral_lines: SpectralLineData | None = None, plugins=None, parent=None):
         super().__init__(parent)
@@ -54,6 +57,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._plugins = plugins
 
+        self.interface_hidden: bool = False
         self.was_maximized: bool = False
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
@@ -183,6 +187,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._view.addSeparator()
 
+        self._zen = QtWidgets.QAction("Hide Interface")
+        self._zen.triggered.connect(lambda:
+                                    self._hide_interface() if not self.interface_hidden else self._show_interface())
+        self._zen.setShortcut('H')
+        self._view.addAction(self._zen)
+
+        self._view.addSeparator()
+
         self._fullscreen = QtWidgets.QAction("Fullscreen")
         self._fullscreen.triggered.connect(lambda:
                                            self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
@@ -244,6 +256,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.starred_state_updated.connect(self._commands_bar.update_star_button_icon)
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
+
+        self.zen_mode_activated.connect(self._data_viewer.hide_interface)
+        self.zen_mode_deactivated.connect(self._data_viewer.restore_visibility)
 
         # connect the child widgets to the main window
         self._quick_search.id_selected.connect(self.load_by_id)
@@ -468,6 +483,16 @@ class MainWindow(QtWidgets.QMainWindow):
         if path:
             save_yaml(path, asdict(self._viewer_cfg))
             logger.info('Viewer configuration saved')
+
+    def _hide_interface(self):
+        self.interface_hidden = True
+        self._zen.setText('Show Interface')
+        self.zen_mode_activated.emit()
+
+    def _show_interface(self):
+        self.interface_hidden = False
+        self._zen.setText('Hide Interface')
+        self.zen_mode_deactivated.emit()
 
     def _enter_fullscreen(self):
         self.was_maximized = True if self.isMaximized() else False

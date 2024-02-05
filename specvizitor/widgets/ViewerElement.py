@@ -261,9 +261,14 @@ class ViewerElement(AbstractWidget, abc.ABC):
                                 showValues=(self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible))
 
     def update_axis_labels(self):
+        show_xaxis = self.container.getAxis('bottom').isVisible()
+        show_yaxis = self.container.getAxis('bottom').isVisible()
+
         self.container.setLabel(axis='bottom', text=self._axes.x.label_ext)
         self.container.setLabel(axis='left', text=self._axes.y.label_ext)
-        self.set_axes_visibility()  # pyqtgraph changes axis visibility after adding labels
+
+        # pyqtgraph changes axis visibility after adding labels
+        self.container.showAxes((show_yaxis, False, False, show_xaxis))
 
     def setEnabled(self, a0: bool = True):
         super().setEnabled(a0)
@@ -438,3 +443,15 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def clear_content(self):
         self.remove_registered_items()
         self.init_view()
+
+    @QtCore.Slot()
+    def hide_interface(self):
+        self.container.showAxes(False, showValues=False)
+        for s in self.sliders.values():
+            s.setVisible(False)
+
+    @QtCore.Slot()
+    def update_visibility(self):
+        self.set_axes_visibility()
+        self.redshift_slider.setVisible(self.cfg.redshift_slider.visible)
+        self.smoothing_slider.setVisible(self.cfg.smoothing_slider.visible)

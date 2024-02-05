@@ -26,6 +26,9 @@ class DataViewer(AbstractWidget):
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
+    zen_mode_activated = QtCore.Signal()
+    visibility_changed = QtCore.Signal()
+
     def __init__(self,
                  viewer_cfg: DataWidgets,
                  appearance: config.Appearance,
@@ -65,6 +68,8 @@ class DataViewer(AbstractWidget):
         if self.widgets:
             # disconnect signals
             self.object_selected.disconnect()
+            self.zen_mode_activated.disconnect()
+            self.visibility_changed.disconnect()
             try:
                 self.view_reset.disconnect()
             except TypeError:
@@ -98,6 +103,8 @@ class DataViewer(AbstractWidget):
     def _connect_widgets(self, widgets: dict[str, ViewerElement]):
         for w in widgets.values():
             self.object_selected.connect(w.load_object)
+            self.zen_mode_activated.connect(w.hide_interface)
+            self.visibility_changed.connect(w.update_visibility)
 
         for w in widgets.values():
             # link view(s)
@@ -259,4 +266,16 @@ class DataViewer(AbstractWidget):
             else:
                 for w in (core_widget,) + tuple(core_widget.lazy_widgets):
                     self.docks[w.title].setTitle(w.title)
+
+    @QtCore.Slot()
+    def hide_interface(self):
+        for dock in self.docks.values():
+            dock.hideTitleBar()
+        self.zen_mode_activated.emit()
+
+    @QtCore.Slot()
+    def restore_visibility(self):
+        for dock in self.docks.values():
+            dock.showTitleBar()
+        self.visibility_changed.emit()
 
