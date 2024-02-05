@@ -8,6 +8,11 @@ data:
   enabled_unit_aliases:
     ANGSTROMS: AA
 
+review_form:
+  default_flags:
+    - quality_flag_1
+    - quality_flag_2
+
 plugins:
   - sviz-grizli
   - sviz-eiger
