@@ -447,11 +447,9 @@ class ViewerElement(AbstractWidget, abc.ABC):
     @QtCore.Slot()
     def hide_interface(self):
         self.container.showAxes(False, showValues=False)
-        for s in self.sliders.values():
-            s.setVisible(False)
+        self.smoothing_slider.setVisible(False)
 
     @QtCore.Slot()
     def update_visibility(self):
         self.set_axes_visibility()
-        self.redshift_slider.setVisible(self.cfg.redshift_slider.visible)
         self.smoothing_slider.setVisible(self.cfg.smoothing_slider.visible)
