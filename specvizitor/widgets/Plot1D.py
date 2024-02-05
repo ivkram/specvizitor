@@ -78,7 +78,9 @@ class Plot1D(ViewerElement):
             x_data, y_data = plot_data_item.getData()
             xlim = self.update_axis_lims(xlim, x_data)
             ylim = self.update_axis_lims(ylim, y_data)
-        self.set_default_range(xlim, ylim, padding=0.05)
+
+        self.set_default_range(xlim, ylim)
+        self.set_content_padding(ypad=0.05)
 
         super().setup_view()
 

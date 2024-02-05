@@ -4,7 +4,7 @@ from qtpy import QtGui, QtCore, QtWidgets
 import pyqtgraph as pg
 
 import abc
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import logging
 import pathlib
 
@@ -20,15 +20,23 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ContainerRange:
-    x: tuple[float, float] = (0, 1)
-    y: tuple[float, float] = (0, 1)
-    pad: float = 0
+class Axis:
+    unit: str | None = None
+    label: str | None = None
+    limits: tuple[float, float] = (0, 1)
+    padding: float = 0
 
-    def padded(self, lims) -> tuple[float, float]:
-        w = lims[1] - lims[0]
-        pad_abs = self.pad * w
-        return lims[0] - pad_abs, lims[1] + pad_abs
+    @property
+    def limits_padded(self) -> tuple[float, float]:
+        w = self.limits[1] - self.limits[0]
+        pad_abs = self.padding * w
+        return self.limits[0] - pad_abs, self.limits[1] + pad_abs
+
+
+@dataclass
+class Axes:
+    x: Axis = field(default_factory=Axis)
+    y: Axis = field(default_factory=Axis)
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
@@ -52,18 +60,18 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._graphics_view: pg.GraphicsView | None = None
         self.graphics_layout: pg.GraphicsLayout | None = None
 
+        # graphics view properties
+        self._axes: Axes | None = None
+        self._qtransform: QtGui.QTransform | None = None
+
+        self.reset_default_display_settings()
+
         # graphics items
         self.container: pg.PlotItem | None = None
         self._registered_items: list[pg.GraphicsItem] = []
 
         self._spectral_lines = spectral_lines if spectral_lines is not None else SpectralLineData()
         self._spectral_line_artists: dict[str, tuple[pg.InfiniteLine, pg.TextItem]] = {}
-
-        # graphics item display settings
-        self._qtransform: QtGui.QTransform | None = None
-        self._default_range: ContainerRange | None = None
-
-        self.reset_default_display_settings()
 
         # sliders
         self.sliders: dict[str, SmartSlider] = {}  # has to be a dictionary to enable links
@@ -235,13 +243,16 @@ class ViewerElement(AbstractWidget, abc.ABC):
         xlim = (self.cfg.x_axis.limits.min, self.cfg.x_axis.limits.max)
         ylim = (self.cfg.y_axis.limits.min, self.cfg.y_axis.limits.max)
 
-        xlim = tuple(xlim[i] if xlim[i] is not None else self._default_range.x[i] for i in range(2))
-        ylim = tuple(ylim[i] if ylim[i] is not None else self._default_range.y[i] for i in range(2))
+        xlim = (xlim[0] if xlim[0] is not None else self._axes.x.limits[0],
+                xlim[1] if xlim[1] is not None else self._axes.x.limits[1])
+
+        ylim = (ylim[0] if ylim[0] is not None else self._axes.y.limits[0],
+                ylim[1] if ylim[1] is not None else self._axes.y.limits[1])
 
         self.set_default_range(xrange=xlim, yrange=ylim)
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
-                          padding: float | None = None, apply_qtransform=False, update: bool = False):
+                          apply_qtransform=False, update: bool = False):
         if apply_qtransform:
             if not xrange or not yrange:
                 raise ValueError('Cannot apply transformation to missing axis limits')
@@ -252,18 +263,22 @@ class ViewerElement(AbstractWidget, abc.ABC):
             xrange, yrange = (x1, x2), (y1, y2)
 
         if xrange:
-            self._default_range.x = xrange
+            self._axes.x.limits = xrange
         if yrange:
-            self._default_range.y = yrange
-        if padding:
-            self._default_range.pad = padding
+            self._axes.y.limits = yrange
 
         if update:
             self.reset_range()
 
+    def set_content_padding(self, xpad: float | None = None, ypad: float | None = None):
+        if xpad:
+            self._axes.x.padding = xpad
+        if ypad:
+            self._axes.y.padding = ypad
+
     def apply_qtransform(self, apply_to_default_range=False):
         if apply_to_default_range:
-            self.set_default_range(self._default_range.x, self._default_range.y, apply_qtransform=True)
+            self.set_default_range(self._axes.x.limits, self._axes.y.limits, apply_qtransform=True)
 
         for item in self._registered_items:
             item.setTransform(self._qtransform)
@@ -274,7 +289,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     def set_spectral_line_positions(self, redshift: float = 0):
         scale0 = 1 + redshift
-        y_min, y_max = self._default_range.y if self._default_range.y else (0, 0)
+        y_min, y_max = self._axes.y.limits if self._axes.y.limits else (0, 0)
         label_height = y_min + 0.6 * (y_max - y_min)
 
         for line_name, line_artist in self._spectral_line_artists.items():
@@ -287,12 +302,10 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     def reset_default_display_settings(self):
         self._qtransform = QtGui.QTransform()
-        self._default_range = ContainerRange()
+        self._axes = Axes()
 
     def reset_range(self):
-        self.container.setRange(xRange=self._default_range.padded(self._default_range.x),
-                                yRange=self._default_range.padded(self._default_range.y), padding=0)
-        # self.container.autoRange(padding=0)
+        self.container.setRange(xRange=self._axes.x.limits_padded, yRange=self._axes.y.limits_padded, padding=0)
 
     def reset_view(self):
         self.reset_range()
