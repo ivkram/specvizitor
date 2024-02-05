@@ -68,6 +68,8 @@ plots:
     relative_to: Spectrum 2D
     data:
       filename_keyword: 1D.fits
+    x_axis:
+      label: wavelength
     y_axis:
       limits:
         min: -0.5
