@@ -178,6 +178,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setEnabled(False)
         self._reset_view.triggered.connect(self._data_viewer.view_reset.emit)
+        self._reset_view.setShortcut('F5')
         self._view.addAction(self._reset_view)
 
         self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
