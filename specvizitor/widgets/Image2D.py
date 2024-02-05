@@ -54,6 +54,10 @@ class Image2D(ViewerElement):
         self.cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
         self.cbar.setVisible(self.cfg.color_bar.visible)
 
+    def init_view(self):
+        super().init_view()
+        self._default_levels = Image2DLevels()
+
     def populate(self):
         super().populate()
 
@@ -137,10 +141,6 @@ class Image2D(ViewerElement):
             smoothed_data = self.data
 
         self.image_item.setImage(smoothed_data, autoLevels=False)
-
-    def reset_default_display_settings(self):
-        super().reset_default_display_settings()
-        self._default_levels = Image2DLevels()
 
     def reset_levels(self):
         self.cbar.setLevels((self._default_levels.min, self._default_levels.max))

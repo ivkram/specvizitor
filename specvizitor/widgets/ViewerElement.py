@@ -64,7 +64,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._axes: Axes | None = None
         self._qtransform: QtGui.QTransform | None = None
 
-        self.reset_default_display_settings()
+        self.init_view()
 
         # graphics items
         self.container: pg.PlotItem | None = None
@@ -133,6 +133,10 @@ class ViewerElement(AbstractWidget, abc.ABC):
         # connect signals from sliders to slots
         self.smoothing_slider.value_changed[float].connect(self.smooth)
         self.redshift_slider.value_changed[float].connect(self.redshift_changed_action)
+
+    def init_view(self):
+        self._axes = Axes()
+        self._qtransform = QtGui.QTransform()
 
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
         super().set_geometry(spacing=spacing, margins=margins)
@@ -300,10 +304,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def redshift_changed_action(self, redshift: float):
         self.set_spectral_line_positions(redshift)
 
-    def reset_default_display_settings(self):
-        self._qtransform = QtGui.QTransform()
-        self._axes = Axes()
-
     def reset_range(self):
         self.container.setRange(xRange=self._axes.x.limits_padded, yRange=self._axes.y.limits_padded, padding=0)
 
@@ -320,4 +320,4 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     def clear_content(self):
         self.remove_registered_items()
-        self.reset_default_display_settings()
+        self.init_view()
