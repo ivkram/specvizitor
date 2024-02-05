@@ -194,8 +194,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         # create the graphics container
         self.container = pg.PlotItem(name=self.title)
-        self.container.showAxes((self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible),
-                                showValues=(self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible))
+        self.set_axes_visibility()
         self.container.hideButtons()
         self.container.setMouseEnabled(True, True)
 
@@ -257,9 +256,14 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         self._qtransform = QtGui.QTransform()
 
+    def set_axes_visibility(self):
+        self.container.showAxes((self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible),
+                                showValues=(self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible))
+
     def update_axis_labels(self):
         self.container.setLabel(axis='bottom', text=self._axes.x.label_ext)
         self.container.setLabel(axis='left', text=self._axes.y.label_ext)
+        self.set_axes_visibility()  # pyqtgraph changes axis visibility after adding labels
 
     def setEnabled(self, a0: bool = True):
         super().setEnabled(a0)
