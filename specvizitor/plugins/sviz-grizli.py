@@ -91,12 +91,13 @@ class Plugin(PluginCore):
 
     def tweak_widgets(self, widgets: dict[str, ViewerElement], obj_cat: Row | None = None):
         spec_1d: Plot1D | None = widgets.get('Spectrum 1D')
-        spec_2d: Image2D | None = widgets.get('Spectrum 2D')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
 
-        if spec_2d is not None and spec_1d is not None:
-            self.transform_spec2d(spec_2d, spec_1d)
-            spec_2d.reset_view()
+        if spec_1d is not None:
+            for w in widgets.values():
+                if 'Spectrum 2D' in w.title:
+                    self.transform_spec2d(w, spec_1d)
+                    w.reset_view()
 
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)
