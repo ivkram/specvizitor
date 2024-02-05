@@ -22,16 +22,22 @@ class Plot1D(ViewerElement):
 
         super().__init__(cfg=cfg, **kwargs)
 
-    def get_plot_data(self, cname: str, scale: str | None = None):
+    @staticmethod
+    def apply_scale(plot_data, scale: str):
+        if scale == 'log':
+            with np.errstate(invalid='ignore', divide='ignore'):
+                plot_data = np.log10(plot_data)
+
+        return plot_data
+
+    def get_plot_data(self, cname: str, scale: str):
         try:
             plot_data = self.data[cname]
         except KeyError:
             logger.warning(column_not_found_message(cname))
             return None
 
-        if scale == 'log':
-            with np.errstate(invalid='ignore', divide='ignore'):
-                plot_data = np.log10(plot_data)
+        plot_data = self.apply_scale(plot_data, scale=scale)
 
         return plot_data
 

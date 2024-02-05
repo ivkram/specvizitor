@@ -12,7 +12,7 @@ class Limits:
 
 @dataclass
 class ColorBarLimits(Limits):
-    type: str = 'zscale'
+    type: str = 'minmax'
 
 
 @dataclass
@@ -57,7 +57,7 @@ class Axis:
     link_to: str | None = None
 
     unit: str | None = None
-    scale: str | None = None
+    scale: str = 'linear'
     label: str | None = None
     limits: Limits = field(default_factory=Limits)
 
@@ -74,7 +74,7 @@ class ViewerElement:
     visible: bool = True
     position: str | None = None
     relative_to: str | None = None
-    dock_title_fmt: str | None = None
+    dock_title_fmt: str = 'long'
 
     data: DataElement = field(default_factory=DataElement)
 
@@ -88,10 +88,16 @@ class ViewerElement:
 
 
 @dataclass
+class ImageCentralAxes:
+    x: bool = False
+    y: bool = False
+
+
+@dataclass
 class Image(ViewerElement):
     wcs_transform: bool = False
     color_bar: ColorBar = field(default_factory=ColorBar)
-    central_axes: str | None = None
+    central_axes: ImageCentralAxes = field(default_factory=ImageCentralAxes)
     central_crosshair: bool = False
 
 

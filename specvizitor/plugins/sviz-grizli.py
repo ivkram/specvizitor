@@ -9,6 +9,7 @@ from functools import partial
 import logging
 
 from specvizitor.plugins.plugin_core import PluginCore
+from specvizitor.utils.table_tools import column_not_found_message
 from specvizitor.widgets.ViewerElement import ViewerElement
 from specvizitor.widgets.Image2D import Image2D
 from specvizitor.widgets.Plot1D import Plot1D
@@ -100,9 +101,10 @@ class Plugin(PluginCore):
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)
 
-        # if spec_1d is not None:
-        #     self.convert_spec1d_flux_unit_to_physical(spec_1d)
-        #     spec_1d.reset_view()
+        if spec_1d is not None:
+            self.convert_spec1d_flux_unit_to_physical(spec_1d)
+            spec_1d.setup_view()
+            spec_1d.reset_view()
 
     @staticmethod
     def transform_spec2d(spec_2d: Image2D, spec_1d: Plot1D):
@@ -124,39 +126,35 @@ class Plugin(PluginCore):
 
     @staticmethod
     def convert_spec1d_flux_unit_to_physical(spec_1d: Plot1D):
-        if not isinstance(spec_1d.data, Table):
-            try:
-                t: Table = Table.read(spec_1d.filename)
-            except Exception as e:
-                logger.error(e)
-                return
-        else:
-            t = spec_1d.data
-
-        # check that the `flat` column is in the table
-        try:
-            t.field('flat')
-        except KeyError:
-            logger.error('Failed to convert the flux unit to physical: `flat` column not found')
+        t = spec_1d.data
+        if not isinstance(t, Table):
+            logger.error('Spectrum 1D data must be of the `astropy.table.Table` type')
             return
 
-        # check that the original units are correct
-        plot_data = spec_1d.plot_data_items.data
-        if not plot_data.y.unit or not plot_data.y.unit.is_equivalent(u.Unit('ct / s')):
+        # check that the `flux` and `flat` columns are in the table
+        if 'flux' not in t.colnames:
+            logger.error(column_not_found_message('flux'))
+        if 'flat' not in t.colnames:
+            logger.error(column_not_found_message('flat'))
+
+        # check that the flux unit is correct
+        if not t['flux'].unit or not t['flux'].unit.is_equivalent(u.Unit('ct / s')):
+            logger.error('The input flux unit must be `ct/s`')
             return
 
         # convert fluxes to physical units
         flat = t['flat'].to('1e19 AA cm2 ct / erg')
-        plot_data.y.unit = plot_data.y.unit / flat.unit
 
         with np.errstate(divide='ignore'):
             scale = 1 / flat.value
         scale[scale == np.inf] = np.nan
-        plot_data.y.scale(scale)
 
-        # update the y-axis limits based on uncertainties
-        plot_data.y.apply_unc_cutoff(0.25)
+        # update the plot
+        for label in ('flux', 'err'):
+            plot_data_item = spec_1d.plot_data_items.get(label)
+            if plot_data_item is None:
+                continue
 
-        # update labels and redraw the plot
-        spec_1d.update_labels()
-        spec_1d.redraw()
+            x_data, y_data = plot_data_item.getData()
+            y_data *= scale
+            plot_data_item.setData(x=x_data, y=y_data)
