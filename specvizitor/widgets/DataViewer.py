@@ -101,6 +101,7 @@ class DataViewer(AbstractWidget):
 
         for w in widgets.values():
             # link view(s)
+            # TODO: throw a warning if two axes have different unit/scale
             if w.cfg.x_axis.link_to:
                 w.container.setXLink(w.cfg.x_axis.link_to)
             if w.cfg.y_axis.link_to:

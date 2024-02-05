@@ -41,13 +41,14 @@ class ColorBar:
 @dataclass
 class SpectralLines:
     visible: bool = False
+    color: str | None = None
 
 
 @dataclass
 class LinePlot:
     x: str
     y: str
-    color: str | None
+    color: str | None = None
     hide_label: bool = False
 
 

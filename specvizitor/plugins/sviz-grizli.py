@@ -108,7 +108,14 @@ class Plugin(PluginCore):
 
     @staticmethod
     def transform_spec2d(spec_2d: Image2D, spec_1d: Plot1D):
-        wave_unit = 'AA'
+        wave_unit = spec_1d._axes.x.unit
+        if not wave_unit or not wave_unit.is_equivalent('AA'):
+            wave_unit = 'AA'
+
+        spec_2d._axes.x.unit = wave_unit
+        spec_2d._axes.x.label = spec_1d._axes.x.label
+        spec_2d.update_axis_labels()
+
         scale = (1 * u.Unit('micron')).to(wave_unit).value
 
         dlam = spec_2d.meta['CD1_1'] * scale
@@ -146,8 +153,11 @@ class Plugin(PluginCore):
         flat = t['flat'].to('1e19 AA cm2 ct / erg')
 
         with np.errstate(divide='ignore'):
-            scale = 1 / flat.value
+            scale = 1 / flat
         scale[scale == np.inf] = np.nan
+
+        spec_1d._axes.y.unit = (t['flux'] * scale).unit
+        spec_1d.update_axis_labels()
 
         # update the plot
         for label in ('flux', 'err'):
@@ -155,6 +165,10 @@ class Plugin(PluginCore):
             if plot_data_item is None:
                 continue
 
-            x_data, y_data = plot_data_item.getData()
+            x_data, _ = plot_data_item.getData()
+
+            y_data = spec_1d.get_plot_data(spec_1d.cfg.plots[label].y)
             y_data *= scale
+            y_data = spec_1d.apply_ydata_transform(y_data)
+
             plot_data_item.setData(x=x_data, y=y_data)

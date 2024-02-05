@@ -1,5 +1,8 @@
 from astropy.io.fits.header import Header
 from astropy.table import Row
+import astropy.units as u
+from astropy.units import Quantity, UnitConversionError
+import numpy as np
 from qtpy import QtGui, QtCore, QtWidgets
 import pyqtgraph as pg
 
@@ -21,10 +24,30 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Axis:
-    unit: str | None = None
+    unit: u.Unit | None = None
+    scale: str = 'linear'
     label: str | None = None
     limits: tuple[float, float] = (0, 1)
     padding: float = 0
+
+    @property
+    def label_ext(self) -> str | None:
+        if not self.label:
+            return None
+
+        unit_str = None
+        if self.unit:
+            unit_str = self.unit.to_string('unicode', fraction=True)
+
+        label = self.label
+        if self.scale == 'log':
+            if unit_str:
+                label = f'{label}/{unit_str}'
+            label = f'log {label}'
+        elif unit_str:
+            label = f'{label} [{unit_str}]'
+
+        return label
 
     @property
     def limits_padded(self) -> tuple[float, float]:
@@ -37,6 +60,54 @@ class Axis:
 class Axes:
     x: Axis = field(default_factory=Axis)
     y: Axis = field(default_factory=Axis)
+
+
+class PlotTransformBase:
+    def __init__(self, widget_title: str):
+        self.widget_title = widget_title
+
+    @abc.abstractmethod
+    def apply(self, plot_data: Quantity | np.ndarray) -> Quantity | np.ndarray:
+        pass
+
+
+class ScaleTransform(PlotTransformBase):
+    ALLOWED_PLOT_SCALES: tuple[str] = ('linear', 'log')
+
+    def __init__(self, widget_title: str, scale='linear'):
+        super().__init__(widget_title=widget_title)
+
+        if scale not in self.ALLOWED_PLOT_SCALES:
+            logger.error(f'Unknown scaling type: `{scale}` (widget: {self.widget_title})')
+            self.scale = None
+
+        self.scale = scale
+
+    def apply(self, plot_data: Quantity | np.ndarray) -> Quantity | np.ndarray:
+        if self.scale == 'log':
+            if isinstance(plot_data, Quantity):
+                plot_data = plot_data.value
+            with np.errstate(invalid='ignore', divide='ignore'):
+                plot_data = np.log10(plot_data)
+
+        return plot_data
+
+
+class UnitTransform(PlotTransformBase):
+    def __init__(self, widget_title: str, unit: u.Unit):
+        super().__init__(widget_title=widget_title)
+        self.unit = unit
+
+    def apply(self, plot_data: Quantity | np.ndarray) -> Quantity:
+        if isinstance(plot_data, Quantity):
+            try:
+                plot_data = plot_data.value * plot_data.unit.to(self.unit)
+            except UnitConversionError as e:
+                logger.error(f'{e}. Axis unit will be ignored (widget: {self.widget_title})')
+        else:
+            plot_data = plot_data * self.unit
+
+        return plot_data
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
@@ -64,8 +135,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._axes: Axes | None = None
         self._qtransform: QtGui.QTransform | None = None
 
-        self.init_view()
-
         # graphics items
         self.container: pg.PlotItem | None = None
         self._registered_items: list[pg.GraphicsItem] = []
@@ -82,10 +151,28 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.lazy_widgets: list[ViewerElement] = []
 
         super().__init__(parent=parent)
+        self.init_view()
         self.setEnabled(False)
 
+    def _apply_axis_data_transform(self, plot_data: Quantity | np.ndarray, scale: str,
+                                   unit: u.Unit | None) -> Quantity | np.ndarray:
+        # order is important: first convert units, then apply scaling
+        if unit:
+            plot_data = UnitTransform(self.title, unit=unit).apply(plot_data)
+        plot_data = ScaleTransform(self.title, scale=scale).apply(plot_data)
+
+        return plot_data
+
+    def apply_xdata_transform(self, plot_data: Quantity | np.ndarray) -> Quantity | np.ndarray:
+        return self._apply_axis_data_transform(plot_data, scale=self._axes.x.scale, unit=self._axes.x.unit)
+
+    def apply_ydata_transform(self, plot_data: Quantity | np.ndarray) -> Quantity | np.ndarray:
+        return self._apply_axis_data_transform(plot_data, scale=self._axes.y.scale, unit=self._axes.y.unit)
+
     def _create_line_artists(self):
-        line_color = (175.68072, 220.68924, 46.59488)
+        line_color = self.cfg.spectral_lines.color
+        if line_color is None:
+            line_color = (175.68072, 220.68924, 46.59488)
         line_pen = pg.mkPen(color=line_color, width=1)
 
         for line_name, lambda0 in self._spectral_lines.wavelengths.items():
@@ -134,10 +221,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.smoothing_slider.value_changed[float].connect(self.smooth)
         self.redshift_slider.value_changed[float].connect(self.redshift_changed_action)
 
-    def init_view(self):
-        self._axes = Axes()
-        self._qtransform = QtGui.QTransform()
-
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
         super().set_geometry(spacing=spacing, margins=margins)
 
@@ -164,6 +247,20 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 sub_layout.addWidget(s)
         self.layout().addLayout(sub_layout, 2, 1, 1, 1)
 
+    def init_view(self):
+        x_unit = u.Unit(self.cfg.x_axis.unit) if self.cfg.x_axis.unit else None
+        y_unit = u.Unit(self.cfg.y_axis.unit) if self.cfg.y_axis.unit else None
+
+        self._axes = Axes(x=Axis(unit=x_unit, scale=self.cfg.x_axis.scale, label=self.cfg.x_axis.label),
+                          y=Axis(unit=y_unit, scale=self.cfg.y_axis.scale, label=self.cfg.y_axis.label))
+        self.update_axis_labels()
+
+        self._qtransform = QtGui.QTransform()
+
+    def update_axis_labels(self):
+        self.container.setLabel(axis='bottom', text=self._axes.x.label_ext)
+        self.container.setLabel(axis='left', text=self._axes.y.label_ext)
+
     def setEnabled(self, a0: bool = True):
         super().setEnabled(a0)
         for line_artist in self._spectral_line_artists.values():
@@ -188,6 +285,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         # display the data
         if self.data is not None:
             self.add_content()
+            self.update_axis_labels()
 
             # set up the view *after* adding content because content determines axes limits
             self.setup_view()
@@ -292,12 +390,27 @@ class ViewerElement(AbstractWidget, abc.ABC):
         pass
 
     def set_spectral_line_positions(self, redshift: float = 0):
+        # check unit compatibility
+        line_unit = u.Unit(self._spectral_lines.wave_unit)
+        if self._axes.x.unit:
+            try:
+                line_unit.to(self._axes.x.unit)
+            except UnitConversionError as e:
+                if self.cfg.spectral_lines.visible:
+                    logger.error(f'Failed to calculate positions of spectral lines: {e} (widget: {self.title})')
+                return
+
         scale0 = 1 + redshift
         y_min, y_max = self._axes.y.limits if self._axes.y.limits else (0, 0)
         label_height = y_min + 0.6 * (y_max - y_min)
 
-        for line_name, line_artist in self._spectral_line_artists.items():
-            line_wave = self._spectral_lines.wavelengths[line_name] * scale0
+        line_waves = np.array([self._spectral_lines.wavelengths[line_name]
+                               for line_name in self._spectral_line_artists.keys()]) * scale0
+        line_waves = self.apply_xdata_transform(line_waves * u.Unit('AA'))
+        if isinstance(line_waves, Quantity):
+            line_waves = line_waves.value
+
+        for line_wave, line_artist in zip(line_waves, self._spectral_line_artists.values()):
             line_artist[0].setPos(line_wave)
             line_artist[1].setPos(QtCore.QPointF(line_wave, label_height))
 

@@ -25,8 +25,8 @@ class Image2DLevels:
 
 
 class Image2D(ViewerElement):
-    ALLOWED_DATA_TYPES = (np.ndarray,)
-    ALLOWED_CBAR_LIMS = ('minmax', 'zscale', 'user')
+    ALLOWED_DATA_TYPES: tuple[type] = (np.ndarray,)
+    ALLOWED_CBAR_LIMS: tuple[str] = ('minmax', 'zscale', 'user')
 
     def __init__(self, cfg: data_widgets.Image, **kwargs):
         self.cfg = cfg
@@ -54,15 +54,15 @@ class Image2D(ViewerElement):
         self.cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
         self.cbar.setVisible(self.cfg.color_bar.visible)
 
-    def init_view(self):
-        super().init_view()
-        self._default_levels = Image2DLevels()
-
     def populate(self):
         super().populate()
 
         # add the color bar to the layout
         self.graphics_layout.addItem(self.cbar, 0, 1)
+
+    def init_view(self):
+        super().init_view()
+        self._default_levels = Image2DLevels()
 
     def add_content(self):
         self.image_item.setImage(self.data, autoLevels=False)
