@@ -113,6 +113,9 @@ class Image2D(ViewerElement):
             transformation_matrix = get_qtransform_matrix_from_wcs(w)
             self._qtransform.setMatrix(*transformation_matrix.flatten())
 
+        if self.cfg.rotate:
+            self._qtransform = self._qtransform.rotate(self.cfg.rotate)
+
         self.set_default_range((0., float(self.data.shape[1])), (0., float(self.data.shape[0])),
                                apply_qtransform=True)
 

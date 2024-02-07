@@ -105,6 +105,7 @@ class Image(ViewerElement):
     data: ImageDataElement = field(default_factory=ImageDataElement)
 
     wcs_transform: bool = False
+    rotate: float | None = None
     color_bar: ColorBar = field(default_factory=ColorBar)
     central_axes: ImageCentralAxes = field(default_factory=ImageCentralAxes)
     central_crosshair: bool = False
