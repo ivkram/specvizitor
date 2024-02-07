@@ -256,7 +256,7 @@ class DataViewer(AbstractWidget):
 
                 if title_extra:
                     if core_widget.cfg.dock_title_fmt == 'short':
-                        title = fits_meta[j - 1]
+                        title = str(fits_meta[j - 1])
                     else:
                         title += f' [{title_extra}]'
 

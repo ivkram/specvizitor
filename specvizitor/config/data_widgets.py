@@ -75,7 +75,7 @@ class ViewerElement:
     visible: bool = True
     position: str | None = None
     relative_to: str | None = None
-    dock_title_fmt: str = 'long'
+    dock_title_fmt: str = 'short'
 
     data: DataElement = field(default_factory=DataElement)
 

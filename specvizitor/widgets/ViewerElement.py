@@ -179,7 +179,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             line = pg.InfiniteLine(pen=line_pen)
             line.setZValue(10)
 
-            label = pg.TextItem(text=line_name, color=line_color, anchor=(1, 1), angle=-90)
+            label = pg.TextItem(text=line_name, color=line_color, anchor=(0, 1), angle=-90)
             label.setZValue(11)
 
             self._spectral_line_artists[line_name] = (line, label)
@@ -411,7 +411,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         scale0 = 1 + redshift
         y_min, y_max = self._axes.y.limits if self._axes.y.limits else (0, 0)
-        label_height = y_min + 0.6 * (y_max - y_min)
+        label_height = y_max - (y_max - y_min) * 0.03  # y_min + 0.6 * (y_max - y_min)
 
         line_waves = np.array([self._spectral_lines.wavelengths[line_name]
                                for line_name in self._spectral_line_artists.keys()]) * scale0
