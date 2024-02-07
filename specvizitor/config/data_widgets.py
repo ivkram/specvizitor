@@ -72,6 +72,11 @@ class DataElement:
 
 
 @dataclass
+class ImageDataElement(DataElement):
+    cutout_size: float | None = None
+
+
+@dataclass
 class ViewerElement:
     visible: bool = True
     position: str | None = None
@@ -97,7 +102,8 @@ class ImageCentralAxes:
 
 @dataclass
 class Image(ViewerElement):
-    cutout_size: float | None = None
+    data: ImageDataElement = field(default_factory=ImageDataElement)
+
     wcs_transform: bool = False
     color_bar: ColorBar = field(default_factory=ColorBar)
     central_axes: ImageCentralAxes = field(default_factory=ImageCentralAxes)

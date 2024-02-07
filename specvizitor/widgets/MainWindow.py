@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    project_loaded = QtCore.Signal(InspectionData, config.Data)
+    data_sources_updated = QtCore.Signal(dict)
+    project_loaded = QtCore.Signal(InspectionData)
     data_requested = QtCore.Signal()
     object_selected = QtCore.Signal(int, InspectionData, object, config.Data)
 
@@ -102,7 +103,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self._data_viewer = DataViewer(self._viewer_cfg, self._config.appearance,
+        self._data_viewer = DataViewer(self._viewer_cfg, self._config.appearance, images=self._config.data.images,
                                        spectral_lines=self._spectral_lines, plugins=self._plugins, parent=self)
 
         # create a toolbar
@@ -239,6 +240,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def connect(self):
         # connect the main window to the child widgets
+        self.data_sources_updated.connect(self._data_viewer.load_images)
+
         for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._review_form):
             self.project_loaded.connect(w.load_project)
 
@@ -339,7 +342,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._save, self._save_as, self._export, self._reset_view, self._reset_dock_layout):
             w.setEnabled(True)
 
-        self.project_loaded.emit(self.rd.review, self._config.data)
+        self.project_loaded.emit(self.rd.review)
 
         if j is None or (j < 0 or j >= self.rd.review.n_objects):
             j = 0

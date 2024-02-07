@@ -111,6 +111,7 @@ class UnitTransform(PlotTransformBase):
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
+    shared_resource_requested = QtCore.Signal(str, dict)
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal()
@@ -289,11 +290,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 s.clear()
 
         # load data to the widget
-        self.filename, self.data, self.meta = load_widget_data(
-            obj_id=review.get_id(j), data_files=data_files, filename_keyword=self.cfg.data.filename_keyword,
-            loader=self.cfg.data.loader, widget_title=self.title, allowed_dtypes=self.ALLOWED_DATA_TYPES,
-            **(self.cfg.data.loader_params or {})
-        )
+        self.load_data(review.get_id(j), data_files, obj_cat)
 
         # display the data
         if self.data is not None:
@@ -314,6 +311,28 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.setEnabled(True)
         else:
             self.setEnabled(False)
+
+    def load_data(self, obj_id: str | int, data_files: list[str], obj_cat: Row | None):
+        self.filename, self.data, self.meta = None, None, None
+
+        if self.cfg.data.source:
+            if obj_cat is None:
+                logger.error(f'Failed to request a shared resource: catalog entry not found (widget: {self.title})')
+                return
+            self.request_shared_resource(obj_cat)
+        else:
+            self.filename, self.data, self.meta = load_widget_data(
+                obj_id=obj_id, data_files=data_files, filename_keyword=self.cfg.data.filename_keyword,
+                loader=self.cfg.data.loader, widget_title=self.title, allowed_dtypes=self.ALLOWED_DATA_TYPES,
+                **(self.cfg.data.loader_params or {})
+            )
+
+    def request_shared_resource(self, obj_cat: Row | None):
+        pass
+
+    @QtCore.Slot(str, object, object)
+    def get_shared_resource(self, filename: str, data, meta):
+        self.filename, self.data, self.meta = pathlib.Path(filename), data, meta
 
     @abc.abstractmethod
     def add_content(self):
@@ -368,7 +387,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
         for item in self._registered_items:
             item.setTransform(self._qtransform)
 
-    @abc.abstractmethod
     def smooth(self, sigma: float):
         pass
 

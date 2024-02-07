@@ -141,24 +141,8 @@ def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | 
     if wcs_source:
         wcs_source = pathlib.Path(wcs_source)
         if not wcs_source.exists():
-            logger.error(f'Image')
+            logger.error(f'Image not found: {wcs_source} (widget: {widget_title})')
         _, meta = load('generic_fits', wcs_source, header_only=True)
-        if meta is None:
-            return None, None
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', AstropyWarning)
-        try:
-            wcs = WCS(meta)
-        except Exception:
-            if wcs_source:
-                logger.error(f'Failed to create a WCS object from image (filename: {wcs_source}, '
-                             f'widget: {widget_title})')
-            else:
-                logger.error(f'Failed to create a WCS object from image (filename: {filename}, '
-                             f'widget: {widget_title}). Use another image or provide the WCS info '
-                             f'by specifying the `wcs_source` parameter.')
-            return None, None
 
     return data, meta
 

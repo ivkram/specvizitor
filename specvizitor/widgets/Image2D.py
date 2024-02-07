@@ -1,4 +1,5 @@
 from astropy.convolution import convolve_fft, Gaussian2DKernel
+from astropy.table import Row
 from astropy.visualization import ZScaleInterval
 from astropy.wcs import WCS, FITSFixedWarning
 import numpy as np
@@ -11,6 +12,7 @@ import warnings
 
 from ..config import data_widgets
 from ..utils.qt_tools import get_qtransform_matrix_from_wcs
+from ..utils.table_tools import column_not_found_message
 from ..utils.widgets import ColorBar
 
 from .ViewerElement import ViewerElement
@@ -63,6 +65,20 @@ class Image2D(ViewerElement):
     def init_view(self):
         super().init_view()
         self._default_levels = Image2DLevels()
+    
+    def request_shared_resource(self, obj_cat: Row):
+        if self.cfg.data.cutout_size is None:
+            logger.warning(f'Image cutout size not specified (widget: {self.title})')
+
+        ra = obj_cat.get('ra')
+        dec = obj_cat.get('dec')
+        if not ra:
+            logger.warning(column_not_found_message('ra', dictionary=obj_cat.meta.get('aliases')))
+        if not dec:
+            logger.warning(column_not_found_message('dec', dictionary=obj_cat.meta.get('aliases')))
+
+        request_params = {'cutout_size': self.cfg.data.cutout_size, 'ra': ra, 'dec': dec}
+        self.shared_resource_requested.emit(self.cfg.data.source, request_params)
 
     def add_content(self):
         self.image_item.setImage(self.data, autoLevels=False)
