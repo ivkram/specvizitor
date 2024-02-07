@@ -50,7 +50,7 @@ def read_cat(filename=None,
             return
 
         # filter objects based on the list of IDs
-        cat = cat[np.in1d(cat['id'], ids, assume_unique=True)]
+        cat = cat[np.in1d(cat['id'], ids, assume_unique=False)]
 
     if len(cat) == 0:
         logger.error('The processed catalogue is empty')
@@ -58,9 +58,12 @@ def read_cat(filename=None,
 
     # adding indices
     cat.add_index('id')
+    indices = ['id']
     for i in range(2, 11):
         if f'id{i}' in cat.colnames:
             cat.add_index(f'id{i}')
+            indices.append(f'id{i}')
+    cat.meta['indices'] = indices
 
     return cat
 

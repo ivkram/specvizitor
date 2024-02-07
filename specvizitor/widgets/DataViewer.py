@@ -36,7 +36,7 @@ class FieldImage:
 
 class DataViewer(AbstractWidget):
     object_selected = QtCore.Signal(int, InspectionData, object, list)
-    shared_resource_queried = QtCore.Signal(str, object, object)
+    shared_resource_created = QtCore.Signal(str, object, object)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
@@ -93,11 +93,11 @@ class DataViewer(AbstractWidget):
             self.visibility_changed.disconnect()
             try:
                 self.view_reset.disconnect()
-                self.shared_resource_queried.disconnect()
             except TypeError:
                 pass
 
             for w in self.widgets:
+                w.shared_resource_requested.disconnect()
                 w.graphics_layout.clear()
                 w.deleteLater()
 
@@ -128,8 +128,7 @@ class DataViewer(AbstractWidget):
             self.zen_mode_activated.connect(w.hide_interface)
             self.visibility_changed.connect(w.update_visibility)
 
-            w.shared_resource_requested.connect(self.query_shared_resource)
-            self.shared_resource_queried.connect(w.get_shared_resource)
+            w.shared_resource_requested.connect(self.query_shared_resources)
 
         for w in widgets.values():
             # link view(s)
@@ -244,8 +243,8 @@ class DataViewer(AbstractWidget):
 
             self._field_images[img_label] = FieldImage(img.filename, data, meta)
 
-    @QtCore.Slot(str, dict)
-    def query_shared_resource(self, label: str, request_params: dict):
+    @QtCore.Slot(str, str, dict)
+    def query_shared_resources(self, widget_title: str, label: str, request_params: dict):
         if label not in self._field_images:
             logger.error(f'Shared resource not found (label: {label})')
             return
@@ -263,16 +262,30 @@ class DataViewer(AbstractWidget):
                     try:
                         wcs = WCS(img.meta)
                     except Exception:
-                        logger.error(f'Cutout service error: failed to create a WCS object from image (label: {label})')
+                        logger.error(f'Cutout error: Failed to create a WCS object from image (image: {label})')
                         return
                 x, y = wcs.all_world2pix(ra, dec, 0)
+                if not np.isfinite(x) or not np.isfinite(y):
+                    logger.error(f'Cutout error: Failed to convert pixel coordinates to world coordinates '
+                                 f'(image: {label}, RA: {ra}, Dec: {dec})')
+                    return
                 x, y = int(x), int(y)
 
             data = img.data[y-cutout_size:y+cutout_size, x-cutout_size:x+cutout_size]
-            self.shared_resource_queried.emit(img.filename, data, img.meta)
+            self._share_resource(widget_title, img.filename, data, img.meta)
             return
 
-        self.shared_resource_queried.emit(img.filename, img.data, img.meta)
+        self._share_resource(widget_title, img.filename, img.data, img.meta)
+
+    def _share_resource(self, widget_title, *args):
+        w = self.core_widgets.get(widget_title)
+        if w is None:
+            logger.error(f'Could not share the resource: Widget `{widget_title}` not found')
+            return
+
+        self.shared_resource_created.connect(w.get_shared_resource)
+        self.shared_resource_created.emit(*args)
+        self.shared_resource_created.disconnect()
 
     @QtCore.Slot()
     def load_project(self):

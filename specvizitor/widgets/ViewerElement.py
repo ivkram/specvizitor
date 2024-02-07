@@ -111,7 +111,7 @@ class UnitTransform(PlotTransformBase):
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
-    shared_resource_requested = QtCore.Signal(str, dict)
+    shared_resource_requested = QtCore.Signal(str, str, dict)
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal()

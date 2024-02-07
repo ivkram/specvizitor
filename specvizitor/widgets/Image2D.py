@@ -78,7 +78,7 @@ class Image2D(ViewerElement):
             logger.warning(column_not_found_message('dec', dictionary=obj_cat.meta.get('aliases')))
 
         request_params = {'cutout_size': self.cfg.data.cutout_size, 'ra': ra, 'dec': dec}
-        self.shared_resource_requested.emit(self.cfg.data.source, request_params)
+        self.shared_resource_requested.emit(self.title, self.cfg.data.source, request_params)
 
     def add_content(self):
         self.image_item.setImage(self.data, autoLevels=False)

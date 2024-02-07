@@ -6,7 +6,10 @@ logger = logging.getLogger(__name__)
 
 
 def get_table_indices(t: Table) -> tuple:
-    return tuple(ind.columns[0].name for ind in t.indices)
+    if t.meta.get('indices'):
+        return t.meta['indices']
+    else:
+        return tuple(ind.columns[0].name for ind in t.indices)
 
 
 def loc_full(t: Table | Row, obj_id: str | int | tuple, indices: tuple | None = None):
