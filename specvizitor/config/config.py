@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from ..utils.params import Params
 
@@ -11,8 +12,17 @@ class Catalogue:
 
 
 @dataclass
+class Image:
+    filename: str | None = None
+    wcs_source: str | None = None
+    loader: str = 'auto'
+    loader_params: dict[str, Any] | None = None
+
+
+@dataclass
 class Data:
     dir: str = '.'
+    images: dict[str, Image] | None = None
     id_pattern: str = r'\d+'
     enabled_unit_aliases: dict[str, str] | None = None
 

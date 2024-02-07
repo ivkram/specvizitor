@@ -1,3 +1,5 @@
+import numpy as np
+from astropy.io.fits.header import Header
 from astropy.table import Row
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
@@ -10,7 +12,7 @@ from ..config import config
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import get_filenames_from_id
+from ..io.viewer_data import get_filenames_from_id, load_image
 from ..plugins.plugin_core import PluginCore
 from ..utils.widgets import AbstractWidget
 
@@ -40,6 +42,10 @@ class DataViewer(AbstractWidget):
         self._viewer_cfg = viewer_cfg
         self._spectral_lines = spectral_lines
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
+
+        # images that are shared between widgets and can be used to create cutouts
+        self._img_data: dict[str, np.ndarray] = {}
+        self._img_meta: dict[str, Header] = {}
 
         self.dock_area: DockArea | None = None
         self.added_docks: list[str] = []
@@ -209,8 +215,17 @@ class DataViewer(AbstractWidget):
         self._viewer_cfg = viewer_cfg
         self.init_ui()
 
-    @QtCore.Slot()
-    def load_project(self):
+    @QtCore.Slot(InspectionData, config.Data)
+    def load_project(self, _: InspectionData, data_cfg: config.Data):
+        if data_cfg.images:
+            for img_label, img in data_cfg.images.items():
+                data, meta = load_image(filename=img.filename, loader=img.loader, widget_title='Data Viewer',
+                                        wcs_source=img.wcs_source, **(img.loader_params or {}))
+                if data is None:
+                    continue
+
+                self._img_data[img_label], self._img_meta[img_label] = data, meta
+
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, object, config.Data)

@@ -1,6 +1,8 @@
 from astropy.io import fits
 from astropy.table import Table
 import astropy.units as u
+from astropy.utils.exceptions import AstropyWarning
+from astropy.wcs import WCS
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -9,9 +11,11 @@ from dataclasses import dataclass
 import logging
 import pathlib
 import re
+import warnings
 
 from ..utils.widgets import FileBrowser
 
+Image.MAX_IMAGE_PIXELS = None  # ignore warnings when loading large images
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +35,16 @@ class BaseLoader(abc.ABC):
 class GenericFITSLoader(BaseLoader):
     name: str = 'generic_fits'
 
-    def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, extver_index: int = None, **kwargs):
+    def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, extver_index: int = None,
+             header_only: bool = False, **kwargs):
+
+        if header_only:
+            try:
+                meta = fits.getheader(filename)
+            except Exception as e:
+                self.raise_error(e)
+                return None, None
+            return None, meta
 
         try:
             hdul = fits.open(filename, **kwargs)
@@ -54,8 +67,10 @@ class GenericFITSLoader(BaseLoader):
                     counter += 1
         elif extname is not None:
             index = extname
-        else:
+        elif len(hdul) > 1:
             index = 1
+        else:
+            index = 0
 
         try:
             hdu = hdul[index]
@@ -63,14 +78,14 @@ class GenericFITSLoader(BaseLoader):
             self.raise_error(f'Extension `{index}` not found (filename: {filename.name})')
             return None, None
 
-        # reading the header
+        # read the header
         meta = hdu.header
 
-        if meta['XTENSION'] in ('TABLE', 'BINTABLE'):
-            # reading table data
+        if meta.get('XTENSION') and meta['XTENSION'] in ('TABLE', 'BINTABLE'):
+            # read table data
             data = Table.read(hdu)
         else:
-            # reading image data
+            # read image data
             data = hdu.data
 
         hdul.close()
@@ -97,21 +112,81 @@ class PILLoader(BaseLoader):
         return data, meta
 
 
-def load(loader_name: str | None, filename: pathlib.Path, widget_name: str, **kwargs):
+def load(loader_name: str | None, filename: pathlib.Path, **kwargs):
     logger.disabled = True if kwargs.get('silent') else False
 
     registered_loaders: dict[str, BaseLoader] = {loader.name: loader for loader in (GenericFITSLoader(), PILLoader())}
 
     allowed_loader_names = ('auto',) + tuple(loader.name for loader in registered_loaders.values())
     if loader_name not in allowed_loader_names:
-        logger.error(f'Unknown loader type: `{loader_name}` (widget: {widget_name}).'
-                     f'Available loaders: {allowed_loader_names}')
+        logger.error(f'Unknown loader type: `{loader_name}`. Available loaders: {allowed_loader_names}')
         return None, None
 
     if loader_name == 'auto':
         loader_name = 'generic_fits' if filename.suffix == '.fits' else 'pil'
 
     return registered_loaders[loader_name].load(filename, **kwargs)
+
+
+def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | None = None, **kwargs):
+    filename = pathlib.Path(filename)
+    if not filename.exists():
+        logger.error(f'Image not found: {filename} (widget: {widget_title})')
+        return None, None
+
+    data, meta = load(loader, filename, **kwargs)
+    if data is None or not validate_dtype(data, (np.ndarray,), widget_title):
+        return None, None
+
+    if wcs_source:
+        wcs_source = pathlib.Path(wcs_source)
+        if not wcs_source.exists():
+            logger.error(f'Image')
+        _, meta = load('generic_fits', wcs_source, header_only=True)
+        if meta is None:
+            return None, None
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', AstropyWarning)
+        try:
+            wcs = WCS(meta)
+        except Exception:
+            if wcs_source:
+                logger.error(f'Failed to create a WCS object from image (filename: {wcs_source}, '
+                             f'widget: {widget_title})')
+            else:
+                logger.error(f'Failed to create a WCS object from image (filename: {filename}, '
+                             f'widget: {widget_title}). Use another image or provide the WCS info '
+                             f'by specifying the `wcs_source` parameter.')
+            return None, None
+
+    return data, meta
+
+
+def load_widget_data(obj_id: str | int, data_files: list[str], filename_keyword: str, loader: str, widget_title: str,
+                     allowed_dtypes: tuple[type] | None = None, **kwargs):
+    if filename_keyword is None:
+        logger.error(f'Filename keyword not specified (widget: {widget_title})')
+        return None, None, None
+
+    filename = get_matching_filename(data_files, filename_keyword)
+    if filename is None:
+        if not kwargs.get('silent'):
+            logger.error('{} not found (object ID: {})'.format(widget_title, obj_id))
+        return None, None, None
+
+    data, meta = load(loader, filename, **kwargs)
+    if data is None or (allowed_dtypes and not validate_dtype(data, allowed_dtypes, widget_title)):
+        return None, None, None
+
+    return filename, data, meta
+
+
+def validate_dtype(data, allowed_dtypes: tuple[type], widget_title: str) -> bool:
+    if not any(isinstance(data, t) for t in allowed_dtypes):
+        logger.error(f'Invalid input data type: {type(data)} (widget: {widget_title})')
+        return False
+    return True
 
 
 def add_enabled_aliases(units: dict[str, str]):

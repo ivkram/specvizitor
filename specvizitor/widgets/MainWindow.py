@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    project_loaded = QtCore.Signal(InspectionData)
+    project_loaded = QtCore.Signal(InspectionData, config.Data)
     data_requested = QtCore.Signal()
     object_selected = QtCore.Signal(int, InspectionData, object, config.Data)
 
@@ -339,7 +339,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._save, self._save_as, self._export, self._reset_view, self._reset_dock_layout):
             w.setEnabled(True)
 
-        self.project_loaded.emit(self.rd.review)
+        self.project_loaded.emit(self.rd.review, self._config.data)
 
         if j is None or (j < 0 or j >= self.rd.review.n_objects):
             j = 0

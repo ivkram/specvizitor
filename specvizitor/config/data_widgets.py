@@ -65,6 +65,7 @@ class Axis:
 
 @dataclass
 class DataElement:
+    source: str | None = None
     filename_keyword: str | None = None
     loader: str = 'auto'
     loader_params: dict[str, Any] | None = None
@@ -96,6 +97,7 @@ class ImageCentralAxes:
 
 @dataclass
 class Image(ViewerElement):
+    cutout_size: float | None = None
     wcs_transform: bool = False
     color_bar: ColorBar = field(default_factory=ColorBar)
     central_axes: ImageCentralAxes = field(default_factory=ImageCentralAxes)

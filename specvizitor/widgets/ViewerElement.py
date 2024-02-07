@@ -14,7 +14,7 @@ import pathlib
 from ..config import config, data_widgets
 from ..config import SpectralLineData
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import get_matching_filename, load
+from ..io.viewer_data import load_widget_data
 from ..utils.widgets import AbstractWidget
 
 from .SmartSlider import SmartSlider
@@ -289,7 +289,11 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 s.clear()
 
         # load data to the widget
-        self.load_data(obj_id=review.get_id(j), data_files=data_files)
+        self.filename, self.data, self.meta = load_widget_data(
+            obj_id=review.get_id(j), data_files=data_files, filename_keyword=self.cfg.data.filename_keyword,
+            loader=self.cfg.data.loader, widget_title=self.title, allowed_dtypes=self.ALLOWED_DATA_TYPES,
+            **(self.cfg.data.loader_params or {})
+        )
 
         # display the data
         if self.data is not None:
@@ -310,36 +314,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.setEnabled(True)
         else:
             self.setEnabled(False)
-
-    def load_data(self, obj_id: str | int, data_files: list[str]):
-        if self.cfg.data.filename_keyword is None:
-            logger.error(f'Filename keyword not specified (object ID: {self.title})')
-            self.data, self.meta = None, None
-            return
-
-        loader_params = {} if self.cfg.data.loader_params is None else self.cfg.data.loader_params
-
-        self.filename = get_matching_filename(data_files, self.cfg.data.filename_keyword)
-        if self.filename is None:
-            if not loader_params.get('silent'):
-                logger.error('{} not found (object ID: {})'.format(self.title, obj_id))
-            self.data, self.meta = None, None
-            return
-
-        self.data, self.meta = load(self.cfg.data.loader, self.filename, self.title, **loader_params)
-        if self.data is None:
-            return
-
-        if not self.validate_dtype(self.data):
-            self.data, self.meta = None, None
-
-    def validate_dtype(self, data) -> bool:
-        if self.ALLOWED_DATA_TYPES is not None:
-            if not any(isinstance(data, t) for t in self.ALLOWED_DATA_TYPES):
-                logger.error(f'Invalid input data type: {type(data)} (widget: {self.title}). '
-                             'Try to use a different data loader')
-                return False
-        return True
 
     @abc.abstractmethod
     def add_content(self):
