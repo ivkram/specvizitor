@@ -1,23 +1,17 @@
-import numpy as np
-from astropy.io.fits.header import Header
 from astropy.table import Row
-from astropy.wcs import WCS
-from astropy.utils.exceptions import AstropyWarning
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
-import rasterio
 
-from dataclasses import dataclass
 from functools import partial
 import logging
-import warnings
+import pathlib
 
 from ..config import config
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import get_filenames_from_id, load_image
+from ..io.viewer_data import get_filenames_from_id, load_image, FieldImage, REQUESTS
 from ..plugins.plugin_core import PluginCore
 from ..utils.widgets import AbstractWidget
 
@@ -28,16 +22,9 @@ from .Plot1D import Plot1D
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class FieldImage:
-    filename: str
-    data: np.ndarray | rasterio.DatasetReader
-    meta: dict | Header | None = None
-
-
 class DataViewer(AbstractWidget):
     object_selected = QtCore.Signal(int, InspectionData, object, list)
-    shared_resource_created = QtCore.Signal(str, object, object)
+    shared_resources_queried = QtCore.Signal(str, pathlib.Path, object, object)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
@@ -61,7 +48,7 @@ class DataViewer(AbstractWidget):
         self._field_images: dict[str, FieldImage] = {}
 
         if images:
-            self.load_images(images)
+            self.load_field_images(images)
 
         self.dock_area: DockArea | None = None
         self.added_docks: list[str] = []
@@ -92,6 +79,7 @@ class DataViewer(AbstractWidget):
             self.object_selected.disconnect()
             self.zen_mode_activated.disconnect()
             self.visibility_changed.disconnect()
+            self.shared_resources_queried.disconnect()
             try:
                 self.view_reset.disconnect()
             except TypeError:
@@ -128,8 +116,9 @@ class DataViewer(AbstractWidget):
             self.object_selected.connect(w.load_object)
             self.zen_mode_activated.connect(w.hide_interface)
             self.visibility_changed.connect(w.update_visibility)
+            self.shared_resources_queried.connect(w.get_shared_resource)
 
-            w.shared_resource_requested.connect(self.query_shared_resources)
+            w.shared_resource_requested.connect(self._query_shared_resources)
 
         for w in widgets.values():
             # link view(s)
@@ -235,68 +224,42 @@ class DataViewer(AbstractWidget):
         self.init_ui()
 
     @QtCore.Slot(dict)
-    def load_images(self, images: dict[str, config.Data.images]):
+    def load_field_images(self, images: dict[str, config.Data.images]):
         for img_label, img in images.items():
             data, meta = load_image(filename=img.filename, loader=img.loader, widget_title='Data Viewer',
                                     wcs_source=img.wcs_source, **(img.loader_params or {}))
             if data is None:
                 continue
 
-            self._field_images[img_label] = FieldImage(img.filename, data, meta)
+            self._field_images[img_label] = FieldImage(pathlib.Path(img.filename), data, meta)
 
-    @QtCore.Slot(str, str, dict)
-    def query_shared_resources(self, widget_title: str, label: str, request_params: dict):
-        if label not in self._field_images:
-            logger.error(f'Shared resource not found (label: {label})')
-            return
+    @QtCore.Slot(str, REQUESTS, dict)
+    def _query_shared_resources(self, widget_title: str, request: REQUESTS, request_params: dict):
+        if request == REQUESTS.CUTOUT:
+            label = request_params.get('image')
+            if label not in self._field_images:
+                logger.error(f'Shared image not found (label: {label})')
+                return
 
-        img = self._field_images[label]
+            img = self._field_images[label]
 
-        cutout_size = request_params.get('cutout_size')
-        if cutout_size:
-            x, y = img.data.shape[0] // 2, img.data.shape[1] // 2
+            cutout_size = request_params.get('cutout_size')
+            if cutout_size:
+                ra, dec = request_params.get('ra'), request_params.get('dec')
+                data = img.create_cutout(cutout_size, ra=ra, dec=dec)
+                if data is not None:
+                    self._share_resource(widget_title, img.filename, data, img.meta)
+                return
 
-            ra, dec = request_params.get('ra'), request_params.get('dec')
-            if ra and dec:
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore', AstropyWarning)
-                    try:
-                        wcs = WCS(img.meta)
-                    except Exception:
-                        logger.error(f'Cutout error: Failed to create a WCS object from image (image: {label})')
-                        return
-                x, y = wcs.all_world2pix(ra, dec, 0)
-                if not np.isfinite(x) or not np.isfinite(y):
-                    logger.error(f'Cutout error: Failed to convert pixel coordinates to world coordinates '
-                                 f'(image: {label}, RA: {ra}, Dec: {dec})')
-                    return
-                x, y = int(x), int(y)
-
-            x1, x2 = x-cutout_size, x+cutout_size
-            y1, y2 = y-cutout_size, y+cutout_size
-
-            if isinstance(img.data, rasterio.DatasetReader):
-                # wow, this actually worked
-                data = img.data.read(window=rasterio.windows.Window(x1, img.data.height - y2,
-                                                                    2 * cutout_size, 2 * cutout_size))
-                data = np.moveaxis(data, 0, -1)
-                data = np.flip(data, 0)
-            else:
-                data = img.data[y1:y2, x1:x2]
-            self._share_resource(widget_title, img.filename, data, img.meta)
-            return
-
-        self._share_resource(widget_title, img.filename, img.data, img.meta)
+            self._share_resource(widget_title, img.filename, img.data, img.meta)
 
     def _share_resource(self, widget_title, *args):
         w = self.core_widgets.get(widget_title)
         if w is None:
-            logger.error(f'Could not share the resource: Widget `{widget_title}` not found')
+            logger.error(f'Failed to share the resource: Widget `{widget_title}` not found')
             return
 
-        self.shared_resource_created.connect(w.get_shared_resource)
-        self.shared_resource_created.emit(*args)
-        self.shared_resource_created.disconnect()
+        self.shared_resources_queried.emit(w.title, *args)
 
     @QtCore.Slot()
     def load_project(self):

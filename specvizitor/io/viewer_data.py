@@ -1,12 +1,16 @@
 from astropy.io import fits
+from astropy.io.fits.header import Header
 from astropy.table import Table
 import astropy.units as u
+from astropy.utils.exceptions import AstropyWarning
+from astropy.wcs import WCS
 import numpy as np
 from PIL import Image, ImageOps
 import rasterio
 
 import abc
 from dataclasses import dataclass
+from enum import Enum
 import logging
 import pathlib
 import re
@@ -16,6 +20,48 @@ from ..utils.widgets import FileBrowser
 
 Image.MAX_IMAGE_PIXELS = None  # ignore warnings when loading large images
 logger = logging.getLogger(__name__)
+
+
+class REQUESTS(Enum):
+    CUTOUT = 0
+
+
+@dataclass
+class FieldImage:
+    filename: pathlib.Path
+    data: np.ndarray | rasterio.DatasetReader
+    meta: dict | Header | None = None
+
+    def create_cutout(self, cutout_size: float, ra=None, dec=None):
+        x, y = self.data.shape[0] // 2, self.data.shape[1] // 2
+
+        if ra and dec:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', AstropyWarning)
+                try:
+                    wcs = WCS(self.meta)
+                except Exception as e:
+                    logger.error(f'Failed to create a WCS object from image: {e} (image: {self.filename.name})')
+                    return None
+            x, y = wcs.all_world2pix(ra, dec, 0)
+            if not np.isfinite(x) or not np.isfinite(y):
+                logger.error(f'Cutout error: Failed to convert pixel coordinates to world coordinates '
+                             f'(image: {self.filename.name}, RA: {ra}, Dec: {dec})')
+                return None
+            x, y = int(x), int(y)
+
+        x1, x2 = x - cutout_size, x + cutout_size
+        y1, y2 = y - cutout_size, y + cutout_size
+
+        if isinstance(self.data, rasterio.DatasetReader):
+            # wow, this actually worked
+            data = self.data.read(window=rasterio.windows.Window(x1, self.data.height - y2,
+                                                                 2 * cutout_size, 2 * cutout_size))
+            data = np.moveaxis(data, 0, -1)
+            data = np.flip(data, 0)
+        else:
+            data = self.data[y1:y2, x1:x2]
+        return data
 
 
 @dataclass

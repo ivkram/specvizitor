@@ -240,7 +240,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def connect(self):
         # connect the main window to the child widgets
-        self.data_sources_updated.connect(self._data_viewer.load_images)
+        self.data_sources_updated.connect(self._data_viewer.load_field_images)
 
         for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._review_form):
             self.project_loaded.connect(w.load_project)

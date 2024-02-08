@@ -14,7 +14,7 @@ import pathlib
 from ..config import config, data_widgets
 from ..config import SpectralLineData
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import load_widget_data
+from ..io.viewer_data import load_widget_data, REQUESTS
 from ..utils.widgets import AbstractWidget
 
 from .SmartSlider import SmartSlider
@@ -111,7 +111,7 @@ class UnitTransform(PlotTransformBase):
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
-    shared_resource_requested = QtCore.Signal(str, str, dict)
+    shared_resource_requested = QtCore.Signal(str, REQUESTS, dict)
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal()
@@ -288,6 +288,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.clear_content()
             for s in self.sliders.values():
                 s.clear()
+        self.filename, self.data, self.meta = None, None, None
 
         # load data to the widget
         self.load_data(review.get_id(j), data_files, obj_cat)
@@ -313,8 +314,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.setEnabled(False)
 
     def load_data(self, obj_id: str | int, data_files: list[str], obj_cat: Row | None):
-        self.filename, self.data, self.meta = None, None, None
-
         if self.cfg.data.source:
             if obj_cat is None:
                 logger.error(f'Failed to request a shared resource: catalog entry not found (widget: {self.title})')
@@ -327,12 +326,14 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 **(self.cfg.data.loader_params or {})
             )
 
-    def request_shared_resource(self, obj_cat: Row | None):
+    def request_shared_resource(self, obj_cat: Row):
         pass
 
-    @QtCore.Slot(str, object, object)
-    def get_shared_resource(self, filename: str, data, meta):
-        self.filename, self.data, self.meta = pathlib.Path(filename), data, meta
+    @QtCore.Slot(str, pathlib.Path, object, object)
+    def get_shared_resource(self, widget_title: str, filename: pathlib.Path, data, meta):
+        if widget_title != self.title:
+            return
+        self.filename, self.data, self.meta = filename, data, meta
 
     @abc.abstractmethod
     def add_content(self):

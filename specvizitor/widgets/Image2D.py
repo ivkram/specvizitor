@@ -11,6 +11,7 @@ import logging
 import warnings
 
 from ..config import data_widgets
+from ..io.viewer_data import REQUESTS
 from ..utils.qt_tools import get_qtransform_matrix_from_wcs
 from ..utils.table_tools import column_not_found_message
 from ..utils.widgets import ColorBar
@@ -66,7 +67,7 @@ class Image2D(ViewerElement):
         super().init_view()
         self._default_levels = Image2DLevels()
     
-    def request_shared_resource(self, obj_cat: Row):
+    def request_shared_resource(self, obj_cat: Row | None):
         if self.cfg.data.cutout_size is None:
             logger.warning(f'Image cutout size not specified (widget: {self.title})')
 
@@ -77,8 +78,9 @@ class Image2D(ViewerElement):
         if not dec:
             logger.warning(column_not_found_message('dec', dictionary=obj_cat.meta.get('aliases')))
 
-        request_params = {'cutout_size': self.cfg.data.cutout_size, 'ra': ra, 'dec': dec}
-        self.shared_resource_requested.emit(self.title, self.cfg.data.source, request_params)
+        request = REQUESTS.CUTOUT
+        request_params = {'image': self.cfg.data.source, 'cutout_size': self.cfg.data.cutout_size, 'ra': ra, 'dec': dec}
+        self.shared_resource_requested.emit(self.title, request, request_params)
 
     def add_content(self):
         self.image_item.setImage(self.data, autoLevels=False)
