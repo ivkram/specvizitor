@@ -1,8 +1,6 @@
 from astropy.io import fits
 from astropy.table import Table
 import astropy.units as u
-from astropy.utils.exceptions import AstropyWarning
-from astropy.wcs import WCS
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -11,7 +9,6 @@ from dataclasses import dataclass
 import logging
 import pathlib
 import re
-import warnings
 
 from ..utils.widgets import FileBrowser
 
@@ -38,16 +35,8 @@ class GenericFITSLoader(BaseLoader):
     def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, extver_index: int = None,
              header_only: bool = False, **kwargs):
 
-        if header_only:
-            try:
-                meta = fits.getheader(filename)
-            except Exception as e:
-                self.raise_error(e)
-                return None, None
-            return None, meta
-
         try:
-            hdul = fits.open(filename, **kwargs)
+            hdul = fits.open(filename, memmap=True, **kwargs)
         except Exception as e:
             self.raise_error(e)
             return None, None
@@ -62,6 +51,7 @@ class GenericFITSLoader(BaseLoader):
                 index += 1
                 if index >= len(extname_matching_mask):
                     self.raise_error(f'EXTVER `{extver_index}` out of range (filename: {filename.name})')
+                    hdul.close()
                     return None, None
                 if extname_matching_mask[index]:
                     counter += 1
@@ -76,12 +66,15 @@ class GenericFITSLoader(BaseLoader):
             hdu = hdul[index]
         except KeyError:
             self.raise_error(f'Extension `{index}` not found (filename: {filename.name})')
+            hdul.close()
             return None, None
 
         # read the header
         meta = hdu.header
 
-        if meta.get('XTENSION') and meta['XTENSION'] in ('TABLE', 'BINTABLE'):
+        if header_only:
+            data = None
+        elif meta.get('XTENSION') and meta['XTENSION'] in ('TABLE', 'BINTABLE'):
             # read table data
             data = Table.read(hdu)
         else:
@@ -89,7 +82,6 @@ class GenericFITSLoader(BaseLoader):
             data = hdu.data
 
         hdul.close()
-
         return data, meta
 
 
