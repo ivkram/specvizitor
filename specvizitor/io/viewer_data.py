@@ -151,7 +151,11 @@ def load(loader_name: str | None, filename: pathlib.Path, memmap: bool = False, 
             else:
                 loader_name = 'pil'
 
-    return registered_loaders[loader_name]().load(filename, memmap=memmap, **kwargs)
+    loader: BaseLoader = registered_loaders[loader_name]()
+    if loader.supports_memmap:
+        return loader.load(filename, memmap=memmap, **kwargs)
+    else:
+        return loader.load(filename, **kwargs)
 
 
 def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | None = None,
