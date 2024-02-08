@@ -3,12 +3,14 @@ from astropy.table import Table
 import astropy.units as u
 import numpy as np
 from PIL import Image, ImageOps
+import rasterio
 
 import abc
 from dataclasses import dataclass
 import logging
 import pathlib
 import re
+import warnings
 
 from ..utils.widgets import FileBrowser
 
@@ -19,10 +21,16 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BaseLoader(abc.ABC):
     name: str
+    supports_memmap: bool = False
+    extensions: tuple[str, ...] = ()
 
     @abc.abstractmethod
     def load(self, filename: pathlib.Path, **kwargs):
         pass
+
+    @classmethod
+    def validate_extension(cls, filename: str | pathlib.Path):
+        return any(str(filename).endswith(s) for s in cls.extensions)
 
     def raise_error(self, e):
         logger.error(f'{type(self).__name__}: {e}')
@@ -31,12 +39,14 @@ class BaseLoader(abc.ABC):
 @dataclass
 class GenericFITSLoader(BaseLoader):
     name: str = 'generic_fits'
+    supports_memmap: bool = True
+    extensions: tuple[str, ...] = ('.fits', '.fits.gz')
 
     def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, extver_index: int = None,
-             header_only: bool = False, **kwargs):
+             memmap=True, **kwargs):
 
         try:
-            hdul = fits.open(filename, memmap=True, **kwargs)
+            hdul = fits.open(filename, memmap=memmap, **kwargs)
         except Exception as e:
             self.raise_error(e)
             return None, None
@@ -72,9 +82,7 @@ class GenericFITSLoader(BaseLoader):
         # read the header
         meta = hdu.header
 
-        if header_only:
-            data = None
-        elif meta.get('XTENSION') and meta['XTENSION'] in ('TABLE', 'BINTABLE'):
+        if meta.get('XTENSION') and meta['XTENSION'] in ('TABLE', 'BINTABLE'):
             # read table data
             data = Table.read(hdu)
         else:
@@ -104,10 +112,30 @@ class PILLoader(BaseLoader):
         return data, meta
 
 
-def load(loader_name: str | None, filename: pathlib.Path, **kwargs):
+@dataclass
+class RasterIOLoader(BaseLoader):
+    name: str = 'rasterio'
+    supports_memmap: bool = True
+
+    def load(self, filename: pathlib.Path, memmap=True, **kwargs):
+        try:
+            warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
+            dataset = rasterio.open(filename, **kwargs)
+        except Exception as e:
+            self.raise_error(e)
+            return None, None
+
+        meta = dataset.meta
+
+        return dataset, meta
+
+
+def load(loader_name: str | None, filename: pathlib.Path, memmap: bool = False, **kwargs):
     logger.disabled = True if kwargs.get('silent') else False
 
-    registered_loaders: dict[str, BaseLoader] = {loader.name: loader for loader in (GenericFITSLoader(), PILLoader())}
+    registered_loaders: dict[str, type(BaseLoader)] = {loader.name: loader for loader in (GenericFITSLoader,
+                                                                                          PILLoader,
+                                                                                          RasterIOLoader)}
 
     allowed_loader_names = ('auto',) + tuple(loader.name for loader in registered_loaders.values())
     if loader_name not in allowed_loader_names:
@@ -115,26 +143,33 @@ def load(loader_name: str | None, filename: pathlib.Path, **kwargs):
         return None, None
 
     if loader_name == 'auto':
-        loader_name = 'generic_fits' if filename.suffix == '.fits' else 'pil'
+        if GenericFITSLoader.validate_extension(filename):
+            loader_name = 'generic_fits'
+        else:
+            if memmap:
+                loader_name = 'rasterio'
+            else:
+                loader_name = 'pil'
 
-    return registered_loaders[loader_name].load(filename, **kwargs)
+    return registered_loaders[loader_name]().load(filename, memmap=memmap, **kwargs)
 
 
-def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | None = None, **kwargs):
+def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | None = None,
+               memmap=True, **kwargs):
     filename = pathlib.Path(filename)
     if not filename.exists():
         logger.error(f'Image not found: {filename} (widget: {widget_title})')
         return None, None
 
-    data, meta = load(loader, filename, **kwargs)
-    if data is None or not validate_dtype(data, (np.ndarray,), widget_title):
+    data, meta = load(loader, filename, memmap=memmap, **kwargs)
+    if data is None or not validate_dtype(data, (np.ndarray, rasterio.DatasetReader), widget_title):
         return None, None
 
     if wcs_source:
         wcs_source = pathlib.Path(wcs_source)
         if not wcs_source.exists():
             logger.error(f'Image not found: {wcs_source} (widget: {widget_title})')
-        _, meta = load('generic_fits', wcs_source, header_only=True)
+        _, meta = load('auto', wcs_source)
 
     return data, meta
 
@@ -158,7 +193,7 @@ def load_widget_data(obj_id: str | int, data_files: list[str], filename_keyword:
     return filename, data, meta
 
 
-def validate_dtype(data, allowed_dtypes: tuple[type], widget_title: str) -> bool:
+def validate_dtype(data, allowed_dtypes: tuple[type, ...], widget_title: str) -> bool:
     if not any(isinstance(data, t) for t in allowed_dtypes):
         logger.error(f'Invalid input data type: {type(data)} (widget: {widget_title})')
         return False

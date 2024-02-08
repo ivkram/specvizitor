@@ -6,6 +6,7 @@ from astropy.utils.exceptions import AstropyWarning
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
+import rasterio
 
 from dataclasses import dataclass
 from functools import partial
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FieldImage:
     filename: str
-    data: np.ndarray
+    data: np.ndarray | rasterio.DatasetReader
     meta: dict | Header | None = None
 
 
@@ -271,7 +272,17 @@ class DataViewer(AbstractWidget):
                     return
                 x, y = int(x), int(y)
 
-            data = img.data[y-cutout_size:y+cutout_size, x-cutout_size:x+cutout_size]
+            x1, x2 = x-cutout_size, x+cutout_size
+            y1, y2 = y-cutout_size, y+cutout_size
+
+            if isinstance(img.data, rasterio.DatasetReader):
+                # wow, this actually worked
+                data = img.data.read(window=rasterio.windows.Window(x1, img.data.height - y2,
+                                                                    2 * cutout_size, 2 * cutout_size))
+                data = np.moveaxis(data, 0, -1)
+                data = np.flip(data, 0)
+            else:
+                data = img.data[y1:y2, x1:x2]
             self._share_resource(widget_title, img.filename, data, img.meta)
             return
 
