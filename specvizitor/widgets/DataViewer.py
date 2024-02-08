@@ -47,8 +47,8 @@ class DataViewer(AbstractWidget):
         # images that are shared between widgets and can be used to create cutouts
         self._field_images: dict[str, FieldImage] = {}
 
-        if images:
-            self.load_field_images(images)
+        self._field_images_cfg: dict[str, config.Data.images] = images if images else {}
+        self.load_field_images()
 
         self.dock_area: DockArea | None = None
         self.added_docks: list[str] = []
@@ -224,14 +224,14 @@ class DataViewer(AbstractWidget):
         self.init_ui()
 
     @QtCore.Slot(dict)
-    def load_field_images(self, images: dict[str, config.Data.images]):
-        for img_label, img in images.items():
-            data, meta = load_image(filename=img.filename, loader=img.loader, widget_title='Data Viewer',
-                                    wcs_source=img.wcs_source, **(img.loader_params or {}))
+    def load_field_images(self):
+        for img_label, img_cfg in self._field_images_cfg.items():
+            data, meta = load_image(filename=img_cfg.filename, loader=img_cfg.loader, widget_title='Data Viewer',
+                                    wcs_source=img_cfg.wcs_source, **(img_cfg.loader_params or {}))
             if data is None:
                 continue
 
-            self._field_images[img_label] = FieldImage(pathlib.Path(img.filename), data, meta)
+            self._field_images[img_label] = FieldImage(pathlib.Path(img_cfg.filename), data, meta)
 
     @QtCore.Slot(str, REQUESTS, dict)
     def _query_shared_resources(self, widget_title: str, request: REQUESTS, request_params: dict):

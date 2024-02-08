@@ -59,6 +59,10 @@ class FieldImage:
                                                                  2 * cutout_size, 2 * cutout_size))
             data = np.moveaxis(data, 0, -1)
             data = np.flip(data, 0)
+
+            # reopen the dataset to free resources
+            self.data.close()
+            self.data, _ = RasterIOLoader().load(self.filename)
         else:
             data = self.data[y1:y2, x1:x2]
         return data
