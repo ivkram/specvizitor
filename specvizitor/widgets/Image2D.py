@@ -4,7 +4,7 @@ from astropy.visualization import ZScaleInterval
 from astropy.wcs import WCS, FITSFixedWarning
 import numpy as np
 import pyqtgraph as pg
-from qtpy import QtCore
+from qtpy import QtCore, QtGui
 
 from dataclasses import dataclass
 import logging
@@ -104,6 +104,8 @@ class Image2D(ViewerElement):
             self.register_item(pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen))
 
     def setup_view(self):
+        qtransform = QtGui.QTransform()
+
         # create a transformation matrix from metadata
         if self.cfg.wcs_transform and self.meta is not None:
             with warnings.catch_warnings():
@@ -111,10 +113,12 @@ class Image2D(ViewerElement):
                 w = WCS(self.meta)
 
             transformation_matrix = get_qtransform_matrix_from_wcs(w)
-            self._qtransform.setMatrix(*transformation_matrix.flatten())
+            qtransform.setMatrix(*transformation_matrix.flatten())
 
         if self.cfg.rotate:
-            self._qtransform = self._qtransform.rotate(self.cfg.rotate)
+            qtransform = qtransform.rotate(self.cfg.rotate)
+
+        self._qtransform = qtransform
 
         self.set_default_range((0., float(self.data.shape[1])), (0., float(self.data.shape[0])),
                                apply_qtransform=True)
