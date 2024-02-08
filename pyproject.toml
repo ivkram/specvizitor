@@ -19,8 +19,8 @@ platformdirs = "4.2.0"
 pyqt5 = "5.15.2"
 pyqtdarktheme = "2.1.0"
 pyqtgraph = "0.13.3"
-scipy = "1.12.0"
 qtpy = "2.4.1"
+scipy = "1.12.0"
 
 [tool.poetry.scripts]
 specvizitor = 'specvizitor.main:main'
