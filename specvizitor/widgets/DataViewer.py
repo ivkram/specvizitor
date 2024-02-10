@@ -27,6 +27,7 @@ class DataViewer(AbstractWidget):
     shared_resources_queried = QtCore.Signal(str, pathlib.Path, object, object)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
+    redshift_fixed = QtCore.Signal(float)
 
     zen_mode_activated = QtCore.Signal()
     visibility_changed = QtCore.Signal()
@@ -119,6 +120,7 @@ class DataViewer(AbstractWidget):
             self.shared_resources_queried.connect(w.get_shared_resource)
 
             w.shared_resource_requested.connect(self._query_shared_resources)
+            w.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
         for w in widgets.values():
             # link view(s)
@@ -285,6 +287,10 @@ class DataViewer(AbstractWidget):
 
         for plugin in self._plugins:
             plugin.tweak_widgets(self.active_core_widgets, obj_cat)
+
+    @QtCore.Slot(float)
+    def _save_redshift(self, redshift: float):
+        self.redshift_fixed.emit(redshift)
 
     @QtCore.Slot()
     def collect(self):

@@ -10,6 +10,8 @@ import pathlib
 
 logger = logging.getLogger(__name__)
 
+REDSHIFT_FILL_VALUE = -1.0
+
 
 class WriterBase(ABC):
     @abstractmethod
@@ -31,7 +33,25 @@ class FITSWriter(WriterBase):
 @dataclass
 class InspectionData:
     df: pd.DataFrame
-    default_columns: list[str] = field(default_factory=lambda: ['starred', 'comment'])
+    default_columns: list[str] = field(default_factory=lambda: ['starred', 'z_sviz', 'comment'])
+
+    @staticmethod
+    def _add_default_columns(df: pd.DataFrame):
+        # objects starred by the user
+        if 'starred' not in df.columns:
+            df['starred'] = False
+
+        # redshifts saved by the user
+        if 'z_sviz' not in df.columns:
+            df['z_sviz'] = REDSHIFT_FILL_VALUE
+
+        # column for user comments
+        if 'comment' not in df.columns:
+            df['comment'] = ''
+        else:
+            df['comment'] = df['comment'].fillna('')
+
+        return df
 
     @classmethod
     def create(cls, *args, flags: list[str] | None = None):
@@ -49,8 +69,7 @@ class InspectionData:
             index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
 
         df = (pd.DataFrame(index=index)).sort_index()
-        df['starred'] = False
-        df['comment'] = ''
+        df = cls._add_default_columns(df)
 
         if flags is not None:
             for cname in flags:
@@ -73,10 +92,7 @@ class InspectionData:
             df.set_index(f'id{i + 1}', append=True, inplace=True)
             i += 1
 
-        if 'starred' not in df.columns:
-            df['starred'] = False
-
-        df['comment'] = '' if 'comment' not in df.columns else df['comment'].fillna('')
+        df = cls._add_default_columns(df)
 
         review = cls(df=df)
         review.reorder_columns()

@@ -29,6 +29,8 @@ class Slider:
     show_text_editor: bool = False
     n_decimal_places: int = 6
 
+    show_save_button: bool = False
+
 
 @dataclass
 class ColorBar:
@@ -91,7 +93,7 @@ class ViewerElement:
     spectral_lines: SpectralLines = field(default_factory=SpectralLines)
     smoothing_slider: Slider = field(default_factory=lambda: Slider(max_value=3, step=0.05))
     redshift_slider: Slider = field(default_factory=lambda: Slider(visible=False, max_value=10, step=1e-6,
-                                                                   show_text_editor=True))
+                                                                   show_text_editor=True, show_save_button=True))
 
 
 @dataclass

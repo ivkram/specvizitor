@@ -36,7 +36,7 @@ class Appearance:
 
 
 @dataclass
-class ReviewForm:
+class InspectionResults:
     default_flags: list[str] | None = None
 
 
@@ -45,5 +45,5 @@ class Config(Params):
     appearance: Appearance = field(default_factory=lambda: Appearance())
     catalogue: Catalogue = field(default_factory=lambda: Catalogue())
     data: Data = field(default_factory=lambda: Data())
-    review_form: ReviewForm = field(default_factory=lambda: ReviewForm())
+    inspection_results: InspectionResults = field(default_factory=lambda: InspectionResults())
     plugins: list[str] | None = None

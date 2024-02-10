@@ -19,7 +19,7 @@ from .DataViewer import DataViewer
 from .NewFile import NewFile
 from .ObjectInfo import ObjectInfo
 from .QuickSearch import QuickSearch
-from .ReviewForm import ReviewForm
+from .InspectionResults import InspectionResults
 from .Settings import Settings
 from .ToolBar import ToolBar
 
@@ -72,11 +72,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._commands_bar: ToolBar | None = None
         self._quick_search: QuickSearch | None = None
         self._object_info: ObjectInfo | None = None
-        self._review_form: ReviewForm | None = None
+        self._inspection_res: InspectionResults | None = None
 
         self._quick_search_dock: QtWidgets.QDockWidget | None = None
         self._object_info_dock: QtWidgets.QDockWidget | None = None
-        self._review_form_dock: QtWidgets.QDockWidget | None = None
+        self._inspection_res_dock: QtWidgets.QDockWidget | None = None
 
         self.init_ui()
         self.populate()
@@ -124,10 +124,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self._object_info_dock.setWidget(self._object_info)
 
         # create a widget for writing comments
-        self._review_form = ReviewForm(cfg=self._config.review_form, parent=self)
-        self._review_form_dock = QtWidgets.QDockWidget('Review Form', self)
-        self._review_form_dock.setObjectName('Review Form')
-        self._review_form_dock.setWidget(self._review_form)
+        self._inspection_res = InspectionResults(cfg=self._config.inspection_results, parent=self)
+        self._inspection_res_dock = QtWidgets.QDockWidget('Inspection Results', self)
+        self._inspection_res_dock.setObjectName('Inspection Results')
+        self._inspection_res_dock.setWidget(self._inspection_res)
 
         self._init_menu()
 
@@ -242,13 +242,13 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the main window to the child widgets
         self.data_sources_updated.connect(self._data_viewer.load_field_images)
 
-        for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._review_form):
+        for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._inspection_res):
             self.project_loaded.connect(w.load_project)
 
-        for w in (self._data_viewer, self._object_info, self._review_form):
+        for w in (self._data_viewer, self._object_info, self._inspection_res):
             self.data_requested.connect(w.collect)
 
-        for w in (self._data_viewer, self._commands_bar, self._object_info, self._review_form):
+        for w in (self._data_viewer, self._commands_bar, self._object_info, self._inspection_res):
             self.object_selected.connect(w.load_object)
 
         self.theme_changed.connect(self._data_viewer.init_ui)
@@ -274,9 +274,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._data_viewer.data_collected.connect(self.save_viewer_data)
         self._object_info.data_collected.connect(self.save_obj_info_data)
-        self._review_form.data_collected.connect(self.save_review_data)
+        self._inspection_res.data_collected.connect(self.save_review_data)
 
         # connect the child widgets between each other
+        self._data_viewer.redshift_fixed.connect(self._inspection_res.set_redshift_value)
         self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.view_reset.emit)
         self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.init_docks)
 
@@ -286,7 +287,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addToolBar(QtCore.Qt.TopToolBarArea, self._commands_bar)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._quick_search_dock)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._object_info_dock)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._review_form_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._inspection_res_dock)
 
     def load_catalogue(self):
         cat = read_cat(self._config.catalogue.filename, translate=self._config.catalogue.translate)
@@ -312,7 +313,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.catalogue_changed.connect(self.update_catalogue)
         dialog.output_path_selected.connect(self.update_output_path)
         if dialog.exec():
-            self.rd.create(flags=self._config.review_form.default_flags)
+            self.rd.create(flags=self._config.inspection_results.default_flags)
             self.load_project()
 
     def _open_file_action(self):
@@ -429,7 +430,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _save_action(self):
         """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
         """
-        msg = 'The project data is saved automatically'
+        msg = 'All project data is saved automatically'
         if self.rd.output_path is not None:
             msg += ' to {}'.format(self.rd.output_path)
         LogMessageBox(logging.INFO, msg, parent=self)
@@ -566,8 +567,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.visible_columns = visible_columns
         self._cache.save()
 
-    @QtCore.Slot(str, dict)
-    def save_review_data(self, comments: str, checkboxes: dict[str, bool]):
+    @QtCore.Slot(float, str, dict)
+    def save_review_data(self, redshift: float, comments: str, checkboxes: dict[str, bool]):
+        self.rd.review.update_value(self.rd.j, 'z_sviz', redshift)
         self.rd.review.update_value(self.rd.j, 'comment', comments)
         for cname, is_checked in checkboxes.items():
             self.rd.review.update_value(self.rd.j, cname, is_checked)

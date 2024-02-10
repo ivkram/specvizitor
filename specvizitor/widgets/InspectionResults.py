@@ -1,16 +1,22 @@
 from qtpy import QtCore, QtWidgets
 
 from ..config import config
-from ..io.inspection_data import InspectionData
+from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
 from ..utils.widgets import AbstractWidget
 
 
-class ReviewForm(AbstractWidget):
-    data_collected = QtCore.Signal(str, dict)
+class InspectionResults(AbstractWidget):
+    data_collected = QtCore.Signal(float, str, dict)
 
-    def __init__(self, cfg: config.ReviewForm, parent=None):
+    def __init__(self, cfg: config.InspectionResults, parent=None):
 
         self.cfg = cfg
+        self._saved_redshift: float | None = None
+
+        self._redshift_widget: QtWidgets.QLabel | None = None
+        self._spacer: QtWidgets.QWidget | None = None
+        self._clear_redshift: QtWidgets.QPushButton | None = None
+        self._separator: QtWidgets.QFrame | None = None
 
         self._checkbox_widgets: dict[str, QtWidgets.QCheckBox] | None = None
         self._comments_widget: QtWidgets.QTextEdit | None = None
@@ -41,23 +47,43 @@ class ReviewForm(AbstractWidget):
         self._checkbox_widgets = checkbox_widgets
 
     def init_ui(self):
+        self._redshift_widget = QtWidgets.QLabel(self)
+        self._spacer = QtWidgets.QWidget(self)
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self._clear_redshift = QtWidgets.QPushButton("Clear", self)
+
+        self._separator = QtWidgets.QFrame(self)
+        self._separator.setFrameShape(QtWidgets.QFrame.HLine)
+
         self._create_checkbox_widgets()
         self._comments_widget = QtWidgets.QTextEdit(self)
 
         self._edit_flags = QtWidgets.QPushButton("Edit...", self)
         self._edit_flags.pressed.connect(self._edit_flags_action)
+        self._edit_flags.setVisible(False)
+
+        self._clear_redshift.clicked.connect(self._clear_redshift_value)
 
     def set_layout(self):
-        self.setLayout(QtWidgets.QGridLayout())
+        self.setLayout(QtWidgets.QVBoxLayout())
 
     def populate(self):
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.addWidget(self._redshift_widget)
+        sub_layout.addWidget(self._spacer)
+        sub_layout.addWidget(self._clear_redshift)
+        self.layout().addLayout(sub_layout)
+
+        self.layout().addWidget(self._separator)
+        self._separator.setVisible(False)
+
         for i, widget in enumerate(self._checkbox_widgets.values()):
-            self.layout().addWidget(widget, i + 1, 1, 1, 1)
+            self.layout().addWidget(widget)
 
-        self.layout().addWidget(QtWidgets.QLabel('Comments:', self), len(self._checkbox_widgets) + 1, 1, 1, 1)
-        self.layout().addWidget(self._comments_widget, len(self._checkbox_widgets) + 2, 1, 1, 1)
+        self.layout().addWidget(QtWidgets.QLabel('Comments:', self))
+        self.layout().addWidget(self._comments_widget)
 
-        self.layout().addWidget(self._edit_flags, len(self._checkbox_widgets) + 3, 1, 1, 1)
+        self.layout().addWidget(self._edit_flags)
 
     @QtCore.Slot(InspectionData)
     def load_project(self, review: InspectionData):
@@ -66,18 +92,31 @@ class ReviewForm(AbstractWidget):
         self._create_checkbox_widgets(review=review)
         self.repopulate()
 
+    @QtCore.Slot(float)
+    def set_redshift_value(self, redshift: float):
+        if redshift != REDSHIFT_FILL_VALUE:
+            self._redshift_widget.setText(f"Redshift: {redshift:.4f}")
+        else:
+            self._redshift_widget.setText(f"Redshift: ???")
+        self._saved_redshift = redshift
+
+    def _clear_redshift_value(self):
+        self.set_redshift_value(REDSHIFT_FILL_VALUE)
+
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):
+        self.set_redshift_value(review.get_value(j, 'z_sviz'))
         self._comments_widget.setText(review.get_value(j, 'comment'))
         for cname, widget in self._checkbox_widgets.items():
             widget.setChecked(review.get_value(j, cname))
 
     @QtCore.Slot()
     def collect(self):
+        redshift = self._saved_redshift
         comment = self._comments_widget.toPlainText()
         checkboxes = {cname: widget.isChecked() for cname, widget in self._checkbox_widgets.items()}
 
-        self.data_collected.emit(comment, checkboxes)
+        self.data_collected.emit(redshift, comment, checkboxes)
 
     def _edit_flags_action(self):
         pass

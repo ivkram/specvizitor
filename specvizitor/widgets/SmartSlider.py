@@ -66,10 +66,12 @@ class SmartSliderBase(QtWidgets.QSlider):
 
 class SmartSlider(AbstractWidget):
     value_changed = QtCore.Signal(float)
+    save_button_clicked = QtCore.Signal(float)
 
     def __init__(self, short_name: str = 'x', full_name: str | None = None, action: str | None = None,
                  visible: bool = True, catalog_name: str | None = None, link_to: str | None = None,
-                 show_text_editor: bool = False, n_decimal_places: int = 6, parent=None, **kwargs):
+                 show_text_editor: bool = False, n_decimal_places: int = 6, show_save_button: bool = False,
+                 parent=None, **kwargs):
 
         if catalog_name is not None:
             self.short_name = catalog_name
@@ -83,12 +85,14 @@ class SmartSlider(AbstractWidget):
         self.link_to = link_to
         self.show_text_editor = show_text_editor
         self.n_decimal_places = n_decimal_places
+        self.show_save_button = show_save_button
 
         self._slider_kwargs = kwargs
 
         self._slider: SmartSliderBase | None = None
         self._label: QtWidgets.QLabel | None = None
         self._editor: QtWidgets.QLineEdit | None = None
+        self._save_button: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
         self.setHidden(not visible)
@@ -108,11 +112,16 @@ class SmartSlider(AbstractWidget):
         self._editor = QtWidgets.QLineEdit(self)
         self._editor.setMaximumWidth(120)
 
-        self._label.setHidden(not self.show_text_editor)
-        self._editor.setHidden(not self.show_text_editor)
+        # create a save button
+        self._save_button = QtWidgets.QPushButton('Save !', self)
+
+        self._label.setVisible(self.show_text_editor)
+        self._editor.setVisible(self.show_text_editor)
+        self._save_button.setVisible(self.show_save_button)
 
         self._slider.value_changed.connect(self.update_from_slider)
         self._editor.returnPressed.connect(self._update_from_editor)
+        self._save_button.clicked.connect(self._save_redshift)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
@@ -122,6 +131,7 @@ class SmartSlider(AbstractWidget):
         self.layout().addWidget(self._slider, 1, 1, 1, 1)
         self.layout().addWidget(self._label, 1, 2, 1, 1)
         self.layout().addWidget(self._editor, 1, 3, 1, 1)
+        self.layout().addWidget(self._save_button, 1, 4, 1, 1)
 
     @property
     def value(self):
@@ -148,6 +158,9 @@ class SmartSlider(AbstractWidget):
         except ValueError:
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
+
+    def _save_redshift(self):
+        self.save_button_clicked.emit(self.value)
 
     def update_default_value(self, obj_cat: Row | None):
         if obj_cat is None or self.catalog_name is None:
