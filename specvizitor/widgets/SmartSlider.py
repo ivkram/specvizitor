@@ -159,8 +159,13 @@ class SmartSlider(AbstractWidget):
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
 
+    @QtCore.Slot()
     def save_redshift(self):
         self.save_button_clicked.emit(self.value)
+
+    @QtCore.Slot(float)
+    def change_redshift(self, delta_z: float):
+        self._slider.index = self._slider.index_from_value(self._slider.value + delta_z)
 
     def update_default_value(self, obj_cat: Row | None):
         if obj_cat is None or self.catalog_name is None:

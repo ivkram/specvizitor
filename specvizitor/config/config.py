@@ -41,9 +41,15 @@ class InspectionResults:
 
 
 @dataclass
+class DataViewer:
+    redshift_step: float = 0.02
+
+
+@dataclass
 class Config(Params):
-    appearance: Appearance = field(default_factory=lambda: Appearance())
-    catalogue: Catalogue = field(default_factory=lambda: Catalogue())
-    data: Data = field(default_factory=lambda: Data())
-    inspection_results: InspectionResults = field(default_factory=lambda: InspectionResults())
+    appearance: Appearance = field(default_factory=Appearance)
+    catalogue: Catalogue = field(default_factory=Catalogue)
+    data: Data = field(default_factory=Data)
+    data_viewer: DataViewer = field(default_factory=DataViewer)
+    inspection_results: InspectionResults = field(default_factory=InspectionResults)
     plugins: list[str] | None = None

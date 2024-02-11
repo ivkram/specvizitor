@@ -18,6 +18,7 @@ from ..utils.widgets import AbstractWidget
 from .ViewerElement import ViewerElement
 from .Image2D import Image2D
 from .Plot1D import Plot1D
+from .SmartSlider import SmartSlider
 
 logger = logging.getLogger(__name__)
 
@@ -28,19 +29,22 @@ class DataViewer(AbstractWidget):
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
     redshift_requested = QtCore.Signal()
+    redshift_changed = QtCore.Signal(float)
     redshift_obtained = QtCore.Signal(float)
 
     zen_mode_activated = QtCore.Signal()
     visibility_changed = QtCore.Signal()
 
     def __init__(self,
-                 viewer_cfg: DataWidgets,
+                 cfg: config.DataViewer,
                  appearance: config.Appearance,
+                 viewer_cfg: DataWidgets,
                  images: dict[str, config.Image] | None = None,
                  spectral_lines: SpectralLineData | None = None,
                  plugins: list[PluginCore] | None = None,
                  parent=None):
 
+        self.cfg = cfg
         self._appearance = appearance
         self._viewer_cfg = viewer_cfg
         self._spectral_lines = spectral_lines
@@ -61,6 +65,9 @@ class DataViewer(AbstractWidget):
         super().__init__(parent=parent)
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        QtWidgets.QShortcut('Q', self, partial(self.change_redshift, -1))
+        QtWidgets.QShortcut('W', self, partial(self.change_redshift, 1))
 
     @property
     def widgets(self) -> list[ViewerElement]:
@@ -289,17 +296,30 @@ class DataViewer(AbstractWidget):
         for plugin in self._plugins:
             plugin.tweak_widgets(self.active_core_widgets, obj_cat)
 
+    def _find_active_redshift_slider(self) -> SmartSlider | None:
+        for w in self.widgets:
+            if w.redshift_slider.isVisible():
+                return w.redshift_slider
+        return None
+
     @QtCore.Slot()
     def request_redshift(self):
-        for w in self.widgets:
-            if w.redshift_slider.show_save_button:
-                self.redshift_requested.connect(w.redshift_slider.save_redshift)
-                self.redshift_requested.emit()
-                self.redshift_requested.disconnect()
+        slider = self._find_active_redshift_slider()
+        if slider:
+            self.redshift_requested.connect(slider.save_redshift)
+            self.redshift_requested.emit()
+            self.redshift_requested.disconnect()
 
     @QtCore.Slot(float)
     def _save_redshift(self, redshift: float):
         self.redshift_obtained.emit(redshift)
+
+    def change_redshift(self, n_steps: int):
+        slider = self._find_active_redshift_slider()
+        if slider:
+            self.redshift_changed.connect(slider.change_redshift)
+            self.redshift_changed.emit(n_steps * self.cfg.redshift_step)
+            self.redshift_changed.disconnect()
 
     @QtCore.Slot()
     def collect(self):

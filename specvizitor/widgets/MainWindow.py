@@ -70,6 +70,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
 
+        QtWidgets.QShortcut('Ctrl+S', self, self.save_action_invoked.emit)
+        QtWidgets.QShortcut('Ctrl+D', self, self.delete_action_invoked.emit)
+        QtWidgets.QShortcut('Esc', self, lambda: self._exit_fullscreen() if self.isFullScreen() else None)
+
         self._data_viewer: DataViewer | None = None
         self._commands_bar: ToolBar | None = None
         self._quick_search: QuickSearch | None = None
@@ -105,8 +109,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self._data_viewer = DataViewer(self._viewer_cfg, self._config.appearance, images=self._config.data.images,
-                                       spectral_lines=self._spectral_lines, plugins=self._plugins, parent=self)
+        self._data_viewer = DataViewer(self._config.data_viewer, self._config.appearance, self._viewer_cfg,
+                                       images=self._config.data.images, spectral_lines=self._spectral_lines,
+                                       plugins=self._plugins, parent=self)
 
         # create a toolbar
         self._commands_bar = ToolBar(self._config.appearance, parent=self)
@@ -148,9 +153,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
         self._file.addAction(self._open_file)
 
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+S'), self, self.save_action_invoked.emit)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+D'), self, self.delete_action_invoked.emit)
-
         self._export = QtWidgets.QAction("&Export FITS Table...")
         self._export.triggered.connect(self._export_action)
         self._export.setEnabled(False)
@@ -191,8 +193,6 @@ class MainWindow(QtWidgets.QMainWindow):
                                            self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
         self._fullscreen.setShortcut('F11')
         self._view.addAction(self._fullscreen)
-
-        QtWidgets.QShortcut('Esc', self, lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._widgets = self._menu.addMenu("&Widgets")
 
