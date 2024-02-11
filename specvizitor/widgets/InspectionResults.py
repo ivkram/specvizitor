@@ -62,7 +62,7 @@ class InspectionResults(AbstractWidget):
         self._edit_flags.pressed.connect(self._edit_flags_action)
         self._edit_flags.setVisible(False)
 
-        self._clear_redshift.clicked.connect(self._clear_redshift_value)
+        self._clear_redshift.clicked.connect(self.clear_redshift_value)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -100,7 +100,8 @@ class InspectionResults(AbstractWidget):
             self._redshift_widget.setText(f"Redshift: ???")
         self._saved_redshift = redshift
 
-    def _clear_redshift_value(self):
+    @QtCore.Slot()
+    def clear_redshift_value(self):
         self.set_redshift_value(REDSHIFT_FILL_VALUE)
 
     @QtCore.Slot(int, InspectionData)

@@ -32,6 +32,7 @@ class MainWindow(QtWidgets.QMainWindow):
     data_requested = QtCore.Signal()
     data_sources_updated = QtCore.Signal(dict)
     save_action_invoked = QtCore.Signal()
+    delete_action_invoked = QtCore.Signal()
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
@@ -147,21 +148,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
         self._file.addAction(self._open_file)
 
-        self._file.addSeparator()
-
-        self._save = QtWidgets.QAction("&Save...")
-        self._save.triggered.connect(self.save_action_invoked.emit)
-        self._save.setShortcut(QtGui.QKeySequence('Ctrl+S'))
-        self._save.setEnabled(False)
-        self._file.addAction(self._save)
-
-        self._save_as = QtWidgets.QAction("Save As...")
-        self._save_as.triggered.connect(self._save_as_action)
-        self._save_as.setShortcut(QtGui.QKeySequence('Shift+Ctrl+S'))
-        self._save_as.setEnabled(False)
-        self._file.addAction(self._save_as)
-
-        self._file.addSeparator()
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+S'), self, self.save_action_invoked.emit)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+D'), self, self.delete_action_invoked.emit)
 
         self._export = QtWidgets.QAction("&Export FITS Table...")
         self._export.triggered.connect(self._export_action)
@@ -263,6 +251,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
         self.save_action_invoked.connect(self._data_viewer.request_redshift)
+        self.delete_action_invoked.connect(self._inspection_res.clear_redshift_value)
 
         self.zen_mode_activated.connect(self._data_viewer.hide_interface)
         self.zen_mode_deactivated.connect(self._data_viewer.restore_visibility)
@@ -343,7 +332,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def load_project(self, j: int | None = None):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
-        for w in (self._save, self._save_as, self._export, self._reset_view, self._reset_dock_layout):
+        for w in (self._export, self._reset_view, self._reset_dock_layout):
             w.setEnabled(True)
 
         self.project_loaded.emit(self.rd.review)
@@ -429,14 +418,6 @@ class MainWindow(QtWidgets.QMainWindow):
                       f' [#{self.rd.j + 1}/{self.rd.review.n_objects}] – ')
         title += 'Specvizitor'
         self.setWindowTitle(title)
-
-    def _save_as_action(self):
-        path = qtpy.compat.getsavefilename(self, caption='Save/Save As',
-                                           basedir=str(self.rd.output_path),
-                                           filters='CSV Files (*.csv)')[0]
-        if path:
-            self.update_output_path(pathlib.Path(path).resolve())
-            self.rd.save()
 
     def _export_action(self):
         path = qtpy.compat.getsavefilename(self, caption='Export To FITS',
