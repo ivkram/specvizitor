@@ -69,6 +69,9 @@ class DataViewer(AbstractWidget):
         QtWidgets.QShortcut('Q', self, partial(self.change_redshift, -1))
         QtWidgets.QShortcut('W', self, partial(self.change_redshift, 1))
 
+        QtWidgets.QShortcut('Shift+Q', self, partial(self.change_redshift, -1, True))
+        QtWidgets.QShortcut('Shift+W', self, partial(self.change_redshift, 1, True))
+
     @property
     def widgets(self) -> list[ViewerElement]:
         lazy_widgets = []
@@ -314,11 +317,12 @@ class DataViewer(AbstractWidget):
     def _save_redshift(self, redshift: float):
         self.redshift_obtained.emit(redshift)
 
-    def change_redshift(self, n_steps: int):
+    def change_redshift(self, n_steps: int, small_step: bool = False):
         slider = self._find_active_redshift_slider()
         if slider:
+            step = self.cfg.redshift_small_step if small_step else self.cfg.redshift_step
             self.redshift_changed.connect(slider.change_redshift)
-            self.redshift_changed.emit(n_steps * self.cfg.redshift_step)
+            self.redshift_changed.emit(n_steps * step)
             self.redshift_changed.disconnect()
 
     @QtCore.Slot()
