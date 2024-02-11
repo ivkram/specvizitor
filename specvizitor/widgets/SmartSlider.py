@@ -121,7 +121,7 @@ class SmartSlider(AbstractWidget):
 
         self._slider.value_changed.connect(self.update_from_slider)
         self._editor.returnPressed.connect(self._update_from_editor)
-        self._save_button.clicked.connect(self._save_redshift)
+        self._save_button.clicked.connect(self.save_redshift)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
@@ -159,7 +159,7 @@ class SmartSlider(AbstractWidget):
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
 
-    def _save_redshift(self):
+    def save_redshift(self):
         self.save_button_clicked.emit(self.value)
 
     def update_default_value(self, obj_cat: Row | None):

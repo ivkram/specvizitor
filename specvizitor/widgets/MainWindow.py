@@ -27,10 +27,11 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    data_sources_updated = QtCore.Signal(dict)
     project_loaded = QtCore.Signal(InspectionData)
-    data_requested = QtCore.Signal()
     object_selected = QtCore.Signal(int, InspectionData, object, config.Data)
+    data_requested = QtCore.Signal()
+    data_sources_updated = QtCore.Signal(dict)
+    save_action_invoked = QtCore.Signal()
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
@@ -149,7 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._file.addSeparator()
 
         self._save = QtWidgets.QAction("&Save...")
-        self._save.triggered.connect(self._save_action)
+        self._save.triggered.connect(self.save_action_invoked.emit)
         self._save.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self._save.setEnabled(False)
         self._file.addAction(self._save)
@@ -261,6 +262,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.starred_state_updated.connect(self._commands_bar.update_star_button_icon)
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
+        self.save_action_invoked.connect(self._data_viewer.request_redshift)
+
         self.zen_mode_activated.connect(self._data_viewer.hide_interface)
         self.zen_mode_deactivated.connect(self._data_viewer.restore_visibility)
 
@@ -277,7 +280,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._inspection_res.data_collected.connect(self.save_review_data)
 
         # connect the child widgets between each other
-        self._data_viewer.redshift_fixed.connect(self._inspection_res.set_redshift_value)
+        self._data_viewer.redshift_obtained.connect(self._inspection_res.set_redshift_value)
         self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.view_reset.emit)
         self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.init_docks)
 
@@ -426,14 +429,6 @@ class MainWindow(QtWidgets.QMainWindow):
                       f' [#{self.rd.j + 1}/{self.rd.review.n_objects}] – ')
         title += 'Specvizitor'
         self.setWindowTitle(title)
-
-    def _save_action(self):
-        """ Instead of saving inspection results, display a message saying that the auto-save mode is enabled.
-        """
-        msg = 'All project data is saved automatically'
-        if self.rd.output_path is not None:
-            msg += ' to {}'.format(self.rd.output_path)
-        LogMessageBox(logging.INFO, msg, parent=self)
 
     def _save_as_action(self):
         path = qtpy.compat.getsavefilename(self, caption='Save/Save As',
