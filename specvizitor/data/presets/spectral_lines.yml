@@ -78,6 +78,9 @@ wavelengths:
   MgII 1: 2796.35
   MgII 2: 2803.53
 
+  # Neon lines
+  NeIII: 3870.16
+
 # references:
 # [1] https://physics.nist.gov/PhysRefData/Handbook/Tables/hydrogentable2.htm
 # [2] https://www.gemini.edu/observing/resources/near-ir-resources/spectroscopy/hydrogen-recombination-lines
