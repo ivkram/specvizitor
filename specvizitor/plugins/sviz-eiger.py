@@ -38,7 +38,6 @@ class Plugin(PluginCore):
         zoom_level = 25
         dx, dy = 5, 5
         x1, x2 = x0 - zoom_level * dx, x0 + zoom_level * dx
-        y1, y2 = y0 - dy, y0 + dy
 
         for spec_2d in spec2d_array:
             pen = pg.mkPen(color, width=2, style=QtCore.Qt.DashLine)
@@ -47,7 +46,8 @@ class Plugin(PluginCore):
             spec_2d.register_item(pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen))
 
             if zoom:
-                spec_2d.set_default_range(xrange=(x1, x2), yrange=(y1, y2), apply_qtransform=True, update=True)
+                yrange = (0., float(spec_2d.data.shape[0]))
+                spec_2d.set_default_range(xrange=(x1, x2), yrange=yrange, apply_qtransform=True, update=True)
 
     @staticmethod
     def get_emline_coords(obj_cat: Row | None) -> list[tuple[float, float]]:

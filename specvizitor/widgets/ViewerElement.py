@@ -398,8 +398,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 return
 
         scale0 = 1 + redshift
-        y_min, y_max = self._axes.y.limits if self._axes.y.limits else (0, 0)
-        label_height = y_max - (y_max - y_min) * 0.03  # y_min + 0.6 * (y_max - y_min)
+        y_min, y_max = self._axes.y.limits
+        label_height = y_max - (y_max - y_min) * 0.03
 
         line_waves = np.array([self._spectral_lines.wavelengths[line_name]
                                for line_name in self._spectral_line_artists.keys()]) * scale0
