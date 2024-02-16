@@ -23,6 +23,9 @@ wavelengths:
   PaG: 10941.1
   PaD: 10052.1
   PaE: 9548.6
+  Pa10: 9231.5
+  Pa11: 9017.4
+  Pa12: 8865.2
 
   # Brackett series [2]
   BrA: 40522.6
@@ -36,6 +39,7 @@ wavelengths:
   PfG: 37405.6
   PfD: 32969.9
   PfE: 30392.0
+
 
   # He-I lines [1], [3]
   HeI-3890: 3889.751
