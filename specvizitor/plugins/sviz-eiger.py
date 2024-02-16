@@ -1,3 +1,4 @@
+import numpy as np
 from astropy.table import Row
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Dock import Dock
@@ -58,8 +59,15 @@ class Plugin(PluginCore):
 
         for i, cname_pair in enumerate(coord_colnames):
             if cname_pair[0] in obj_cat.colnames and cname_pair[1] in obj_cat.colnames:
+                x, y = obj_cat[cname_pair[0]], obj_cat[cname_pair[1]]
+
+                # skip masked elements
+                if np.ma.is_masked(x) or np.ma.is_masked(y):
+                    continue
+
+                # convert line coordinates to float
                 try:
-                    line_coords = (float(obj_cat[cname_pair[0]]), float(obj_cat[cname_pair[1]]))
+                    line_coords = (float(x), float(y))
                 except TypeError as msg:
                     logger.error(msg)
                 else:
