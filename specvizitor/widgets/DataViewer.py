@@ -158,10 +158,17 @@ class DataViewer(AbstractWidget):
                 try:
                     source_widget = widgets[w.cfg.color_bar.link_to]
                 except KeyError:
-                    logger.error(f'Failed to link color bars (source widget: {w.cfg.color_bar.link_to})')
+                    logger.error(f'Failed to (un)link color bars (source widget: {w.cfg.color_bar.link_to})')
                 else:
-                    source_widget.cbar.sigLevelsChanged[tuple].connect(partial(w.set_default_levels, update=True))
-                    w.cbar.sigLevelsChanged[tuple].connect(partial(source_widget.set_default_levels, update=True))
+                    if w.data and w.has_defined_levels:
+                        source_widget.cbar.sigLevelsChanged[tuple].connect(partial(w.set_default_levels, update=True))
+                        w.cbar.sigLevelsChanged[tuple].connect(partial(source_widget.set_default_levels, update=True))
+                    else:
+                        try:
+                            source_widget.cbar.sigLevelsChanged[tuple].disconnect()
+                            w.cbar.sigLevelsChanged[tuple].disconnect()
+                        except TypeError:
+                            pass
 
     def _create_docks(self):
         # delete previously created docks

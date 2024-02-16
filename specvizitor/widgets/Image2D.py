@@ -105,6 +105,10 @@ class Image2D(ViewerElement):
             self.register_item(pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen))
             self.register_item(pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen))
 
+    @property
+    def has_defined_levels(self) -> bool:
+        return np.any(np.isfinite(self.data)) and np.any(np.nonzero(self.data))
+
     def setup_view(self):
         qtransform = QtGui.QTransform()
 
@@ -126,7 +130,7 @@ class Image2D(ViewerElement):
                                apply_qtransform=True)
 
         # compute default image levels
-        if np.any(np.isfinite(self.data)) and np.any(np.nonzero(self.data)):
+        if self.has_defined_levels:
             limits_cfg = self.cfg.color_bar.limits
             if limits_cfg.type not in self.ALLOWED_CBAR_LIMS:
                 logger.error(f'Unknown type of colorbar limits: {limits_cfg}.'
