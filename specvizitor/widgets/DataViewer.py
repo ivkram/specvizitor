@@ -13,6 +13,7 @@ from ..config.spectral_lines import SpectralLineData
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filenames_from_id, load_image, FieldImage, REQUESTS
 from ..plugins.plugin_core import PluginCore
+from ..utils.qt_tools import safe_disconnect
 from ..utils.widgets import AbstractWidget
 
 from .ViewerElement import ViewerElement
@@ -59,7 +60,7 @@ class DataViewer(AbstractWidget):
         self.dock_area: DockArea | None = None
         self.added_docks: list[str] = []
 
-        self.core_widgets: dict[str, ViewerElement] = {}
+        self.widgets: dict[str, ViewerElement] = {}
         self.docks: dict[str, Dock] = {}
 
         super().__init__(parent=parent)
@@ -73,16 +74,8 @@ class DataViewer(AbstractWidget):
         QtWidgets.QShortcut('Shift+W', self, partial(self.change_redshift, 1, True))
 
     @property
-    def widgets(self) -> list[ViewerElement]:
-        lazy_widgets = []
-        for w in self.core_widgets.values():
-            lazy_widgets.extend(w.lazy_widgets)
-
-        return list(self.core_widgets.values()) + lazy_widgets
-
-    @property
-    def active_core_widgets(self) -> dict[str, ViewerElement]:
-        return {title: w for title, w in self.core_widgets.items() if w.data is not None}
+    def active_widgets(self) -> dict[str, ViewerElement]:
+        return {title: w for title, w in self.widgets.items() if w.data is not None}
 
     def _create_widgets(self):
         # delete previously created widgets
@@ -92,13 +85,9 @@ class DataViewer(AbstractWidget):
             self.zen_mode_activated.disconnect()
             self.visibility_changed.disconnect()
             self.shared_resources_queried.disconnect()
-            try:
-                self.view_reset.disconnect()
-            except TypeError:
-                pass
+            safe_disconnect(self.view_reset)
 
-            for w in self.widgets:
-                w.shared_resource_requested.disconnect()
+            for w in self.widgets.values():
                 w.graphics_layout.clear()
                 w.deleteLater()
 
@@ -121,7 +110,7 @@ class DataViewer(AbstractWidget):
         for plugin in self._plugins:
             plugin.overwrite_widget_configs(widgets)
 
-        self.core_widgets = widgets
+        self.widgets = widgets
 
     def _connect_widgets(self, widgets: dict[str, ViewerElement]):
         for w in widgets.values():
@@ -133,42 +122,56 @@ class DataViewer(AbstractWidget):
             w.shared_resource_requested.connect(self._query_shared_resources)
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
-        for w in widgets.values():
-            # link view(s)
-            # TODO: throw a warning if two axes have different unit/scale
-            if w.cfg.x_axis.link_to:
-                w.container.setXLink(w.cfg.x_axis.link_to)
-            if w.cfg.y_axis.link_to:
-                w.container.setYLink(w.cfg.y_axis.link_to)
+        self._connect_sliders()
 
-            # link sliders
+    def _connect_sliders(self):
+        for w in self.widgets.values():
             for slider_name, slider in w.sliders.items():
                 if slider.link_to is not None:
                     try:
-                        source_slider = widgets[slider.link_to].sliders[slider_name]
+                        source_slider = self.widgets[slider.link_to].sliders[slider_name]
                     except KeyError:
                         logger.error(f'Failed to link sliders (source widget: {slider.link_to}, slider: {slider_name})')
                     else:
-                        source_slider.value_changed[float].connect(slider.set_value)
+                        source_slider.value_changed.connect(slider.set_value)
                         slider.value_changed[float].connect(source_slider.set_value)
 
-        images: dict[str, Image2D] = {title: w for title, w in widgets.items() if isinstance(w, Image2D)}
+    def _update_widget_connections(self):
+        self._connect_views()
+        self._connect_colorbars()
+
+    def _connect_views(self):
+        safe_disconnect(self.view_reset)
+        for w in self.active_widgets.values():
+            self.view_reset.connect(w.reset_view)
+
+        for w in self.widgets.values():
+            # TODO: throw a warning if two axes have different unit/scale
+            if w.cfg.x_axis.link_to:
+                if w.data is not None:
+                    w.container.setXLink(w.cfg.x_axis.link_to)
+                else:
+                    w.container.setXLink(None)
+            if w.cfg.y_axis.link_to:
+                if w.data is not None:
+                    w.container.setYLink(w.cfg.y_axis.link_to)
+                else:
+                    w.container.setYLink(None)
+
+    def _connect_colorbars(self):
+        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items()}
         for w in images.values():
             if w.cfg.color_bar.link_to is not None:
                 try:
-                    source_widget = widgets[w.cfg.color_bar.link_to]
+                    source_widget = images[w.cfg.color_bar.link_to]
                 except KeyError:
                     logger.error(f'Failed to (un)link color bars (source widget: {w.cfg.color_bar.link_to})')
                 else:
-                    if w.data and w.has_defined_levels:
+                    if w.data is not None and w.has_defined_levels:
                         source_widget.cbar.sigLevelsChanged[tuple].connect(partial(w.set_default_levels, update=True))
                         w.cbar.sigLevelsChanged[tuple].connect(partial(source_widget.set_default_levels, update=True))
                     else:
-                        try:
-                            source_widget.cbar.sigLevelsChanged[tuple].disconnect()
-                            w.cbar.sigLevelsChanged[tuple].disconnect()
-                        except TypeError:
-                            pass
+                        safe_disconnect(w.cbar.sigLevelsChanged[tuple])
 
     def _create_docks(self):
         # delete previously created docks
@@ -181,7 +184,7 @@ class DataViewer(AbstractWidget):
                 d.container().close()
 
         docks = {}
-        for widget in self.widgets:
+        for widget in self.widgets.values():
             docks[widget.title] = Dock(widget.title, widget=widget)
 
         self.docks = docks
@@ -198,7 +201,7 @@ class DataViewer(AbstractWidget):
     def _add_docks(self):
         self.added_docks = []
 
-        for widget in self.widgets:
+        for widget in self.widgets.values():
             if widget.cfg.visible:
                 self._add_dock(widget)
 
@@ -274,7 +277,7 @@ class DataViewer(AbstractWidget):
             self._share_resource(widget_title, img.filename, img.data, img.meta)
 
     def _share_resource(self, widget_title, *args):
-        w = self.core_widgets.get(widget_title)
+        w = self.widgets.get(widget_title)
         if w is None:
             logger.error(f'Failed to share the resource: Widget `{widget_title}` not found')
             return
@@ -293,21 +296,14 @@ class DataViewer(AbstractWidget):
         # load the object data to the widgets
         self.object_selected.emit(j, review, obj_cat, discovered_data_files)
 
-        # connecting the `view_reset` signal to activate core widgets
-        try:
-            self.view_reset.disconnect()
-        except TypeError:
-            pass
-        for w in self.active_core_widgets.values():
-            self.view_reset.connect(w.reset_view)
-
+        self._update_widget_connections()
         self._update_dock_titles()
 
         for plugin in self._plugins:
-            plugin.tweak_widgets(self.active_core_widgets, obj_cat)
+            plugin.tweak_widgets(self.active_widgets, obj_cat)
 
     def _find_active_redshift_slider(self) -> SmartSlider | None:
-        for w in self.widgets:
+        for w in self.widgets.values():
             if w.redshift_slider.isVisible():
                 return w.redshift_slider
         return None
@@ -341,29 +337,27 @@ class DataViewer(AbstractWidget):
         self.grab().save(filename)
 
     def _update_dock_titles(self):
-        for core_widget in self.core_widgets.values():
-            if core_widget.filename is not None and core_widget.meta is not None:
-                title = core_widget.filename.name
+        for w in self.widgets.values():
+            if w.filename is not None and w.meta is not None:
+                title = w.filename.name
 
                 # adding EXTNAME and EXTVER to the dock title
-                fits_meta = core_widget.meta.get('EXTNAME'), core_widget.meta.get('EXTVER')
+                fits_meta = w.meta.get('EXTNAME'), w.meta.get('EXTVER')
                 j = 0
                 while j < len(fits_meta) and fits_meta[j] is not None:
                     j += 1
                 title_extra = ', '.join(map(str, fits_meta[:j]))
 
                 if title_extra:
-                    if core_widget.cfg.dock_title_fmt == 'short':
+                    if w.cfg.dock_title_fmt == 'short':
                         title = title_extra  # str(fits_meta[j - 1])
                     else:
                         title += f' [{title_extra}]'
 
-                for w in (core_widget,) + tuple(core_widget.lazy_widgets):
-                    self.docks[w.title].setTitle(title)
+                self.docks[w.title].setTitle(title)
 
             else:
-                for w in (core_widget,) + tuple(core_widget.lazy_widgets):
-                    self.docks[w.title].setTitle(w.title)
+                self.docks[w.title].setTitle(w.title)
 
     @QtCore.Slot()
     def hide_interface(self):

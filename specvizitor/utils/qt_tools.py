@@ -1,6 +1,6 @@
 from astropy.wcs import WCS
 import numpy as np
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 
 
 def get_widgets(layout: QtWidgets.QLayout) -> list[QtWidgets.QWidget]:
@@ -26,3 +26,10 @@ def get_qtransform_matrix_from_wcs(w: WCS) -> np.ndarray:
     transformation_matrix[2, 2] = 1.0
 
     return transformation_matrix
+
+
+def safe_disconnect(signal: QtCore.Signal):
+    try:
+        signal.disconnect()
+    except TypeError:
+        pass

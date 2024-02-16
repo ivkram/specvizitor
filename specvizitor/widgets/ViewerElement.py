@@ -148,9 +148,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.smoothing_slider: SmartSlider | None = None
         self.redshift_slider: SmartSlider | None = None
 
-        # widgets inheriting the data from this widget
-        self.lazy_widgets: list[ViewerElement] = []
-
         super().__init__(parent=parent)
         self.init_view()
         self.setEnabled(False)
@@ -278,8 +275,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
             line_artist[1].setVisible(a0)
         for s in self.sliders.values():
             s.setEnabled(a0)
-        for w in self.lazy_widgets:
-            w.setEnabled(a0)
 
     @QtCore.Slot(int, InspectionData, object, list)
     def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_files: list[str]):
