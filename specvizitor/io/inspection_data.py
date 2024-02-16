@@ -66,12 +66,7 @@ class InspectionData:
         if len(args) == 1:
             index = pd.Index(args[0], name='id')
         else:
-            idx = [args[0]]
-            # replace missing indices with 0
-            if len(args) > 1:
-                for a in args[1:]:
-                    idx.append(np.ma.filled(a, 0))
-            index = pd.MultiIndex.from_arrays(idx, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
+            index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
 
         df = (pd.DataFrame(index=index)).sort_index()
         df = cls._add_default_columns(df)
