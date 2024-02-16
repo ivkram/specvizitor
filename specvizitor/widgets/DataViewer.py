@@ -159,7 +159,7 @@ class DataViewer(AbstractWidget):
                     w.container.setYLink(None)
 
     def _connect_colorbars(self):
-        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items()}
+        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items() if isinstance(w, Image2D)}
         for w in images.values():
             if w.cfg.color_bar.link_to is not None:
                 try:
@@ -173,15 +173,25 @@ class DataViewer(AbstractWidget):
                     else:
                         safe_disconnect(w.cbar.sigLevelsChanged[tuple])
 
+    def _close_dock(self, dock: Dock):
+        container = dock.container()
+        if container and not isinstance(container, DockArea):
+            self._close_dock(container)
+        else:
+            dock.close()
+            return
+
     def _create_docks(self):
         # delete previously created docks
         docks = list(self.docks.values())
-        if len(docks) == 1:
-            docks[0].close()
-        else:
-            for d in docks[:-1]:
-                # pyqtgraph bug: d.close() would leave a floating TContainer (created when docks are stacked)
-                d.container().close()
+        for d in docks:
+            self._close_dock(d)
+        # if len(docks) == 1:
+        #     docks[0].close()
+        # else:
+        #     for d in docks[:-1]:
+        #         # pyqtgraph bug: d.close() would leave a floating TContainer (created when docks are stacked)
+        #         d.container().close()
 
         docks = {}
         for widget in self.widgets.values():
