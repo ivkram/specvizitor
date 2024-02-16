@@ -122,7 +122,7 @@ class DataViewer(AbstractWidget):
             w.shared_resource_requested.connect(self._query_shared_resources)
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
-        self._connect_sliders()
+        self._connect_sliders()  # sliders always stay connected
 
     def _connect_sliders(self):
         for w in self.widgets.values():
@@ -133,10 +133,10 @@ class DataViewer(AbstractWidget):
                     except KeyError:
                         logger.error(f'Failed to link sliders (source widget: {slider.link_to}, slider: {slider_name})')
                     else:
-                        source_slider.value_changed.connect(slider.set_value)
+                        source_slider.value_changed[float].connect(slider.set_value)
                         slider.value_changed[float].connect(source_slider.set_value)
 
-    def _update_widget_connections(self):
+    def _reconnect_widgets(self):
         self._connect_views()
         self._connect_colorbars()
 
@@ -183,15 +183,8 @@ class DataViewer(AbstractWidget):
 
     def _create_docks(self):
         # delete previously created docks
-        docks = list(self.docks.values())
-        for d in docks:
+        for d in self.docks.values():
             self._close_dock(d)
-        # if len(docks) == 1:
-        #     docks[0].close()
-        # else:
-        #     for d in docks[:-1]:
-        #         # pyqtgraph bug: d.close() would leave a floating TContainer (created when docks are stacked)
-        #         d.container().close()
 
         docks = {}
         for widget in self.widgets.values():
@@ -306,7 +299,7 @@ class DataViewer(AbstractWidget):
         # load the object data to the widgets
         self.object_selected.emit(j, review, obj_cat, discovered_data_files)
 
-        self._update_widget_connections()
+        self._reconnect_widgets()
         self._update_dock_titles()
 
         for plugin in self._plugins:
@@ -380,4 +373,3 @@ class DataViewer(AbstractWidget):
         for dock in self.docks.values():
             dock.showTitleBar()
         self.visibility_changed.emit()
-
