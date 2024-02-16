@@ -139,23 +139,25 @@ class DataViewer(AbstractWidget):
         self._connect_views()
         self._connect_colorbars()
 
+    def _disconnect_widgets(self):
+        self._disconnect_views()
+        self._disconnect_colorbars()
+
     def _connect_views(self):
-        safe_disconnect(self.view_reset)
         for w in self.active_widgets.values():
             self.view_reset.connect(w.reset_view)
 
-        for w in self.widgets.values():
             # TODO: throw a warning if two axes have different unit/scale
             if w.cfg.x_axis.link_to:
-                if w.data is not None:
-                    w.container.setXLink(w.cfg.x_axis.link_to)
-                else:
-                    w.container.setXLink(None)
+                w.container.setXLink(w.cfg.x_axis.link_to)
             if w.cfg.y_axis.link_to:
-                if w.data is not None:
-                    w.container.setYLink(w.cfg.y_axis.link_to)
-                else:
-                    w.container.setYLink(None)
+                w.container.setYLink(w.cfg.y_axis.link_to)
+
+    def _disconnect_views(self):
+        safe_disconnect(self.view_reset)
+        for w in self.widgets.values():
+            w.container.setXLink(None)
+            w.container.setYLink(None)
 
     def _connect_colorbars(self):
         images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items() if isinstance(w, Image2D)}
@@ -169,8 +171,12 @@ class DataViewer(AbstractWidget):
                     if w.data is not None and w.has_defined_levels:
                         source_widget.cbar.sigLevelsChanged[tuple].connect(partial(w.set_default_levels, update=True))
                         w.cbar.sigLevelsChanged[tuple].connect(partial(source_widget.set_default_levels, update=True))
-                    else:
-                        safe_disconnect(w.cbar.sigLevelsChanged[tuple])
+
+    def _disconnect_colorbars(self):
+        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items() if
+                                      isinstance(w, Image2D)}
+        for w in images.values():
+            safe_disconnect(w.cbar.sigLevelsChanged[tuple])
 
     def _close_dock(self, dock: Dock):
         container = dock.container()
@@ -294,6 +300,8 @@ class DataViewer(AbstractWidget):
     def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_cfg: config.Data):
         # perform search for files containing the object ID in their filename
         discovered_data_files = get_filenames_from_id(data_cfg.dir, review.get_id(j))
+
+        self._disconnect_widgets()
 
         # load the object data to the widgets
         self.object_selected.emit(j, review, obj_cat, discovered_data_files)
