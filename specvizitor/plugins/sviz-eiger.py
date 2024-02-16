@@ -30,7 +30,7 @@ class Plugin(PluginCore):
 
         coords = self.get_emline_coords(obj_cat)
         for i, c in enumerate(coords):
-            self.mark_emline(c[0], c[1], spec_2d_array, zoom=True if len(coords) == 1 else False,
+            self.mark_emline(c[0], c[1], spec_2d_array, zoom=True if i == 0 else False,
                              color='r' if i == 0 else 'white')
 
     @staticmethod
@@ -41,7 +41,7 @@ class Plugin(PluginCore):
         y1, y2 = y0 - dy, y0 + dy
 
         for spec_2d in spec2d_array:
-            pen = pg.mkPen(color, width=4, style=QtCore.Qt.DashLine)
+            pen = pg.mkPen(color, width=2, style=QtCore.Qt.DashLine)
 
             spec_2d.register_item(pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen))
             spec_2d.register_item(pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen))

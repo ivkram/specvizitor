@@ -105,15 +105,14 @@ class DataViewer(AbstractWidget):
                 widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
                                        spectral_lines=self._spectral_lines, parent=self)
 
-        self._connect_widgets(widgets)
-
         for plugin in self._plugins:
             plugin.overwrite_widget_configs(widgets)
 
         self.widgets = widgets
+        self._connect_widgets()
 
-    def _connect_widgets(self, widgets: dict[str, ViewerElement]):
-        for w in widgets.values():
+    def _connect_widgets(self):
+        for w in self.widgets.values():
             self.object_selected.connect(w.load_object)
             self.zen_mode_activated.connect(w.hide_interface)
             self.visibility_changed.connect(w.update_visibility)
