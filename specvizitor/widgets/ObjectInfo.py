@@ -121,7 +121,9 @@ class ObjectInfo(AbstractWidget):
         for row in self._table_items:
             cname = row[0].text()
             try:
-                row[1].setText(str(obj_cat[cname]))
+                value = obj_cat[cname]
+                value = f'{value:.8f}' if isinstance(value, float) else str(value)
+                row[1].setText(value)
             except KeyError:
                 logger.warning(column_not_found_message(cname, obj_cat.meta.get('aliases')))
                 row[1].setText('')
