@@ -56,6 +56,7 @@ class Image2D(ViewerElement):
         # create a color bar
         self.cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
         self.cbar.setVisible(self.cfg.color_bar.visible)
+        self.cbar.axisItem.setVisible(False)
 
     def populate(self):
         super().populate()
