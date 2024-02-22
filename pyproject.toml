@@ -23,6 +23,13 @@ qtpy = "2.4.1"
 rasterio = "1.3.9"
 scipy = "1.12.0"
 
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "*"
+sphinx-book-theme = "*"
+
 [tool.poetry.scripts]
 specvizitor = 'specvizitor.main:main'
 
