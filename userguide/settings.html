@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Customization &#8212; specvizitor 0.4.0 documentation</title>
+    <title>Application settings &#8212; specvizitor 0.4.0 documentation</title>
   
   
   
@@ -40,11 +40,11 @@
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/customization';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/settings';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Keyboard shortcuts" href="keyboard_shortcuts.html" />
-    <link rel="prev" title="User Guide" href="index.html" />
+    <link rel="next" title="Widget configurations" href="widgets.html" />
+    <link rel="prev" title="Inspection File" href="inspection.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -148,8 +148,10 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting started</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Customization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="keyboard_shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inspection.html">Inspection File</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Application settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="widgets.html">Widget configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shortcuts.html">Keyboard shortcuts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 </ul>
 </li>
@@ -231,7 +233,7 @@
       
       
       
-      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/customization.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/settings.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -261,7 +263,7 @@
       
       
       
-      <li><a href="../_sources/userguide/customization.rst" target="_blank"
+      <li><a href="../_sources/userguide/settings.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -345,7 +347,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Customization</h1>
+    <h1>Application settings</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -355,8 +357,8 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-spectral-lines">Adding spectral lines</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-a-widget">Hiding a widget</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-settings">Basic settings</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-settings">Advanced settings</a></li>
 </ul>
             </nav>
         </div>
@@ -368,22 +370,59 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="customization">
-<h1>Customization<a class="headerlink" href="#customization" title="Permalink to this heading">#</a></h1>
-<p>The basic settings such as the path to the catalogue or the data directory are available in <span class="menuselection">Tools ‣ Settings</span>. For advanced settings, open the directory indicated in the bottom of the <span class="menuselection">Settings</span> widget (“Advanced settings”). This directory should contain the following YAML files: <code class="docutils literal notranslate"><span class="pre">config.yml</span></code> (the general GUI settings), <code class="docutils literal notranslate"><span class="pre">spectral_lines.yml</span></code> (the list of spectral lines displayed along with a 1D spectrum) and <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> (the data viewer configuration). A few examples of how to tweak these settings for your needs are given below.</p>
-<section id="adding-spectral-lines">
-<h2>Adding spectral lines<a class="headerlink" href="#adding-spectral-lines" title="Permalink to this heading">#</a></h2>
-<p>Open <code class="docutils literal notranslate"><span class="pre">spectral_lines.yml</span></code> and add an entry with a name of a spectral line and its rest wavelength to <code class="docutils literal notranslate"><span class="pre">wavelengths</span></code>, e.g.:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">wavelengths</span><span class="p">:</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">PaG</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10938.086</span>
-</pre></div>
-</div>
-<p>Save the file and restart specvizitor. The new line should appear in the spectrum widget.</p>
+  <section id="application-settings">
+<h1>Application settings<a class="headerlink" href="#application-settings" title="Permalink to this heading">#</a></h1>
+<section id="basic-settings">
+<h2>Basic settings<a class="headerlink" href="#basic-settings" title="Permalink to this heading">#</a></h2>
+<p>Some basic settings such as the data path are available in <span class="menuselection">Tools ‣ Settings</span>. You can also access <span class="guilabel">Settings</span> by clicking on the cogwheel in <span class="guilabel">Toolbar</span>.</p>
+<p><span class="guilabel">Settings</span> comprises the following sections:</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Section</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="guilabel">Appearance</span></p></td>
+<td><p>Change the application theme, enable/disable antialiasing <a class="footnote-reference brackets" href="#f1" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="guilabel">Catalog</span></p></td>
+<td><p>Change the catalog</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="guilabel">Data Source</span></p></td>
+<td><p>Change the path to the data folder</p></td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="hiding-a-widget">
-<h2>Hiding a widget<a class="headerlink" href="#hiding-a-widget" title="Permalink to this heading">#</a></h2>
-<p>Open <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and navigate to the configuration of the widget that you want to hide. Set the <code class="docutils literal notranslate"><span class="pre">visible</span></code> parameter to <code class="docutils literal notranslate"><span class="pre">false</span></code>, save the file and restart specvizitor. The widget should be removed from the view.</p>
+<section id="advanced-settings">
+<h2>Advanced settings<a class="headerlink" href="#advanced-settings" title="Permalink to this heading">#</a></h2>
+<p>To access advanced settings, open the directory indicated in the bottom of <span class="guilabel">Settings</span> (under the “Advanced settings”). This directory should comprise the following <a class="reference external" href="https://yaml.org">YAML</a> files:</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">config.yml</span></code></p></td>
+<td><p>General GUI settings</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code></p></td>
+<td><p>Configurations of data widgets</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">spectral_lines.yml</span></code></p></td>
+<td><p>The list of spectral lines displayed in the GUI</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Footnotes</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="f1" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Enabling antialiasing might decrease the GUI responsiveness.</p>
+</aside>
+</aside>
 </section>
 </section>
 
@@ -399,20 +438,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="inspection.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">User Guide</p>
+        <p class="prev-next-title">Inspection File</p>
       </div>
     </a>
     <a class="right-next"
-       href="keyboard_shortcuts.html"
+       href="widgets.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Keyboard shortcuts</p>
+        <p class="prev-next-title">Widget configurations</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -432,8 +471,8 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-spectral-lines">Adding spectral lines</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-a-widget">Hiding a widget</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-settings">Basic settings</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-settings">Advanced settings</a></li>
 </ul>
   </nav></div>
 

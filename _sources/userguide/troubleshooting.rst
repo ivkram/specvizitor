@@ -23,7 +23,7 @@ What to do if none of the above helped
 
 1. Check the console output - error messages can help you to pinpoint the exact source of the problem.
 
-2. `Update specvizitor to the latest version <../gettingstarted.html#updating-specvizitor>`__ - a bug might have been fixed in the latest version.
+2. `Update specvizitor <../gettingstarted.html#updating-specvizitor>`__ - some bugs might have been fixed in the latest version.
 
 3. Reset specvizitor to its initial state::
 
@@ -38,3 +38,4 @@ What to do if none of the above helped
         Running specvizitor with the ``--purge`` option will NOT affect any inspection files (``*.csv``).
 
 4. `Open issue on GitHub <https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/troubleshooting.html&body=Your%20issue%20content%20here.>`_.
+

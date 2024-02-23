@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Troubleshooting &#8212; specvizitor 0.4.0 documentation</title>
+    <title>Inspection File &#8212; specvizitor 0.4.0 documentation</title>
   
   
   
@@ -40,11 +40,11 @@
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/troubleshooting';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/inspection';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Development" href="../development/index.html" />
-    <link rel="prev" title="Keyboard shortcuts" href="shortcuts.html" />
+    <link rel="next" title="Application settings" href="settings.html" />
+    <link rel="prev" title="User Guide" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -148,11 +148,11 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting started</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="inspection.html">Inspection File</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Inspection File</a></li>
 <li class="toctree-l2"><a class="reference internal" href="settings.html">Application settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="widgets.html">Widget configurations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shortcuts.html">Keyboard shortcuts</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../development/index.html">Development</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -233,7 +233,7 @@
       
       
       
-      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/troubleshooting.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/inspection.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -263,7 +263,7 @@
       
       
       
-      <li><a href="../_sources/userguide/troubleshooting.rst" target="_blank"
+      <li><a href="../_sources/userguide/inspection.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -347,7 +347,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Troubleshooting</h1>
+    <h1>Inspection File</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -357,9 +357,9 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#specvizitor-won-t-launch">Specvizitor won’t launch</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#widget-s-disappeared-from-the-gui">Widget(s) disappeared from the GUI</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-to-do-if-none-of-the-above-helped">What to do if none of the above helped</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-a-new-inspection-file">Creating a new inspection file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saving-inspection-results">Saving inspection results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modifying-inspection-flags">Modifying inspection flags</a></li>
 </ul>
             </nav>
         </div>
@@ -371,44 +371,16 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="troubleshooting">
-<h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading">#</a></h1>
-<section id="specvizitor-won-t-launch">
-<h2>Specvizitor won’t launch<a class="headerlink" href="#specvizitor-won-t-launch" title="Permalink to this heading">#</a></h2>
-<p>If you run specvizitor for the first time, you might encounter the following error:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
-<span class="ne">TypeError</span><span class="p">:</span> <span class="n">unsupported</span> <span class="n">operand</span> <span class="nb">type</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="o">|</span><span class="p">:</span> <span class="s1">&#39;type&#39;</span> <span class="ow">and</span> <span class="s1">&#39;NoneType&#39;</span>
-</pre></div>
-</div>
-<p>This usually means that you are using an older version of Python than the version required to run specvizitor (3.10 and higher). You can install Python 3.10+ for example using <a class="reference external" href="https://conda.io/projects/conda/en/latest/user-guide/getting-started.html">conda</a>.</p>
+  <section id="inspection-file">
+<h1>Inspection File<a class="headerlink" href="#inspection-file" title="Permalink to this heading">#</a></h1>
+<section id="creating-a-new-inspection-file">
+<h2>Creating a new inspection file<a class="headerlink" href="#creating-a-new-inspection-file" title="Permalink to this heading">#</a></h2>
 </section>
-<section id="widget-s-disappeared-from-the-gui">
-<h2>Widget(s) disappeared from the GUI<a class="headerlink" href="#widget-s-disappeared-from-the-gui" title="Permalink to this heading">#</a></h2>
-<p>If a sidebar widget (e.g., <span class="guilabel">Object Information</span>) has disappeared from the GUI and you want to bring it back, right click on the empty area in <span class="guilabel">Toolbar</span> or <span class="guilabel">Menu</span> and click on that widget from the dropdown menu:</p>
-<img alt="../_images/restoring_sidebar_widgets.png" src="../_images/restoring_sidebar_widgets.png" />
+<section id="saving-inspection-results">
+<h2>Saving inspection results<a class="headerlink" href="#saving-inspection-results" title="Permalink to this heading">#</a></h2>
 </section>
-<section id="what-to-do-if-none-of-the-above-helped">
-<h2>What to do if none of the above helped<a class="headerlink" href="#what-to-do-if-none-of-the-above-helped" title="Permalink to this heading">#</a></h2>
-<ol class="arabic">
-<li><p>Check the console output - error messages can help you to pinpoint the exact source of the problem.</p></li>
-<li><p><a class="reference external" href="../gettingstarted.html#updating-specvizitor">Update specvizitor</a> - some bugs might have been fixed in the latest version.</p></li>
-<li><p>Reset specvizitor to its initial state:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">specvizitor</span> <span class="o">--</span><span class="n">purge</span>
-</pre></div>
-</div>
-</li>
-</ol>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Running specvizitor with the <code class="docutils literal notranslate"><span class="pre">--purge</span></code> option will erase user-defined paths, custom widget configurations and other application settings.</p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Running specvizitor with the <code class="docutils literal notranslate"><span class="pre">--purge</span></code> option will NOT affect any inspection files (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>).</p>
-</div>
-<ol class="arabic simple" start="4">
-<li><p><a class="reference external" href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/troubleshooting.html&amp;body=Your%20issue%20content%20here.">Open issue on GitHub</a>.</p></li>
-</ol>
+<section id="modifying-inspection-flags">
+<h2>Modifying inspection flags<a class="headerlink" href="#modifying-inspection-flags" title="Permalink to this heading">#</a></h2>
 </section>
 </section>
 
@@ -424,20 +396,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="shortcuts.html"
+       href="index.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Keyboard shortcuts</p>
+        <p class="prev-next-title">User Guide</p>
       </div>
     </a>
     <a class="right-next"
-       href="../development/index.html"
+       href="settings.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Development</p>
+        <p class="prev-next-title">Application settings</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -457,9 +429,9 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#specvizitor-won-t-launch">Specvizitor won’t launch</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#widget-s-disappeared-from-the-gui">Widget(s) disappeared from the GUI</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-to-do-if-none-of-the-above-helped">What to do if none of the above helped</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-a-new-inspection-file">Creating a new inspection file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saving-inspection-results">Saving inspection results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modifying-inspection-flags">Modifying inspection flags</a></li>
 </ul>
   </nav></div>
 
