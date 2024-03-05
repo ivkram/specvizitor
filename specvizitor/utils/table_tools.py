@@ -17,15 +17,21 @@ def loc_full(t: Table | Row, obj_id: str | int | tuple, indices: tuple | None = 
     """
 
     if isinstance(obj_id, str) or isinstance(obj_id, int):
-        return t.loc[obj_id]
+        return t.loc[obj_id]  # standard .loc method
     elif isinstance(obj_id, tuple):
-        if not obj_id or (isinstance(t, Row) and t[indices[0]] == obj_id[0]):
-            return t
+        if not obj_id:
+            return t  # exit recursion
 
         if indices is None:
             indices = get_table_indices(t)
             if len(indices) != len(obj_id):
                 raise KeyError
+
+        if isinstance(t, Row):
+            if t[indices[0]] == obj_id[0]:
+                return t
+            else:
+                raise IndexError
 
         return loc_full(t.loc[indices[0], obj_id[0]], obj_id[1:], indices[1:])
     else:

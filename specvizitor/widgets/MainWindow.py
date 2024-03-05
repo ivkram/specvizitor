@@ -12,14 +12,15 @@ from ..config import config, Config, Cache, DataWidgets, SpectralLineData
 from ..config.appearance import set_up_appearance
 from ..io.catalogue import read_cat, create_cat, get_obj_cat
 from ..io.inspection_data import InspectionData
-from ..utils.logs import LogMessageBox
 from ..utils.params import save_yaml
+from ..utils.table_tools import loc_full
 
 from .DataViewer import DataViewer
 from .NewFile import NewFile
 from .ObjectInfo import ObjectInfo
 from .QuickSearch import QuickSearch
 from .InspectionResults import InspectionResults
+from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
 
@@ -41,6 +42,7 @@ class MainWindow(QtWidgets.QMainWindow):
     viewer_configuration_updated = QtCore.Signal(DataWidgets)
 
     starred_state_updated = QtCore.Signal(bool, bool)
+    subset_loaded = QtCore.Signal(str, object)
     screenshot_path_selected = QtCore.Signal(str)
 
     zen_mode_activated = QtCore.Signal()
@@ -56,6 +58,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache = cache
 
         self._viewer_cfg = viewer_cfg
+        self._subset_cat = None
         self._spectral_lines = spectral_lines
 
         self._plugins = plugins
@@ -79,10 +82,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._quick_search: QuickSearch | None = None
         self._object_info: ObjectInfo | None = None
         self._inspection_res: InspectionResults | None = None
+        self._subsets: Subsets | None = None
 
         self._quick_search_dock: QtWidgets.QDockWidget | None = None
         self._object_info_dock: QtWidgets.QDockWidget | None = None
         self._inspection_res_dock: QtWidgets.QDockWidget | None = None
+        self._subsets_dock: QtWidgets.QDockWidget | None = None
 
         self.init_ui()
         self.populate()
@@ -102,6 +107,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # write "is not None" explicitly in case visible_columns == []
         if self.rd.cat and self._cache.visible_columns is not None:
             self.visible_columns_updated.emit(self._cache.visible_columns)
+
+        # load the subset to the memory
+        if self._config.catalogue.subset_filename:
+            self.load_subset(reset_index=False)
 
         # read cache and try to load the last active project
         if self._cache.last_inspection_file:
@@ -135,6 +144,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._inspection_res_dock = QtWidgets.QDockWidget('Inspection Results', self)
         self._inspection_res_dock.setObjectName('Inspection Results')
         self._inspection_res_dock.setWidget(self._inspection_res)
+
+        # create a widget for inspecting a subset of objects
+        self._subsets = Subsets(parent=self)
+        self._subsets_dock = QtWidgets.QDockWidget('Subsets', self)
+        self._subsets_dock.setObjectName('Subsets')
+        self._subsets_dock.setWidget(self._subsets)
 
         self._init_menu()
 
@@ -212,6 +227,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._tools = self._menu.addMenu("&Tools")
 
+        self._inspect_subset = QtWidgets.QAction("Inspect Subset...")
+        self._inspect_subset.triggered.connect(self._inspect_subset_action)
+        self._tools.addAction(self._inspect_subset)
+
         self._screenshot = QtWidgets.QAction("Take Screenshot...")
         self._screenshot.triggered.connect(self._screenshot_action)
         self._tools.addAction(self._screenshot)
@@ -231,13 +250,14 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the main window to the child widgets
         self.data_sources_updated.connect(self._data_viewer.load_field_images)
 
-        for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._inspection_res):
+        for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._inspection_res,
+                  self._subsets):
             self.project_loaded.connect(w.load_project)
 
         for w in (self._data_viewer, self._object_info, self._inspection_res):
             self.data_requested.connect(w.collect)
 
-        for w in (self._data_viewer, self._commands_bar, self._object_info, self._inspection_res):
+        for w in (self._data_viewer, self._commands_bar, self._object_info, self._inspection_res, self._subsets):
             self.object_selected.connect(w.load_object)
 
         self.theme_changed.connect(self._data_viewer.init_ui)
@@ -248,6 +268,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.viewer_configuration_updated.connect(self._data_viewer.update_viewer_configuration)
 
         self.starred_state_updated.connect(self._commands_bar.update_star_button_icon)
+        self.subset_loaded.connect(self._subsets.load_subset)
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
         self.save_action_invoked.connect(self._data_viewer.request_redshift)
@@ -259,6 +280,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the child widgets to the main window
         self._quick_search.id_selected.connect(self.load_by_id)
         self._quick_search.index_selected.connect(self.load_by_index)
+        self._subsets.inspect_subset_button_clicked.connect(self._inspect_subset_action)
+        self._subsets.stop_inspecting_button_clicked.connect(self._stop_inspecting_subset_action)
         self._commands_bar.navigation_button_clicked.connect(self.switch_object)
         self._commands_bar.star_button_clicked.connect(self.update_starred_state)
         self._commands_bar.screenshot_button_clicked.connect(self._screenshot_action)
@@ -280,6 +303,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._quick_search_dock)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._object_info_dock)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._inspection_res_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._subsets_dock)
 
     def load_catalogue(self):
         cat = read_cat(self._config.catalogue.filename, translate=self._config.catalogue.translate)
@@ -376,7 +400,15 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         j_upd = self._update_index(self.rd.j, command)
-        if find_starred:
+        if self._subset_cat:
+            while True:
+                try:
+                    loc_full(self._subset_cat, self.rd.review.get_id(j_upd, full=True))
+                except (IndexError, KeyError):
+                    j_upd = self._update_index(j_upd, command)
+                else:
+                    break
+        elif find_starred:
             while not self.rd.review.get_value(j_upd, 'starred'):
                 j_upd = self._update_index(j_upd, command)
 
@@ -483,6 +515,29 @@ class MainWindow(QtWidgets.QMainWindow):
         self.showNormal()
         if self.was_maximized:
             self.showMaximized()
+
+    def _inspect_subset_action(self):
+        path = qtpy.compat.getopenfilename(self, caption='Load Subset')[0]
+        if path:
+            self._config.catalogue.subset_filename = path
+            self._config.save()
+            self.load_subset()
+
+    def load_subset(self, reset_index=True):
+        subset_path = self._config.catalogue.subset_filename
+        subset = read_cat(subset_path, translate=self._config.catalogue.translate)
+        if subset:
+            self._subset_cat = subset
+            self.subset_loaded.emit(subset_path, subset)
+            if reset_index:
+                self.load_by_id(self._subset_cat['id'][0])
+        else:
+            self._config.catalogue.subset_filename = None
+            self._config.save()
+
+    def _stop_inspecting_subset_action(self):
+        self._subset_cat = None
+        self.load_object(0)
 
     def _screenshot_action(self):
         default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.review.get_id(self.rd.j)}.png'
