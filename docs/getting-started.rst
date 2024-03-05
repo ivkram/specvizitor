@@ -12,7 +12,7 @@ Install the latest version of specvizitor using :pypi:`pip`::
 
       pip install specvizitor
 
-If you wish to install specvizitor from source, refer to the :doc:`development/installing_from_source` section.
+If you wish to install specvizitor from source, refer to the :doc:`development/installing-from-source` section.
 
 Basic usage
 +++++++++++

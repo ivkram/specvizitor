@@ -4,8 +4,8 @@ User Guide
 .. toctree::
     :maxdepth: 2
 
-    inspection
-    settings
-    widgets
-    shortcuts
+    inspection-file
+    app-settings
+    widget-configs
+    keyboard-shortcuts
     troubleshooting
