@@ -348,7 +348,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if path.exists():
             self.update_output_path(path)
             self.rd.read()
-            self.update_catalogue(self.rd.cat)  # in case the catalogue hasn't been initialized before
+            if self.rd.cat is None:
+                self.update_catalogue(None)  # in case the catalogue hasn't been initialized before
             self.load_project(cached_index)
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
