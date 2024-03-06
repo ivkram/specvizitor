@@ -537,7 +537,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _stop_inspecting_subset_action(self):
         self._subset_cat = None
-        self.load_object(0)
 
     def _screenshot_action(self):
         default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.review.get_id(self.rd.j)}.png'
