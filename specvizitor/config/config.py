@@ -7,7 +7,6 @@ from ..utils.params import Params
 @dataclass
 class Catalogue:
     filename: str | None = None
-    subset_filename: str | None = None
     use_secondary_ids: bool = True
     translate: dict[str, list[str]] | None = None
 

@@ -113,7 +113,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.visible_columns_updated.emit(self._cache.visible_columns)
 
         # load the subset to the memory
-        if self._config.catalogue.subset_filename:
+        if self._cache.last_subset_file:
             self.load_subset(reset_index=False)
 
         # read cache and try to load the last active project
@@ -541,16 +541,20 @@ class MainWindow(QtWidgets.QMainWindow):
             if reset_index:
                 self.load_by_id(self._subset_cat['id'][0])
         else:
-            self._config.catalogue.subset_filename = None
-            self._config.save()
+            self._cache.last_subset_file = None
+            self._cache.save()
 
     def _pause_inspecting_subset_action(self):
         self._subset_inspection_paused = not self._subset_inspection_paused
         self.subset_inspection_paused.emit(self._subset_inspection_paused)
 
     def _stop_inspecting_subset_action(self):
-        self._subset_inspection_paused = False
         self._subset_cat = None
+        self._subset_inspection_paused = False
+
+        self._cache.last_subset_file = None
+        self._cache.save()
+
         self.subset_inspection_stopped.emit()
 
     def _screenshot_action(self):
