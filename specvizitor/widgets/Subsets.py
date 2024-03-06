@@ -14,34 +14,38 @@ logger = logging.getLogger(__name__)
 
 
 class Subsets(AbstractWidget):
-    inspect_subset_button_clicked = QtCore.Signal()
+    inspect_button_clicked = QtCore.Signal()
+    pause_inspecting_button_clicked = QtCore.Signal()
     stop_inspecting_button_clicked = QtCore.Signal()
 
     def __init__(self, parent=None):
         self._inspect_subset: QtWidgets.QPushButton | None = None
+        self._pause_inspecting: QtWidgets.QPushButton | None = None
         self._stop_inspecting: QtWidgets.QPushButton | None = None
         self._subset_info: QtWidgets.QLabel | None = None
 
-        self._subset_cat = None
-        self._subset_name = None
+        self._subset_cat: Table | None = None
+        self._subset_name: str | None = None
 
         super().__init__(parent=parent)
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
     def init_ui(self):
-        self._inspect_subset = QtWidgets.QPushButton(self)
-        self._inspect_subset.setText('Inspect Subset...')
-
-        self._stop_inspecting = QtWidgets.QPushButton(self)
-        self._stop_inspecting.setText('Stop')
+        self._inspect_subset = QtWidgets.QPushButton('Inspect...', parent=self)
+        self._pause_inspecting = QtWidgets.QPushButton('Pause', parent=self)
+        self._pause_inspecting.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._pause_inspecting.setEnabled(False)
+        self._stop_inspecting = QtWidgets.QPushButton('Stop', parent=self)
+        self._stop_inspecting.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         self._stop_inspecting.setEnabled(False)
 
         self._subset_info = QtWidgets.QLabel(self)
         self._subset_info.setVisible(False)
 
-        self._inspect_subset.clicked.connect(self.inspect_subset_button_clicked.emit)
-        self._stop_inspecting.clicked.connect(self.stop_inspecting_subset)
+        self._inspect_subset.clicked.connect(self.inspect_button_clicked.emit)
+        self._pause_inspecting.clicked.connect(self.pause_inspecting_button_clicked.emit)
+        self._stop_inspecting.clicked.connect(self.stop_inspecting_button_clicked.emit)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -49,6 +53,7 @@ class Subsets(AbstractWidget):
     def populate(self):
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.addWidget(self._inspect_subset)
+        sub_layout.addWidget(self._pause_inspecting)
         sub_layout.addWidget(self._stop_inspecting)
         self.layout().addLayout(sub_layout)
 
@@ -62,6 +67,8 @@ class Subsets(AbstractWidget):
     def load_subset(self, subset_path: str, subset: Table):
         self._subset_cat = subset
         self._subset_name = pathlib.Path(subset_path).name
+
+        self._pause_inspecting.setEnabled(True)
         self._stop_inspecting.setEnabled(True)
 
         self.set_subset_info()
@@ -82,11 +89,19 @@ class Subsets(AbstractWidget):
             except ValueError:
                 self.set_subset_info()
 
+    @QtCore.Slot(bool)
+    def pause_inspecting_subset(self, is_paused: bool):
+        if is_paused:
+            self._pause_inspecting.setText('Resume')
+        else:
+            self._pause_inspecting.setText('Pause')
+
     @QtCore.Slot()
     def stop_inspecting_subset(self):
-        self._stop_inspecting.setEnabled(False)
-        self._subset_info.setVisible(False)
         self._subset_cat = None
         self._subset_name = None
+        self._pause_inspecting.setText('Pause')
 
-        self.stop_inspecting_button_clicked.emit()
+        self._pause_inspecting.setEnabled(False)
+        self._stop_inspecting.setEnabled(False)
+        self._subset_info.setVisible(False)

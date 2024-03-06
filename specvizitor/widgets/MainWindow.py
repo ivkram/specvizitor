@@ -42,8 +42,11 @@ class MainWindow(QtWidgets.QMainWindow):
     viewer_configuration_updated = QtCore.Signal(DataWidgets)
 
     starred_state_updated = QtCore.Signal(bool, bool)
-    subset_loaded = QtCore.Signal(str, object)
     screenshot_path_selected = QtCore.Signal(str)
+
+    subset_loaded = QtCore.Signal(str, object)
+    subset_inspection_paused = QtCore.Signal(bool)
+    subset_inspection_stopped = QtCore.Signal()
 
     zen_mode_activated = QtCore.Signal()
     zen_mode_deactivated = QtCore.Signal()
@@ -58,7 +61,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache = cache
 
         self._viewer_cfg = viewer_cfg
-        self._subset_cat = None
+        self._subset_cat: Table | None = None
+        self._subset_inspection_paused: bool = False
         self._spectral_lines = spectral_lines
 
         self._plugins = plugins
@@ -268,8 +272,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.viewer_configuration_updated.connect(self._data_viewer.update_viewer_configuration)
 
         self.starred_state_updated.connect(self._commands_bar.update_star_button_icon)
-        self.subset_loaded.connect(self._subsets.load_subset)
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
+
+        self.subset_loaded.connect(self._subsets.load_subset)
+        self.subset_inspection_paused.connect(self._subsets.pause_inspecting_subset)
+        self.subset_inspection_stopped.connect(self._subsets.stop_inspecting_subset)
 
         self.save_action_invoked.connect(self._data_viewer.request_redshift)
         self.delete_action_invoked.connect(self._inspection_res.clear_redshift_value)
@@ -280,7 +287,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the child widgets to the main window
         self._quick_search.id_selected.connect(self.load_by_id)
         self._quick_search.index_selected.connect(self.load_by_index)
-        self._subsets.inspect_subset_button_clicked.connect(self._inspect_subset_action)
+        self._subsets.inspect_button_clicked.connect(self._inspect_subset_action)
+        self._subsets.pause_inspecting_button_clicked.connect(self._pause_inspecting_subset_action)
         self._subsets.stop_inspecting_button_clicked.connect(self._stop_inspecting_subset_action)
         self._commands_bar.navigation_button_clicked.connect(self.switch_object)
         self._commands_bar.star_button_clicked.connect(self.update_starred_state)
@@ -391,17 +399,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self._update_window_title()
 
     @QtCore.Slot(str, bool)
-    def switch_object(self, command: str, find_starred: bool):
+    def switch_object(self, command: str, switch_to_starred: bool):
         if command not in ('next', 'previous'):
             logger.error(f'Unknown command: {command}')
             return
 
-        if find_starred and not self.rd.review.has_starred:
+        if switch_to_starred and not self.rd.review.has_starred:
             logger.error('No starred objects found')
             return
 
         j_upd = self._update_index(self.rd.j, command)
-        if self._subset_cat:
+        if self._subset_cat and not self._subset_inspection_paused:
             while True:
                 try:
                     loc_full(self._subset_cat, self.rd.review.get_id(j_upd, full=True))
@@ -409,7 +417,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     j_upd = self._update_index(j_upd, command)
                 else:
                     break
-        elif find_starred:
+        elif switch_to_starred:
             while not self.rd.review.get_value(j_upd, 'starred'):
                 j_upd = self._update_index(j_upd, command)
 
@@ -536,8 +544,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self._config.catalogue.subset_filename = None
             self._config.save()
 
+    def _pause_inspecting_subset_action(self):
+        self._subset_inspection_paused = not self._subset_inspection_paused
+        self.subset_inspection_paused.emit(self._subset_inspection_paused)
+
     def _stop_inspecting_subset_action(self):
+        self._subset_inspection_paused = False
         self._subset_cat = None
+        self.subset_inspection_stopped.emit()
 
     def _screenshot_action(self):
         default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.review.get_id(self.rd.j)}.png'
