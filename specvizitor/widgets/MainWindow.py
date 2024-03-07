@@ -528,12 +528,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def _inspect_subset_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Load Subset')[0]
         if path:
-            self._config.catalogue.subset_filename = path
-            self._config.save()
+            self._cache.last_subset_file = path
+            self._cache.save()
             self.load_subset()
 
     def load_subset(self, reset_index=True):
-        subset_path = self._config.catalogue.subset_filename
+        subset_path = self._cache.last_subset_file
         subset = read_cat(subset_path, translate=self._config.catalogue.translate)
         if subset:
             self._subset_cat = subset
