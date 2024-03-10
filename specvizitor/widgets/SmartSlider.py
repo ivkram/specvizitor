@@ -167,7 +167,10 @@ class SmartSlider(AbstractWidget):
     def change_redshift(self, delta_z: float):
         self._slider.index = self._slider.index_from_value(self._slider.value + delta_z)
 
-    def update_default_value(self, obj_cat: Row | None):
+    def update_default_value(self, default_value: float):
+        self._slider.default_value = default_value
+
+    def update_default_value_from_catalog(self, obj_cat: Row | None):
         if obj_cat is None or self.catalog_name is None:
             self._slider.default_value = self._default_value_fallback
             return

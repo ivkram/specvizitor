@@ -97,7 +97,7 @@ class InspectionResults(AbstractWidget):
         if redshift != REDSHIFT_FILL_VALUE:
             self._redshift_widget.setText(f"Redshift: {redshift:.4f}")
         else:
-            self._redshift_widget.setText(f"Redshift: ???")
+            self._redshift_widget.setText(f"Redshift: --")
         self._saved_redshift = redshift
 
     @QtCore.Slot()

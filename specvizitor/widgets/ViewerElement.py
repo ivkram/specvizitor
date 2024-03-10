@@ -13,7 +13,7 @@ import pathlib
 
 from ..config import config, data_widgets
 from ..config import SpectralLineData
-from ..io.inspection_data import InspectionData
+from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
 from ..io.viewer_data import load_widget_data, REQUESTS
 from ..utils.widgets import AbstractWidget
 
@@ -298,8 +298,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.apply_qtransform()
 
             # process sliders
-            for s in self.sliders.values():
-                s.update_default_value(obj_cat)  # load the catalog value to the slider
+            for slider_name, s in self.sliders.items():
+                s.update_default_value_from_catalog(obj_cat)  # load the catalog value to the slider
+                if slider_name == 'redshift':  # load redshift from inspection results
+                    redshift = review.get_value(j, 'z_sviz')
+                    if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
+                        s.update_default_value(redshift)
                 s.update_from_slider()  # update the widget according to the slider state
 
             # final preparations
