@@ -83,7 +83,8 @@ class Subsets(AbstractWidget):
     def load_object(self, j: int, review: InspectionData):
         if self._subset_cat:
             try:
-                j_subset, = np.where(self._subset_cat['id'] == review.get_id(j))[0]
+                j_subset = loc_full(self._subset_cat, review.get_id(j, full=True))['__index__']
+                # j_subset, = np.where(self._subset_cat['id'] == review.get_id(j))[0]
                 self.set_subset_info(str(j_subset + 1))
 
             except ValueError:

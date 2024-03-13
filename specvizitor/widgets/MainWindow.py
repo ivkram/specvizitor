@@ -1,6 +1,7 @@
 from astropy.table import Table
 import qtpy.compat
 from qtpy import QtWidgets, QtCore, QtGui
+import numpy as np
 
 from dataclasses import asdict
 from importlib.metadata import version
@@ -13,7 +14,7 @@ from ..config.appearance import set_up_appearance
 from ..io.catalogue import read_cat, create_cat, get_obj_cat
 from ..io.inspection_data import InspectionData
 from ..utils.params import save_yaml
-from ..utils.table_tools import loc_full
+from ..utils.table_tools import loc_full, get_table_indices
 
 from .DataViewer import DataViewer
 from .NewFile import NewFile
@@ -534,8 +535,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def load_subset(self, reset_index=True):
         subset_path = self._cache.last_subset_file
-        subset = read_cat(subset_path, translate=self._config.catalogue.translate)
+        subset = read_cat(subset_path, translate=self._config.catalogue.translate, keep_ids_only=True)
         if subset:
+            subset.add_column(np.arange(len(subset)), name='__index__', index=0)
+
             self._subset_cat = subset
             self.subset_loaded.emit(subset_path, subset)
             if reset_index:

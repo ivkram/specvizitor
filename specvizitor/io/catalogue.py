@@ -13,11 +13,13 @@ logger = logging.getLogger(__name__)
 
 def read_cat(filename=None,
              translate: dict[str, list[str]] | None = None,
+             keep_ids_only: bool = False,
              data_dir=None,
              id_pattern=r'\d+') -> [Table, None]:
     """ Read and filter the catalogue.
     @param filename: the catalogue filename
     @param translate:
+    @param keep_ids_only:
     @param data_dir:
     @param id_pattern:
     @return: the processed catalogue
@@ -64,6 +66,9 @@ def read_cat(filename=None,
             cat.add_index(f'id{i}')
             indices.append(f'id{i}')
     cat.meta['indices'] = indices
+
+    if keep_ids_only:
+        cat = cat[indices]  # remove non-ID columns
 
     return cat
 
