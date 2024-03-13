@@ -16,11 +16,11 @@ class ObjectInfo(AbstractWidget):
     data_collected = QtCore.Signal(list)
 
     def __init__(self, parent=None):
-        self.all_columns: list[str] | None = None
+        self.all_columns: dict[str, str] | None = None
         self.visible_columns: list[str] | None = None
 
         self._table: QtWidgets.QTableWidget | None = None
-        self._table_items: list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]] | None = None
+        self._table_items: dict[str, list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]]] | None = None
 
         self._search_label: QtWidgets.QLabel | None = None
         self._search_lineedit: QtWidgets.QLineEdit | None = None
@@ -32,35 +32,35 @@ class ObjectInfo(AbstractWidget):
 
     def _create_table_items(self):
         if self.all_columns is None:
-            self._table_items = []
+            self._table_items = {}
             return
 
-        table_items = []
-        for cname in self.all_columns:
-            cname_item = QtWidgets.QTableWidgetItem(cname)
+        table_items = {}
+        for cname, cname_annotated in self.all_columns.items():
+            cname_item = QtWidgets.QTableWidgetItem(cname_annotated)
             value_item = QtWidgets.QTableWidgetItem('')
 
-            table_items.append((cname_item, value_item))
+            table_items[cname] = cname_item, value_item
 
         self._table_items = table_items
 
     def _set_table_items(self):
         self._table.setRowCount(len(self._table_items))
-        for i, row in enumerate(self._table_items):
+        for i, row in enumerate(self._table_items.values()):
             self._table.setItem(i, 0, row[0])
             self._table.setItem(i, 1, row[1])
 
     @QtCore.Slot(object)
-    def update_table_items(self, cat: Table | None):
-        self.all_columns = cat.colnames if cat is not None else None
+    def update_table_items(self, cat: Catalog | None):
+        self.all_columns = cat.annotated_colnames if cat is not None else None
         self._create_table_items()
         self._set_table_items()
 
-        self.update_visible_columns(self.all_columns)
+        self.update_visible_columns(list(self.all_columns.values()))
 
     @QtCore.Slot()
     def update_view(self):
-        for i, row in enumerate(self._table_items):
+        for i, row in enumerate(self._table_items.values()):
             cname = row[0].text()
             if cname in self.visible_columns and self._search_lineedit.text() in cname:
                 self._table.showRow(i)
@@ -114,12 +114,11 @@ class ObjectInfo(AbstractWidget):
     def load_object(self, _, __, cat_entry: Catalog | None):
 
         if cat_entry is None:
-            for row in self._table_items:
+            for row in self._table_items.values():
                 row[1].setText('')
             return
 
-        for row in self._table_items:
-            cname = row[0].text()
+        for cname, row in self._table_items.items():
             try:
                 value = cat_entry.get_col(cname)
                 value = f'{value:.8f}' if isinstance(value, float) else str(value)
@@ -133,7 +132,7 @@ class ObjectInfo(AbstractWidget):
         self.data_collected.emit(self.visible_columns)
 
     def _display_options_action(self):
-        dialog = TableColumns(self.all_columns, self.visible_columns, parent=self)
+        dialog = TableColumns(list(self.all_columns.values()), self.visible_columns, parent=self)
         dialog.visible_columns_updated.connect(self.update_visible_columns)
         if dialog.exec():
             pass

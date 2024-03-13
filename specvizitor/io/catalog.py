@@ -90,12 +90,12 @@ class Catalog:
         return len(self.table)
 
     @property
-    def colnames(self):
+    def colnames(self) -> list:
         return self.table.colnames
 
     @property
-    def extended_colnames(self):
-        colnames = self.table.colnames
+    def extended_colnames(self) -> list:
+        colnames = self.colnames
 
         if self.translate:
             colnames_extension = []
@@ -105,6 +105,19 @@ class Catalog:
                         colnames_extension.append(cname)
                         break
             colnames += colnames_extension
+
+        return colnames
+
+    @property
+    def annotated_colnames(self) -> dict[str, str]:
+        colnames = {cname: cname for cname in self.colnames}
+
+        if self.translate:
+            for cname, cname_aliases in self.translate.items():
+                for cname_alias in cname_aliases:
+                    if cname_alias in self.colnames:
+                        colnames[cname_alias] = f'{cname_alias} ({cname})'
+                        break
 
         return colnames
 
