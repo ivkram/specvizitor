@@ -56,12 +56,11 @@ class ObjectInfo(AbstractWidget):
         self._create_table_items()
         self._set_table_items()
 
-        self.update_visible_columns(list(self.all_columns.values()))
+        self.update_visible_columns(list(self.all_columns.keys()))
 
     @QtCore.Slot()
     def update_view(self):
-        for i, row in enumerate(self._table_items.values()):
-            cname = row[0].text()
+        for i, cname in enumerate(self._table_items.keys()):
             if cname in self.visible_columns and self._search_lineedit.text() in cname:
                 self._table.showRow(i)
             else:
@@ -132,7 +131,7 @@ class ObjectInfo(AbstractWidget):
         self.data_collected.emit(self.visible_columns)
 
     def _display_options_action(self):
-        dialog = TableColumns(list(self.all_columns.values()), self.visible_columns, parent=self)
+        dialog = TableColumns(list(self.all_columns.keys()), self.visible_columns, parent=self)
         dialog.visible_columns_updated.connect(self.update_visible_columns)
         if dialog.exec():
             pass
