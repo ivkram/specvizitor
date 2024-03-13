@@ -5,7 +5,7 @@ from abc import abstractmethod
 import logging
 
 from ..config import config
-from ..io.catalogue import read_cat, cat_browser
+from ..io.catalog import Catalog, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
 from ..utils.widgets import AbstractWidget, FileBrowser, Section
@@ -118,7 +118,7 @@ class CatalogueWidget(SettingsWidget):
         self.layout().addWidget(self._aliases_section)
 
     def get_catalogue(self):
-        return read_cat(self._browser.path, translate=self.cfg.translate)
+        return Catalog.read(self._browser.path, translate=self.cfg.translate)
 
     def validate(self) -> bool:
         if not self._browser.exists(verbose=True):

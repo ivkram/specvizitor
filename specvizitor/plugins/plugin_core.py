@@ -1,9 +1,9 @@
-from astropy.table import Row
 from pyqtgraph.dockarea.Dock import Dock
 
 from abc import ABC, abstractmethod
 
-from ..widgets.ViewerElement import ViewerElement
+from specvizitor.io.catalog import Catalog
+from specvizitor.widgets.ViewerElement import ViewerElement
 
 
 class PluginCore(ABC):
@@ -16,5 +16,5 @@ class PluginCore(ABC):
         pass
 
     @abstractmethod
-    def tweak_widgets(self, widgets: dict[str, ViewerElement], obj_cat: Row | None = None):
+    def tweak_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         pass

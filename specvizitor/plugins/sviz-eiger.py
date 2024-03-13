@@ -1,11 +1,11 @@
 import numpy as np
-from astropy.table import Row
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Dock import Dock
 from qtpy import QtCore
 
 import logging
 
+from ..io.catalog import Catalog
 from .plugin_core import PluginCore
 from ..widgets.ViewerElement import ViewerElement
 
@@ -21,17 +21,18 @@ class Plugin(PluginCore):
     def tweak_docks(self, docks: dict[str, Dock]):
         pass
 
-    def tweak_widgets(self, widgets: dict[str, ViewerElement], obj_cat: Row | None = None):
+    def tweak_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         spec_2d_stack: Image2D | None = widgets.get('Spectrum 2D [Stack]')
         spec_2d_mods: tuple[Image2D | None, Image2D | None] = (widgets.get(f'Spectrum 2D [Module A]'),
                                                                widgets.get(f'Spectrum 2D [Module B]'))
 
         spec_2d_array = tuple(spec_2d for spec_2d in (spec_2d_stack,) + spec_2d_mods if spec_2d is not None)
 
-        coords = self.get_emline_coords(obj_cat)
-        for i, c in enumerate(coords):
-            self.mark_emline(c[0], c[1], spec_2d_array, zoom=True if i == 0 else False,
-                             color='r' if i == 0 else 'white')
+        if cat_entry:
+            coords = self.get_emline_coords(cat_entry)
+            for i, c in enumerate(coords):
+                self.mark_emline(c[0], c[1], spec_2d_array, zoom=True if i == 0 else False,
+                                 color='r' if i == 0 else 'white')
 
     @staticmethod
     def mark_emline(x0: float, y0: float, spec2d_array: tuple[Image2D], zoom=False, color='r'):
@@ -50,17 +51,16 @@ class Plugin(PluginCore):
                 spec_2d.set_default_range(xrange=(x1, x2), yrange=yrange, apply_qtransform=True, update=True)
 
     @staticmethod
-    def get_emline_coords(obj_cat: Row | None) -> list[tuple[float, float]]:
-        if obj_cat is None:
-            return []
-
+    def get_emline_coords(cat_entry: Catalog | None) -> list[tuple[float, float]]:
         coords_array = []
         coord_colnames = [('X_IMAGE', 'Y_IMAGE')] + list((f'X_IMAGE_{i}', f'Y_IMAGE_{i}') for i in range(11))
 
         for i, cname_pair in enumerate(coord_colnames):
-            if cname_pair[0] in obj_cat.colnames and cname_pair[1] in obj_cat.colnames:
-                x, y = obj_cat[cname_pair[0]], obj_cat[cname_pair[1]]
-
+            try:
+                x, y = cat_entry.get_col(cname_pair[0]), cat_entry.get_col(cname_pair[1])
+            except KeyError:
+                break
+            else:
                 # skip masked elements
                 if np.ma.is_masked(x) or np.ma.is_masked(y):
                     continue

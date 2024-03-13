@@ -2,11 +2,10 @@ from astropy.table import Table
 from qtpy import QtWidgets, QtCore
 
 import logging
-import numpy as np
 import pathlib
 
+from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..utils.table_tools import get_table_indices, loc_full
 from ..utils.widgets import AbstractWidget
 
 
@@ -24,7 +23,7 @@ class Subsets(AbstractWidget):
         self._stop_inspecting: QtWidgets.QPushButton | None = None
         self._subset_info: QtWidgets.QLabel | None = None
 
-        self._subset_cat: Table | None = None
+        self._subset_cat: Catalog | None = None
         self._subset_name: str | None = None
 
         super().__init__(parent=parent)
@@ -82,13 +81,13 @@ class Subsets(AbstractWidget):
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):
         if self._subset_cat:
-            try:
-                j_subset = loc_full(self._subset_cat, review.get_id(j, full=True))['__index__']
-                # j_subset, = np.where(self._subset_cat['id'] == review.get_id(j))[0]
+            subset_entry = self._subset_cat.get_cat_entry(review.get_id(j, full=True), ignore_missing=True)
+            if subset_entry is None:
+                self.set_subset_info()
+            else:
+                j_subset = subset_entry.get_col('__index__')
                 self.set_subset_info(str(j_subset + 1))
 
-            except ValueError:
-                self.set_subset_info()
 
     @QtCore.Slot(bool)
     def pause_inspecting_subset(self, is_paused: bool):

@@ -1,4 +1,3 @@
-from astropy.table import Row
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
@@ -10,6 +9,7 @@ import pathlib
 from ..config import config
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
+from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filenames_from_id, load_image, FieldImage, REQUESTS
 from ..plugins.plugin_core import PluginCore
@@ -297,20 +297,20 @@ class DataViewer(AbstractWidget):
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, object, config.Data)
-    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_cfg: config.Data):
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, data_cfg: config.Data):
         # perform search for files containing the object ID in their filename
         discovered_data_files = get_filenames_from_id(data_cfg.dir, review.get_id(j))
 
         self._disconnect_widgets()
 
         # load the object data to the widgets
-        self.object_selected.emit(j, review, obj_cat, discovered_data_files)
+        self.object_selected.emit(j, review, cat_entry, discovered_data_files)
 
         self._reconnect_widgets()
         self._update_dock_titles()
 
         for plugin in self._plugins:
-            plugin.tweak_widgets(self.active_widgets, obj_cat)
+            plugin.tweak_widgets(self.active_widgets, cat_entry)
 
     def _find_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.widgets.values():

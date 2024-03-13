@@ -1,10 +1,10 @@
-from astropy.table import Table, Row
+from astropy.table import Table
 from qtpy import QtWidgets, QtCore
 
 import logging
 
+from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..utils.table_tools import column_not_found_message
 from ..utils.widgets import AbstractWidget
 
 from .TableColumns import TableColumns
@@ -111,9 +111,9 @@ class ObjectInfo(AbstractWidget):
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, object)
-    def load_object(self, _, __, obj_cat: Row | None):
+    def load_object(self, _, __, cat_entry: Catalog | None):
 
-        if obj_cat is None:
+        if cat_entry is None:
             for row in self._table_items:
                 row[1].setText('')
             return
@@ -121,11 +121,11 @@ class ObjectInfo(AbstractWidget):
         for row in self._table_items:
             cname = row[0].text()
             try:
-                value = obj_cat[cname]
+                value = cat_entry.get_col(cname)
                 value = f'{value:.8f}' if isinstance(value, float) else str(value)
                 row[1].setText(value)
-            except KeyError:
-                logger.warning(column_not_found_message(cname, obj_cat.meta.get('aliases')))
+            except KeyError as e:
+                logger.warning(e)
                 row[1].setText('')
 
     @QtCore.Slot()

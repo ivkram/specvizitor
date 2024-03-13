@@ -1,5 +1,4 @@
 from astropy.io.fits.header import Header
-from astropy.table import Row
 import astropy.units as u
 from astropy.units import Quantity, UnitConversionError
 import numpy as np
@@ -13,6 +12,7 @@ import pathlib
 
 from ..config import config, data_widgets
 from ..config import SpectralLineData
+from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
 from ..io.viewer_data import load_widget_data, REQUESTS
 from ..utils.widgets import AbstractWidget
@@ -277,7 +277,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             s.setEnabled(a0)
 
     @QtCore.Slot(int, InspectionData, object, list)
-    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_files: list[str]):
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, data_files: list[str]):
         # clear widget contents
         if self.data is not None:
             self.clear_content()
@@ -286,7 +286,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.filename, self.data, self.meta = None, None, None
 
         # load data to the widget
-        self.load_data(review.get_id(j), data_files, obj_cat)
+        self.load_data(review.get_id(j), data_files, cat_entry)
 
         # display the data
         if self.data is not None:
@@ -299,7 +299,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
             # process sliders
             for slider_name, s in self.sliders.items():
-                s.update_default_value_from_catalog(obj_cat)  # load the catalog value to the slider
+                s.update_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
                 if slider_name == 'redshift':  # load redshift from inspection results
                     redshift = review.get_value(j, 'z_sviz')
                     if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
@@ -312,12 +312,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
         else:
             self.setEnabled(False)
 
-    def load_data(self, obj_id: str | int, data_files: list[str], obj_cat: Row | None):
+    def load_data(self, obj_id: str | int, data_files: list[str], cat_entry: Catalog | None):
         if self.cfg.data.source:
-            if obj_cat is None:
+            if cat_entry is None:
                 logger.error(f'Failed to request a shared resource: catalog entry not found (widget: {self.title})')
                 return
-            self.request_shared_resource(obj_cat)
+            self.request_shared_resource(cat_entry)
         else:
             self.filename, self.data, self.meta = load_widget_data(
                 obj_id=obj_id, data_files=data_files, filename_keyword=self.cfg.data.filename_keyword,
@@ -325,7 +325,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 **(self.cfg.data.loader_params or {})
             )
 
-    def request_shared_resource(self, obj_cat: Row):
+    def request_shared_resource(self, cat_entry: Catalog):
         pass
 
     @QtCore.Slot(str, pathlib.Path, object, object)

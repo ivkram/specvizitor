@@ -1,5 +1,4 @@
 from astropy.table import Table
-import numpy as np
 import pandas as pd
 
 from abc import ABC, abstractmethod
@@ -63,10 +62,14 @@ class InspectionData:
         @return: an instance of the InspectionData class
         """
 
-        if len(args) == 1:
-            index = pd.Index(args[0], name='id')
-        else:
-            index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
+        try:
+            if len(args) == 1:
+                index = pd.Index(args[0], name='id')
+            else:
+                index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
+        except TypeError as e:
+            logger.error(f'Failed to created the inspection file: {e}')
+            return None
 
         df = (pd.DataFrame(index=index)).sort_index()
         df = cls._add_default_columns(df)

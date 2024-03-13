@@ -11,10 +11,9 @@ import pathlib
 from ..appdata import AppData
 from ..config import config, Config, Cache, DataWidgets, SpectralLineData
 from ..config.appearance import set_up_appearance
-from ..io.catalogue import read_cat, create_cat, get_obj_cat
+from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..utils.params import save_yaml
-from ..utils.table_tools import loc_full, get_table_indices
 
 from .DataViewer import DataViewer
 from .NewFile import NewFile
@@ -62,7 +61,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache = cache
 
         self._viewer_cfg = viewer_cfg
-        self._subset_cat: Table | None = None
+        self._subset_cat: Catalog | None = None
         self._subset_inspection_paused: bool = False
         self._spectral_lines = spectral_lines
 
@@ -315,7 +314,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._subsets_dock)
 
     def load_catalogue(self):
-        cat = read_cat(self._config.catalogue.filename, translate=self._config.catalogue.translate)
+        cat = Catalog.read(self._config.catalogue.filename, translate=self._config.catalogue.translate)
         if cat is None:
             self._config.catalogue.filename = None
             self._config.save()
@@ -339,7 +338,8 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.output_path_selected.connect(self.update_output_path)
         if dialog.exec():
             self.rd.create(flags=self._config.inspection_results.default_flags)
-            self.load_project()
+            if self.rd.review is not None:
+                self.load_project()
 
     def _open_file_action(self):
         """ Open an existing inspection file via QFileDialog.
@@ -393,9 +393,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # get object data from the catalogue
         obj_id = self.rd.review.get_id(j, full=True)
-        obj_cat = get_obj_cat(self.rd.cat, obj_id)
+        cat_entry = self.rd.cat.get_cat_entry(obj_id)
 
-        self.object_selected.emit(self.rd.j, self.rd.review, obj_cat, self._config.data)
+        self.object_selected.emit(self.rd.j, self.rd.review, cat_entry, self._config.data)
 
         self._update_window_title()
 
@@ -412,12 +412,16 @@ class MainWindow(QtWidgets.QMainWindow):
         j_upd = self._update_index(self.rd.j, command)
         if self._subset_cat and not self._subset_inspection_paused:
             while True:
-                try:
-                    loc_full(self._subset_cat, self.rd.review.get_id(j_upd, full=True))
-                except (IndexError, KeyError):
-                    j_upd = self._update_index(j_upd, command)
-                else:
+                subset_entry = self._subset_cat.get_cat_entry(self.rd.review.get_id(j_upd, full=True),
+                                                              ignore_missing=True)
+                if subset_entry is not None:
                     break
+
+                j_upd = self._update_index(j_upd, command)
+                if j_upd == self.rd.j:  # in case no other ID from the subset is found
+                    logger.warning('No other IDs found in the subset')
+                    break
+
         elif switch_to_starred:
             while not self.rd.review.get_value(j_upd, 'starred'):
                 j_upd = self._update_index(j_upd, command)
@@ -535,14 +539,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def load_subset(self, reset_index=True):
         subset_path = self._cache.last_subset_file
-        subset = read_cat(subset_path, translate=self._config.catalogue.translate, keep_ids_only=True)
+        subset = Catalog.read(subset_path, translate=self._config.catalogue.translate)
         if subset:
             subset.add_column(np.arange(len(subset)), name='__index__', index=0)
 
             self._subset_cat = subset
             self.subset_loaded.emit(subset_path, subset)
+
             if reset_index:
-                self.load_by_id(self._subset_cat['id'][0])
+                self.load_by_id(self._subset_cat.get_col('id')[0])
         else:
             self._cache.last_subset_file = None
             self._cache.save()
@@ -582,9 +587,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.theme_changed.emit()
 
     @QtCore.Slot(object)
-    def update_catalogue(self, cat: Table | None):
+    def update_catalogue(self, cat: Catalog | None):
         if cat is None and self.rd.review is not None:
-            self.rd.cat = create_cat(self.rd.review.ids_full)
+            self.rd.cat = Catalog.create(self.rd.review.ids_full)
         else:
             self.rd.cat = cat
         self.catalogue_changed.emit(self.rd.cat)

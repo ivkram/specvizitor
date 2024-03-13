@@ -1,4 +1,4 @@
-from astropy.table import Table, Row
+from astropy.table import Table
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
@@ -9,7 +9,7 @@ from functools import partial
 import logging
 
 from specvizitor.plugins.plugin_core import PluginCore
-from specvizitor.utils.table_tools import column_not_found_message
+from specvizitor.io.catalog import Catalog
 from specvizitor.widgets.ViewerElement import ViewerElement
 from specvizitor.widgets.Image2D import Image2D
 from specvizitor.widgets.Plot1D import Plot1D
@@ -89,7 +89,7 @@ class Plugin(PluginCore):
 
         return stacked_lm_docks
 
-    def tweak_widgets(self, widgets: dict[str, ViewerElement], obj_cat: Row | None = None):
+    def tweak_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         spec_1d: Plot1D | None = widgets.get('Spectrum 1D')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
 
@@ -141,9 +141,9 @@ class Plugin(PluginCore):
 
         # check that the `flux` and `flat` columns are in the table
         if 'flux' not in t.colnames:
-            logger.error(column_not_found_message('flux'))
+            logger.error('Column not found: flux')
         if 'flat' not in t.colnames:
-            logger.error(column_not_found_message('flat'))
+            logger.error('Column not found: flat')
 
         # check that the flux unit is correct
         if not t['flux'].unit or not t['flux'].unit.is_equivalent(u.Unit('ct / s')):

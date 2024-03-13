@@ -1,10 +1,9 @@
-from astropy.table import Row
 import numpy as np
 from qtpy import QtWidgets, QtCore
 
 import logging
 
-from ..utils.table_tools import column_not_found_message
+from ..io.catalog import Catalog
 from ..utils.widgets import AbstractWidget
 
 logger = logging.getLogger(__name__)
@@ -170,15 +169,15 @@ class SmartSlider(AbstractWidget):
     def update_default_value(self, default_value: float):
         self._slider.default_value = default_value
 
-    def update_default_value_from_catalog(self, obj_cat: Row | None):
-        if obj_cat is None or self.catalog_name is None:
+    def update_default_value_from_catalog(self, cat_entry: Catalog | None):
+        if cat_entry is None or self.catalog_name is None:
             self._slider.default_value = self._default_value_fallback
             return
 
         try:
-            self._slider.default_value = obj_cat[self.catalog_name]
-        except KeyError:
-            logger.warning(column_not_found_message(self.catalog_name, obj_cat.meta.get('aliases')))
+            self._slider.default_value = cat_entry.get_col(self.catalog_name)
+        except KeyError as e:
+            logger.warning(e)
             self._slider.default_value = self._default_value_fallback
 
     def reset(self):
