@@ -112,7 +112,7 @@ class SmartSlider(AbstractWidget):
         self._editor.setMaximumWidth(120)
 
         # create a save button
-        self._save_button = QtWidgets.QPushButton('Save !', self)
+        self._save_button = QtWidgets.QPushButton('Save!', self)
 
         self._label.setVisible(self.show_text_editor)
         self._editor.setVisible(self.show_text_editor)
