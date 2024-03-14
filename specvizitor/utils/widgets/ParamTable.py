@@ -143,11 +143,10 @@ class ParamTable(QtWidgets.QWidget):
     def _current_row(self):
         return self._table.currentRow()
 
-    @property
-    def _item_filter_list(self):
+    def _get_item_filter_list(self, include_current_row=False):
         filter_list = [[] for _ in range(len(self._header))]
         for i, row in enumerate(self._table_items):
-            if i == self._current_row:
+            if i == self._current_row and not include_current_row:
                 continue
             for j, item in enumerate(row):
                 if self._is_unique:
@@ -228,7 +227,8 @@ class ParamTable(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def _add_row_dialog(self):
-        dialog = TableRowEditor(header=self._header, item_filter_list=self._item_filter_list,
+        item_filter_list = self._get_item_filter_list(include_current_row=True)
+        dialog = TableRowEditor(header=self._header, item_filter_list=item_filter_list,
                                 **self._row_editor_kwargs, parent=self)
         dialog.data_collected.connect(self._add_row)
         dialog.exec()
@@ -270,8 +270,9 @@ class ParamTable(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def _edit_row_dialog(self):
+        item_filter_list = self._get_item_filter_list(include_current_row=False)
         dialog = TableRowEditor(header=self._header, data=self._new_data[self._current_row],
-                                item_filter_list=self._item_filter_list, **self._row_editor_kwargs, parent=self)
+                                item_filter_list=item_filter_list, **self._row_editor_kwargs, parent=self)
         dialog.data_collected.connect(partial(self._edit_row, self._current_row))
         dialog.exec()
 
