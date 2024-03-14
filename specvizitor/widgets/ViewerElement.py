@@ -168,6 +168,13 @@ class ViewerElement(AbstractWidget, abc.ABC):
         return self._apply_axis_data_transform(plot_data, scale=self._axes.y.scale, unit=self._axes.y.unit)
 
     def _create_line_artists(self):
+        if self._spectral_line_artists:
+            for line_artist in self._spectral_line_artists.values():
+                line_artist[0].deleteLater()
+                line_artist[1].deleteLater()
+
+        self._spectral_line_artists = {}
+
         line_color = self.cfg.spectral_lines.color
         if line_color is None:
             line_color = (175.68072, 220.68924, 46.59488)
@@ -181,6 +188,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
             label.setZValue(11)
 
             self._spectral_line_artists[line_name] = (line, label)
+
+    def _add_line_artists(self):
+        if self.cfg.spectral_lines.visible:
+            for line_name, line_artist in self._spectral_line_artists.items():
+                self.container.addItem(line_artist[0], ignoreBounds=True)
+                self.container.addItem(line_artist[1])
 
     def init_ui(self):
         # create the graphics view
@@ -200,10 +213,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         # add spectral lines to the container
         self._create_line_artists()
-        if self.cfg.spectral_lines.visible:
-            for line_name, line_artist in self._spectral_line_artists.items():
-                self.container.addItem(line_artist[0], ignoreBounds=True)
-                self.container.addItem(line_artist[1])
+        self._add_line_artists()
 
         # adding sliders to the UI
         self.smoothing_slider = SmartSlider(short_name='sigma', action='smooth the data', parent=self,
@@ -445,3 +455,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def update_visibility(self):
         self.set_axes_visibility()
         self.smoothing_slider.setVisible(self.cfg.smoothing_slider.visible)
+
+    @QtCore.Slot()
+    def update_spectral_lines(self):
+        self._create_line_artists()
+        self._add_line_artists()

@@ -1,9 +1,9 @@
-from astropy.table import Table
 import qtpy.compat
 from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
 
 from dataclasses import asdict
+from functools import partial
 from importlib.metadata import version
 import logging
 import pathlib
@@ -38,6 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
+    spectral_lines_changed = QtCore.Signal()
     visible_columns_updated = QtCore.Signal(list)
     dock_layout_updated = QtCore.Signal(dict)
     viewer_configuration_updated = QtCore.Signal(DataWidgets)
@@ -268,6 +269,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.theme_changed.connect(self._data_viewer.init_ui)
         self.theme_changed.connect(self._commands_bar._set_icons)
         self.catalogue_changed.connect(self._object_info.update_table_items)
+        self.spectral_lines_changed.connect(self._data_viewer.spectral_lines_changed.emit)
         self.visible_columns_updated.connect(self._object_info.update_visible_columns)
         self.dock_layout_updated.connect(self._data_viewer.restore_dock_layout)
         self.viewer_configuration_updated.connect(self._data_viewer.update_viewer_configuration)
@@ -588,9 +590,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.screenshot_path_selected.emit(path)
 
     def _settings_action(self):
-        dialog = Settings(self.rd.cat, self._config, parent=self)
+        dialog = Settings(self.rd.cat, self._config, self._spectral_lines, parent=self)
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
+        dialog.spectral_lines_changed.connect(self.spectral_lines_changed.emit)
         if dialog.exec():
             self._reload()
 

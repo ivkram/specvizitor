@@ -1,3 +1,4 @@
+import numpy as np
 from platformdirs import user_config_dir
 from qtpy import QtWidgets, QtCore
 
@@ -5,6 +6,7 @@ from abc import abstractmethod
 import logging
 
 from ..config import config
+from ..config.spectral_lines import SpectralLineData
 from ..io.catalog import Catalog, cat_browser
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
@@ -181,9 +183,9 @@ class CatalogueWidget(SettingsWidget):
         return True
 
     @QtCore.Slot(list)
-    def save_aliases(self, aliases: list[tuple[str, str]]):
+    def save_aliases(self, table_data: list[tuple[str, str]]):
         translate = {}
-        for alias in aliases:
+        for alias in table_data:
             translate[alias[0]] = alias[1].split(',')
 
         self._aliases_changed = False
@@ -234,13 +236,79 @@ class DataSourceWidget(SettingsWidget):
         self.cfg.dir = self._new_dir
 
 
+def spectral_lines_table_factory(wavelengths: dict[str, float], parent=None) -> ParamTable:
+    header = ['Line', 'Wavelength']
+    data = [[line, str(wave)] for line, wave in wavelengths.items()]
+    regex_pattern = [r'^\s*$', r'(?!([0-9]+([.][0-9]*)?|[.][0-9]+)$)']
+    is_unique = [True, False]
+
+    return ParamTable(header=header, data=data, name='Spectral Line', regex_pattern=regex_pattern,
+                      is_unique=is_unique, remember_deleted=False, parent=parent)
+
+
+class SpectralLineWidget(SettingsWidget):
+    data_requested = QtCore.Signal()
+    spectral_lines_changed = QtCore.Signal()
+
+    def __init__(self, cfg: SpectralLineData, parent=None):
+        self.cfg = cfg
+
+        self._lines_table: ParamTable | None = None
+
+        self._new_wavelengths: dict[str, float] | None = None
+
+        self._wavelengths_changed: bool = False
+
+        super().__init__(parent=parent)
+
+    def init_ui(self):
+        self._lines_table = spectral_lines_table_factory(self.cfg.wavelengths, self)
+        self.data_requested.connect(self._lines_table.collect)
+        self._lines_table.data_collected.connect(self.save_lines)
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QVBoxLayout())
+
+    def populate(self):
+        self.layout().addWidget(self._lines_table)
+
+    def collect(self) -> bool:
+        self.data_requested.emit()
+        return True
+
+    @QtCore.Slot(list)
+    def save_lines(self, table_data: list[tuple[str, str]]):
+        wavelengths = {}
+        for line in table_data:
+            wavelengths[line[0]] = float(line[1])
+
+        self._wavelengths_changed = False
+        if not sorted(self.cfg.wavelengths.keys()) == sorted(wavelengths.keys()):
+            self._wavelengths_changed = True
+        else:
+            for line, wave in wavelengths.items():
+                if not np.isclose(wave, self.cfg.wavelengths[line]):
+                    self._wavelengths_changed = True
+                    break
+
+        self._new_wavelengths = wavelengths
+
+    def accept(self):
+        self.cfg.wavelengths = self._new_wavelengths
+
+        if self._wavelengths_changed:
+            self.spectral_lines_changed.emit()
+
+
 class Settings(QtWidgets.QDialog):
     appearance_changed = QtCore.Signal(bool)
     catalogue_changed = QtCore.Signal(object)
+    spectral_lines_changed = QtCore.Signal()
 
-    def __init__(self, cat: Catalog, cfg: config.Config, parent=None):
+    def __init__(self, cat: Catalog, cfg: config.Config, spectral_lines: SpectralLineData, parent=None):
         self._old_cat = cat
-        self.cfg = cfg
+        self._cfg = cfg
+        self._spectral_lines = spectral_lines
 
         self._tab_widget: QtWidgets.QTabWidget | None = None
         self._tabs: dict[str, SettingsWidget] | None = None
@@ -256,11 +324,13 @@ class Settings(QtWidgets.QDialog):
         self.populate()
 
     def create_tabs(self):
-        self._tabs = {'Appearance': AppearanceWidget(self.cfg.appearance, self),
-                      'Catalogue': CatalogueWidget(self._old_cat, self.cfg.catalogue, self),
-                      'Data Source': DataSourceWidget(self.cfg.data, self)}
+        self._tabs = {'Appearance': AppearanceWidget(self._cfg.appearance, self),
+                      'Catalogue': CatalogueWidget(self._old_cat, self._cfg.catalogue, self),
+                      'Data Source': DataSourceWidget(self._cfg.data, self),
+                      'Spectral Lines': SpectralLineWidget(self._spectral_lines, self)}
         self._tabs['Appearance'].appearance_changed.connect(self.appearance_changed.emit)
         self._tabs['Catalogue'].catalog_changed.connect(self.catalogue_changed.emit)
+        self._tabs['Spectral Lines'].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
 
     def add_tabs(self):
         for name, t in self._tabs.items():
@@ -305,6 +375,7 @@ class Settings(QtWidgets.QDialog):
         for t in self._tabs.values():
             t.accept()
 
-        self.cfg.save()
+        self._cfg.save()
+        self._spectral_lines.save()
 
         super().accept()

@@ -35,6 +35,7 @@ class DataViewer(AbstractWidget):
 
     zen_mode_activated = QtCore.Signal()
     visibility_changed = QtCore.Signal()
+    spectral_lines_changed = QtCore.Signal()
 
     def __init__(self,
                  cfg: config.DataViewer,
@@ -85,6 +86,7 @@ class DataViewer(AbstractWidget):
             self.zen_mode_activated.disconnect()
             self.visibility_changed.disconnect()
             self.shared_resources_queried.disconnect()
+            self.spectral_lines_changed.disconnect()
             safe_disconnect(self.view_reset)
 
             for w in self.widgets.values():
@@ -117,6 +119,7 @@ class DataViewer(AbstractWidget):
             self.zen_mode_activated.connect(w.hide_interface)
             self.visibility_changed.connect(w.update_visibility)
             self.shared_resources_queried.connect(w.get_shared_resource)
+            self.spectral_lines_changed.connect(w.update_spectral_lines)
 
             w.shared_resource_requested.connect(self._query_shared_resources)
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
