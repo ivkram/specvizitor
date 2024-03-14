@@ -531,7 +531,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showMaximized()
 
     def _inspect_subset_action(self):
-        path = qtpy.compat.getopenfilename(self, caption='Load Subset')[0]
+        path = qtpy.compat.getopenfilename(self, caption='Open Subset')[0]
         if path:
             self._cache.last_subset_file = path
             self._cache.save()
