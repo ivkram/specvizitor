@@ -345,6 +345,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rd.create(flags=self._config.inspection_results.default_flags)
             if self.rd.review is not None:
                 self.load_project()
+            else:
+                self.update_catalogue(None)
+                self.update_output_path(None)
 
     def _open_file_action(self):
         """ Open an existing inspection file via QFileDialog.
@@ -585,7 +588,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.screenshot_path_selected.emit(path)
 
     def _settings_action(self):
-        dialog = Settings(self._config, parent=self)
+        dialog = Settings(self.rd.cat, self._config, parent=self)
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
         if dialog.exec():
@@ -606,9 +609,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.catalogue_changed.emit(self.rd.cat)
 
     @QtCore.Slot(pathlib.Path)
-    def update_output_path(self, path: pathlib.Path):
+    def update_output_path(self, path: pathlib.Path | None):
         self.rd.output_path = path
-        self._cache.last_inspection_file = str(path)
+        self._cache.last_inspection_file = None if path is None else str(path)
         self._cache.save()
         self._update_window_title()
 

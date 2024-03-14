@@ -68,7 +68,7 @@ class InspectionData:
             else:
                 index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
         except TypeError as e:
-            logger.error(f'Failed to created the inspection file: {e}')
+            logger.error(f'Failed to create the inspection file: {e}')
             return None
 
         df = (pd.DataFrame(index=index)).sort_index()

@@ -16,7 +16,7 @@ class TableRowEditor(QtWidgets.QDialog):
         if data is None:
             data = [""] * len(header)
         if item_choices is None:
-            item_choices = [] * len(header)
+            item_choices = [None] * len(header)
 
         self._old_data = data
         self._item_choices = item_choices
@@ -31,6 +31,8 @@ class TableRowEditor(QtWidgets.QDialog):
             name = 'Row'
         self.setWindowTitle(f"{action} {name}")
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+
         self.init_ui()
         self.set_layout()
         self.populate()
@@ -39,26 +41,31 @@ class TableRowEditor(QtWidgets.QDialog):
     def _new_data(self) -> list[str]:
         data = []
         for row_item in self._row_items:
-            item_editor = row_item[1]
-            if hasattr(item_editor, 'currentText'):
-                data.append(item_editor.currentText())
-            else:
-                data.append(item_editor.text())
+            text = self.get_item_editor_text(row_item[1])
+            data.append(text)
         return data
+
+    @staticmethod
+    def get_item_editor_text(item_editor) -> str:
+        if hasattr(item_editor, 'currentText'):
+            return item_editor.currentText()
+        else:
+            return item_editor.text()
 
     def _create_row_items(self):
         self._row_items = []
         for i, (item_label, item_value, item_choices) in enumerate(zip(self._header, self._old_data, self._item_choices)):
             label = QtWidgets.QLabel(f"{item_label}:", self)
-            label.setFixedWidth(200)
+            label.setFixedWidth(120)
             if item_choices:
                 item_editor = QtWidgets.QComboBox(self)
                 item_editor.addItems(item_choices)
             else:
                 item_editor = QtWidgets.QLineEdit(item_value, self)
                 if self._regex_pattern or self._filter_list:
-                    item_editor.textChanged.connect(partial(self.validate_text, i))
+                    item_editor.textChanged.connect(self.validate_text)
                     item_editor.textChanged.emit(item_value)  # in case we match against an empty string
+            item_editor.setFixedWidth(360)
             self._row_items.append((label, item_editor))
 
     def init_ui(self):
@@ -81,18 +88,21 @@ class TableRowEditor(QtWidgets.QDialog):
 
         self.layout().addWidget(self._button_box)
 
-    @QtCore.Slot(str)
-    def validate_text(self, index: int, text: str):
-        use_regex = self._regex_pattern[index] is not None
-        use_filter_list = self._filter_list[index] is not None
-        if not (use_regex or use_filter_list):
-            return
+    @QtCore.Slot()
+    def validate_text(self):
+        for idx, row_item in enumerate(self._row_items):
+            text = self.get_item_editor_text(row_item[1])
 
-        ok_button = self._button_box.button(QtWidgets.QDialogButtonBox.Ok)
-        if (use_regex and re.match(self._regex_pattern[index], text)) or (use_filter_list and text in self._filter_list[index]):
-            ok_button.setEnabled(False)
-        else:
-            ok_button.setEnabled(True)
+            use_regex = self._regex_pattern and self._regex_pattern[idx] is not None
+            use_filter_list = self._filter_list and self._filter_list[idx] is not None
+            if not (use_regex or use_filter_list):
+                return
+
+            ok_button = self._button_box.button(QtWidgets.QDialogButtonBox.Ok)
+            if (use_regex and re.match(self._regex_pattern[idx], text)) or (use_filter_list and text in self._filter_list[idx]):
+                ok_button.setEnabled(False)
+            else:
+                ok_button.setEnabled(True)
 
     def accept(self):
         self.data_collected.emit(self._new_data)
@@ -100,10 +110,10 @@ class TableRowEditor(QtWidgets.QDialog):
 
 
 class ParamTable(QtWidgets.QWidget):
-    table_changed = QtCore.Signal(list, list)
+    data_collected = QtCore.Signal(list, list)
 
     def __init__(self, header: list[str], data: list[list[str]], is_unique: list[bool] | None = None,
-                 parent=None, **kwargs):
+                 remember_deleted=True, parent=None, **kwargs):
         self._header = header
         self._old_data = data
         self._row_editor_kwargs = kwargs
@@ -111,6 +121,7 @@ class ParamTable(QtWidgets.QWidget):
         if is_unique is None:
             is_unique = [False] * len(header)
         self._is_unique = is_unique
+        self._remember_deleted = remember_deleted
 
         self._add_button: QtWidgets.QPushButton | None = None
         self._delete_button: QtWidgets.QPushButton | None = None
@@ -183,6 +194,7 @@ class ParamTable(QtWidgets.QWidget):
         self._set_buttons_enabled(False)
 
         self._table = QtWidgets.QTableWidget(len(self._old_data), len(self._header), self)
+        self._table.horizontalHeader().setStretchLastSection(True)
         self._table.setHorizontalHeaderLabels(self._header)
 
         self._table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
@@ -250,7 +262,7 @@ class ParamTable(QtWidgets.QWidget):
     def _delete_row(self):
         current_row = self._current_row
 
-        if current_row >= len(self._old_data):
+        if current_row >= len(self._old_data) or not self._remember_deleted:
             self._table_items.pop(current_row)
             self._table.removeRow(current_row)
 
@@ -292,4 +304,4 @@ class ParamTable(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def collect(self):
-        self.table_changed.emit(self._new_data, self._is_deleted)
+        self.data_collected.emit(self._new_data, self._is_deleted)

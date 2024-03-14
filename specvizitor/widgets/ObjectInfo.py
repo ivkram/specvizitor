@@ -55,7 +55,8 @@ class ObjectInfo(AbstractWidget):
 
         self._create_table_items()
         self._set_table_items()
-        self.update_visible_columns(list(self.all_columns.keys()))
+        if self.all_columns:
+            self.update_visible_columns(list(self.all_columns.keys()))
 
     @QtCore.Slot()
     def update_view(self):

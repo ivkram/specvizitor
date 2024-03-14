@@ -48,7 +48,7 @@ class InspectionResults(AbstractWidget):
         self._checkbox_widgets = checkbox_widgets
 
     def init_ui(self):
-        self._redshift_widget = QtWidgets.QLabel(self)
+        self._redshift_widget = QtWidgets.QLabel("Redshift: --", self)
         self._spacer = QtWidgets.QWidget(self)
         self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self._clear_redshift = QtWidgets.QPushButton("Clear", self)

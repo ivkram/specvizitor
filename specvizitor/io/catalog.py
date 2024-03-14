@@ -1,4 +1,4 @@
-from astropy.table import Table, Row
+from astropy.table import Table, Row, MaskedColumn
 import numpy as np
 
 from dataclasses import dataclass, field
@@ -33,8 +33,32 @@ class Catalog:
         table = Table(table_data, names=colnames)
         return cls(table=table, indices=colnames)
 
+    def _add_indices(self) -> bool:
+        # check that the ID column is present in the catalogue
+        try:
+            id_col = self.get_col('id')
+        except KeyError as e:
+            logger.error(e)
+            return False
+
+        self.add_index(id_col.name)
+        for i in range(2, 11):
+            try:
+                id_col = self.get_col(f'id{i}')
+            except KeyError:
+                break
+            else:
+                self.add_index(id_col.name)
+
+        for idx in self.indices:
+            if isinstance(self.get_col(idx), MaskedColumn):
+                logger.error(f"Some IDs are missing (column: {idx})")
+                return False
+
+        return True
+
     @classmethod
-    def read(cls, filename, translate: dict[str, list[str]] | None = None, data_dir=None, id_pattern=r'\d+'):
+    def read(cls, filename: str, translate: dict[str, list[str]] | None = None, data_dir=None, id_pattern=r'\d+'):
         """ Read the catalogue from file.
         @param filename: the catalogue filename
         @param translate:
@@ -42,49 +66,38 @@ class Catalog:
         @param id_pattern:
         @return: the processed catalogue
         """
-
-        if filename is None:
-            logger.warning('Catalogue filename not specified')
-            return
-
         try:
             table = Table.read(filename)  # load the catalogue
         except (OSError, ValueError) as e:
             logger.error(f'Failed to load the catalogue: {e}')
-            return
+            return None
 
         cat = cls(table=table, translate=translate)
-
-        # check that the ID column is present in the catalogue
-        try:
-            id_col = cat.get_col('id')
-        except KeyError as e:
-            logger.error(e)
-            return
+        if not cat._add_indices():
+            return None
 
         if data_dir is not None:
             ids = get_ids_from_dir(data_dir, id_pattern)
             if ids is None:
-                return
+                return None
 
             # filter objects based on the list of IDs
             cat.table = cat.table[np.in1d(cat.get_col('id'), ids, assume_unique=False)]
 
         if len(cat.table) == 0:
             logger.error('The processed catalogue is empty')
-            return
-
-        # add indices
-        cat.add_index(id_col.name)
-        for i in range(2, 11):
-            try:
-                id_col = cat.get_col(f'id{i}')
-            except KeyError:
-                break
-            else:
-                cat.add_index(id_col.name)
+            return None
 
         return cat
+
+    def update_translate(self, new_translate: dict[str, list[str]] | None) -> bool:
+        self.translate = new_translate
+        self.indices = []
+
+        if not self._add_indices():
+            return False
+
+        return True
 
     def __len__(self):
         return len(self.table)
