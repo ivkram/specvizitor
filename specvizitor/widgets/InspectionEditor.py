@@ -1,4 +1,4 @@
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from itertools import repeat
 import logging
@@ -18,7 +18,6 @@ def inspection_field_table_factory(review: InspectionData, parent=None) -> Param
 
 
 class InspectionEditor(QtWidgets.QDialog):
-    changes_accepted = QtCore.Signal()
     inspection_fields_updated = QtCore.Signal(list, list)
 
     def __init__(self, review: InspectionData, parent=None):
@@ -27,7 +26,7 @@ class InspectionEditor(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent=parent)
-        self.setWindowTitle("Edit Inspection File")
+        self.setWindowTitle("Edit Inspection Fields")
 
         self.init_ui()
         self.set_layout()
@@ -39,11 +38,10 @@ class InspectionEditor(QtWidgets.QDialog):
         self._button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
-        self._button_box.accepted.connect(self.accept)
+        self._button_box.accepted.connect(self._field_table.collect)
         self._button_box.rejected.connect(self.reject)
 
-        self.changes_accepted.connect(self._field_table.collect)
-        self._field_table.table_changed.connect(self.inspection_fields_updated.emit)
+        self._field_table.table_changed.connect(self.accept)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -52,6 +50,21 @@ class InspectionEditor(QtWidgets.QDialog):
         self.layout().addWidget(self._field_table)
         self.layout().addWidget(self._button_box)
 
-    def accept(self):
-        self.changes_accepted.emit()
-        super().accept()
+    @QtCore.Slot(list, list)
+    def accept(self, fields: list[tuple[str, str]], is_deleted: list[bool]):
+        warn_columns = []
+        for i, old_name in enumerate(self._review.user_defined_columns):
+            if is_deleted[i] and self._review.has_data(old_name):
+                warn_columns.append(old_name)
+
+        accept = True
+        if warn_columns:
+            msg_box = QtWidgets.QMessageBox(self)
+            ans = msg_box.question(self, '', f"Data in the following column(s) will be deleted: {', '.join(warn_columns)}.\n"
+                                             "Are you sure you want to proceed?", msg_box.Yes | msg_box.No)
+            if ans == msg_box.No:
+                accept = False
+
+        if accept:
+            self.inspection_fields_updated.emit(fields, is_deleted)
+            super().accept()
