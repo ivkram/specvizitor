@@ -90,19 +90,21 @@ class TableRowEditor(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def validate_text(self):
+        ok_button_enabled = True
         for idx, row_item in enumerate(self._row_items):
             text = self.get_item_editor_text(row_item[1])
 
             use_regex = self._regex_pattern and self._regex_pattern[idx] is not None
             use_filter_list = self._filter_list and self._filter_list[idx] is not None
             if not (use_regex or use_filter_list):
-                return
+                continue
 
-            ok_button = self._button_box.button(QtWidgets.QDialogButtonBox.Ok)
             if (use_regex and re.match(self._regex_pattern[idx], text)) or (use_filter_list and text in self._filter_list[idx]):
-                ok_button.setEnabled(False)
-            else:
-                ok_button.setEnabled(True)
+                ok_button_enabled = False
+                break
+
+        ok_button = self._button_box.button(QtWidgets.QDialogButtonBox.Ok)
+        ok_button.setEnabled(ok_button_enabled)
 
     def accept(self):
         self.data_collected.emit(self._new_data)
@@ -160,7 +162,7 @@ class ParamTable(QtWidgets.QWidget):
             if i == self._current_row and not include_current_row:
                 continue
             for j, item in enumerate(row):
-                if self._is_unique:
+                if self._is_unique[j]:
                     filter_list[j].append(str(item.data(0)))
                 else:
                     filter_list[j].append(None)
