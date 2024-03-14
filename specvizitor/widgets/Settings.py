@@ -181,7 +181,7 @@ class Settings(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setWindowTitle("Settings [Beta]")
+        self.setWindowTitle("Settings")
 
         self.init_ui()
         self.set_layout()

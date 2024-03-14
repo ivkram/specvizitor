@@ -20,6 +20,7 @@ from .NewFile import NewFile
 from .ObjectInfo import ObjectInfo
 from .QuickSearch import QuickSearch
 from .InspectionResults import InspectionResults
+from .InspectionEditor import InspectionEditor
 from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
@@ -287,13 +288,17 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the child widgets to the main window
         self._quick_search.id_selected.connect(self.load_by_id)
         self._quick_search.index_selected.connect(self.load_by_index)
+
         self._subsets.inspect_button_clicked.connect(self._inspect_subset_action)
         self._subsets.pause_inspecting_button_clicked.connect(self._pause_inspecting_subset_action)
         self._subsets.stop_inspecting_button_clicked.connect(self._stop_inspecting_subset_action)
+
         self._commands_bar.navigation_button_clicked.connect(self.switch_object)
         self._commands_bar.star_button_clicked.connect(self.update_starred_state)
         self._commands_bar.screenshot_button_clicked.connect(self._screenshot_action)
         self._commands_bar.settings_button_clicked.connect(self._settings_action)
+
+        self._inspection_res.edit_button_clicked.connect(self._edit_inspection_file_action)
 
         self._data_viewer.data_collected.connect(self.save_viewer_data)
         self._object_info.data_collected.connect(self.save_obj_info_data)
@@ -405,7 +410,7 @@ class MainWindow(QtWidgets.QMainWindow):
             logger.error(f'Unknown command: {command}')
             return
 
-        if switch_to_starred and not self.rd.review.has_starred:
+        if switch_to_starred and not self.rd.review.has_data('starred'):
             logger.error('No starred objects found')
             return
 
@@ -530,6 +535,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.was_maximized:
             self.showMaximized()
 
+    def _edit_inspection_file_action(self):
+        dialog = InspectionEditor(review=self.rd.review, parent=self)
+        dialog.inspection_fields_updated.connect(self.update_inspection_fields)
+        if dialog.exec():
+            self.project_loaded.emit(self.rd.review)
+
     def _inspect_subset_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Subset')[0]
         if path:
@@ -601,6 +612,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.save()
         self._update_window_title()
 
+    @QtCore.Slot(list, list)
+    def update_inspection_fields(self, fields: list[tuple[str, str]], is_deleted: list[bool]):
+        old_columns = self.rd.review.user_defined_columns
+        for i, old_name in enumerate(old_columns):
+            new_name = fields[i][0]
+            if is_deleted[i]:
+                self.rd.review.delete_column(column_name=old_name)
+            elif old_name != new_name:
+                self.rd.review.rename_column(old_name=old_name, new_name=new_name)
+
+        for field in fields[len(old_columns):]:
+            new_name, new_type = field[0], field[1]
+            if new_type == 'boolean':
+                self.rd.review.add_flag_column(column_name=new_name)
+
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
 
@@ -612,7 +638,7 @@ class MainWindow(QtWidgets.QMainWindow):
         starred = not self.rd.review.get_value(self.rd.j, 'starred')
         self.rd.review.update_value(self.rd.j, 'starred', starred)
 
-        self.starred_state_updated.emit(starred, self.rd.review.has_starred)
+        self.starred_state_updated.emit(starred, self.rd.review.has_data('starred'))
 
     @QtCore.Slot(dict)
     def save_viewer_data(self, layout: dict):

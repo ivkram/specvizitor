@@ -1,4 +1,3 @@
-from astropy.table import Table
 from qtpy import QtWidgets, QtCore
 
 import logging
@@ -53,9 +52,9 @@ class ObjectInfo(AbstractWidget):
     @QtCore.Slot(object)
     def update_table_items(self, cat: Catalog | None):
         self.all_columns = cat.annotated_colnames if cat is not None else None
+
         self._create_table_items()
         self._set_table_items()
-
         self.update_visible_columns(list(self.all_columns.keys()))
 
     @QtCore.Slot()
@@ -90,7 +89,7 @@ class ObjectInfo(AbstractWidget):
         self._display_options.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
         self._search_lineedit.textChanged[str].connect(self.update_view)
-        self._display_options.pressed.connect(self._display_options_action)
+        self._display_options.clicked.connect(self._display_options_action)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())

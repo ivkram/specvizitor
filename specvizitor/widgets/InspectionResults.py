@@ -7,6 +7,7 @@ from ..utils.widgets import AbstractWidget
 
 class InspectionResults(AbstractWidget):
     data_collected = QtCore.Signal(float, str, dict)
+    edit_button_clicked = QtCore.Signal()
 
     def __init__(self, cfg: config.InspectionResults, parent=None):
 
@@ -21,7 +22,7 @@ class InspectionResults(AbstractWidget):
         self._checkbox_widgets: dict[str, QtWidgets.QCheckBox] | None = None
         self._comments_widget: QtWidgets.QTextEdit | None = None
 
-        self._edit_flags: QtWidgets.QPushButton | None = None
+        self._edit_fields: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
         self.setEnabled(False)
@@ -58,9 +59,8 @@ class InspectionResults(AbstractWidget):
         self._create_checkbox_widgets()
         self._comments_widget = QtWidgets.QTextEdit(self)
 
-        self._edit_flags = QtWidgets.QPushButton("Edit...", self)
-        self._edit_flags.pressed.connect(self._edit_flags_action)
-        self._edit_flags.setVisible(False)
+        self._edit_fields = QtWidgets.QPushButton("Edit...", self)
+        self._edit_fields.clicked.connect(self.edit_button_clicked.emit)
 
         self._clear_redshift.clicked.connect(self.clear_redshift_value)
 
@@ -83,7 +83,7 @@ class InspectionResults(AbstractWidget):
         self.layout().addWidget(QtWidgets.QLabel('Comments:', self))
         self.layout().addWidget(self._comments_widget)
 
-        self.layout().addWidget(self._edit_flags)
+        self.layout().addWidget(self._edit_fields)
 
     @QtCore.Slot(InspectionData)
     def load_project(self, review: InspectionData):
@@ -118,6 +118,3 @@ class InspectionResults(AbstractWidget):
         checkboxes = {cname: widget.isChecked() for cname, widget in self._checkbox_widgets.items()}
 
         self.data_collected.emit(redshift, comment, checkboxes)
-
-    def _edit_flags_action(self):
-        pass

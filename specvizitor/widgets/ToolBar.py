@@ -152,8 +152,8 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         for b in self._viewer_connected_buttons:
             b.setEnabled(True)
 
-        self._navigation_buttons['previous starred'].setEnabled(review.has_starred)
-        self._navigation_buttons['next starred'].setEnabled(review.has_starred)
+        self._navigation_buttons['previous starred'].setEnabled(review.has_data('starred'))
+        self._navigation_buttons['next starred'].setEnabled(review.has_data('starred'))
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):
