@@ -31,12 +31,15 @@ class Subsets(AbstractWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
     def init_ui(self):
-        self._inspect_subset = QtWidgets.QPushButton('Inspect...', parent=self)
+        self._inspect_subset = QtWidgets.QPushButton('Inspect Subset...', parent=self)
         self._pause_inspecting = QtWidgets.QPushButton('Pause', parent=self)
-        self._pause_inspecting.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
-        self._pause_inspecting.setEnabled(False)
         self._stop_inspecting = QtWidgets.QPushButton('Stop', parent=self)
-        self._stop_inspecting.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+
+        self._inspect_subset.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        for w in (self._pause_inspecting, self._stop_inspecting):
+            w.setFixedWidth(90)
+
+        self._pause_inspecting.setEnabled(False)
         self._stop_inspecting.setEnabled(False)
 
         self._subset_info = QtWidgets.QLabel(self)
@@ -52,6 +55,9 @@ class Subsets(AbstractWidget):
     def populate(self):
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.addWidget(self._inspect_subset)
+        self.layout().addLayout(sub_layout)
+
+        sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.addWidget(self._pause_inspecting)
         sub_layout.addWidget(self._stop_inspecting)
         self.layout().addLayout(sub_layout)
