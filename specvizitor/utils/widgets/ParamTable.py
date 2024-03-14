@@ -1,30 +1,35 @@
 from qtpy import QtCore, QtWidgets
 
 from functools import partial
+import re
 
 
 class TableRowEditor(QtWidgets.QDialog):
     data_collected = QtCore.Signal(list)
 
     def __init__(self, header: list[str], data: list[str] | None = None, name: str | None = None,
-                 item_choices: list[list[str] | None] | None = None, parent=None):
+                 item_choices: list[list[str] | None] | None = None, regex_pattern: list[str | None] | None = None,
+                 item_filter_list: list[list[str]] | None = None, parent=None):
         self._header = header
+        action = 'Add' if data is None else 'Edit'
+
+        if data is None:
+            data = [""] * len(header)
+        if item_choices is None:
+            item_choices = [] * len(header)
+
         self._old_data = data
         self._item_choices = item_choices
+        self._regex_pattern = regex_pattern
+        self._filter_list = item_filter_list
 
         self._button_box: QtWidgets.QDialogButtonBox | None = None
         self._row_items: list[tuple[QtWidgets.QLabel, QtWidgets.QLineEdit | QtWidgets.QComboBox]] | None = None
 
         super().__init__(parent=parent)
-        action = 'Add' if data is None else 'Edit'
         if name is None:
             name = 'Row'
         self.setWindowTitle(f"{action} {name}")
-
-        if self._old_data is None:
-            self._old_data = [""] * len(header)
-        if self._item_choices is None:
-            self._item_choices = [] * len(header)
 
         self.init_ui()
         self.set_layout()
@@ -43,7 +48,7 @@ class TableRowEditor(QtWidgets.QDialog):
 
     def _create_row_items(self):
         self._row_items = []
-        for item_label, item_value, item_choices in zip(self._header, self._old_data, self._item_choices):
+        for i, (item_label, item_value, item_choices) in enumerate(zip(self._header, self._old_data, self._item_choices)):
             label = QtWidgets.QLabel(f"{item_label}:", self)
             label.setFixedWidth(200)
             if item_choices:
@@ -51,12 +56,15 @@ class TableRowEditor(QtWidgets.QDialog):
                 item_editor.addItems(item_choices)
             else:
                 item_editor = QtWidgets.QLineEdit(item_value, self)
+                if self._regex_pattern or self._filter_list:
+                    item_editor.textChanged.connect(partial(self.validate_text, i))
+                    item_editor.textChanged.emit(item_value)  # in case we match against an empty string
             self._row_items.append((label, item_editor))
 
     def init_ui(self):
-        self._create_row_items()
         self._button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
+        self._create_row_items()
 
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
@@ -73,6 +81,19 @@ class TableRowEditor(QtWidgets.QDialog):
 
         self.layout().addWidget(self._button_box)
 
+    @QtCore.Slot(str)
+    def validate_text(self, index: int, text: str):
+        use_regex = self._regex_pattern[index] is not None
+        use_filter_list = self._filter_list[index] is not None
+        if not (use_regex or use_filter_list):
+            return
+
+        ok_button = self._button_box.button(QtWidgets.QDialogButtonBox.Ok)
+        if (use_regex and re.match(self._regex_pattern[index], text)) or (use_filter_list and text in self._filter_list[index]):
+            ok_button.setEnabled(False)
+        else:
+            ok_button.setEnabled(True)
+
     def accept(self):
         self.data_collected.emit(self._new_data)
         super().accept()
@@ -81,10 +102,15 @@ class TableRowEditor(QtWidgets.QDialog):
 class ParamTable(QtWidgets.QWidget):
     table_changed = QtCore.Signal(list, list)
 
-    def __init__(self, header: list[str], data: list[list[str]], parent=None, **kwargs):
+    def __init__(self, header: list[str], data: list[list[str]], is_unique: list[bool] | None = None,
+                 parent=None, **kwargs):
         self._header = header
         self._old_data = data
         self._row_editor_kwargs = kwargs
+
+        if is_unique is None:
+            is_unique = [False] * len(header)
+        self._is_unique = is_unique
 
         self._add_button: QtWidgets.QPushButton | None = None
         self._delete_button: QtWidgets.QPushButton | None = None
@@ -116,6 +142,19 @@ class ParamTable(QtWidgets.QWidget):
     @property
     def _current_row(self):
         return self._table.currentRow()
+
+    @property
+    def _item_filter_list(self):
+        filter_list = [[] for _ in range(len(self._header))]
+        for i, row in enumerate(self._table_items):
+            if i == self._current_row:
+                continue
+            for j, item in enumerate(row):
+                if self._is_unique:
+                    filter_list[j].append(str(item.data(0)))
+                else:
+                    filter_list[j].append(None)
+        return filter_list
 
     def _create_table_items(self):
         table_items = []
@@ -189,7 +228,8 @@ class ParamTable(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def _add_row_dialog(self):
-        dialog = TableRowEditor(header=self._header, **self._row_editor_kwargs, parent=self)
+        dialog = TableRowEditor(header=self._header, item_filter_list=self._item_filter_list,
+                                **self._row_editor_kwargs, parent=self)
         dialog.data_collected.connect(self._add_row)
         dialog.exec()
 
@@ -230,7 +270,8 @@ class ParamTable(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def _edit_row_dialog(self):
-        dialog = TableRowEditor(header=self._header, data=self._new_data[self._current_row], **self._row_editor_kwargs, parent=self)
+        dialog = TableRowEditor(header=self._header, data=self._new_data[self._current_row],
+                                item_filter_list=self._item_filter_list, **self._row_editor_kwargs, parent=self)
         dialog.data_collected.connect(partial(self._edit_row, self._current_row))
         dialog.exec()
 

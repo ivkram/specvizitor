@@ -1,4 +1,4 @@
-from qtpy import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from itertools import repeat
 import logging
@@ -12,9 +12,15 @@ logger = logging.getLogger(__name__)
 def inspection_field_table_factory(review: InspectionData, parent=None) -> ParamTable:
     header = ['Field', 'Type']
     data = list(zip(review.flag_columns, repeat('boolean')))
+    item_choices = [None, ('boolean',)]
 
-    return ParamTable(header=header, data=data, name='Inspection Field', item_choices=[None, ('boolean',)],
-                      parent=parent)
+    reserved_colnames = list(review.indices) + review.default_columns
+    regex_pattern = [fr"^({'|'.join(reserved_colnames)})?$", None]
+
+    is_unique = [True, False]
+
+    return ParamTable(header=header, data=data, name='Inspection Field', item_choices=item_choices,
+                      regex_pattern=regex_pattern, is_unique=is_unique, parent=parent)
 
 
 class InspectionEditor(QtWidgets.QDialog):
@@ -60,7 +66,7 @@ class InspectionEditor(QtWidgets.QDialog):
         accept = True
         if warn_columns:
             msg_box = QtWidgets.QMessageBox(self)
-            ans = msg_box.question(self, '', f"Data in the following column(s) will be deleted: {', '.join(warn_columns)}.\n"
+            ans = msg_box.question(self, '', f"Data in the following column(s) will be deleted: {', '.join(warn_columns)}. "
                                              "Are you sure you want to proceed?", msg_box.Yes | msg_box.No)
             if ans == msg_box.No:
                 accept = False

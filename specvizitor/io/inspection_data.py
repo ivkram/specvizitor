@@ -146,6 +146,10 @@ class InspectionData:
         return pd.api.types.is_integer_dtype(self.ids)
 
     @property
+    def indices(self) -> list[str]:
+        return self.df.index.names
+
+    @property
     def user_defined_columns(self) -> list[str]:
         return [cname for cname in self.df.columns if cname not in self.default_columns]
 
