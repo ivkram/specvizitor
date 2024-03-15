@@ -90,14 +90,14 @@ class Catalog:
 
         return cat
 
-    def update_translate(self, new_translate: dict[str, list[str]] | None) -> bool:
-        self.translate = new_translate
-        self.indices = []
+    def update_translate(self, new_translate: dict[str, list[str]] | None):
+        cat = Catalog(table=self.table)
 
-        if not self._add_indices():
-            return False
+        cat.translate = new_translate
+        if not cat._add_indices():
+            return None
 
-        return True
+        return cat
 
     def __len__(self):
         return len(self.table)

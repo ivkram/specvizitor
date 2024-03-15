@@ -173,9 +173,9 @@ class CatalogueWidget(SettingsWidget):
 
             return True
 
-        self._new_cat = self._old_cat
         if self._aliases_changed and self._old_cat is not None:
-            if not self._new_cat.update_translate(self._new_translate):
+            self._new_cat = self._old_cat.update_translate(self._new_translate)
+            if self._new_cat is None:
                 return False
 
         return True
