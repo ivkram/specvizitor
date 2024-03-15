@@ -208,9 +208,10 @@ def image_table_factory(images: dict[str, config.Image], parent=None) -> ParamTa
     data = [[label, img.filename, img.wcs_source] for label, img in images.items()]
     regex_pattern = [r'^\s*$', r'^\s*$', None]
     is_unique = [True, False, False]
+    is_browser = [False, True, True]
 
     return ParamTable(header=header, data=data, name='Image', regex_pattern=regex_pattern,
-                      is_unique=is_unique, remember_deleted=False, parent=parent)
+                      is_unique=is_unique, remember_deleted=False, is_browser=is_browser, parent=parent)
 
 
 class DataSourceWidget(SettingsWidget):

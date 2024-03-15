@@ -174,6 +174,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
         self._file.addAction(self._open_file)
 
+        self._file.addSeparator()
+
         self._export = QtWidgets.QAction("&Export FITS Table...")
         self._export.triggered.connect(self._export_action)
         self._export.setEnabled(False)

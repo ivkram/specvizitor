@@ -3,13 +3,15 @@ from qtpy import QtCore, QtWidgets
 from functools import partial
 import re
 
+from .FileBrowser import FileBrowser
+
 
 class TableRowEditor(QtWidgets.QDialog):
     data_collected = QtCore.Signal(list)
 
     def __init__(self, header: list[str], data: list[str] | None = None, name: str | None = None,
                  item_choices: list[list[str] | None] | None = None, regex_pattern: list[str | None] | None = None,
-                 item_filter_list: list[list[str]] | None = None, parent=None):
+                 item_filter_list: list[list[str]] | None = None, is_browser: list[bool] | None = None, parent=None):
         self._header = header
         action = 'Add' if data is None else 'Edit'
 
@@ -17,14 +19,17 @@ class TableRowEditor(QtWidgets.QDialog):
             data = [""] * len(header)
         if item_choices is None:
             item_choices = [None] * len(header)
+        if is_browser is None:
+            is_browser = [False] * len(header)
 
         self._old_data = data
         self._item_choices = item_choices
         self._regex_pattern = regex_pattern
         self._filter_list = item_filter_list
+        self._is_browser = is_browser
 
         self._button_box: QtWidgets.QDialogButtonBox | None = None
-        self._row_items: list[tuple[QtWidgets.QLabel, QtWidgets.QLineEdit | QtWidgets.QComboBox]] | None = None
+        self._row_items: list[tuple[QtWidgets.QLabel, QtWidgets.QLineEdit | QtWidgets.QComboBox | FileBrowser]] | None = None
 
         super().__init__(parent=parent)
         if name is None:
@@ -47,25 +52,31 @@ class TableRowEditor(QtWidgets.QDialog):
 
     @staticmethod
     def get_item_editor_text(item_editor) -> str:
+        if hasattr(item_editor, 'path'):
+            return item_editor.path
         if hasattr(item_editor, 'currentText'):
             return item_editor.currentText()
         else:
             return item_editor.text()
 
     def _create_row_items(self):
+        editor_width = 720 if sum(self._is_browser) else 360
         self._row_items = []
         for i, (item_label, item_value, item_choices) in enumerate(zip(self._header, self._old_data, self._item_choices)):
             label = QtWidgets.QLabel(f"{item_label}:", self)
             label.setFixedWidth(120)
-            if item_choices:
+            if self._is_browser[i]:
+                item_editor = FileBrowser(default_path=item_value, line_edit_width=0, parent=self)
+            elif item_choices:
                 item_editor = QtWidgets.QComboBox(self)
                 item_editor.addItems(item_choices)
+                item_editor.setCurrentIndex(item_choices.index(item_value))
             else:
                 item_editor = QtWidgets.QLineEdit(item_value, self)
                 if self._regex_pattern or self._filter_list:
                     item_editor.textChanged.connect(self.validate_text)
                     item_editor.textChanged.emit(item_value)  # in case we match against an empty string
-            item_editor.setFixedWidth(360)
+            item_editor.setFixedWidth(editor_width)
             self._row_items.append((label, item_editor))
 
     def init_ui(self):
