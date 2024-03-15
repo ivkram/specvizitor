@@ -3,13 +3,12 @@ from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
 
 from dataclasses import asdict
-from functools import partial
 from importlib.metadata import version
 import logging
 import pathlib
 
 from ..appdata import AppData
-from ..config import config, Config, Cache, DataWidgets, SpectralLineData
+from ..config import Config, Cache, DataWidgets, SpectralLineData
 from ..config.appearance import set_up_appearance
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData

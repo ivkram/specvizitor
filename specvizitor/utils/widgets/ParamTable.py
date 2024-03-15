@@ -16,7 +16,7 @@ class TableRowEditor(QtWidgets.QDialog):
         action = 'Add' if data is None else 'Edit'
 
         if data is None:
-            data = [""] * len(header)
+            data = [None] * len(header)
         if item_choices is None:
             item_choices = [None] * len(header)
         if is_browser is None:
@@ -70,12 +70,13 @@ class TableRowEditor(QtWidgets.QDialog):
             elif item_choices:
                 item_editor = QtWidgets.QComboBox(self)
                 item_editor.addItems(item_choices)
-                item_editor.setCurrentIndex(item_choices.index(item_value))
+                if item_value:
+                    item_editor.setCurrentIndex(item_choices.index(item_value))
             else:
-                item_editor = QtWidgets.QLineEdit(item_value, self)
+                item_editor = QtWidgets.QLineEdit(item_value if item_value else "", self)
                 if self._regex_pattern or self._filter_list:
                     item_editor.textChanged.connect(self.validate_text)
-                    item_editor.textChanged.emit(item_value)  # in case we match against an empty string
+                    item_editor.textChanged.emit(item_value if item_value else "")  # in case we match against an empty string
             item_editor.setFixedWidth(editor_width)
             self._row_items.append((label, item_editor))
 
