@@ -25,11 +25,12 @@ def inspection_field_table_factory(review: InspectionData, parent=None) -> Param
 
 class InspectionEditor(QtWidgets.QDialog):
     data_requested = QtCore.Signal()
-    inspection_fields_updated = QtCore.Signal(list, list)
+    inspection_fields_updated = QtCore.Signal(list, list, bool)
 
     def __init__(self, review: InspectionData, parent=None):
         self._review = review
         self._field_table: ParamTable | None = None
+        self._set_as_default_checkbox: QtWidgets.QCheckBox | None = None
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         self._new_fields: list[tuple[str, str]] | None = None
@@ -44,6 +45,7 @@ class InspectionEditor(QtWidgets.QDialog):
 
     def init_ui(self):
         self._field_table = inspection_field_table_factory(self._review, self)
+        self._set_as_default_checkbox = QtWidgets.QCheckBox('Set as default for new inspection files', self)
 
         self._button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
@@ -59,6 +61,7 @@ class InspectionEditor(QtWidgets.QDialog):
 
     def populate(self):
         self.layout().addWidget(self._field_table)
+        self.layout().addWidget(self._set_as_default_checkbox)
         self.layout().addWidget(self._button_box)
 
     @QtCore.Slot(list, list)
@@ -85,5 +88,5 @@ class InspectionEditor(QtWidgets.QDialog):
                 accept = False
 
         if accept:
-            self.inspection_fields_updated.emit(self._new_fields, self._is_deleted)
+            self.inspection_fields_updated.emit(self._new_fields, self._is_deleted, self._set_as_default_checkbox.isChecked())
             super().accept()

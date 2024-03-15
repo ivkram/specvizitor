@@ -620,8 +620,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.save()
         self._update_window_title()
 
-    @QtCore.Slot(list, list)
-    def update_inspection_fields(self, fields: list[tuple[str, str]], is_deleted: list[bool]):
+    @QtCore.Slot(list, list, bool)
+    def update_inspection_fields(self, fields: list[tuple[str, str]], is_deleted: list[bool], set_as_default: bool):
         old_columns = self.rd.review.user_defined_columns
         for i, old_name in enumerate(old_columns):
             new_name = fields[i][0]
@@ -634,6 +634,11 @@ class MainWindow(QtWidgets.QMainWindow):
             new_name, new_type = field[0], field[1]
             if new_type == 'boolean':
                 self.rd.review.add_flag_column(column_name=new_name)
+
+        if set_as_default:
+            default_flags = self.rd.review.flag_columns
+            self._config.inspection_results.default_flags = default_flags if default_flags else None
+            self._config.save()
 
     def _about_action(self):
         QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
