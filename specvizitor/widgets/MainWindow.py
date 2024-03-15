@@ -30,14 +30,14 @@ logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
     project_loaded = QtCore.Signal(InspectionData)
-    object_selected = QtCore.Signal(int, InspectionData, object, config.Data)
+    object_selected = QtCore.Signal(int, InspectionData, object)
     data_requested = QtCore.Signal()
-    data_sources_updated = QtCore.Signal(dict)
     save_action_invoked = QtCore.Signal()
     delete_action_invoked = QtCore.Signal()
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
+    data_source_changed = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
     visible_columns_updated = QtCore.Signal(list)
     dock_layout_updated = QtCore.Signal(dict)
@@ -124,8 +124,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self._data_viewer = DataViewer(self._config.data_viewer, self._config.appearance, self._viewer_cfg,
-                                       images=self._config.data.images, spectral_lines=self._spectral_lines,
+        self._data_viewer = DataViewer(self._config.data_viewer, self._config.data, self._config.appearance,
+                                       self._viewer_cfg, spectral_lines=self._spectral_lines,
                                        plugins=self._plugins, parent=self)
 
         # create a toolbar
@@ -254,8 +254,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def connect(self):
         # connect the main window to the child widgets
-        self.data_sources_updated.connect(self._data_viewer.load_field_images)
-
         for w in (self._data_viewer, self._commands_bar, self._quick_search, self._object_info, self._inspection_res,
                   self._subsets):
             self.project_loaded.connect(w.load_project)
@@ -269,6 +267,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.theme_changed.connect(self._data_viewer.init_ui)
         self.theme_changed.connect(self._commands_bar._set_icons)
         self.catalogue_changed.connect(self._object_info.update_table_items)
+        self.data_source_changed.connect(self._data_viewer.load_field_images)
         self.spectral_lines_changed.connect(self._data_viewer.spectral_lines_changed.emit)
         self.visible_columns_updated.connect(self._object_info.update_visible_columns)
         self.dock_layout_updated.connect(self._data_viewer.restore_dock_layout)
@@ -405,7 +404,7 @@ class MainWindow(QtWidgets.QMainWindow):
         obj_id = self.rd.review.get_id(j, full=True)
         cat_entry = self.rd.cat.get_cat_entry(obj_id)
 
-        self.object_selected.emit(self.rd.j, self.rd.review, cat_entry, self._config.data)
+        self.object_selected.emit(self.rd.j, self.rd.review, cat_entry)
 
         self._update_window_title()
 
@@ -594,6 +593,8 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
         dialog.spectral_lines_changed.connect(self.spectral_lines_changed.emit)
+        dialog.data_source_changed.connect(self.data_source_changed.emit)
+
         if dialog.exec():
             self._reload()
 

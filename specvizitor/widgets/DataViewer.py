@@ -39,14 +39,15 @@ class DataViewer(AbstractWidget):
 
     def __init__(self,
                  cfg: config.DataViewer,
+                 data_cfg: config.Data,
                  appearance: config.Appearance,
                  viewer_cfg: DataWidgets,
-                 images: dict[str, config.Image] | None = None,
                  spectral_lines: SpectralLineData | None = None,
                  plugins: list[PluginCore] | None = None,
                  parent=None):
 
         self.cfg = cfg
+        self._data_cfg = data_cfg
         self._appearance = appearance
         self._viewer_cfg = viewer_cfg
         self._spectral_lines = spectral_lines
@@ -54,8 +55,6 @@ class DataViewer(AbstractWidget):
 
         # images that are shared between widgets and can be used to create cutouts
         self._field_images: dict[str, FieldImage] = {}
-
-        self._field_images_cfg: dict[str, config.Data.images] = images if images else {}
         self.load_field_images()
 
         self.dock_area: DockArea | None = None
@@ -257,9 +256,14 @@ class DataViewer(AbstractWidget):
         self._viewer_cfg = viewer_cfg
         self.init_ui()
 
-    @QtCore.Slot(dict)
+    @QtCore.Slot()
     def load_field_images(self):
-        for img_label, img_cfg in self._field_images_cfg.items():
+        self._field_images = {}
+
+        if self._data_cfg.images is None:
+            return
+
+        for img_label, img_cfg in self._data_cfg.images.items():
             data, meta = load_image(filename=img_cfg.filename, loader=img_cfg.loader, widget_title='Data Viewer',
                                     wcs_source=img_cfg.wcs_source, **(img_cfg.loader_params or {}))
             if data is None:
@@ -267,7 +271,7 @@ class DataViewer(AbstractWidget):
 
             self._field_images[img_label] = FieldImage(pathlib.Path(img_cfg.filename), data, meta)
 
-    @QtCore.Slot(str, REQUESTS, dict)
+    @QtCore.Slot(str, object, dict)
     def _query_shared_resources(self, widget_title: str, request: REQUESTS, request_params: dict):
         if request == REQUESTS.CUTOUT:
             label = request_params.get('image')
@@ -299,10 +303,10 @@ class DataViewer(AbstractWidget):
     def load_project(self):
         self.setEnabled(True)
 
-    @QtCore.Slot(int, InspectionData, object, config.Data)
-    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, data_cfg: config.Data):
+    @QtCore.Slot(int, InspectionData, object)
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
         # perform search for files containing the object ID in their filename
-        discovered_data_files = get_filenames_from_id(data_cfg.dir, review.get_id(j))
+        discovered_data_files = get_filenames_from_id(self._data_cfg.dir, review.get_id(j))
 
         self._disconnect_widgets()
 

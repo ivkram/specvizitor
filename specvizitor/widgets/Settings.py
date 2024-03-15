@@ -98,12 +98,9 @@ class AppearanceWidget(SettingsWidget):
             self.appearance_changed.emit(self._theme_changed)
 
 
-def column_aliases_table_factory(translate: dict[str, list[str]] | None = None, parent=None) -> ParamTable:
+def column_aliases_table_factory(translate: dict[str, list[str]], parent=None) -> ParamTable:
     header = ['Column', 'Aliases']
-    if translate is None:
-        data = []
-    else:
-        data = [[cname, ','.join(cname_aliases)] for cname, cname_aliases in translate.items()]
+    data = [[cname, ','.join(cname_aliases)] for cname, cname_aliases in translate.items()]
     regex_pattern = [r'^\s*$', r'^\s*$']
     is_unique = [True, False]
 
@@ -136,7 +133,8 @@ class CatalogueWidget(SettingsWidget):
         self._browser = cat_browser(self.cfg.filename, title='Filename:', parent=self)
 
         self._aliases_section = Section("Column aliases", parent=self)
-        self._aliases_table = column_aliases_table_factory(self.cfg.translate, parent=self)
+        self._aliases_table = column_aliases_table_factory(self.cfg.translate if self.cfg.translate else {},
+                                                           parent=self)
 
         self.data_requested.connect(self._aliases_table.collect)
         self._aliases_table.data_collected.connect(self.save_aliases)
@@ -188,8 +186,9 @@ class CatalogueWidget(SettingsWidget):
         for alias in table_data:
             translate[alias[0]] = alias[1].split(',')
 
-        self._aliases_changed = False
-        if not self.cfg.translate.keys() == translate.keys() or not list(self.cfg.translate.values()) == list(translate.values()):
+        if self.cfg.translate.keys() == translate.keys() and list(self.cfg.translate.values()) == list(translate.values()):
+            self._aliases_changed = False
+        else:
             self._aliases_changed = True
 
         self._new_translate = translate if translate else None
@@ -204,34 +203,73 @@ class CatalogueWidget(SettingsWidget):
             self.catalog_changed.emit(self._new_cat)
 
 
+def image_table_factory(images: dict[str, config.Image], parent=None) -> ParamTable:
+    header = ['Label', 'Path', 'WCS Source']
+    data = [[label, img.filename, img.wcs_source] for label, img in images.items()]
+    regex_pattern = [r'^\s*$', r'^\s*$', None]
+    is_unique = [True, False, False]
+
+    return ParamTable(header=header, data=data, name='Image', regex_pattern=regex_pattern,
+                      is_unique=is_unique, remember_deleted=False, parent=parent)
+
+
 class DataSourceWidget(SettingsWidget):
+    data_requested = QtCore.Signal()
+    images_changed = QtCore.Signal()
+
     def __init__(self, cfg: config.Data, parent=None):
         self.cfg = cfg
 
         self._browser: FileBrowser | None = None
+        self._image_table: ParamTable | None = None
 
         self._new_dir: str | None = None
+        self._new_images: dict[config.Image] | None = None
+
+        self._images_changed: bool = False
 
         super().__init__(parent=parent)
 
     def init_ui(self):
         self._browser = data_browser(self.cfg.dir, title='Directory:', parent=self)
+        self._image_table = image_table_factory(self.cfg.images, self)
+
+        self.data_requested.connect(self._image_table.collect)
+        self._image_table.data_collected.connect(self.save_images)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
 
     def populate(self):
         self.layout().addWidget(self._browser)
+        self.layout().addWidget(self._image_table)
 
     def collect(self) -> bool:
+        self.data_requested.emit()
+
         if not self._browser.is_filled(verbose=True) or not self._browser.exists(verbose=True):
             return False
 
         self._new_dir = self._browser.path
         return True
 
+    @QtCore.Slot(list)
+    def save_images(self, table_data: list[tuple[str, str, str]]):
+        images = {}
+        for img in table_data:
+            images[img[0]] = config.Image(filename=img[1], wcs_source=img[2])
+
+        old_data = [[label, img.filename, img.wcs_source] for label, img in self.cfg.images.items()] if self.cfg.images else []
+        self._images_changed = True if old_data != table_data else False
+
+        self._new_images = images if images else None
+
     def accept(self):
         self.cfg.dir = self._new_dir
+        self.cfg.images = self._new_images
+
+        if self._images_changed:
+            self.images_changed.emit()
 
 
 def spectral_lines_table_factory(wavelengths: dict[str, float], parent=None) -> ParamTable:
@@ -299,6 +337,7 @@ class SpectralLineWidget(SettingsWidget):
 class Settings(QtWidgets.QDialog):
     appearance_changed = QtCore.Signal(bool)
     catalogue_changed = QtCore.Signal(object)
+    data_source_changed = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
 
     def __init__(self, cat: Catalog, cfg: config.Config, spectral_lines: SpectralLineData, parent=None):
@@ -326,6 +365,7 @@ class Settings(QtWidgets.QDialog):
                       'Spectral Lines': SpectralLineWidget(self._spectral_lines, self)}
         self._tabs['Appearance'].appearance_changed.connect(self.appearance_changed.emit)
         self._tabs['Catalogue'].catalog_changed.connect(self.catalogue_changed.emit)
+        self._tabs['Data Source'].images_changed.connect(self.data_source_changed.emit)
         self._tabs['Spectral Lines'].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
 
     def add_tabs(self):
