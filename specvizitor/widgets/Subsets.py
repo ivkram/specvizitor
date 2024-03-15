@@ -43,6 +43,7 @@ class Subsets(AbstractWidget):
         self._stop_inspecting.setEnabled(False)
 
         self._subset_info = QtWidgets.QLabel(self)
+        self._subset_info.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Fixed)
         self._subset_info.setVisible(False)
 
         self._inspect_subset.clicked.connect(self.inspect_button_clicked.emit)

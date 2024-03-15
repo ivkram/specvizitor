@@ -75,10 +75,10 @@ class ObjectInfo(AbstractWidget):
         self._table = QtWidgets.QTableWidget(self)
         self._table.setColumnCount(2)
         self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self._table.horizontalHeader().hide()
+        # self._table.horizontalHeader().hide()
         self._table.horizontalHeader().setStretchLastSection(True)
-        self._table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        # self._table.setHorizontalHeaderLabels(('key', 'value'))
+        # self._table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        self._table.setHorizontalHeaderLabels(('Column', 'Value'))
         self._table.verticalHeader().hide()
         self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 

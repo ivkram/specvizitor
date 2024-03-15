@@ -26,7 +26,7 @@ class InspectionResults(AbstractWidget):
 
         super().__init__(parent=parent)
         self.setEnabled(False)
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
 
     def _create_checkbox_widgets(self, review: InspectionData | None = None):
         if self._checkbox_widgets is not None:
@@ -40,6 +40,7 @@ class InspectionResults(AbstractWidget):
             for i, flag_name in enumerate(flags):
                 # TODO: overwrite the keyPressEvent method of QtWidgets.QCheckBox to add shortcuts
                 checkbox_widget = QtWidgets.QCheckBox(flag_name, self)
+                checkbox_widget.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Fixed)
                 checkbox_widgets[flag_name] = checkbox_widget
                 
                 if i < 9:
@@ -58,6 +59,8 @@ class InspectionResults(AbstractWidget):
 
         self._create_checkbox_widgets()
         self._comments_widget = QtWidgets.QTextEdit(self)
+        self._comments_widget.setPlaceholderText('Comment')
+        self._comments_widget.setMinimumWidth(90)
 
         self._edit_fields = QtWidgets.QPushButton("Edit...", self)
         self._edit_fields.clicked.connect(self.edit_button_clicked.emit)
@@ -80,7 +83,6 @@ class InspectionResults(AbstractWidget):
         for i, widget in enumerate(self._checkbox_widgets.values()):
             self.layout().addWidget(widget)
 
-        self.layout().addWidget(QtWidgets.QLabel('Comments:', self))
         self.layout().addWidget(self._comments_widget)
 
         self.layout().addWidget(self._edit_fields)
