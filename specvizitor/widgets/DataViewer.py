@@ -38,20 +38,20 @@ class DataViewer(AbstractWidget):
     spectral_lines_changed = QtCore.Signal()
 
     def __init__(self,
-                 cfg: config.DataViewer,
+                 global_cfg: config.DataViewer,
                  data_cfg: config.Data,
+                 widget_cfg: DataWidgets,
                  appearance: config.Appearance,
-                 viewer_cfg: DataWidgets,
-                 spectral_lines: SpectralLineData | None = None,
-                 plugins: list[PluginCore] | None = None,
+                 spectral_lines: SpectralLineData,
+                 plugins: list[PluginCore],
                  parent=None):
 
-        self.cfg = cfg
+        self._global_cfg = global_cfg
         self._data_cfg = data_cfg
+        self._widget_cfg = widget_cfg
         self._appearance = appearance
-        self._viewer_cfg = viewer_cfg
         self._spectral_lines = spectral_lines
-        self._plugins: list[PluginCore] = plugins if plugins is not None else []
+        self._plugins = plugins
 
         # images that are shared between widgets and can be used to create cutouts
         self._field_images: dict[str, FieldImage] = {}
@@ -77,34 +77,37 @@ class DataViewer(AbstractWidget):
     def active_widgets(self) -> dict[str, ViewerElement]:
         return {title: w for title, w in self.widgets.items() if w.data is not None}
 
+    def _delete_widgets(self):
+        # disconnect signals
+        self.object_selected.disconnect()
+        self.zen_mode_activated.disconnect()
+        self.visibility_changed.disconnect()
+        self.shared_resources_queried.disconnect()
+        self.spectral_lines_changed.disconnect()
+        safe_disconnect(self.view_reset)
+
+        for w in self.widgets.values():
+            w.graphics_layout.clear()
+            w.deleteLater()
+
+        self.widgets = {}
+
     def _create_widgets(self):
         # delete previously created widgets
         if self.widgets:
-            # disconnect signals
-            self.object_selected.disconnect()
-            self.zen_mode_activated.disconnect()
-            self.visibility_changed.disconnect()
-            self.shared_resources_queried.disconnect()
-            self.spectral_lines_changed.disconnect()
-            safe_disconnect(self.view_reset)
-
-            for w in self.widgets.values():
-                w.graphics_layout.clear()
-                w.deleteLater()
+            self._delete_widgets()
 
         widgets = {}
 
         # create widgets for images (e.g. image cutouts, 2D spectra)
-        if self._viewer_cfg.images is not None:
-            for name, image_cfg in self._viewer_cfg.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
-                                        spectral_lines=self._spectral_lines, parent=self)
+        for name, image_cfg in self._widget_cfg.images.items():
+            widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
+                                    spectral_lines=self._spectral_lines, parent=self)
 
         # create widgets for plots, including 1D spectra
-        if self._viewer_cfg.plots is not None:
-            for name, plot_cfg in self._viewer_cfg.plots.items():
-                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
-                                       spectral_lines=self._spectral_lines, parent=self)
+        for name, plot_cfg in self._widget_cfg.plots.items():
+            widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
+                                   spectral_lines=self._spectral_lines, parent=self)
 
         for plugin in self._plugins:
             plugin.overwrite_widget_configs(widgets)
@@ -188,10 +191,14 @@ class DataViewer(AbstractWidget):
             dock.close()
             return
 
-    def _create_docks(self):
-        # delete previously created docks
+    def _close_docks(self):
         for d in self.docks.values():
             self._close_dock(d)
+        self.docks = {}
+
+    def _create_docks(self):
+        # delete previously created docks
+        self._close_docks()
 
         docks = {}
         for widget in self.widgets.values():
@@ -253,7 +260,7 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(DataWidgets)
     def update_viewer_configuration(self, viewer_cfg: DataWidgets):
-        self._viewer_cfg = viewer_cfg
+        self._widget_cfg = viewer_cfg
         self.init_ui()
 
     @QtCore.Slot()
@@ -340,7 +347,7 @@ class DataViewer(AbstractWidget):
     def change_redshift(self, n_steps: int, small_step: bool = False):
         slider = self._find_active_redshift_slider()
         if slider:
-            step = self.cfg.redshift_small_step if small_step else self.cfg.redshift_step
+            step = self._global_cfg.redshift_small_step if small_step else self._global_cfg.redshift_step
             self.redshift_changed.connect(slider.change_redshift)
             self.redshift_changed.emit(n_steps * step)
             self.redshift_changed.disconnect()

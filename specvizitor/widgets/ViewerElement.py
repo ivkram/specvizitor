@@ -15,7 +15,7 @@ from ..config import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
 from ..io.viewer_data import load_widget_data, REQUESTS
-from ..utils.widgets import AbstractWidget
+from ..utils.widgets import AbstractWidget, MyViewBox
 
 from .SmartSlider import SmartSlider
 
@@ -120,7 +120,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
     ALLOWED_DATA_TYPES: tuple[type] | None = None
 
     def __init__(self, title: str, cfg: data_widgets.ViewerElement, appearance: config.Appearance,
-                 spectral_lines: SpectralLineData | None = None, parent=None):
+                 spectral_lines: SpectralLineData, parent=None):
         self.title = title
         self.cfg = cfg
         self.appearance = appearance
@@ -140,7 +140,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.container: pg.PlotItem | None = None
         self._registered_items: list[pg.GraphicsItem] = []
 
-        self._spectral_lines = spectral_lines if spectral_lines is not None else SpectralLineData()
+        self._spectral_lines = spectral_lines
         self._spectral_line_artists: dict[str, tuple[pg.InfiniteLine, pg.TextItem]] = {}
 
         # sliders
@@ -204,7 +204,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._graphics_view.setCentralItem(self.graphics_layout)
 
         # create the graphics container
-        self.container = pg.PlotItem(name=self.title)
+        self.container = pg.PlotItem(name=self.title, viewBox=MyViewBox(enableMenu=False))
         self.set_axes_visibility()
         self.container.hideButtons()
         self.container.setMouseEnabled(True, True)

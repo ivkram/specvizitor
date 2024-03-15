@@ -9,9 +9,10 @@ import pathlib
 
 from ..appdata import AppData
 from ..config import Config, Cache, DataWidgets, SpectralLineData
-from ..config.appearance import set_up_appearance
+from ..config.appearance import setup_appearance
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
+from ..plugins.plugin_core import PluginCore
 from ..utils.params import save_yaml
 
 from .DataViewer import DataViewer
@@ -28,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
+    EXIT_CODE_REBOOT = -42
+
     project_loaded = QtCore.Signal(InspectionData)
     object_selected = QtCore.Signal(int, InspectionData, object)
     data_requested = QtCore.Signal()
@@ -52,21 +55,28 @@ class MainWindow(QtWidgets.QMainWindow):
     zen_mode_activated = QtCore.Signal()
     zen_mode_deactivated = QtCore.Signal()
 
-    def __init__(self, global_cfg: Config, cache: Cache, viewer_cfg: DataWidgets,
-                 spectral_lines: SpectralLineData | None = None, plugins=None, parent=None):
+    def __init__(self,
+                 config: Config | None = None,
+                 cache: Cache | None = None,
+                 widget_cfg: DataWidgets | None = None,
+                 spectral_lines: SpectralLineData | None = None,
+                 plugins: list[PluginCore] | None = None,
+                 parent=None):
+
         super().__init__(parent)
 
         self.rd = AppData()
-        
-        self._config = global_cfg
-        self._cache = cache
 
-        self._viewer_cfg = viewer_cfg
+        self._config = config if config else Config()
+        self._cache = cache if cache else Cache()
+        self._widget_cfg = widget_cfg if widget_cfg else DataWidgets()
+        self._spectral_lines = spectral_lines if spectral_lines else SpectralLineData()
+        self._plugins: list[PluginCore] = plugins if plugins is not None else []
+
         self._subset_cat: Catalog | None = None
         self._subset_inspection_paused: bool = False
-        self._spectral_lines = spectral_lines
 
-        self._plugins = plugins
+        self._restart_requested = False
 
         self.interface_hidden: bool = False
         self.was_maximized: bool = False
@@ -123,8 +133,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         # create a central widget
-        self._data_viewer = DataViewer(self._config.data_viewer, self._config.data, self._config.appearance,
-                                       self._viewer_cfg, spectral_lines=self._spectral_lines,
+        self._data_viewer = DataViewer(self._config.data_viewer, self._config.data, self._widget_cfg,
+                                       self._config.appearance, spectral_lines=self._spectral_lines,
                                        plugins=self._plugins, parent=self)
 
         # create a toolbar
@@ -499,14 +509,14 @@ class MainWindow(QtWidgets.QMainWindow):
         path = qtpy.compat.getopenfilename(self, caption='Open Viewer Configuration',
                                            filters='YAML Files (*.yml)')[0]
         if path:
-            new_viewer_cfg = self._viewer_cfg.replace_params(pathlib.Path(path))
+            new_viewer_cfg = self._widget_cfg.replace_params(pathlib.Path(path))
             if new_viewer_cfg is None:
                 logger.error('Failed to restore the viewer configuration')
             else:
-                self._viewer_cfg = new_viewer_cfg
-                self._viewer_cfg.save()
+                self._widget_cfg = new_viewer_cfg
+                self._widget_cfg.save()
 
-                self.viewer_configuration_updated.emit(self._viewer_cfg)
+                self.viewer_configuration_updated.emit(self._widget_cfg)
 
                 self._reload()
 
@@ -518,7 +528,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='YAML Files (*.yml)')[0]
 
         if path:
-            save_yaml(path, asdict(self._viewer_cfg))
+            save_yaml(path, asdict(self._widget_cfg))
             logger.info('Viewer configuration saved')
 
     def _hide_interface(self):
@@ -590,20 +600,24 @@ class MainWindow(QtWidgets.QMainWindow):
             self.screenshot_path_selected.emit(path)
 
     def _settings_action(self):
+        self._restart_requested = False
+
         dialog = Settings(self.rd.cat, self._config, self._spectral_lines, parent=self)
+
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
         dialog.spectral_lines_changed.connect(self.spectral_lines_changed.emit)
         dialog.data_source_changed.connect(self.data_source_changed.emit)
 
-        if dialog.exec():
-            self._reload()
+        dialog.restart_requested.connect(self.restart)
 
-    @QtCore.Slot(bool)
-    def update_appearance(self, theme_changed: bool = False):
-        set_up_appearance(self._config.appearance)
-        if theme_changed:
-            self.theme_changed.emit()
+        if dialog.exec():
+            if not self._restart_requested:
+                self._reload()
+
+    @QtCore.Slot()
+    def update_appearance(self):
+        setup_appearance(self._config.appearance, update_theme=False)
 
     @QtCore.Slot(object)
     def update_catalogue(self, cat: Catalog | None):
@@ -670,3 +684,9 @@ class MainWindow(QtWidgets.QMainWindow):
         for cname, is_checked in checkboxes.items():
             self.rd.review.update_value(self.rd.j, cname, is_checked)
         self.rd.save()
+
+    @QtCore.Slot()
+    def restart(self):
+        self._restart_requested = True
+        self._exit_action()
+        QtWidgets.QApplication.exit(MainWindow.EXIT_CODE_REBOOT)

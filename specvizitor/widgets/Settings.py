@@ -339,15 +339,19 @@ class SpectralLineWidget(SettingsWidget):
 
 
 class Settings(QtWidgets.QDialog):
-    appearance_changed = QtCore.Signal(bool)
+    appearance_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
     data_source_changed = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
+
+    restart_requested = QtCore.Signal()
 
     def __init__(self, cat: Catalog, cfg: config.Config, spectral_lines: SpectralLineData, parent=None):
         self._old_cat = cat
         self._cfg = cfg
         self._spectral_lines = spectral_lines
+
+        self._restart_required: bool = False
 
         self._tab_widget: QtWidgets.QTabWidget | None = None
         self._tabs: dict[str, SettingsWidget] | None = None
@@ -367,7 +371,7 @@ class Settings(QtWidgets.QDialog):
                       'Catalogue': CatalogueWidget(self._old_cat, self._cfg.catalogue, self),
                       'Data Source': DataSourceWidget(self._cfg.data, self),
                       'Spectral Lines': SpectralLineWidget(self._spectral_lines, self)}
-        self._tabs['Appearance'].appearance_changed.connect(self.appearance_changed.emit)
+        self._tabs['Appearance'].appearance_changed.connect(self._appearance_changed_action)
         self._tabs['Catalogue'].catalog_changed.connect(self.catalogue_changed.emit)
         self._tabs['Data Source'].images_changed.connect(self.data_source_changed.emit)
         self._tabs['Spectral Lines'].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
@@ -401,6 +405,11 @@ class Settings(QtWidgets.QDialog):
         self.layout().addWidget(self._info_label)
         self.layout().addWidget(self._button_box)
 
+    @QtCore.Slot(bool)
+    def _appearance_changed_action(self, theme_changed: bool):
+        self._restart_required = self._restart_required or theme_changed
+        self.appearance_changed.emit()
+
     @qlog
     def collect(self) -> bool:
         for t in self._tabs.values():
@@ -409,6 +418,8 @@ class Settings(QtWidgets.QDialog):
         return True
 
     def accept(self):
+        self._restart_required = False
+
         if not self.collect():
             return
 
@@ -418,4 +429,15 @@ class Settings(QtWidgets.QDialog):
         self._cfg.save()
         self._spectral_lines.save()
 
+        restart_requested = False
+        if self._restart_required:
+            msg_box = QtWidgets.QMessageBox(self)
+            ans = msg_box.question(self, '', f"Restart required to apply changes. Restart now?",
+                                   msg_box.Yes | msg_box.No)
+            if ans == msg_box.Yes:
+                restart_requested = True
+
         super().accept()
+
+        if restart_requested:
+            self.restart_requested.emit()

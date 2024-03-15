@@ -115,10 +115,10 @@ class Image(ViewerElement):
 
 @dataclass
 class Plot1D(ViewerElement):
-    plots: dict[str, LinePlot] | None = None
+    plots: dict[str, LinePlot] = field(default_factory=dict)
 
 
 @dataclass
 class DataWidgets(Params):
-    images: dict[str, Image] | None
-    plots: dict[str, Plot1D] | None
+    images: dict[str, Image] = field(default_factory=dict)
+    plots: dict[str, Plot1D] = field(default_factory=dict)

@@ -78,7 +78,7 @@ class ObjectInfo(AbstractWidget):
         # self._table.horizontalHeader().hide()
         self._table.horizontalHeader().setStretchLastSection(True)
         # self._table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        self._table.setHorizontalHeaderLabels(('Column', 'Value'))
+        self._table.setHorizontalHeaderLabels(('Key', 'Value'))
         self._table.verticalHeader().hide()
         self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
