@@ -222,6 +222,7 @@ class DataSourceWidget(SettingsWidget):
         self.cfg = cfg
 
         self._browser: FileBrowser | None = None
+        self._image_label: QtWidgets.QLabel | None = None
         self._image_table: ParamTable | None = None
 
         self._new_dir: str | None = None
@@ -232,7 +233,8 @@ class DataSourceWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._browser = data_browser(self.cfg.dir, title='Directory:', parent=self)
+        self._browser = data_browser(self.cfg.dir, title="Directory:", parent=self)
+        self._image_label = QtWidgets.QLabel("Images:", self)
         self._image_table = image_table_factory(self.cfg.images, self)
 
         self.data_requested.connect(self._image_table.collect)
@@ -243,6 +245,7 @@ class DataSourceWidget(SettingsWidget):
 
     def populate(self):
         self.layout().addWidget(self._browser)
+        self.layout().addWidget(self._image_label)
         self.layout().addWidget(self._image_table)
 
     def collect(self) -> bool:
