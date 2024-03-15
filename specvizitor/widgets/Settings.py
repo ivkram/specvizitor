@@ -189,10 +189,8 @@ class CatalogueWidget(SettingsWidget):
             translate[alias[0]] = alias[1].split(',')
 
         self._aliases_changed = False
-        for cname, cname_aliases in translate.items():
-            if cname not in self.cfg.translate.keys() or cname_aliases != self.cfg.translate[cname]:
-                self._aliases_changed = True
-                break
+        if not self.cfg.translate.keys() == translate.keys() or not list(self.cfg.translate.values()) == list(translate.values()):
+            self._aliases_changed = True
 
         self._new_translate = translate if translate else None
 
@@ -283,13 +281,11 @@ class SpectralLineWidget(SettingsWidget):
             wavelengths[line[0]] = float(line[1])
 
         self._wavelengths_changed = False
-        if not sorted(self.cfg.wavelengths.keys()) == sorted(wavelengths.keys()):
+        if not self.cfg.wavelengths.keys() == wavelengths.keys():
             self._wavelengths_changed = True
-        else:
-            for line, wave in wavelengths.items():
-                if not np.isclose(wave, self.cfg.wavelengths[line]):
-                    self._wavelengths_changed = True
-                    break
+        elif not np.isclose(np.fromiter(wavelengths.values(), dtype=float),
+                            np.fromiter(self.cfg.wavelengths.values(), dtype=float)).all():
+            self._wavelengths_changed = True
 
         self._new_wavelengths = wavelengths
 
