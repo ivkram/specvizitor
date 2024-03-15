@@ -79,6 +79,7 @@ class ObjectInfo(AbstractWidget):
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         # self._table.setHorizontalHeaderLabels(('key', 'value'))
+        self._table.verticalHeader().hide()
         self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
         self._search_label = QtWidgets.QLabel("Search:", self)
