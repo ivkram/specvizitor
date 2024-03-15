@@ -51,7 +51,7 @@ class Catalog:
                 self.add_index(id_col.name)
 
         for idx in self.indices:
-            if isinstance(self.get_col(idx), MaskedColumn):
+            if isinstance(self.get_col(idx), MaskedColumn) and np.sum(self.get_col(idx).mask):
                 logger.error(f"Some IDs are missing (column: {idx})")
                 return False
 
