@@ -261,7 +261,7 @@ class DataSourceWidget(SettingsWidget):
     def save_images(self, table_data: list[tuple[str, str, str]]):
         images = {}
         for img in table_data:
-            images[img[0]] = config.Image(filename=img[1], wcs_source=img[2])
+            images[img[0]] = config.Image(filename=img[1], wcs_source=img[2] if img[2] else None)
 
         old_data = [[label, img.filename, img.wcs_source] for label, img in self.cfg.images.items()] if self.cfg.images else []
         self._images_changed = True if old_data != table_data else False

@@ -12,7 +12,7 @@ class Catalogue:
 
 @dataclass
 class Image:
-    filename: str | None = None
+    filename: str
     wcs_source: str | None = None
     loader: str = 'auto'
     loader_params: dict[str, Any] | None = None

@@ -74,11 +74,17 @@ class TableRowEditor(QtWidgets.QDialog):
                     item_editor.setCurrentIndex(item_choices.index(item_value))
             else:
                 item_editor = QtWidgets.QLineEdit(item_value if item_value else "", self)
-                if self._regex_pattern or self._filter_list:
+            if self._regex_pattern or self._filter_list:
+                if hasattr(item_editor, 'textChanged'):
                     item_editor.textChanged.connect(self.validate_text)
-                    item_editor.textChanged.emit(item_value if item_value else "")  # in case we match against an empty string
             item_editor.setFixedWidth(editor_width)
             self._row_items.append((label, item_editor))
+
+        # in case we match against an empty string
+        for i, item_value in enumerate(self._old_data):
+            item_editor = self._row_items[i][1]
+            if hasattr(item_editor, 'textChanged'):
+                item_editor.textChanged.emit(item_value if item_value else "")
 
     def init_ui(self):
         self._button_box = QtWidgets.QDialogButtonBox(
@@ -208,6 +214,7 @@ class ParamTable(QtWidgets.QWidget):
         self._set_buttons_enabled(False)
 
         self._table = QtWidgets.QTableWidget(len(self._old_data), len(self._header), self)
+        self._table.setTextElideMode(QtCore.Qt.ElideLeft)
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.setHorizontalHeaderLabels(self._header)
 

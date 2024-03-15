@@ -1,5 +1,5 @@
 import qtpy.compat
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 
 import logging
 import pathlib
@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class FileBrowser(AbstractWidget):
+    textChanged = QtCore.Signal(str)
+
     OpenFile = 0
     # OpenFiles = 1
     OpenDirectory = 2
@@ -50,6 +52,7 @@ class FileBrowser(AbstractWidget):
         self._button = QtWidgets.QPushButton(self._button_text, self)
         self._button.setFixedWidth(120)
 
+        self._line_edit.textChanged.connect(self.textChanged.emit)
         self._button.clicked.connect(self._browse)
 
     def set_layout(self):
