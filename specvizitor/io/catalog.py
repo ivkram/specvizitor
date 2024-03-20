@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Catalog:
     table: Table | Row
     indices: list[str] = field(default_factory=list)
-    translate: dict[str, list[str]] | None = None
+    translate: dict[str, list[str]] = field(default_factory=dict)
 
     def __post_init__(self):
         if isinstance(self.table, Table):
@@ -110,14 +110,13 @@ class Catalog:
     def extended_colnames(self) -> list:
         colnames = self.colnames
 
-        if self.translate:
-            colnames_extension = []
-            for cname, cname_aliases in self.translate.items():
-                for cname_alias in cname_aliases:
-                    if cname_alias in colnames:
-                        colnames_extension.append(cname)
-                        break
-            colnames += colnames_extension
+        colnames_extension = []
+        for cname, cname_aliases in self.translate.items():
+            for cname_alias in cname_aliases:
+                if cname_alias in colnames:
+                    colnames_extension.append(cname)
+                    break
+        colnames += colnames_extension
 
         return colnames
 
@@ -125,12 +124,11 @@ class Catalog:
     def annotated_colnames(self) -> dict[str, str]:
         colnames = {cname: cname for cname in self.colnames}
 
-        if self.translate:
-            for cname, cname_aliases in self.translate.items():
-                for cname_alias in cname_aliases:
-                    if cname_alias in self.colnames:
-                        colnames[cname_alias] = f'{cname_alias} ({cname})'
-                        break
+        for cname, cname_aliases in self.translate.items():
+            for cname_alias in cname_aliases:
+                if cname_alias in self.colnames:
+                    colnames[cname_alias] = f'{cname_alias} ({cname})'
+                    break
 
         return colnames
 
@@ -171,7 +169,7 @@ class Catalog:
 
     def get_col(self, cname: str):
         if cname not in self.extended_colnames:
-            if self.translate and cname in self.translate:
+            if cname in self.translate:
                 raise KeyError('`{}` column and its aliases ({}) not found'.format(cname, ", ".join(self.translate[cname])))
             else:
                 raise KeyError('`{}` column not found'.format(cname))

@@ -60,22 +60,20 @@ def main():
     config = Config.read_user_params(local_files['config'], default='config.yml')
 
     # register unit aliases
-    if config.data.enabled_unit_aliases is not None:
-        add_enabled_aliases(config.data.enabled_unit_aliases)
+    add_enabled_aliases(config.data.enabled_unit_aliases)
 
     # "discover" and "register" plugins
     plugins = []
-    if config.plugins:
-        undiscovered_plugins = []
-        for plugin_name in config.plugins:
-            try:
-                plugins.append(importlib.import_module("specvizitor.plugins." + plugin_name).Plugin())
-            except ModuleNotFoundError:
-                logger.warning(f'Plugin not found: {plugin_name}')
-                undiscovered_plugins.append(plugin_name)
+    undiscovered_plugins = []
+    for plugin_name in config.plugins:
+        try:
+            plugins.append(importlib.import_module("specvizitor.plugins." + plugin_name).Plugin())
+        except ModuleNotFoundError:
+            logger.warning(f'Plugin not found: {plugin_name}')
+            undiscovered_plugins.append(plugin_name)
 
-        config.plugins = [plugin_name for plugin_name in config.plugins if plugin_name not in undiscovered_plugins]
-        config.save()
+    config.plugins = [plugin_name for plugin_name in config.plugins if plugin_name not in undiscovered_plugins]
+    config.save()
 
     exit_code = MainWindow.EXIT_CODE_REBOOT
     while exit_code == MainWindow.EXIT_CODE_REBOOT:

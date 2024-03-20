@@ -651,7 +651,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if set_as_default:
             default_flags = self.rd.review.flag_columns
-            self._config.inspection_results.default_flags = default_flags if default_flags else None
+            self._config.inspection_results.default_flags = default_flags
             self._config.save()
 
     def _about_action(self):

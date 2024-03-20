@@ -272,7 +272,7 @@ class DataViewer(AbstractWidget):
 
         for img_label, img_cfg in self._data_cfg.images.items():
             data, meta = load_image(filename=img_cfg.filename, loader=img_cfg.loader, widget_title='Data Viewer',
-                                    wcs_source=img_cfg.wcs_source, **(img_cfg.loader_params or {}))
+                                    wcs_source=img_cfg.wcs_source, **img_cfg.loader_params)
             if data is None:
                 continue
 

@@ -7,7 +7,7 @@ from ..utils.params import Params
 @dataclass
 class Catalogue:
     filename: str | None = None
-    translate: dict[str, list[str]] | None = None
+    translate: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -15,15 +15,15 @@ class Image:
     filename: str
     wcs_source: str | None = None
     loader: str = 'auto'
-    loader_params: dict[str, Any] | None = None
+    loader_params: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class Data:
     dir: str = '.'
-    images: dict[str, Image] | None = None
+    images: dict[str, Image] = field(default_factory=dict)
     id_pattern: str = r'\d+'
-    enabled_unit_aliases: dict[str, str] | None = None
+    enabled_unit_aliases: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -36,7 +36,7 @@ class Appearance:
 
 @dataclass
 class InspectionResults:
-    default_flags: list[str] | None = None
+    default_flags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -52,4 +52,4 @@ class Config(Params):
     data: Data = field(default_factory=Data)
     data_viewer: DataViewer = field(default_factory=DataViewer)
     inspection_results: InspectionResults = field(default_factory=InspectionResults)
-    plugins: list[str] | None = None
+    plugins: list[str] = field(default_factory=list)

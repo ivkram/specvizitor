@@ -70,7 +70,7 @@ class DataElement:
     source: str | None = None
     filename_keyword: str | None = None
     loader: str = 'auto'
-    loader_params: dict[str, Any] | None = None
+    loader_params: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

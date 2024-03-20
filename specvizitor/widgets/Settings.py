@@ -191,7 +191,7 @@ class CatalogueWidget(SettingsWidget):
         else:
             self._aliases_changed = True
 
-        self._new_translate = translate if translate else None
+        self._new_translate = translate
 
     def accept(self):
         self.cfg.translate = self._new_translate
@@ -266,7 +266,7 @@ class DataSourceWidget(SettingsWidget):
         old_data = [[label, img.filename, img.wcs_source] for label, img in self.cfg.images.items()] if self.cfg.images else []
         self._images_changed = True if old_data != table_data else False
 
-        self._new_images = images if images else None
+        self._new_images = images
 
     def accept(self):
         self.cfg.dir = self._new_dir

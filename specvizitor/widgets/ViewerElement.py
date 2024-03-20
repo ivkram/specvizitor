@@ -332,7 +332,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.filename, self.data, self.meta = load_widget_data(
                 obj_id=obj_id, data_files=data_files, filename_keyword=self.cfg.data.filename_keyword,
                 loader=self.cfg.data.loader, widget_title=self.title, allowed_dtypes=self.ALLOWED_DATA_TYPES,
-                **(self.cfg.data.loader_params or {})
+                **self.cfg.data.loader_params
             )
 
     def request_shared_resource(self, cat_entry: Catalog):
