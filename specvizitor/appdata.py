@@ -1,11 +1,9 @@
-from astropy.table import Table
-
 from dataclasses import dataclass
 import logging
 import pathlib
 
+from .io.catalog import Catalog
 from .io.inspection_data import InspectionData
-from .utils.table_tools import get_table_indices
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +12,7 @@ logger = logging.getLogger(__name__)
 class AppData:
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
-    cat: Table | None = None                 # the catalogue
+    cat: Catalog | None = None               # the catalogue
     review: InspectionData | None = None     # inspection results
 
     j: int = None  # the index of the current object
@@ -26,7 +24,7 @@ class AppData:
             logger.error("Failed to initialize inspection data: the catalogue not loaded to the memory")
             return
 
-        self.review = InspectionData.create(*[list(self.cat[ind]) for ind in get_table_indices(self.cat)], **kwargs)
+        self.review = InspectionData.create(*[list(self.cat.get_col(ind)) for ind in self.cat.indices], **kwargs)
 
     def read(self):
         """ Read the inspection file.

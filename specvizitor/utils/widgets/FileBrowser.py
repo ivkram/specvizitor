@@ -1,5 +1,5 @@
 import qtpy.compat
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 
 import logging
 import pathlib
@@ -10,13 +10,16 @@ logger = logging.getLogger(__name__)
 
 
 class FileBrowser(AbstractWidget):
+    textChanged = QtCore.Signal(str)
+
     OpenFile = 0
     # OpenFiles = 1
     OpenDirectory = 2
     SaveFile = 3
 
     def __init__(self, mode=OpenFile, filename_extensions='All files (*.*)', default_path=None,
-                 title: str = '', title_width: int | None = None, button_text='Browse...', parent=None):
+                 title: str = '', title_width: int | None = None, button_text='Browse...',
+                 line_edit_width=700, parent=None):
 
         self._browser_mode = mode
         self._filter = filename_extensions  # example: 'Images (*.png *.xpm *.jpg);;Text files (*.txt)'
@@ -25,6 +28,7 @@ class FileBrowser(AbstractWidget):
         self._title = title
         self._title_width = title_width
         self._button_text = button_text
+        self._line_edit_width = line_edit_width
 
         self._label: QtWidgets.QLabel | None = None
         self._line_edit: QtWidgets.QLineEdit | None = None
@@ -38,14 +42,17 @@ class FileBrowser(AbstractWidget):
             self._label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         else:
             self._label.setFixedWidth(self._title_width)
+        if not self._title:
+            self._label.setVisible(False)
 
         self._line_edit = QtWidgets.QLineEdit(self)
-        self._line_edit.setMinimumWidth(700)
+        self._line_edit.setMinimumWidth(self._line_edit_width)
         self._line_edit.setText(self._default_path)
 
         self._button = QtWidgets.QPushButton(self._button_text, self)
         self._button.setFixedWidth(120)
 
+        self._line_edit.textChanged.connect(self.textChanged.emit)
         self._button.clicked.connect(self._browse)
 
     def set_layout(self):

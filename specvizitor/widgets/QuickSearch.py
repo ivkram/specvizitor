@@ -26,16 +26,18 @@ class QuickSearch(AbstractWidget):
         # create a `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton(self)
         self._go_to_id_button.setText('Go to ID')
-        self._go_to_id_button.setFixedWidth(110)
+        self._go_to_id_button.setFixedWidth(90)
 
         self._id_field = QtWidgets.QLineEdit(self)
+        self._id_field.setMinimumWidth(60)
 
         # create a `Go to index` button
         self._go_to_index_button = QtWidgets.QPushButton(self)
         self._go_to_index_button.setText('Go to #')
-        self._go_to_index_button.setFixedWidth(110)
+        self._go_to_index_button.setFixedWidth(90)
 
         self._index_field = QtWidgets.QLineEdit(self)
+        self._index_field.setMinimumWidth(60)
 
         self._go_to_id_button.clicked.connect(self.go_to_id)
         self._id_field.returnPressed.connect(self.go_to_id)

@@ -6,7 +6,12 @@ from qtpy import QtWidgets
 
 class QLogHandler(logging.Handler):
     def emit(self, record):
-        LogMessageBox(record.levelno, record.msg, parent=QtWidgets.QApplication.focusWidget())
+        msg = record.msg
+        if isinstance(msg, Exception):
+            msg = str(msg)
+            if msg.startswith("'") and msg.endswith("'"):
+                msg = msg[1:-1]
+        LogMessageBox(record.levelno, msg, parent=QtWidgets.QApplication.focusWidget())
 
 
 class LogMessageBox(QtWidgets.QMessageBox):
@@ -20,7 +25,7 @@ class LogMessageBox(QtWidgets.QMessageBox):
     }
 
     def __init__(self, level: int, message: str, parent=None):
-        super().__init__(LogMessageBox.LOGGING_LEVELS[level], '{} Message'.format(self.PACKAGE), message, parent=parent)
+        super().__init__(self.LOGGING_LEVELS[level], '{} Message'.format(self.PACKAGE), message, parent=parent)
         self.show()
 
 

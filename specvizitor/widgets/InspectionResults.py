@@ -7,6 +7,7 @@ from ..utils.widgets import AbstractWidget
 
 class InspectionResults(AbstractWidget):
     data_collected = QtCore.Signal(float, str, dict)
+    edit_button_clicked = QtCore.Signal()
 
     def __init__(self, cfg: config.InspectionResults, parent=None):
 
@@ -21,11 +22,11 @@ class InspectionResults(AbstractWidget):
         self._checkbox_widgets: dict[str, QtWidgets.QCheckBox] | None = None
         self._comments_widget: QtWidgets.QTextEdit | None = None
 
-        self._edit_flags: QtWidgets.QPushButton | None = None
+        self._edit_fields: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
         self.setEnabled(False)
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
 
     def _create_checkbox_widgets(self, review: InspectionData | None = None):
         if self._checkbox_widgets is not None:
@@ -35,19 +36,19 @@ class InspectionResults(AbstractWidget):
         flags = self.cfg.default_flags if review is None else review.flag_columns
 
         checkbox_widgets = {}
-        if flags is not None:
-            for i, flag_name in enumerate(flags):
-                # TODO: overwrite the keyPressEvent method of QtWidgets.QCheckBox to add shortcuts
-                checkbox_widget = QtWidgets.QCheckBox(flag_name, self)
-                checkbox_widgets[flag_name] = checkbox_widget
-                
-                if i < 9:
-                    checkbox_widget.setShortcut(str(i + 1))
+        for i, flag_name in enumerate(flags):
+            # TODO: overwrite the keyPressEvent method of QtWidgets.QCheckBox to add shortcuts
+            checkbox_widget = QtWidgets.QCheckBox(flag_name, self)
+            checkbox_widget.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Fixed)
+            checkbox_widgets[flag_name] = checkbox_widget
+
+            if i < 9:
+                checkbox_widget.setShortcut(str(i + 1))
 
         self._checkbox_widgets = checkbox_widgets
 
     def init_ui(self):
-        self._redshift_widget = QtWidgets.QLabel(self)
+        self._redshift_widget = QtWidgets.QLabel("Redshift: --", self)
         self._spacer = QtWidgets.QWidget(self)
         self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self._clear_redshift = QtWidgets.QPushButton("Clear", self)
@@ -57,10 +58,11 @@ class InspectionResults(AbstractWidget):
 
         self._create_checkbox_widgets()
         self._comments_widget = QtWidgets.QTextEdit(self)
+        self._comments_widget.setPlaceholderText('Comment')
+        self._comments_widget.setMinimumWidth(90)
 
-        self._edit_flags = QtWidgets.QPushButton("Edit...", self)
-        self._edit_flags.pressed.connect(self._edit_flags_action)
-        self._edit_flags.setVisible(False)
+        self._edit_fields = QtWidgets.QPushButton("Edit...", self)
+        self._edit_fields.clicked.connect(self.edit_button_clicked.emit)
 
         self._clear_redshift.clicked.connect(self.clear_redshift_value)
 
@@ -80,10 +82,9 @@ class InspectionResults(AbstractWidget):
         for i, widget in enumerate(self._checkbox_widgets.values()):
             self.layout().addWidget(widget)
 
-        self.layout().addWidget(QtWidgets.QLabel('Comments:', self))
         self.layout().addWidget(self._comments_widget)
 
-        self.layout().addWidget(self._edit_flags)
+        self.layout().addWidget(self._edit_fields)
 
     @QtCore.Slot(InspectionData)
     def load_project(self, review: InspectionData):
@@ -97,7 +98,7 @@ class InspectionResults(AbstractWidget):
         if redshift != REDSHIFT_FILL_VALUE:
             self._redshift_widget.setText(f"Redshift: {redshift:.4f}")
         else:
-            self._redshift_widget.setText(f"Redshift: ???")
+            self._redshift_widget.setText(f"Redshift: --")
         self._saved_redshift = redshift
 
     @QtCore.Slot()
@@ -118,6 +119,3 @@ class InspectionResults(AbstractWidget):
         checkboxes = {cname: widget.isChecked() for cname, widget in self._checkbox_widgets.items()}
 
         self.data_collected.emit(redshift, comment, checkboxes)
-
-    def _edit_flags_action(self):
-        pass

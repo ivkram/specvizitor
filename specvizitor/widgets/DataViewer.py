@@ -1,4 +1,3 @@
-from astropy.table import Row
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
@@ -10,6 +9,7 @@ import pathlib
 from ..config import config
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
+from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import get_filenames_from_id, load_image, FieldImage, REQUESTS
 from ..plugins.plugin_core import PluginCore
@@ -35,26 +35,26 @@ class DataViewer(AbstractWidget):
 
     zen_mode_activated = QtCore.Signal()
     visibility_changed = QtCore.Signal()
+    spectral_lines_changed = QtCore.Signal()
 
     def __init__(self,
-                 cfg: config.DataViewer,
+                 global_cfg: config.DataViewer,
+                 data_cfg: config.Data,
+                 widget_cfg: DataWidgets,
                  appearance: config.Appearance,
-                 viewer_cfg: DataWidgets,
-                 images: dict[str, config.Image] | None = None,
-                 spectral_lines: SpectralLineData | None = None,
-                 plugins: list[PluginCore] | None = None,
+                 spectral_lines: SpectralLineData,
+                 plugins: list[PluginCore],
                  parent=None):
 
-        self.cfg = cfg
+        self._global_cfg = global_cfg
+        self._data_cfg = data_cfg
+        self._widget_cfg = widget_cfg
         self._appearance = appearance
-        self._viewer_cfg = viewer_cfg
         self._spectral_lines = spectral_lines
-        self._plugins: list[PluginCore] = plugins if plugins is not None else []
+        self._plugins = plugins
 
         # images that are shared between widgets and can be used to create cutouts
         self._field_images: dict[str, FieldImage] = {}
-
-        self._field_images_cfg: dict[str, config.Data.images] = images if images else {}
         self.load_field_images()
 
         self.dock_area: DockArea | None = None
@@ -77,33 +77,37 @@ class DataViewer(AbstractWidget):
     def active_widgets(self) -> dict[str, ViewerElement]:
         return {title: w for title, w in self.widgets.items() if w.data is not None}
 
+    def _delete_widgets(self):
+        # disconnect signals
+        self.object_selected.disconnect()
+        self.zen_mode_activated.disconnect()
+        self.visibility_changed.disconnect()
+        self.shared_resources_queried.disconnect()
+        self.spectral_lines_changed.disconnect()
+        safe_disconnect(self.view_reset)
+
+        for w in self.widgets.values():
+            w.graphics_layout.clear()
+            w.deleteLater()
+
+        self.widgets = {}
+
     def _create_widgets(self):
         # delete previously created widgets
         if self.widgets:
-            # disconnect signals
-            self.object_selected.disconnect()
-            self.zen_mode_activated.disconnect()
-            self.visibility_changed.disconnect()
-            self.shared_resources_queried.disconnect()
-            safe_disconnect(self.view_reset)
-
-            for w in self.widgets.values():
-                w.graphics_layout.clear()
-                w.deleteLater()
+            self._delete_widgets()
 
         widgets = {}
 
         # create widgets for images (e.g. image cutouts, 2D spectra)
-        if self._viewer_cfg.images is not None:
-            for name, image_cfg in self._viewer_cfg.images.items():
-                widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
-                                        spectral_lines=self._spectral_lines, parent=self)
+        for name, image_cfg in self._widget_cfg.images.items():
+            widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
+                                    spectral_lines=self._spectral_lines, parent=self)
 
         # create widgets for plots, including 1D spectra
-        if self._viewer_cfg.plots is not None:
-            for name, plot_cfg in self._viewer_cfg.plots.items():
-                widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
-                                       spectral_lines=self._spectral_lines, parent=self)
+        for name, plot_cfg in self._widget_cfg.plots.items():
+            widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
+                                   spectral_lines=self._spectral_lines, parent=self)
 
         for plugin in self._plugins:
             plugin.overwrite_widget_configs(widgets)
@@ -117,6 +121,7 @@ class DataViewer(AbstractWidget):
             self.zen_mode_activated.connect(w.hide_interface)
             self.visibility_changed.connect(w.update_visibility)
             self.shared_resources_queried.connect(w.get_shared_resource)
+            self.spectral_lines_changed.connect(w.update_spectral_lines)
 
             w.shared_resource_requested.connect(self._query_shared_resources)
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
@@ -186,10 +191,14 @@ class DataViewer(AbstractWidget):
             dock.close()
             return
 
-    def _create_docks(self):
-        # delete previously created docks
+    def _close_docks(self):
         for d in self.docks.values():
             self._close_dock(d)
+        self.docks = {}
+
+    def _create_docks(self):
+        # delete previously created docks
+        self._close_docks()
 
         docks = {}
         for widget in self.widgets.values():
@@ -251,20 +260,25 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(DataWidgets)
     def update_viewer_configuration(self, viewer_cfg: DataWidgets):
-        self._viewer_cfg = viewer_cfg
+        self._widget_cfg = viewer_cfg
         self.init_ui()
 
-    @QtCore.Slot(dict)
+    @QtCore.Slot()
     def load_field_images(self):
-        for img_label, img_cfg in self._field_images_cfg.items():
+        self._field_images = {}
+
+        if self._data_cfg.images is None:
+            return
+
+        for img_label, img_cfg in self._data_cfg.images.items():
             data, meta = load_image(filename=img_cfg.filename, loader=img_cfg.loader, widget_title='Data Viewer',
-                                    wcs_source=img_cfg.wcs_source, **(img_cfg.loader_params or {}))
+                                    wcs_source=img_cfg.wcs_source, **img_cfg.loader_params)
             if data is None:
                 continue
 
             self._field_images[img_label] = FieldImage(pathlib.Path(img_cfg.filename), data, meta)
 
-    @QtCore.Slot(str, REQUESTS, dict)
+    @QtCore.Slot(str, object, dict)
     def _query_shared_resources(self, widget_title: str, request: REQUESTS, request_params: dict):
         if request == REQUESTS.CUTOUT:
             label = request_params.get('image')
@@ -296,21 +310,21 @@ class DataViewer(AbstractWidget):
     def load_project(self):
         self.setEnabled(True)
 
-    @QtCore.Slot(int, InspectionData, object, config.Data)
-    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_cfg: config.Data):
+    @QtCore.Slot(int, InspectionData, object)
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
         # perform search for files containing the object ID in their filename
-        discovered_data_files = get_filenames_from_id(data_cfg.dir, review.get_id(j))
+        discovered_data_files = get_filenames_from_id(self._data_cfg.dir, review.get_id(j))
 
         self._disconnect_widgets()
 
         # load the object data to the widgets
-        self.object_selected.emit(j, review, obj_cat, discovered_data_files)
+        self.object_selected.emit(j, review, cat_entry, discovered_data_files)
 
         self._reconnect_widgets()
         self._update_dock_titles()
 
         for plugin in self._plugins:
-            plugin.tweak_widgets(self.active_widgets, obj_cat)
+            plugin.tweak_widgets(self.active_widgets, cat_entry)
 
     def _find_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.widgets.values():
@@ -333,7 +347,7 @@ class DataViewer(AbstractWidget):
     def change_redshift(self, n_steps: int, small_step: bool = False):
         slider = self._find_active_redshift_slider()
         if slider:
-            step = self.cfg.redshift_small_step if small_step else self.cfg.redshift_step
+            step = self._global_cfg.redshift_small_step if small_step else self._global_cfg.redshift_step
             self.redshift_changed.connect(slider.change_redshift)
             self.redshift_changed.emit(n_steps * step)
             self.redshift_changed.disconnect()

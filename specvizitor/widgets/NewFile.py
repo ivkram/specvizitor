@@ -4,7 +4,7 @@ import logging
 import pathlib
 
 from ..config import config
-from ..io.catalogue import read_cat, create_cat, cat_browser
+from ..io.catalog import Catalog, cat_browser
 from ..io.viewer_data import get_ids_from_dir, data_browser
 from ..utils.logs import qlog
 from ..utils.widgets import FileBrowser
@@ -138,13 +138,13 @@ class NewFile(QtWidgets.QDialog):
             ids = get_ids_from_dir(self._browsers['data'].path, self._id_pattern.text())
             if ids is None:
                 return
-            return create_cat(ids)
+            return Catalog.create(ids)
 
         # otherwise, load an existing catalogue
         data_dir = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
-        return read_cat(self._browsers['cat'].path, translate=self.cfg.catalogue.translate, data_dir=data_dir,
-                        id_pattern=self.cfg.data.id_pattern)
+        return Catalog.read(self._browsers['cat'].path, translate=self.cfg.catalogue.translate, data_dir=data_dir,
+                            id_pattern=self.cfg.data.id_pattern)
 
     def accept(self):
         if not self.validate():

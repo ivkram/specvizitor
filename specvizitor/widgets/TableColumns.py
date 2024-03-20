@@ -62,8 +62,8 @@ class TableColumns(QtWidgets.QDialog):
         self._button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
-        self._check_all.pressed.connect(partial(self._all_action, True))
-        self._uncheck_all.pressed.connect(partial(self._all_action, False))
+        self._check_all.clicked.connect(partial(self._all_action, True))
+        self._uncheck_all.clicked.connect(partial(self._all_action, False))
 
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)

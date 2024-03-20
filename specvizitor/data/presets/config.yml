@@ -2,8 +2,8 @@ catalogue:
   translate:
     id: [Id, ID, NUMBER]
     id2: [ID_SOLUTION, ID_EMLINE]
-    ra: [Ra, RA, RA_1, ALPHA_J2000_DET]
-    dec: [Dec, DEC, DEC_1, DELTA_J2000_DET]
+    ra: [Ra, RA, RA_1, ra_1, ALPHA_J2000_DET]
+    dec: [Dec, DEC, DEC_1, dec_1, DELTA_J2000_DET]
     redshift: [z, Z, Redshift, REDSHIFT, z_vac, z_map, Z_SPEC, z_phot_eazy]
 
 data:

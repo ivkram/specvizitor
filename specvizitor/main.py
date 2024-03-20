@@ -8,7 +8,7 @@ import pathlib
 from platformdirs import user_config_dir, user_cache_dir
 import sys
 
-from .config.appearance import set_up_appearance
+from .config.appearance import setup_appearance
 from .config import Config, DataWidgets, SpectralLineData, Cache
 from .io.viewer_data import add_enabled_aliases
 from .utils.params import LocalFile
@@ -60,42 +60,45 @@ def main():
     config = Config.read_user_params(local_files['config'], default='config.yml')
 
     # register unit aliases
-    if config.data.enabled_unit_aliases is not None:
-        add_enabled_aliases(config.data.enabled_unit_aliases)
-
-    # start the application
-    app = QtWidgets.QApplication(sys.argv)
-    app.setOrganizationName(ORGANIZATION_NAME)
-    app.setApplicationName(APPLICATION_NAME.capitalize())
-    logger.info("Application started")
-
-    # set up the GUI appearance
-    set_up_appearance(cfg=config.appearance)
+    add_enabled_aliases(config.data.enabled_unit_aliases)
 
     # "discover" and "register" plugins
     plugins = []
-    if config.plugins:
-        undiscovered_plugins = []
-        for plugin_name in config.plugins:
-            try:
-                plugins.append(importlib.import_module("specvizitor.plugins." + plugin_name).Plugin())
-            except ModuleNotFoundError:
-                logger.warning(f'Plugin not found: {plugin_name}')
-                undiscovered_plugins.append(plugin_name)
+    undiscovered_plugins = []
+    for plugin_name in config.plugins:
+        try:
+            plugins.append(importlib.import_module("specvizitor.plugins." + plugin_name).Plugin())
+        except ModuleNotFoundError:
+            logger.warning(f'Plugin not found: {plugin_name}')
+            undiscovered_plugins.append(plugin_name)
 
-        config.plugins = [plugin_name for plugin_name in config.plugins if plugin_name not in undiscovered_plugins]
-        config.save()
+    config.plugins = [plugin_name for plugin_name in config.plugins if plugin_name not in undiscovered_plugins]
+    config.save()
 
-    # create the main window
-    window = MainWindow(global_cfg=config,
-                        cache=Cache.read_user_params(local_files['cache']),
-                        viewer_cfg=DataWidgets.read_user_params(local_files['widgets'], default='data_widgets.yml'),
-                        spectral_lines=SpectralLineData.read_user_params(local_files['lines'],
-                                                                         default='spectral_lines.yml'),
-                        plugins=plugins)
-    window.show()
+    exit_code = MainWindow.EXIT_CODE_REBOOT
+    while exit_code == MainWindow.EXIT_CODE_REBOOT:
+        # start the application
+        app = QtWidgets.QApplication(sys.argv)
+        app.setOrganizationName(ORGANIZATION_NAME)
+        app.setApplicationName(APPLICATION_NAME.capitalize())
+        logger.info("Application started")
 
-    sys.exit(app.exec_())
+        # set up the GUI appearance
+        setup_appearance(cfg=config.appearance)
+
+        # create the main window
+        window = MainWindow(config=config,
+                            cache=Cache.read_user_params(local_files['cache']),
+                            widget_cfg=DataWidgets.read_user_params(local_files['widgets'], default='data_widgets.yml'),
+                            spectral_lines=SpectralLineData.read_user_params(local_files['lines'],
+                                                                             default='spectral_lines.yml'),
+                            plugins=plugins)
+        window.show()
+
+        exit_code = app.exec_()
+        app = None
+
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

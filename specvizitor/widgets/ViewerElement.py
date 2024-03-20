@@ -1,5 +1,4 @@
 from astropy.io.fits.header import Header
-from astropy.table import Row
 import astropy.units as u
 from astropy.units import Quantity, UnitConversionError
 import numpy as np
@@ -13,9 +12,10 @@ import pathlib
 
 from ..config import config, data_widgets
 from ..config import SpectralLineData
-from ..io.inspection_data import InspectionData
+from ..io.catalog import Catalog
+from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
 from ..io.viewer_data import load_widget_data, REQUESTS
-from ..utils.widgets import AbstractWidget
+from ..utils.widgets import AbstractWidget, MyViewBox
 
 from .SmartSlider import SmartSlider
 
@@ -120,7 +120,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
     ALLOWED_DATA_TYPES: tuple[type] | None = None
 
     def __init__(self, title: str, cfg: data_widgets.ViewerElement, appearance: config.Appearance,
-                 spectral_lines: SpectralLineData | None = None, parent=None):
+                 spectral_lines: SpectralLineData, parent=None):
         self.title = title
         self.cfg = cfg
         self.appearance = appearance
@@ -140,7 +140,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.container: pg.PlotItem | None = None
         self._registered_items: list[pg.GraphicsItem] = []
 
-        self._spectral_lines = spectral_lines if spectral_lines is not None else SpectralLineData()
+        self._spectral_lines = spectral_lines
         self._spectral_line_artists: dict[str, tuple[pg.InfiniteLine, pg.TextItem]] = {}
 
         # sliders
@@ -168,6 +168,13 @@ class ViewerElement(AbstractWidget, abc.ABC):
         return self._apply_axis_data_transform(plot_data, scale=self._axes.y.scale, unit=self._axes.y.unit)
 
     def _create_line_artists(self):
+        if self._spectral_line_artists:
+            for line_artist in self._spectral_line_artists.values():
+                line_artist[0].deleteLater()
+                line_artist[1].deleteLater()
+
+        self._spectral_line_artists = {}
+
         line_color = self.cfg.spectral_lines.color
         if line_color is None:
             line_color = (175.68072, 220.68924, 46.59488)
@@ -182,6 +189,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
             self._spectral_line_artists[line_name] = (line, label)
 
+    def _add_line_artists(self):
+        if self.cfg.spectral_lines.visible:
+            for line_name, line_artist in self._spectral_line_artists.items():
+                self.container.addItem(line_artist[0], ignoreBounds=True)
+                self.container.addItem(line_artist[1])
+
     def init_ui(self):
         # create the graphics view
         self._graphics_view = pg.GraphicsView(parent=self)
@@ -191,7 +204,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._graphics_view.setCentralItem(self.graphics_layout)
 
         # create the graphics container
-        self.container = pg.PlotItem(name=self.title)
+        self.container = pg.PlotItem(name=self.title, viewBox=MyViewBox(enableMenu=False))
         self.set_axes_visibility()
         self.container.hideButtons()
         self.container.setMouseEnabled(True, True)
@@ -200,10 +213,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         # add spectral lines to the container
         self._create_line_artists()
-        if self.cfg.spectral_lines.visible:
-            for line_name, line_artist in self._spectral_line_artists.items():
-                self.container.addItem(line_artist[0], ignoreBounds=True)
-                self.container.addItem(line_artist[1])
+        self._add_line_artists()
 
         # adding sliders to the UI
         self.smoothing_slider = SmartSlider(short_name='sigma', action='smooth the data', parent=self,
@@ -277,7 +287,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             s.setEnabled(a0)
 
     @QtCore.Slot(int, InspectionData, object, list)
-    def load_object(self, j: int, review: InspectionData, obj_cat: Row | None, data_files: list[str]):
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, data_files: list[str]):
         # clear widget contents
         if self.data is not None:
             self.clear_content()
@@ -286,7 +296,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.filename, self.data, self.meta = None, None, None
 
         # load data to the widget
-        self.load_data(review.get_id(j), data_files, obj_cat)
+        self.load_data(review.get_id(j), data_files, cat_entry)
 
         # display the data
         if self.data is not None:
@@ -298,8 +308,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.apply_qtransform()
 
             # process sliders
-            for s in self.sliders.values():
-                s.update_default_value(obj_cat)  # load the catalog value to the slider
+            for slider_name, s in self.sliders.items():
+                s.update_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
+                if slider_name == 'redshift':  # load redshift from inspection results
+                    redshift = review.get_value(j, 'z_sviz')
+                    if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
+                        s.update_default_value(redshift)
                 s.update_from_slider()  # update the widget according to the slider state
 
             # final preparations
@@ -308,20 +322,20 @@ class ViewerElement(AbstractWidget, abc.ABC):
         else:
             self.setEnabled(False)
 
-    def load_data(self, obj_id: str | int, data_files: list[str], obj_cat: Row | None):
+    def load_data(self, obj_id: str | int, data_files: list[str], cat_entry: Catalog | None):
         if self.cfg.data.source:
-            if obj_cat is None:
+            if cat_entry is None:
                 logger.error(f'Failed to request a shared resource: catalog entry not found (widget: {self.title})')
                 return
-            self.request_shared_resource(obj_cat)
+            self.request_shared_resource(cat_entry)
         else:
             self.filename, self.data, self.meta = load_widget_data(
                 obj_id=obj_id, data_files=data_files, filename_keyword=self.cfg.data.filename_keyword,
                 loader=self.cfg.data.loader, widget_title=self.title, allowed_dtypes=self.ALLOWED_DATA_TYPES,
-                **(self.cfg.data.loader_params or {})
+                **self.cfg.data.loader_params
             )
 
-    def request_shared_resource(self, obj_cat: Row):
+    def request_shared_resource(self, cat_entry: Catalog):
         pass
 
     @QtCore.Slot(str, pathlib.Path, object, object)
@@ -441,3 +455,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def update_visibility(self):
         self.set_axes_visibility()
         self.smoothing_slider.setVisible(self.cfg.smoothing_slider.visible)
+
+    @QtCore.Slot()
+    def update_spectral_lines(self):
+        self._create_line_artists()
+        self._add_line_artists()

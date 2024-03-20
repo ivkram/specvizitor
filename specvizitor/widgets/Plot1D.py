@@ -1,14 +1,12 @@
 import numpy as np
 from astropy.table import Table
 from astropy.units import Quantity
-import astropy.units as u
 import pyqtgraph as pg
 from scipy.ndimage import gaussian_filter1d
 
 import logging
 
 from ..config import data_widgets
-from ..utils.table_tools import column_not_found_message
 from .ViewerElement import ViewerElement
 
 __all__ = ['Plot1D']
@@ -30,15 +28,12 @@ class Plot1D(ViewerElement):
         try:
             plot_data = self.data[cname].quantity
         except KeyError:
-            logger.warning(column_not_found_message(cname))
+            logger.warning(f'Column not found: {cname}')
             return None
 
         return plot_data
 
     def add_content(self):
-        if self.cfg.plots is None:
-            return
-
         default_pen = pg.getConfigOption('foreground')
         for label, line_plot in self.cfg.plots.items():
             x_data, y_data = self.get_plot_data(line_plot.x), self.get_plot_data(line_plot.y)

@@ -1,5 +1,4 @@
 from astropy.convolution import convolve_fft, Gaussian2DKernel
-from astropy.table import Row
 from astropy.visualization import ZScaleInterval
 from astropy.wcs import WCS, FITSFixedWarning
 import numpy as np
@@ -11,9 +10,9 @@ import logging
 import warnings
 
 from ..config import data_widgets
+from ..io.catalog import Catalog
 from ..io.viewer_data import REQUESTS
 from ..utils.qt_tools import get_qtransform_matrix_from_wcs
-from ..utils.table_tools import column_not_found_message
 from ..utils.widgets import ColorBar
 
 from .ViewerElement import ViewerElement
@@ -68,16 +67,19 @@ class Image2D(ViewerElement):
         super().init_view()
         self._default_levels = Image2DLevels()
     
-    def request_shared_resource(self, obj_cat: Row | None):
+    def request_shared_resource(self, cat_entry: Catalog | None):
         if self.cfg.data.cutout_size is None:
             logger.warning(f'Image cutout size not specified (widget: {self.title})')
 
-        ra = obj_cat.get('ra')
-        dec = obj_cat.get('dec')
-        if not ra:
-            logger.warning(column_not_found_message('ra', dictionary=obj_cat.meta.get('aliases')))
-        if not dec:
-            logger.warning(column_not_found_message('dec', dictionary=obj_cat.meta.get('aliases')))
+        ra, dec = None, None
+        try:
+            ra = cat_entry.get_col('ra')
+        except KeyError as e:
+            logger.warning(e)
+        try:
+            dec = cat_entry.get_col('dec')
+        except KeyError as e:
+            logger.warning(e)
 
         request = REQUESTS.CUTOUT
         request_params = {'image': self.cfg.data.source, 'cutout_size': self.cfg.data.cutout_size, 'ra': ra, 'dec': dec}

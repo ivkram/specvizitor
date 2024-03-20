@@ -1,10 +1,9 @@
-from astropy.table import Row
 import numpy as np
 from qtpy import QtWidgets, QtCore
 
 import logging
 
-from ..utils.table_tools import column_not_found_message
+from ..io.catalog import Catalog
 from ..utils.widgets import AbstractWidget
 
 logger = logging.getLogger(__name__)
@@ -113,7 +112,7 @@ class SmartSlider(AbstractWidget):
         self._editor.setMaximumWidth(120)
 
         # create a save button
-        self._save_button = QtWidgets.QPushButton('Save !', self)
+        self._save_button = QtWidgets.QPushButton('Save!', self)
 
         self._label.setVisible(self.show_text_editor)
         self._editor.setVisible(self.show_text_editor)
@@ -167,15 +166,18 @@ class SmartSlider(AbstractWidget):
     def change_redshift(self, delta_z: float):
         self._slider.index = self._slider.index_from_value(self._slider.value + delta_z)
 
-    def update_default_value(self, obj_cat: Row | None):
-        if obj_cat is None or self.catalog_name is None:
+    def update_default_value(self, default_value: float):
+        self._slider.default_value = default_value
+
+    def update_default_value_from_catalog(self, cat_entry: Catalog | None):
+        if cat_entry is None or self.catalog_name is None:
             self._slider.default_value = self._default_value_fallback
             return
 
         try:
-            self._slider.default_value = obj_cat[self.catalog_name]
-        except KeyError:
-            logger.warning(column_not_found_message(self.catalog_name, obj_cat.meta.get('aliases')))
+            self._slider.default_value = cat_entry.get_col(self.catalog_name)
+        except KeyError as e:
+            logger.warning(e)
             self._slider.default_value = self._default_value_fallback
 
     def reset(self):

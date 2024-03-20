@@ -1,5 +1,4 @@
 from astropy.table import Table
-import numpy as np
 import pandas as pd
 
 from abc import ABC, abstractmethod
@@ -63,19 +62,25 @@ class InspectionData:
         @return: an instance of the InspectionData class
         """
 
-        if len(args) == 1:
-            index = pd.Index(args[0], name='id')
-        else:
-            index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
+        try:
+            if len(args) == 1:
+                index = pd.Index(args[0], name='id')
+            else:
+                index = pd.MultiIndex.from_arrays(args, names=('id',) + tuple(f'id{i + 1}' for i in range(1, len(args))))
+        except TypeError as e:
+            logger.error(f'Failed to create the inspection file: {e}')
+            return None
 
         df = (pd.DataFrame(index=index)).sort_index()
         df = cls._add_default_columns(df)
 
+        review = cls(df=df)
+
         if flags is not None:
             for cname in flags:
-                df[cname] = False
+                review.add_flag_column(cname)
 
-        return cls(df=df)
+        return review
 
     @classmethod
     def read(cls, filename: str | pathlib.Path):
@@ -141,6 +146,10 @@ class InspectionData:
         return pd.api.types.is_integer_dtype(self.ids)
 
     @property
+    def indices(self) -> list[str]:
+        return self.df.index.names
+
+    @property
     def user_defined_columns(self) -> list[str]:
         return [cname for cname in self.df.columns if cname not in self.default_columns]
 
@@ -148,12 +157,33 @@ class InspectionData:
     def flag_columns(self) -> list[str]:
         return [cname for cname in self.user_defined_columns if pd.api.types.is_bool_dtype(self.df[cname])]
 
-    @property
-    def has_starred(self) -> bool:
-        return self.df['starred'].sum() > 0
+    def add_flag_column(self, column_name: str):
+        self.df[column_name] = False
 
     def reorder_columns(self):
         self.df = self.df[self.default_columns + self.user_defined_columns]
+
+    def rename_column(self, old_name: str, new_name: str):
+        if old_name not in self.user_defined_columns:
+            logger.error(f"Failed to rename a column: Column not found (column: {old_name})")
+            return
+        self.df.rename(columns={old_name: new_name}, inplace=True)
+
+    def delete_column(self, column_name: str):
+        if column_name not in self.user_defined_columns:
+            logger.error(f"Failed to delete a column: Column not found (column: {column_name})")
+            return
+        self.df.drop(column_name, axis=1, inplace=True)
+
+    def to_list(self):
+        return self.df.values.tolist()
+
+    def has_data(self, column_name: str) -> bool:
+        if column_name in self.flag_columns or column_name == 'starred':
+            return self.df[column_name].sum() > 0
+        else:
+            logger.warning(f"Cannot determine if a column has data or not (column: {column_name})")
+            return True
 
     def get_value(self, j: int, cname: str):
         return self.df.iat[j, self.df.columns.get_loc(cname)]
