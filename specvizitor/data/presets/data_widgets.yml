@@ -32,6 +32,13 @@ images:
         max: 0.015
     central_axes:
       x: true
+    redshift_slider:
+      visible: false
+      max_value: 10
+      step: 1.0e-6
+      link_to: Spectrum 1D
+    spectral_lines:
+      visible: true
 
   Line Map 1: &linemap_defaults
     position: right
@@ -92,5 +99,12 @@ plots:
         x: wave
         y: err
         color: red
+    redshift_slider:
+      visible: true
+      max_value: 10
+      step: 1.0e-6
+      catalog_name: redshift
+      show_text_editor: true
+      show_save_button: true
     spectral_lines:
       visible: true
