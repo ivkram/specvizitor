@@ -4,16 +4,7 @@ Widget configurations
 Adding spectral lines
 +++++++++++++++++++++
 
-Open ``spectral_lines.yml`` and add an entry with a name of a spectral line and its rest wavelength to ``wavelengths``, e.g.:
-
-.. code-block:: yaml
-
-        wavelengths:
-          ...
-          PaG: 10938.086
-
-
-Save the file and restart specvizitor. The new line should appear in the spectrum widget.
+Open :guilabel:`Settings` ‣ :guilabel:`Data Viewer`.
 
 Hiding a widget
 +++++++++++++++

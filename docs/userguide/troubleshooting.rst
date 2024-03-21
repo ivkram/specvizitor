@@ -9,7 +9,7 @@ If you run specvizitor for the first time, you might encounter the following err
         ...
         TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
 
-This usually means that you are using an older version of Python than the version required to run specvizitor (3.10 and higher). You can install Python 3.10+ for example using `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_.
+This means that you are using an older version of Python than the version required to run specvizitor (3.10 and higher). You can install Python 3.10+ using `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_, for example.
 
 Widget(s) disappeared from the GUI
 ++++++++++++++++++++++++++++++++++

@@ -94,9 +94,3 @@ plots:
         color: red
     spectral_lines:
       visible: true
-    redshift_slider:
-      max_value: 12
-      step: 0.0001
-      default_value: 6
-      catalog_name: redshift
-      show_text_editor: True

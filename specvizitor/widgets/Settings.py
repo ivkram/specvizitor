@@ -16,12 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class SettingsWidget(AbstractWidget):
-    SPACING = 20
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.layout().setAlignment(QtCore.Qt.AlignTop)
-        self.layout().setSpacing(self.SPACING)
         self.setFixedHeight(400)
 
     @abstractmethod
@@ -67,6 +64,7 @@ class AppearanceWidget(SettingsWidget):
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().setSpacing(20)
 
     def populate(self):
         sub_layout = QtWidgets.QHBoxLayout()
@@ -286,13 +284,14 @@ def spectral_lines_table_factory(wavelengths: dict[str, float], parent=None) -> 
                       is_unique=is_unique, remember_deleted=False, parent=parent)
 
 
-class SpectralLineWidget(SettingsWidget):
+class DataViewerWidget(SettingsWidget):
     data_requested = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
 
     def __init__(self, cfg: SpectralLineData, parent=None):
         self.cfg = cfg
 
+        self._lines_label: QtWidgets.QLabel | None = None
         self._lines_table: ParamTable | None = None
 
         self._new_wavelengths: dict[str, float] | None = None
@@ -302,7 +301,9 @@ class SpectralLineWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
+        self._lines_label = QtWidgets.QLabel("Spectral lines:")
         self._lines_table = spectral_lines_table_factory(self.cfg.wavelengths, self)
+
         self.data_requested.connect(self._lines_table.collect)
         self._lines_table.data_collected.connect(self.save_lines)
 
@@ -310,6 +311,7 @@ class SpectralLineWidget(SettingsWidget):
         self.setLayout(QtWidgets.QVBoxLayout())
 
     def populate(self):
+        self.layout().addWidget(self._lines_label)
         self.layout().addWidget(self._lines_table)
 
     def collect(self) -> bool:
@@ -370,11 +372,11 @@ class Settings(QtWidgets.QDialog):
         self._tabs = {'Appearance': AppearanceWidget(self._cfg.appearance, self),
                       'Catalogue': CatalogueWidget(self._old_cat, self._cfg.catalogue, self),
                       'Data Source': DataSourceWidget(self._cfg.data, self),
-                      'Spectral Lines': SpectralLineWidget(self._spectral_lines, self)}
+                      'Data Viewer': DataViewerWidget(self._spectral_lines, self)}
         self._tabs['Appearance'].appearance_changed.connect(self._appearance_changed_action)
         self._tabs['Catalogue'].catalog_changed.connect(self.catalogue_changed.emit)
         self._tabs['Data Source'].images_changed.connect(self.data_source_changed.emit)
-        self._tabs['Spectral Lines'].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
+        self._tabs['Data Viewer'].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
 
     def add_tabs(self):
         for name, t in self._tabs.items():
