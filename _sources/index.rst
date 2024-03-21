@@ -5,7 +5,7 @@ Welcome to specvizitor's documentation!
     :hidden:
     :maxdepth: 2
 
-    gettingstarted
+    getting-started
     userguide/index
     development/index
     citation/index

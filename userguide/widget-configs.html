@@ -40,11 +40,11 @@
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/widgets';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/widget-configs';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Keyboard shortcuts" href="shortcuts.html" />
-    <link rel="prev" title="Application settings" href="settings.html" />
+    <link rel="next" title="Keyboard shortcuts" href="keyboard-shortcuts.html" />
+    <link rel="prev" title="Application settings" href="app-settings.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -146,17 +146,17 @@
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="inspection.html">Inspection File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="settings.html">Application settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inspection-file.html">Inspection File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app-settings.html">Application settings</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Widget configurations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../development/index.html">Development</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../development/installing_from_source.html">Installing from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../development/installing-from-source.html">Installing from source</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../citation/index.html">Citation</a></li>
@@ -233,7 +233,7 @@
       
       
       
-      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/widgets.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/widget-configs.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -263,7 +263,7 @@
       
       
       
-      <li><a href="../_sources/userguide/widgets.rst" target="_blank"
+      <li><a href="../_sources/userguide/widget-configs.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -374,13 +374,7 @@ document.write(`
 <h1>Widget configurations<a class="headerlink" href="#widget-configurations" title="Permalink to this heading">#</a></h1>
 <section id="adding-spectral-lines">
 <h2>Adding spectral lines<a class="headerlink" href="#adding-spectral-lines" title="Permalink to this heading">#</a></h2>
-<p>Open <code class="docutils literal notranslate"><span class="pre">spectral_lines.yml</span></code> and add an entry with a name of a spectral line and its rest wavelength to <code class="docutils literal notranslate"><span class="pre">wavelengths</span></code>, e.g.:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">wavelengths</span><span class="p">:</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">PaG</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10938.086</span>
-</pre></div>
-</div>
-<p>Save the file and restart specvizitor. The new line should appear in the spectrum widget.</p>
+<p>Open <span class="guilabel">Settings</span> ‣ <span class="guilabel">Data Viewer</span>.</p>
 </section>
 <section id="hiding-a-widget">
 <h2>Hiding a widget<a class="headerlink" href="#hiding-a-widget" title="Permalink to this heading">#</a></h2>
@@ -400,7 +394,7 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="settings.html"
+       href="app-settings.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
@@ -409,7 +403,7 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="shortcuts.html"
+       href="keyboard-shortcuts.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>

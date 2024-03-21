@@ -6,13 +6,13 @@ Installation
 
 .. important::
 
-      Python >=\ **3.10** is required to run specvizitor. If you have an older version of Python installed in your system, consider using `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_.
+      Python **>=3.10, <3.12** is required to run specvizitor. If you have an older version of Python installed in your system, you could use `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ to create a virtual environment with Python version 3.10+.
 
 Install the latest version of specvizitor using :pypi:`pip`::
 
       pip install specvizitor
 
-If you wish to install specvizitor from source, refer to the :doc:`development/installing_from_source` section.
+If you wish to install specvizitor from source, refer to the :doc:`development/installing-from-source` section.
 
 Basic usage
 +++++++++++
