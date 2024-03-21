@@ -61,9 +61,9 @@ Open one of these files in the text editor, and make desired changes. Restart sp
 
 .. note::
 
-        If the modified ``*.yml`` file contains errors, it will be overwritten by specvizitor at startup. However, the original file will still be accessible from the same directory under the name ``*.yml.bkp`` (e.g., ``config.yml.bkp``).
+        If the ``*.yml`` file contains errors, it will be overwritten by specvizitor at startup. However, the original file will still be accessible from the same directory under the name ``*.yml.bkp`` (e.g., ``config.yml.bkp``).
 
-Most of the parameters stored in these ``*.yml`` files can be modified directly from the GUI, with the important exception of widget configurations (``data_widgets.yml``). A comprehensive guide on how to modify of the ``data_widgets.yml`` file (add new widgets, configure existing ones) can be found in the :doc:`widget-configs` section.
+Most of the parameters stored in these ``*.yml`` files can be modified directly from the GUI, with the important exception of widget configurations (``data_widgets.yml``). A comprehensive guide on how to modify of the ``data_widgets.yml`` file (add new widgets, configure existing ones) can be found in the :doc:`data-viewer` section.
 
 .. rubric:: Footnotes
 

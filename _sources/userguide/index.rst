@@ -6,6 +6,6 @@ User Guide
 
     inspection-file
     app-settings
-    widget-configs
+    data-viewer
     keyboard-shortcuts
     troubleshooting
