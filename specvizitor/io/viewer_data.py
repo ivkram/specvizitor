@@ -254,8 +254,9 @@ def validate_dtype(data, allowed_dtypes: tuple[type, ...], widget_title: str) ->
     return True
 
 
-def add_enabled_aliases(units: dict[str, str]):
-    u.add_enabled_aliases({alias: u.Unit(unit) for alias, unit in units.items()})
+def add_unit_aliases(unit_aliases: dict[str, list[str]]):
+    for unit, aliases in unit_aliases.items():
+        u.add_enabled_aliases({alias: u.Unit(unit) for alias in aliases})
 
 
 def get_id_from_filename(filename, pattern: str) -> str | None:

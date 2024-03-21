@@ -8,12 +8,12 @@ catalogue:
 
 data:
   enabled_unit_aliases:
-    ANGSTROMS: AA
+    AA: [ANGSTROMS]
 
 inspection_results:
   default_flags:
-    - quality_flag_1
-    - quality_flag_2
+    - my_flag_1
+    - my_flag_2
 
 plugins:
   - sviz-grizli

@@ -10,7 +10,7 @@ import sys
 
 from .config.appearance import setup_appearance
 from .config import Config, DataWidgets, SpectralLineData, Cache
-from .io.viewer_data import add_enabled_aliases
+from .io.viewer_data import add_unit_aliases
 from .utils.params import LocalFile
 
 from .widgets.MainWindow import MainWindow
@@ -60,7 +60,7 @@ def main():
     config = Config.read_user_params(local_files['config'], default='config.yml')
 
     # register unit aliases
-    add_enabled_aliases(config.data.enabled_unit_aliases)
+    add_unit_aliases(config.data.enabled_unit_aliases)
 
     # "discover" and "register" plugins
     plugins = []

@@ -23,7 +23,7 @@ class Data:
     dir: str = '.'
     images: dict[str, Image] = field(default_factory=dict)
     id_pattern: str = r'\d+'
-    enabled_unit_aliases: dict[str, str] = field(default_factory=dict)
+    enabled_unit_aliases: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass
