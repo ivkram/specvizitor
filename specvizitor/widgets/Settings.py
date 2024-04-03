@@ -19,7 +19,7 @@ class SettingsWidget(AbstractWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.layout().setAlignment(QtCore.Qt.AlignTop)
-        self.setFixedHeight(400)
+        self.setFixedHeight(500)
 
     @abstractmethod
     def collect(self) -> bool:
@@ -216,7 +216,7 @@ class DataSourceWidget(SettingsWidget):
     data_requested = QtCore.Signal()
     images_changed = QtCore.Signal()
 
-    def __init__(self, cfg: config.Data, parent=None):
+    def __init__(self, cfg: config.DataSource, parent=None):
         self.cfg = cfg
 
         self._browser: FileBrowser | None = None
@@ -291,7 +291,7 @@ class DataViewerWidget(SettingsWidget):
     def __init__(self, cfg: SpectralLineData, parent=None):
         self.cfg = cfg
 
-        self._lines_label: QtWidgets.QLabel | None = None
+        self._lines_section: Section | None = None
         self._lines_table: ParamTable | None = None
 
         self._new_wavelengths: dict[str, float] | None = None
@@ -301,7 +301,7 @@ class DataViewerWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._lines_label = QtWidgets.QLabel("Spectral lines:")
+        self._lines_section = Section("Spectral lines", parent=self)
         self._lines_table = spectral_lines_table_factory(self.cfg.wavelengths, self)
 
         self.data_requested.connect(self._lines_table.collect)
@@ -311,8 +311,10 @@ class DataViewerWidget(SettingsWidget):
         self.setLayout(QtWidgets.QVBoxLayout())
 
     def populate(self):
-        self.layout().addWidget(self._lines_label)
-        self.layout().addWidget(self._lines_table)
+        sub_layout = QtWidgets.QVBoxLayout()
+        sub_layout.addWidget(self._lines_table)
+        self._lines_section.set_layout(sub_layout)
+        self.layout().addWidget(self._lines_section)
 
     def collect(self) -> bool:
         self.data_requested.emit()

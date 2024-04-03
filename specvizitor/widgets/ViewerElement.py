@@ -177,7 +177,10 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
         line_color = self.cfg.spectral_lines.color
         if line_color is None:
-            line_color = (175.68072, 220.68924, 46.59488)
+            if self.appearance.theme == 'dark':
+                line_color = (255, 255, 255)
+            else:
+                line_color = (175.68072, 220.68924, 46.59488)
         line_pen = pg.mkPen(color=line_color, width=1)
 
         for line_name, lambda0 in self._spectral_lines.wavelengths.items():

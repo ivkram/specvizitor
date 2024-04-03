@@ -39,7 +39,7 @@ class DataViewer(AbstractWidget):
 
     def __init__(self,
                  global_cfg: config.DataViewer,
-                 data_cfg: config.Data,
+                 data_cfg: config.DataSource,
                  widget_cfg: DataWidgets,
                  appearance: config.Appearance,
                  spectral_lines: SpectralLineData,
