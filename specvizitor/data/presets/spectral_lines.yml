@@ -103,7 +103,8 @@ wavelengths:
   NeIII: 3870.16
 
   # Iron lines
-  FeII: 16440.0
+  FeII-12570: 12570.0
+  FeII-16440: 16440.0
 
   # PAHs
   PAH 3.3mum: 32900.00
