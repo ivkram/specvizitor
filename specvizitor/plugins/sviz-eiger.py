@@ -23,8 +23,8 @@ class Plugin(PluginCore):
 
     def tweak_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         spec_2d_stack: Image2D | None = widgets.get('Spectrum 2D [Stack]')
-        spec_2d_mods: tuple[Image2D | None, Image2D | None] = (widgets.get(f'Spectrum 2D [Module A]'),
-                                                               widgets.get(f'Spectrum 2D [Module B]'))
+        spec_2d_mods: tuple[Image2D | None, ...] = tuple(widgets.get(f'Spectrum 2D [{label}]') for label in
+                                                         ['Module A', 'Module B', 'R1, A', 'R1, B', 'R2, A', 'R2, B'])
 
         spec_2d_array = tuple(spec_2d for spec_2d in (spec_2d_stack,) + spec_2d_mods if spec_2d is not None)
 
@@ -53,7 +53,7 @@ class Plugin(PluginCore):
     @staticmethod
     def get_emline_coords(cat_entry: Catalog | None) -> list[tuple[float, float]]:
         coords_array = []
-        coord_colnames = [('X_IMAGE', 'Y_IMAGE')] + list((f'X_IMAGE_{i}', f'Y_IMAGE_{i}') for i in range(11))
+        coord_colnames = [('X_IMAGE', 'Y_IMAGE')] + list((f'X_IMAGE_{i}', f'Y_IMAGE_{i}') for i in range(2, 11))
 
         for i, cname_pair in enumerate(coord_colnames):
             try:
