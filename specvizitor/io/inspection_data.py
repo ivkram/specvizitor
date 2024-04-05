@@ -25,7 +25,7 @@ class CSVWriter(WriterBase):
 
 class FITSWriter(WriterBase):
     def write(self, df: pd.DataFrame, filename: pathlib.Path):
-        t: Table = Table.from_pandas(df)
+        t: Table = Table.from_pandas(df.reset_index())
         t.write(filename, overwrite=True)
 
 

@@ -491,7 +491,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='FITS Files (*.fits)')[0]
 
         if path:
-            self.rd.review.write(self.rd.output_path.with_suffix('.fits'), 'fits')
+            self.rd.review.write(path, 'fits')
 
     def _exit_action(self):
         if self.rd.j is not None:
