@@ -313,7 +313,8 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
         # perform search for files containing the object ID in their filename
-        discovered_data_files = get_filenames_from_id(self._data_cfg.dir, review.get_id(j))
+        discovered_data_files = get_filenames_from_id(self._data_cfg.dir, review.get_id(j),
+                                                      recursive=self._data_cfg.recursive_search)
 
         self._disconnect_widgets()
 

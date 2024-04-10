@@ -21,6 +21,7 @@ class Image:
 @dataclass
 class DataSource:
     dir: str = '.'
+    recursive_search: bool = False
     images: dict[str, Image] = field(default_factory=dict)
     id_pattern: str = r'\d+'
     enabled_unit_aliases: dict[str, list[str]] = field(default_factory=dict)

@@ -306,8 +306,8 @@ def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
     return ids
 
 
-def get_filenames_from_id(directory: str, object_id: str | int) -> list[str]:
-    filenames = sorted(pathlib.Path(directory).glob(f'*{object_id}*'))
+def get_filenames_from_id(directory: str, object_id: str | int, recursive: bool = False) -> list[str]:
+    filenames = sorted(pathlib.Path(directory).glob(f'**/*{object_id}*' if recursive else f'*{object_id}*'))
 
     if isinstance(object_id, int):
         # make sure that we don't match e.g. '1123' or '1234' to '123' (but match '0123')
