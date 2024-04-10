@@ -45,8 +45,8 @@ class FieldImage:
                     return None
             x, y = wcs.all_world2pix(ra, dec, 0)
             if not np.isfinite(x) or not np.isfinite(y):
-                logger.error(f'Cutout error: Failed to convert pixel coordinates to world coordinates '
-                             f'(image: {self.filename.name}, RA: {ra}, Dec: {dec})')
+                #logger.error(f'Cutout error: Failed to convert pixel coordinates to world coordinates '
+                #             f'(image: {self.filename.name}, RA: {ra}, Dec: {dec})')
                 return None
             x, y = int(x), int(y)
 
