@@ -71,7 +71,7 @@ class InspectionData:
             logger.error(f'Failed to create the inspection file: {e}')
             return None
 
-        df = (pd.DataFrame(index=index)).sort_index()
+        df = pd.DataFrame(index=index)
         df = cls._add_default_columns(df)
 
         review = cls(df=df)
