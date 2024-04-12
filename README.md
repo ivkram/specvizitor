@@ -2,9 +2,9 @@
 
 Specvizitor is a Python GUI application for a visual inspection of astronomical spectroscopic data. The main goal is to provide a flexible tool for inspecting **large** and **homogeneous** spectroscopic samples of galaxies. This includes but not limited to [wide-field slitless spectroscopic (WFSS)](https://jwst-docs.stsci.edu/methods-and-roadmaps/jwst-wide-field-slitless-spectroscopy) data from the James Webb Space Telescope (JWST). Originally developed for the JWST Cycle 1 program [FRESCO](https://jwst-fresco.astro.unige.ch), this software can be easily adapted for a variety of spectroscopic data sets represented in standard data formats used in the astronomy community (FITS, ASCII, etc.).
 
-For installation instructions, see the [online documentation](https://ivkram.github.io/specvizitor/).
+For installation instructions, see the [online documentation](https://ivkram.github.io/specvizitor/) (in progress).
 
-![Specvizitor GUI](https://github.com/ivkram/specvizitor/blob/main/docs/screenshots/specvizitor_gui.png?raw=true "Specvizitor GUI")
+![Specvizitor GUI](https://github.com/ivkram/specvizitor/blob/main/docs/screenshots/specvizitor_v0.4.0_gui_showcase_compressed.gif)
 
 ## Citation
 
