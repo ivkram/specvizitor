@@ -238,7 +238,7 @@ class DataSourceWidget(SettingsWidget):
         self._recursive_checkbox = QtWidgets.QCheckBox("Recursive search", self)
         self._recursive_checkbox.setChecked(self.cfg.recursive_search)
 
-        self._images_section = Section("Images:", parent=self)
+        self._images_section = Section("Images", parent=self)
         self._image_table = image_table_factory(self.cfg.images, self)
 
         self.data_requested.connect(self._image_table.collect)

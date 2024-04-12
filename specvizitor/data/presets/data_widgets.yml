@@ -16,6 +16,7 @@ images:
   Spectrum 2D:
     position: bottom
     relative_to: Image Cutout
+    dock_title_fmt: long
     data:
       filename_keyword: stack.fits
       loader_params:
@@ -83,6 +84,7 @@ plots:
   Spectrum 1D:
     position: bottom
     relative_to: Spectrum 2D
+    dock_title_fmt: long
     data:
       filename_keyword: 1D.fits
     x_axis:

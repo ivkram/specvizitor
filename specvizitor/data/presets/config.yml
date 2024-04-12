@@ -10,11 +10,6 @@ data:
   enabled_unit_aliases:
     AA: [ANGSTROMS]
 
-inspection_results:
-  default_flags:
-    - my_flag_1
-    - my_flag_2
-
 plugins:
   - sviz-grizli
   - sviz-eiger
