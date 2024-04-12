@@ -4,7 +4,7 @@ Specvizitor is a Python GUI application for a visual inspection of astronomical 
 
 For installation instructions, see the [online documentation](https://ivkram.github.io/specvizitor/) (in progress).
 
-![Specvizitor GUI](https://github.com/ivkram/specvizitor/blob/main/docs/screenshots/specvizitor_v0.4.0_gui_showcase_compressed.gif)
+![Specvizitor GUI](https://github.com/ivkram/specvizitor/blob/main/docs/screenshots/specvizitor_v0.4.0_gui_showcase.gif)
 
 ## Citation
 
