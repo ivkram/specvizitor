@@ -29,7 +29,7 @@ class DataSource:
 
 @dataclass
 class Appearance:
-    theme: str = 'light'
+    theme: str = 'dark'
     antialiasing: bool = False
     viewer_spacing: int = 5
     viewer_margins: int = 5
