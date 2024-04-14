@@ -15,9 +15,9 @@ Specvizitor is a graphical desktop application for a visual inspection of astron
 
 #. Full support for standard data formats used in the astronomy community (FITS, ASCII, TIFF, and more).
 #. Highly interactive data widgets: scroll the mouse wheel to zoom in and zoom out, move the slider to smooth the data, interact with the colorbar to change its range, and more.
-#. A dedicated widget for saving redshift, classifying the object, and writing comments.
+#. A dedicated widget for classifying the object, saving the redshift, and writing comments.
 #. A highly customizable user interface: create widgets tailored to your particular dataset and adapt the viewer's layout for a better visual experience.
-#. Many other useful feature like quick search, subset inspection, and support for creating cutouts from astronomical images on the fly.
+#. Other useful features like quick search, subset inspection, and support for creating cutouts from astronomical images on the fly.
 
 Navigate to the :doc:`getting-started` section to learn how you can install and use specvizitor.
 
