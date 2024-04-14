@@ -1,4 +1,5 @@
 from astropy.table import Table
+import numpy as np
 import pandas as pd
 
 from abc import ABC, abstractmethod
@@ -207,6 +208,8 @@ class InspectionData:
         j = self.df.index.get_loc(obj_id)
         if isinstance(j, slice):
             j = j.start  # use the first available secondary ID
+        elif isinstance(j, np.ndarray):
+            j = np.argmax(j)
 
         return int(j)
 
