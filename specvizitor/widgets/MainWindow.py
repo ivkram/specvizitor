@@ -192,7 +192,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file.addSeparator()
 
-        self._quit = QtWidgets.QAction("&Quit...")
+        self._quit = QtWidgets.QAction("&Quit")
         self._quit.triggered.connect(self._exit_action)
         self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self._file.addAction(self._quit)

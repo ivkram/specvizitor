@@ -1,4 +1,4 @@
-Keyboard shortcuts
+Keyboard Shortcuts
 ==================
 
 .. list-table::
@@ -13,11 +13,11 @@ Keyboard shortcuts
     * - :kbd:`Shift+Q`, :kbd:`Shift+W`
       - Change redshift (fine tuning)
     * - :kbd:`Ctrl+S`
-      - Save redshift
+      - Save redshift to :guilabel:`Inspection Results`
     * - :kbd:`Ctrl+D`
-      - Delete redshift
+      - Delete redshift from :guilabel:`Inspection Results`
     * - :kbd:`1`, :kbd:`2`, ...
-      - Check/uncheck checkboxes in :guilabel:`Inspection Results`
+      - Select checkboxes in :guilabel:`Inspection Results`
     * - :kbd:`S`
       - Star the object
     * - :kbd:`H`
