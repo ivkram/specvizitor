@@ -36,18 +36,18 @@ The output file (also known as the *inspection file*) is stored in the comma-sep
 
 **Third**, you can optionally specify the path to the catalog with some additional information about the objects you are inspecting (photometric redshifts, for example). This information will appear in :guilabel:`Object Information` in the main window.
 
-All IDs found in the catalog will become part of the inspection file even if the respective data files are not found. To avoid having such IDs in the inspection file, select the respective checkbox at the bottom of the window.
+All IDs found in the catalog will become part of the inspection file even if the respective data files are not found. To avoid having such IDs in the inspection file, select the checkbox at the bottom of the window.
 
 .. figure:: ../screenshots/new_file_filter_catalog.png
 
 .. tip::
-    Knowing that astronomical catalogs often use different names for the same columns (examples include "id", "ID", "NUMBER"), a list of aliases for common column names has been added to specvizitor. This list is extensive but, by no means, exhaustive. Thankfully, you can always add more aliases in settings (see :doc:`app-settings`).
+    Knowing that astronomical catalogs always use different names for the same columns (examples include "id", "ID", "NUMBER"), a list of aliases for common column names has been added to specvizitor. This list is extensive but, by no means, exhaustive. Thankfully, you can always add more aliases in the settings (see :doc:`app-settings`).
 
 For some quick analyses, you can skip the catalog part by selecting :guilabel:`Create a new catalog`:
 
 .. figure:: ../screenshots/new_file_no_catalog.png
 
-This creates a dummy catalog comprising a single column of object IDs that are automatically extracted from the filenames of the files found in the data directory. For each filename, specvizitor extracts an ID by finding the longest substring of digits, which is done by matching a particular regular expression (RegEx) pattern (``\d+``) to the filename. You can change this behaviour by modifying the regex pattern at the bottom of the window:
+This creates a dummy catalog comprising a single column of object IDs that are automatically extracted from the filenames of the files found in the data directory. For each filename, specvizitor extracts an ID by finding the longest substring of digits, which is done by matching a particular regular expression (RegEx) pattern (``\d+``) to the filename. You can change this behaviour by modifying the regex pattern in the same the window:
 
 .. figure:: ../screenshots/new_file_no_catalog_regex.png
 

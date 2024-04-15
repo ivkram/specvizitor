@@ -409,19 +409,19 @@ document.write(`
 <p>Currently, specvizitor works with only a single data directory at a time. If your files are spread across different directories, consider moving them into a single directory. Alternatively, you could specify a path to the top-level directory and enable recursive search (see <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>), however this might slow down the discovery of the data files.</p>
 </div>
 <p><strong>Third</strong>, you can optionally specify the path to the catalog with some additional information about the objects you are inspecting (photometric redshifts, for example). This information will appear in <span class="guilabel">Object Information</span> in the main window.</p>
-<p>All IDs found in the catalog will become part of the inspection file even if the respective data files are not found. To avoid having such IDs in the inspection file, select the respective checkbox at the bottom of the window.</p>
+<p>All IDs found in the catalog will become part of the inspection file even if the respective data files are not found. To avoid having such IDs in the inspection file, select the checkbox at the bottom of the window.</p>
 <figure class="align-default">
 <img alt="../_images/new_file_filter_catalog.png" src="../_images/new_file_filter_catalog.png" />
 </figure>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Knowing that astronomical catalogs often use different names for the same columns (examples include “id”, “ID”, “NUMBER”), a list of aliases for common column names has been added to specvizitor. This list is extensive but, by no means, exhaustive. Thankfully, you can always add more aliases in settings (see <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>).</p>
+<p>Knowing that astronomical catalogs always use different names for the same columns (examples include “id”, “ID”, “NUMBER”), a list of aliases for common column names has been added to specvizitor. This list is extensive but, by no means, exhaustive. Thankfully, you can always add more aliases in the settings (see <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>).</p>
 </div>
 <p>For some quick analyses, you can skip the catalog part by selecting <span class="guilabel">Create a new catalog</span>:</p>
 <figure class="align-default">
 <img alt="../_images/new_file_no_catalog.png" src="../_images/new_file_no_catalog.png" />
 </figure>
-<p>This creates a dummy catalog comprising a single column of object IDs that are automatically extracted from the filenames of the files found in the data directory. For each filename, specvizitor extracts an ID by finding the longest substring of digits, which is done by matching a particular regular expression (RegEx) pattern (<code class="docutils literal notranslate"><span class="pre">\d+</span></code>) to the filename. You can change this behaviour by modifying the regex pattern at the bottom of the window:</p>
+<p>This creates a dummy catalog comprising a single column of object IDs that are automatically extracted from the filenames of the files found in the data directory. For each filename, specvizitor extracts an ID by finding the longest substring of digits, which is done by matching a particular regular expression (RegEx) pattern (<code class="docutils literal notranslate"><span class="pre">\d+</span></code>) to the filename. You can change this behaviour by modifying the regex pattern in the same the window:</p>
 <figure class="align-default">
 <img alt="../_images/new_file_no_catalog_regex.png" src="../_images/new_file_no_catalog_regex.png" />
 </figure>

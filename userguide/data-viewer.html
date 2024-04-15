@@ -357,8 +357,12 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-spectral-lines">Adding spectral lines</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-a-widget">Hiding a widget</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-defaults">Configuring the defaults</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-maximum-redshift">Changing the maximum redshift</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-colorbar-range">Changing the colorbar range</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-new-widgets">Adding new widgets</a></li>
 </ul>
             </nav>
         </div>
@@ -372,17 +376,78 @@ document.write(`
                   
   <section id="data-viewer">
 <h1>Data Viewer<a class="headerlink" href="#data-viewer" title="Permalink to this heading">#</a></h1>
-<section id="adding-spectral-lines">
-<h2>Adding spectral lines<a class="headerlink" href="#adding-spectral-lines" title="Permalink to this heading">#</a></h2>
-<p>Open <span class="guilabel">Settings</span> ‣ <span class="guilabel">Data Viewer</span>. Click <span class="guilabel">Add…</span> and enter the line’s name and wavelength:</p>
-<figure class="align-default">
-<img alt="../_images/add_spectral_line.png" src="../_images/add_spectral_line.png" />
-</figure>
-<p>Click <span class="guilabel">OK</span>. The new line should appear in the data viewer.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This section assumes that the reader is already familiar with <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>.</p>
+</div>
+<p>By default, the data viewer in specvizitor is configured to display the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Specifically, it displays the data stored in the following files:</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*1D.fits</span></code></p></td>
+<td><p>1D spectrum</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*stack.fits</span></code></p></td>
+<td><p>2D stacked spectrum of all exposures</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*full.fits</span></code></p></td>
+<td><p>Various extraction products including emission line maps and image cutouts</p></td>
+</tr>
+</tbody>
+</table>
+<p>In this section, you will learn how to change the viewer configuration by modifying the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file.</p>
+<section id="configuring-the-defaults">
+<h2>Configuring the defaults<a class="headerlink" href="#configuring-the-defaults" title="Permalink to this heading">#</a></h2>
+<p>Let us start with some examples of how you can configure the default data widgets.</p>
+<section id="changing-the-maximum-redshift">
+<h3>Changing the maximum redshift<a class="headerlink" href="#changing-the-maximum-redshift" title="Permalink to this heading">#</a></h3>
+<p>In the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, navigate to <code class="docutils literal notranslate"><span class="pre">plots</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">1D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">redshift_slider</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">max_value</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
+<span class="n">plots</span><span class="p">:</span>
+  <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
+    <span class="o">...</span>
+    <span class="n">redshift_slider</span><span class="p">:</span>
+      <span class="o">...</span>
+      <span class="n">max_value</span><span class="p">:</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>Set <code class="docutils literal notranslate"><span class="pre">max_value</span></code> to any redshift you think would suffice to classify every object from your sample. Next, make the same changes to the redshift slider under <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="o">...</span>
+  <span class="n">Spectrum</span> <span class="mi">2</span><span class="n">D</span><span class="p">:</span>
+    <span class="o">...</span>
+    <span class="n">redshift_slider</span><span class="p">:</span>
+      <span class="o">...</span>
+      <span class="n">max_value</span><span class="p">:</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>This is required because <span class="guilabel">Spectrum 1D</span> and <span class="guilabel">Spectrum 2D</span> share the same redshift. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The maximum value of the redshift slider should be updated accordingly.</p>
 </section>
-<section id="hiding-a-widget">
-<h2>Hiding a widget<a class="headerlink" href="#hiding-a-widget" title="Permalink to this heading">#</a></h2>
-<p>Open <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and navigate to the configuration of the widget that you want to hide. Set the <code class="docutils literal notranslate"><span class="pre">visible</span></code> parameter to <code class="docutils literal notranslate"><span class="pre">false</span></code>, save the file and restart specvizitor. The widget should be removed from the view.</p>
+<section id="changing-the-colorbar-range">
+<h3>Changing the colorbar range<a class="headerlink" href="#changing-the-colorbar-range" title="Permalink to this heading">#</a></h3>
+<p>In the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">color_bar</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">limits</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="o">...</span>
+  <span class="n">Spectrum</span> <span class="mi">2</span><span class="n">D</span><span class="p">:</span>
+    <span class="o">...</span>
+    <span class="n">color_bar</span><span class="p">:</span>
+      <span class="o">...</span>
+      <span class="n">limits</span><span class="p">:</span>
+        <span class="nb">min</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.015</span>
+        <span class="nb">max</span><span class="p">:</span> <span class="mf">0.015</span>
+        <span class="nb">type</span><span class="p">:</span> <span class="n">user</span>
+</pre></div>
+</div>
+<p>Here, you can set the <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> parameters of the colorbar. Once you have made the changes, save data_widgets.yml and launch specvizitor. The colorbar range in <span class="guilabel">Spectrum 2D</span> should be updated accordingly.</p>
+</section>
+</section>
+<section id="adding-new-widgets">
+<h2>Adding new widgets<a class="headerlink" href="#adding-new-widgets" title="Permalink to this heading">#</a></h2>
+<p>TBU</p>
 </section>
 </section>
 
@@ -431,8 +496,12 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-spectral-lines">Adding spectral lines</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-a-widget">Hiding a widget</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-defaults">Configuring the defaults</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-maximum-redshift">Changing the maximum redshift</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-colorbar-range">Changing the colorbar range</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-new-widgets">Adding new widgets</a></li>
 </ul>
   </nav></div>
 
