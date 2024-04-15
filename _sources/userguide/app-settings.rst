@@ -1,4 +1,4 @@
-Application settings
+Application Settings
 ====================
 
 Basic settings
@@ -23,7 +23,7 @@ Some basic settings such as the data path are available in :menuselection:`Tools
     * - :guilabel:`Catalog`
       - Load a new catalog, configure aliases for column names
     * - :guilabel:`Data Source`
-      - Change the data path
+      - Change the data path, enable recursive search [#f2]_, add new images
     * - :guilabel:`Data Viewer`
       - Add spectral lines to the data viewer
 
@@ -57,7 +57,7 @@ For example, in Linux this directory will be ``$HOME/.config/specvizitor``. Ther
       - List of spectral lines
       - Yes
 
-Open one of these files in the text editor, and make desired changes. Restart specvizitor for the changes to take effect.
+Open one of these files in the text editor, and make the desired changes. Restart specvizitor for the changes to take effect.
 
 .. note::
 
@@ -68,4 +68,4 @@ Most of the parameters stored in these ``*.yml`` files can be modified directly 
 .. rubric:: Footnotes
 
 .. [#f1] Enabling antialiasing might decrease the GUI responsiveness.
-
+.. [#f2] Enabling recursive search might severely slow down the transition between objects.

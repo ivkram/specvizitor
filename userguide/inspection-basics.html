@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Inspection File &#8212; specvizitor 0.4.0 documentation</title>
+    <title>Inspection Basics &#8212; specvizitor 0.4.0 documentation</title>
   
   
   
@@ -40,10 +40,10 @@
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/inspection-file';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/inspection-basics';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Application settings" href="app-settings.html" />
+    <link rel="next" title="Application Settings" href="app-settings.html" />
     <link rel="prev" title="User Guide" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -148,10 +148,10 @@
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting started</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Inspection File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="app-settings.html">Application settings</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Inspection Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app-settings.html">Application Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data-viewer.html">Data Viewer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="keyboard-shortcuts.html">Keyboard shortcuts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="keyboard-shortcuts.html">Keyboard Shortcuts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 </ul>
 </li>
@@ -233,7 +233,7 @@
       
       
       
-      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/inspection-file.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/inspection-basics.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -263,7 +263,7 @@
       
       
       
-      <li><a href="../_sources/userguide/inspection-file.rst" target="_blank"
+      <li><a href="../_sources/userguide/inspection-basics.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -347,7 +347,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Inspection File</h1>
+    <h1>Inspection Basics</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -358,8 +358,9 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-a-new-inspection-file">Creating a new inspection file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-inspection-fields">Adding inspection fields</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saving-inspection-results">Saving inspection results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modifying-inspection-flags">Modifying inspection flags</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exporting-a-fits-table">Exporting a FITS table</a></li>
 </ul>
             </nav>
         </div>
@@ -371,16 +372,96 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="inspection-file">
-<h1>Inspection File<a class="headerlink" href="#inspection-file" title="Permalink to this heading">#</a></h1>
+  <section id="inspection-basics">
+<h1>Inspection Basics<a class="headerlink" href="#inspection-basics" title="Permalink to this heading">#</a></h1>
 <section id="creating-a-new-inspection-file">
 <h2>Creating a new inspection file<a class="headerlink" href="#creating-a-new-inspection-file" title="Permalink to this heading">#</a></h2>
+<p>Every round of inspections starts with creating a new <em>inspection file</em>. To get started, navigate to <span class="menuselection">File ‣ New…</span>:</p>
+<figure class="align-default">
+<img alt="../_images/new_file.png" src="../_images/new_file.png" />
+</figure>
+<p><strong>First</strong>, specify the name of the output file. This is the file where specvizitor stores the results of our inspections (redshifts, for example). Specifically, it comprises at least the following columns:</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">id</span></code></p></td>
+<td><p>IDs under inspection</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">starred</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if an object is starred by the user, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">z_sviz</span></code></p></td>
+<td><p>Redshifts saved in <span class="guilabel">Inspection Results</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">comment</span></code></p></td>
+<td><p>Comments added in <span class="guilabel">Inspection Results</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>The output file (also known as the <em>inspection file</em>) is stored in the comma-separated values (CSV) format, enabling a quick access to the inspection results from any text editor. Optionally, you can export the inspection results as a FITS table (see <a class="reference internal" href="#export-fits-table"><span class="std std-ref">Exporting a FITS table</span></a>).</p>
+<p><strong>Second</strong>, specify the path to the data directory. The files stored in the data directory must contain object IDs in their filenames, otherwise the files will not be discovered. Apart from that, there are no special requirements to the filenames.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Currently, specvizitor works with only a single data directory at a time. If your files are spread across different directories, consider moving them into a single directory. Alternatively, you could specify a path to the top-level directory and enable recursive search (see <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>), however this might slow down the discovery of the data files.</p>
+</div>
+<p><strong>Third</strong>, you can optionally specify the path to the catalog with some additional information about the objects you are inspecting (photometric redshifts, for example). This information will appear in <span class="guilabel">Object Information</span> in the main window.</p>
+<p>All IDs found in the catalog will become part of the inspection file even if the respective data files are not found. To avoid having such IDs in the inspection file, select the respective checkbox at the bottom of the window.</p>
+<figure class="align-default">
+<img alt="../_images/new_file_filter_catalog.png" src="../_images/new_file_filter_catalog.png" />
+</figure>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Knowing that astronomical catalogs often use different names for the same columns (examples include “id”, “ID”, “NUMBER”), a list of aliases for common column names has been added to specvizitor. This list is extensive but, by no means, exhaustive. Thankfully, you can always add more aliases in settings (see <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>).</p>
+</div>
+<p>For some quick analyses, you can skip the catalog part by selecting <span class="guilabel">Create a new catalog</span>:</p>
+<figure class="align-default">
+<img alt="../_images/new_file_no_catalog.png" src="../_images/new_file_no_catalog.png" />
+</figure>
+<p>This creates a dummy catalog comprising a single column of object IDs that are automatically extracted from the filenames of the files found in the data directory. For each filename, specvizitor extracts an ID by finding the longest substring of digits, which is done by matching a particular regular expression (RegEx) pattern (<code class="docutils literal notranslate"><span class="pre">\d+</span></code>) to the filename. You can change this behaviour by modifying the regex pattern at the bottom of the window:</p>
+<figure class="align-default">
+<img alt="../_images/new_file_no_catalog_regex.png" src="../_images/new_file_no_catalog_regex.png" />
+</figure>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some features of the data viewer work only if certain columns are discovered in the catalog. In particular, cutouts from astronomical images can be created only if object coordinates (<code class="docutils literal notranslate"><span class="pre">RA</span></code> and <code class="docutils literal notranslate"><span class="pre">Dec</span></code>) are present in the catalog.</p>
+</div>
+<p>Once you have gone through all these steps, click <span class="guilabel">OK</span>. If there are no errors, a new inspection file will be created.</p>
+</section>
+<section id="adding-inspection-fields">
+<h2>Adding inspection fields<a class="headerlink" href="#adding-inspection-fields" title="Permalink to this heading">#</a></h2>
+<p>In specvizitor, you can create custom inspection fields for carrying out some additional classification besides just assigning a redshift, for example assigning <em>a confidence level</em> to the redshift or marking objects with some unusual properties. To create a new inspection field, navigate to <span class="guilabel">Inspection Results</span> ‣ <span class="guilabel">Edit…</span> ‣ <span class="guilabel">Add…</span> and enter the name of a new field:</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/edit_inspection_fields.png"><img alt="../_images/edit_inspection_fields.png" src="../_images/edit_inspection_fields.png" style="width: 10cm;" /></a>
+</figure>
+<p>Click <span class="guilabel">OK</span> (twice). The new field will appear in <span class="guilabel">Inspection Results</span>:</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/new_inspection_field.png"><img alt="../_images/new_inspection_field.png" src="../_images/new_inspection_field.png" style="width: 10cm;" /></a>
+</figure>
+<p>This field will also appear as a boolean column in the output file (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>At any time, inspection fields can be renamed or deleted using the same editor. If you attempt to delete an inspection field that contains some data, you will be prompted to confirm this action.</p>
+</div>
 </section>
 <section id="saving-inspection-results">
 <h2>Saving inspection results<a class="headerlink" href="#saving-inspection-results" title="Permalink to this heading">#</a></h2>
+<p>The inspection results (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>) are saved <em>automatically</em> whenever you:</p>
+<ul class="simple">
+<li><p>go from one object to another;</p></li>
+<li><p>exit the application (close the window, navigate to <span class="menuselection">File ‣ Quit</span>, or press <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Q</kbd></kbd>).</p></li>
+</ul>
+<p>By design, there is no <em>manual</em> way to save the inspection results. The <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd> shortcut updates the redshift in <span class="guilabel">Inspection Results</span> only, and for the <code class="docutils literal notranslate"><span class="pre">*.csv</span></code> file to be saved you still need to trigger one of the two events listed above.</p>
 </section>
-<section id="modifying-inspection-flags">
-<h2>Modifying inspection flags<a class="headerlink" href="#modifying-inspection-flags" title="Permalink to this heading">#</a></h2>
+<section id="exporting-a-fits-table">
+<span id="export-fits-table"></span><h2>Exporting a FITS table<a class="headerlink" href="#exporting-a-fits-table" title="Permalink to this heading">#</a></h2>
+<p>Sometimes it might be useful to export the inspection results (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>) as a FITS table (for example, to load them in Astropy). This can be done by navigating to <span class="menuselection">File ‣ Export FITS Table…</span> and specifying the path to the output file:</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/export_fits_table.png"><img alt="../_images/export_fits_table.png" src="../_images/export_fits_table.png" style="width: 10cm;" /></a>
+</figure>
 </section>
 </section>
 
@@ -409,7 +490,7 @@ document.write(`
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Application settings</p>
+        <p class="prev-next-title">Application Settings</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -430,8 +511,9 @@ document.write(`
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-a-new-inspection-file">Creating a new inspection file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-inspection-fields">Adding inspection fields</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saving-inspection-results">Saving inspection results</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#modifying-inspection-flags">Modifying inspection flags</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exporting-a-fits-table">Exporting a FITS table</a></li>
 </ul>
   </nav></div>
 
