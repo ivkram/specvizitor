@@ -1,20 +1,76 @@
 Data Viewer
-=====================
+===========
 
-Adding spectral lines
-+++++++++++++++++++++
+.. note::
 
-Open :guilabel:`Settings` ‣ :guilabel:`Data Viewer`. Click :guilabel:`Add...` and enter the line's name and wavelength:
+    This section assumes that the reader is already familiar with :doc:`app-settings`.
 
+By default, the data viewer in specvizitor is configured to display the `Grizli <https://github.com/gbrammer/grizli>`_ data products. Specifically, it displays the data stored in the following files:
 
-.. figure:: ../screenshots/add_spectral_line.png
+.. list-table::
+    :header-rows: 1
+    :widths: auto
 
+    * - File
+      - Description
+    * - ``*1D.fits``
+      - 1D spectrum
+    * - ``*stack.fits``
+      - 2D stacked spectrum of all exposures
+    * - ``*full.fits``
+      - Various extraction products including emission line maps and image cutouts
 
+In this section, you will learn how to change the viewer configuration by modifying the ``data_widgets.yml`` file.
 
-Click :guilabel:`OK`. The new line should appear in the data viewer.
+Configuring the defaults
+++++++++++++++++++++++++
 
-Hiding a widget
-+++++++++++++++
+Let us start with some examples of how you can configure the default data widgets.
 
-Open ``data_widgets.yml`` and navigate to the configuration of the widget that you want to hide. Set the ``visible`` parameter to ``false``, save the file and restart specvizitor. The widget should be removed from the view.
+Changing the maximum redshift
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+In the ``data_widgets.yml`` file, navigate to ``plots`` ‣ ``Spectrum 1D`` ‣ ``redshift_slider`` ‣ ``max_value``::
+
+      ...
+      plots:
+        Spectrum 1D:
+          ...
+          redshift_slider:
+            ...
+            max_value: 10
+
+Set ``max_value`` to any redshift you think would suffice to classify every object from your sample. Next, make the same changes to the redshift slider under ``images`` ‣ ``Spectrum 2D``::
+
+      images:
+        ...
+        Spectrum 2D:
+          ...
+          redshift_slider:
+            ...
+            max_value: 10
+
+This is required because :guilabel:`Spectrum 1D` and :guilabel:`Spectrum 2D` share the same redshift. Once you have made the changes, save ``data_widgets.yml`` and launch specvizitor. The maximum value of the redshift slider should be updated accordingly.
+
+Changing the colorbar range
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the ``data_widgets.yml`` file, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``color_bar`` ‣ ``limits``::
+
+      images:
+        ...
+        Spectrum 2D:
+          ...
+          color_bar:
+            ...
+            limits:
+              min: -0.015
+              max: 0.015
+              type: user
+
+Here, you can set the ``min`` and ``max`` parameters of the colorbar. Once you have made the changes, save data_widgets.yml and launch specvizitor. The colorbar range in :guilabel:`Spectrum 2D` should be updated accordingly.
+
+Adding new widgets
+++++++++++++++++++
+
+TBU

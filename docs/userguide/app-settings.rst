@@ -29,6 +29,15 @@ Some basic settings such as the data path are available in :menuselection:`Tools
 
 Any changes will take effect immediately once you click :guilabel:`OK` (except for the application theme, which requires a restart).
 
+Adding spectral lines
+^^^^^^^^^^^^^^^^^^^^^
+
+Open :guilabel:`Settings` ‣ :guilabel:`Data Viewer`. Click :guilabel:`Add...` and enter the line's name and wavelength:
+
+.. figure:: ../screenshots/add_spectral_line.png
+
+Click :guilabel:`OK`. The new line should appear in the data viewer.
+
 Advanced settings
 +++++++++++++++++
 
