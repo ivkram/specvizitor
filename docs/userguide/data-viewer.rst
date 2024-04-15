@@ -40,7 +40,7 @@ In the ``data_widgets.yml`` file, navigate to ``plots`` ‣ ``Spectrum 1D`` ‣ 
             ...
             max_value: 10
 
-Set ``max_value`` to any redshift you think would suffice to classify every object from your sample. Next, make the same changes to the redshift slider under ``images`` ‣ ``Spectrum 2D``::
+Set ``max_value`` to any redshift you think would suffice to classify even the most distant objects included in your sample. Next, make the same changes to the redshift slider under ``images`` ‣ ``Spectrum 2D``::
 
       images:
         ...
@@ -55,6 +55,10 @@ This is required because :guilabel:`Spectrum 1D` and :guilabel:`Spectrum 2D` sha
 Changing the colorbar range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. note::
+
+    This example demonstrates how to change the colorbar range of :guilabel:`Spectrum 2D`, however the same can be applied to any widget in the ``images`` category.
+
 In the ``data_widgets.yml`` file, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``color_bar`` ‣ ``limits``::
 
       images:
@@ -68,7 +72,29 @@ In the ``data_widgets.yml`` file, navigate to ``images`` ‣ ``Spectrum 2D`` ‣
               max: 0.015
               type: user
 
-Here, you can set the ``min`` and ``max`` parameters of the colorbar. Once you have made the changes, save data_widgets.yml and launch specvizitor. The colorbar range in :guilabel:`Spectrum 2D` should be updated accordingly.
+Here, you can set the ``min`` and ``max`` parameters of the colorbar. Once you have made the changes, save ``data_widgets.yml`` and launch specvizitor. The colorbar range in :guilabel:`Spectrum 2D` should be updated accordingly.
+
+Hiding widget elements
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+
+    This example demonstrates how to change the visibility of plot axes, however the same can be applied to colorbars, sliders, spectral lines, and widgets themselves.
+
+.. tip::
+
+    You can hide most of the widget elements by pressing :kbd:`H` (this will not affect the visibility of redshift sliders).
+
+In the ``data_widgets.yml`` file, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``x_axis`` ‣ ``visible``::
+
+      images:
+        ...
+        Spectrum 2D:
+          ...
+          x_axis:
+            visible: true
+
+Set ``visible`` to ``false``, save ``data_widgets.yml`` and launch specvizitor. The :guilabel:`Spectrum 2D`'s x-axis will disappear from the view.
 
 Adding new widgets
 ++++++++++++++++++

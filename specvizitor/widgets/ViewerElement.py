@@ -273,7 +273,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     def update_axis_labels(self):
         show_xaxis = self.container.getAxis('bottom').isVisible()
-        show_yaxis = self.container.getAxis('bottom').isVisible()
+        show_yaxis = self.container.getAxis('left').isVisible()
 
         self.container.setLabel(axis='bottom', text=self._axes.x.label_ext)
         self.container.setLabel(axis='left', text=self._axes.y.label_ext)
