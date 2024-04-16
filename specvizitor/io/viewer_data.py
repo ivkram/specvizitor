@@ -1,5 +1,6 @@
 from astropy.io import fits
 from astropy.io.fits.header import Header
+from astropy.io.fits.hdu import HDUList
 from astropy.table import Table
 import astropy.units as u
 from astropy.utils.exceptions import AstropyWarning
@@ -93,7 +94,7 @@ class GenericFITSLoader(BaseLoader):
     extensions: tuple[str, ...] = ('.fits', '.fits.gz')
 
     def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, extver_index: int = None,
-             memmap=True, **kwargs):
+             reverse_search=False, memmap=True, **kwargs):
 
         try:
             hdul = fits.open(filename, memmap=memmap, **kwargs)
@@ -104,17 +105,13 @@ class GenericFITSLoader(BaseLoader):
         if extname is not None and extver is not None:
             index = (extname, extver)
         elif extname is not None and extver_index is not None:
-            extname_matching_mask = ['EXTNAME' in hdu.header and hdu.header['EXTNAME'] == extname for hdu in hdul]
-            index = 0
-            counter = -1
-            while counter != extver_index:
-                index += 1
-                if index >= len(extname_matching_mask):
-                    self.raise_error(f'EXTVER `{extver_index}` out of range (filename: {filename.name})')
-                    hdul.close()
-                    return None, None
-                if extname_matching_mask[index]:
-                    counter += 1
+            extname_match_indices = [i for i, hdu in enumerate(hdul) if hdu.header.get('EXTNAME') == extname]
+            try:
+                index = extname_match_indices[extver_index]
+            except IndexError:
+                self.raise_error(f'EXTVER `{extver_index}` out of range (filename: {filename.name})')
+                hdul.close()
+                return None, None
         elif extname is not None:
             index = extname
         elif len(hdul) > 1:

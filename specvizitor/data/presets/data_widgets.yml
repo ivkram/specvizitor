@@ -21,7 +21,7 @@ images:
       filename_keyword: stack.fits
       loader_params:
         extname: SCI
-        extver: F444W
+        extver_index: -1
     x_axis:
       link_to: Spectrum 1D
     y_axis:
