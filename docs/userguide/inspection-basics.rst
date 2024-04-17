@@ -8,7 +8,7 @@ Every round of inspections starts with creating a new *inspection file*. To get 
 
 .. figure:: ../screenshots/new_file.png
 
-**First**, specify the name of the output file. This is the file where specvizitor stores the results of our inspections (redshifts, for example). Specifically, it comprises at least the following columns:
+**First**, specify the name of the output file. This is the file where specvizitor stores the results of inspections (redshifts, for example). Specifically, it comprises at least the following columns:
 
 .. list-table::
     :header-rows: 1
@@ -40,7 +40,7 @@ All IDs found in the catalog will become part of the inspection file even if the
 
 .. figure:: ../screenshots/new_file_filter_catalog.png
 
-.. tip::
+.. note::
     Knowing that astronomical catalogs always use different names for the same columns (examples include "id", "ID", "NUMBER"), a list of aliases for common column names has been added to specvizitor. This list is extensive but, by no means, exhaustive. Thankfully, you can always add more aliases in the settings (see :doc:`app-settings`).
 
 For some quick analyses, you can skip the catalog part by selecting :guilabel:`Create a new catalog`:
