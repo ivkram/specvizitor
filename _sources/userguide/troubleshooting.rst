@@ -28,7 +28,7 @@ What to do if none of the above helped
 
 3. Reset specvizitor to its initial state::
 
-        specvizitor --purge
+        >> specvizitor --purge
 
 .. warning::
 

@@ -7,14 +7,14 @@ Installing from source
 
 Clone the repository and install specvizitor in the ''editable'' mode::
 
-        git clone https://github.com/ivkram/specvizitor
-        cd specvizitor
-        pip install -e .
+        >> git clone https://github.com/ivkram/specvizitor
+        >> cd specvizitor
+        >> pip install -e .
 
 To update specvizitor, simply run
 
-.. code-block:: shell
+.. code-block::
 
-        git pull
+        >> git pull
 
 in the directory which you cloned the repository to.

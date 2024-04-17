@@ -360,6 +360,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-defaults">Configuring the defaults</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-maximum-redshift">Changing the maximum redshift</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-colorbar-range">Changing the colorbar range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-plot-axes">Linking plot axes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-widget-elements">Hiding widget elements</a></li>
 </ul>
 </li>
@@ -377,11 +378,11 @@ document.write(`
                   
   <section id="data-viewer">
 <h1>Data Viewer<a class="headerlink" href="#data-viewer" title="Permalink to this heading">#</a></h1>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
 <p>This section assumes that the reader is already familiar with <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>.</p>
 </div>
-<p>By default, the data viewer in specvizitor is configured to display the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Specifically, it displays the data stored in the following files:</p>
+<p>By default, the data viewer in specvizitor is configured to display the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Specifically, it is using data from the following files:</p>
 <table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>File</p></th>
@@ -400,13 +401,13 @@ document.write(`
 </tr>
 </tbody>
 </table>
-<p>In this section, you will learn how to change the viewer configuration by modifying the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file.</p>
+<p>However, specvizitor’s capabilities go far beyond this. By modifying the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, you can create a custom widget configuration tailored to practically <em>any</em> spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with small tweaks to the default configuration and finishing with a configuration “from scratch”.</p>
 <section id="configuring-the-defaults">
 <h2>Configuring the defaults<a class="headerlink" href="#configuring-the-defaults" title="Permalink to this heading">#</a></h2>
 <p>Let us start with some examples of how you can configure the default data widgets.</p>
 <section id="changing-the-maximum-redshift">
 <h3>Changing the maximum redshift<a class="headerlink" href="#changing-the-maximum-redshift" title="Permalink to this heading">#</a></h3>
-<p>In the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, navigate to <code class="docutils literal notranslate"><span class="pre">plots</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">1D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">redshift_slider</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">max_value</span></code>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">plots</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">1D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">redshift_slider</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">max_value</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
 <span class="n">plots</span><span class="p">:</span>
   <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
@@ -432,9 +433,9 @@ document.write(`
 <h3>Changing the colorbar range<a class="headerlink" href="#changing-the-colorbar-range" title="Permalink to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This example demonstrates how to change the colorbar range of <span class="guilabel">Spectrum 2D</span>, however the same can be applied to any widget in the <code class="docutils literal notranslate"><span class="pre">images</span></code> category.</p>
+<p>This example demonstrates how to change the colorbar range of <span class="guilabel">Spectrum 2D</span>, however the same applies to any widget in the <code class="docutils literal notranslate"><span class="pre">images</span></code> category.</p>
 </div>
-<p>In the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">color_bar</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">limits</span></code>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">color_bar</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">limits</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="o">...</span>
   <span class="n">Spectrum</span> <span class="mi">2</span><span class="n">D</span><span class="p">:</span>
@@ -449,17 +450,34 @@ document.write(`
 </div>
 <p>Here, you can set the <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> parameters of the colorbar. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The colorbar range in <span class="guilabel">Spectrum 2D</span> should be updated accordingly.</p>
 </section>
+<section id="linking-plot-axes">
+<h3>Linking plot axes<a class="headerlink" href="#linking-plot-axes" title="Permalink to this heading">#</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This example demonstrates how to link plot axes, however the same applies to sliders and colorbars.</p>
+</div>
+<p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Line</span> <span class="pre">Map</span> <span class="pre">1</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">x_axis</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">link_to</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="o">...</span>
+  <span class="n">Line</span> <span class="n">Map</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="o">...</span>
+    <span class="n">x_axis</span><span class="p">:</span>
+      <span class="n">link_to</span><span class="p">:</span> <span class="n">null</span>
+</pre></div>
+</div>
+<p>Set <code class="docutils literal notranslate"><span class="pre">link_to</span></code> to <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code>. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The y-axis of <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code> and <code class="docutils literal notranslate"><span class="pre">Line</span> <span class="pre">Map</span> <span class="pre">1</span></code> should be linked together.</p>
+</section>
 <section id="hiding-widget-elements">
 <h3>Hiding widget elements<a class="headerlink" href="#hiding-widget-elements" title="Permalink to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This example demonstrates how to change the visibility of plot axes, however the same can be applied to colorbars, sliders, spectral lines, and widgets themselves.</p>
+<p>This example demonstrates how to change the visibility of plot axes, however the same applies to colorbars, sliders, spectral lines, and widgets themselves.</p>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>You can hide most of the widget elements by pressing <kbd class="kbd docutils literal notranslate">H</kbd> (this will not affect the visibility of redshift sliders).</p>
 </div>
-<p>In the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">x_axis</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">visible</span></code>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">x_axis</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">visible</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="o">...</span>
   <span class="n">Spectrum</span> <span class="mi">2</span><span class="n">D</span><span class="p">:</span>
@@ -525,6 +543,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-defaults">Configuring the defaults</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-maximum-redshift">Changing the maximum redshift</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-colorbar-range">Changing the colorbar range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-plot-axes">Linking plot axes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-widget-elements">Hiding widget elements</a></li>
 </ul>
 </li>

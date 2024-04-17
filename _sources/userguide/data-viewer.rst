@@ -1,11 +1,11 @@
 Data Viewer
 ===========
 
-.. note::
+.. important::
 
     This section assumes that the reader is already familiar with :doc:`app-settings`.
 
-By default, the data viewer in specvizitor is configured to display the `Grizli <https://github.com/gbrammer/grizli>`_ data products. Specifically, it displays the data stored in the following files:
+By default, the data viewer in specvizitor is configured to display the `Grizli <https://github.com/gbrammer/grizli>`_ data products. Specifically, it is using data from the following files:
 
 .. list-table::
     :header-rows: 1
@@ -20,7 +20,7 @@ By default, the data viewer in specvizitor is configured to display the `Grizli 
     * - ``*full.fits``
       - Various extraction products including emission line maps and image cutouts
 
-In this section, you will learn how to change the viewer configuration by modifying the ``data_widgets.yml`` file.
+However, specvizitor's capabilities go far beyond this. By modifying the ``data_widgets.yml`` file, you can create a custom widget configuration tailored to practically *any* spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with small tweaks to the default configuration and finishing with a configuration "from scratch".
 
 Configuring the defaults
 ++++++++++++++++++++++++
@@ -30,7 +30,7 @@ Let us start with some examples of how you can configure the default data widget
 Changing the maximum redshift
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In the ``data_widgets.yml`` file, navigate to ``plots`` ‣ ``Spectrum 1D`` ‣ ``redshift_slider`` ‣ ``max_value``::
+In ``data_widgets.yml``, navigate to ``plots`` ‣ ``Spectrum 1D`` ‣ ``redshift_slider`` ‣ ``max_value``::
 
       ...
       plots:
@@ -57,9 +57,9 @@ Changing the colorbar range
 
 .. note::
 
-    This example demonstrates how to change the colorbar range of :guilabel:`Spectrum 2D`, however the same can be applied to any widget in the ``images`` category.
+    This example demonstrates how to change the colorbar range of :guilabel:`Spectrum 2D`, however the same applies to any widget in the ``images`` category.
 
-In the ``data_widgets.yml`` file, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``color_bar`` ‣ ``limits``::
+In ``data_widgets.yml``, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``color_bar`` ‣ ``limits``::
 
       images:
         ...
@@ -74,18 +74,36 @@ In the ``data_widgets.yml`` file, navigate to ``images`` ‣ ``Spectrum 2D`` ‣
 
 Here, you can set the ``min`` and ``max`` parameters of the colorbar. Once you have made the changes, save ``data_widgets.yml`` and launch specvizitor. The colorbar range in :guilabel:`Spectrum 2D` should be updated accordingly.
 
+Linking plot axes
+^^^^^^^^^^^^^^^^^
+
+.. note::
+    This example demonstrates how to link plot axes, however the same applies to sliders and colorbars.
+
+In ``data_widgets.yml``, navigate to ``images`` ‣ ``Line Map 1`` ‣ ``x_axis`` ‣ ``link_to``::
+
+      images:
+        ...
+        Line Map 1:
+          ...
+          x_axis:
+            link_to: null
+
+
+Set ``link_to`` to ``Image Cutout``. Once you have made the changes, save ``data_widgets.yml`` and launch specvizitor. The y-axis of ``Image Cutout`` and ``Line Map 1`` should be linked together.
+
 Hiding widget elements
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
 
-    This example demonstrates how to change the visibility of plot axes, however the same can be applied to colorbars, sliders, spectral lines, and widgets themselves.
+    This example demonstrates how to change the visibility of plot axes, however the same applies to colorbars, sliders, spectral lines, and widgets themselves.
 
 .. tip::
 
     You can hide most of the widget elements by pressing :kbd:`H` (this will not affect the visibility of redshift sliders).
 
-In the ``data_widgets.yml`` file, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``x_axis`` ‣ ``visible``::
+In ``data_widgets.yml``, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``x_axis`` ‣ ``visible``::
 
       images:
         ...

@@ -41,7 +41,7 @@ Click :guilabel:`OK`. The new line should appear in the data viewer.
 Advanced settings
 +++++++++++++++++
 
-Some applications settings, for example widget configurations, cannot be modified from the GUI (yet). To view and modify these settings, open the directory indicated in the bottom of :guilabel:`Settings` (under the "Advanced settings"):
+Some applications settings, for example widget configurations, cannot be modified from the GUI (yet). To view and modify these settings, open the directory indicated at the bottom of :guilabel:`Settings` (under the "Advanced settings"):
 
 .. figure:: ../screenshots/advanced_settings.png
 
