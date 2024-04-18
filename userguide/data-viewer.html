@@ -357,14 +357,22 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-defaults">Configuring the defaults</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-maximum-redshift">Changing the maximum redshift</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-colorbar-range">Changing the colorbar range</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-plot-axes">Linking plot axes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-default-widgets">Configuring the default widgets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-redshift-range">Changing the redshift range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-color-bar-range">Changing the color bar range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-widget-elements">Linking widget elements</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-widget-elements">Hiding widget elements</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-new-widgets">Adding new widgets</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-new-widgets">Adding new widgets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#widget-types">Widget types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-an-image">Adding an image</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-plot">Adding a plot</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-full-example">A full example</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#templates">Templates</a></li>
 </ul>
             </nav>
         </div>
@@ -382,6 +390,8 @@ document.write(`
 <p class="admonition-title">Important</p>
 <p>This section assumes that the reader is already familiar with <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>.</p>
 </div>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">#</a></h2>
 <p>By default, the data viewer in specvizitor is configured to display the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Specifically, it is using data from the following files:</p>
 <table class="table">
 <thead>
@@ -402,11 +412,12 @@ document.write(`
 </tbody>
 </table>
 <p>However, specvizitor’s capabilities go far beyond this. By modifying the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, you can create a custom widget configuration tailored to practically <em>any</em> spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with small tweaks to the default configuration and finishing with a configuration “from scratch”.</p>
-<section id="configuring-the-defaults">
-<h2>Configuring the defaults<a class="headerlink" href="#configuring-the-defaults" title="Permalink to this heading">#</a></h2>
+</section>
+<section id="configuring-the-default-widgets">
+<h2>Configuring the default widgets<a class="headerlink" href="#configuring-the-default-widgets" title="Permalink to this heading">#</a></h2>
 <p>Let us start with some examples of how you can configure the default data widgets.</p>
-<section id="changing-the-maximum-redshift">
-<h3>Changing the maximum redshift<a class="headerlink" href="#changing-the-maximum-redshift" title="Permalink to this heading">#</a></h3>
+<section id="changing-the-redshift-range">
+<h3>Changing the redshift range<a class="headerlink" href="#changing-the-redshift-range" title="Permalink to this heading">#</a></h3>
 <p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">plots</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">1D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">redshift_slider</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">max_value</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
 <span class="n">plots</span><span class="p">:</span>
@@ -429,11 +440,11 @@ document.write(`
 </div>
 <p>This is required because <span class="guilabel">Spectrum 1D</span> and <span class="guilabel">Spectrum 2D</span> share the same redshift. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The maximum value of the redshift slider should be updated accordingly.</p>
 </section>
-<section id="changing-the-colorbar-range">
-<h3>Changing the colorbar range<a class="headerlink" href="#changing-the-colorbar-range" title="Permalink to this heading">#</a></h3>
+<section id="changing-the-color-bar-range">
+<h3>Changing the color bar range<a class="headerlink" href="#changing-the-color-bar-range" title="Permalink to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This example demonstrates how to change the colorbar range of <span class="guilabel">Spectrum 2D</span>, however the same applies to any widget in the <code class="docutils literal notranslate"><span class="pre">images</span></code> category.</p>
+<p>This example demonstrates how to change the color bar range of <span class="guilabel">Spectrum 2D</span>, however the same applies to any widget in the <code class="docutils literal notranslate"><span class="pre">images</span></code> category.</p>
 </div>
 <p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">color_bar</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">limits</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
@@ -448,13 +459,13 @@ document.write(`
         <span class="nb">type</span><span class="p">:</span> <span class="n">user</span>
 </pre></div>
 </div>
-<p>Here, you can set the <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> parameters of the colorbar. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The colorbar range in <span class="guilabel">Spectrum 2D</span> should be updated accordingly.</p>
+<p>Here, you can set the <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> parameters of the color bar. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The color bar range in <span class="guilabel">Spectrum 2D</span> should be updated accordingly.</p>
 </section>
-<section id="linking-plot-axes">
-<h3>Linking plot axes<a class="headerlink" href="#linking-plot-axes" title="Permalink to this heading">#</a></h3>
+<section id="linking-widget-elements">
+<h3>Linking widget elements<a class="headerlink" href="#linking-widget-elements" title="Permalink to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This example demonstrates how to link plot axes, however the same applies to sliders and colorbars.</p>
+<p>This example demonstrates how to link plot axes, however the same applies to sliders and color bars.</p>
 </div>
 <p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Line</span> <span class="pre">Map</span> <span class="pre">1</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">x_axis</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">link_to</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
@@ -471,11 +482,11 @@ document.write(`
 <h3>Hiding widget elements<a class="headerlink" href="#hiding-widget-elements" title="Permalink to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This example demonstrates how to change the visibility of plot axes, however the same applies to colorbars, sliders, spectral lines, and widgets themselves.</p>
+<p>This example demonstrates how to change the visibility of plot axes, however the same applies to color bars, sliders, spectral lines, and widgets themselves.</p>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>You can hide most of the widget elements by pressing <kbd class="kbd docutils literal notranslate">H</kbd> (this will not affect the visibility of redshift sliders).</p>
+<p>Most of the widget elements can be hidden simultaneously by pressing <kbd class="kbd docutils literal notranslate">H</kbd>.</p>
 </div>
 <p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">x_axis</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">visible</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
@@ -491,6 +502,191 @@ document.write(`
 </section>
 <section id="adding-new-widgets">
 <h2>Adding new widgets<a class="headerlink" href="#adding-new-widgets" title="Permalink to this heading">#</a></h2>
+<p>Let us continue with some examples of how you can add new widgets to the data viewer.</p>
+<section id="widget-types">
+<h3>Widget types<a class="headerlink" href="#widget-types" title="Permalink to this heading">#</a></h3>
+<p>There are two types of widgets that can be added to the data viewer — images and plots:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="o">...</span>
+<span class="n">plots</span><span class="p">:</span>
+  <span class="o">...</span>
+</pre></div>
+</div>
+<p>Both <code class="docutils literal notranslate"><span class="pre">images</span></code> and <code class="docutils literal notranslate"><span class="pre">plots</span></code> can comprise multiple items:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="n">Image</span><span class="p">:</span>
+    <span class="o">...</span>
+  <span class="n">Spectrum</span> <span class="mi">2</span><span class="n">D</span><span class="p">:</span>
+    <span class="o">...</span>
+<span class="n">plots</span><span class="p">:</span>
+  <span class="n">Plot</span><span class="p">:</span>
+    <span class="o">...</span>
+  <span class="n">Plot</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="o">...</span>
+  <span class="n">Another</span> <span class="n">Plot</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>All widget names must be unique.</p>
+</div>
+<p>The difference between <code class="docutils literal notranslate"><span class="pre">images</span></code> and <code class="docutils literal notranslate"><span class="pre">plots</span></code> lies in the parameters that widgets of these types can have. For example, the <code class="docutils literal notranslate"><span class="pre">color_bar</span></code> parameter is unique to widgets listed in <code class="docutils literal notranslate"><span class="pre">images</span></code>, and the <code class="docutils literal notranslate"><span class="pre">plots</span></code> parameter is unique to widgets listed in <code class="docutils literal notranslate"><span class="pre">plots</span></code>.</p>
+</section>
+<section id="adding-an-image">
+<h3>Adding an image<a class="headerlink" href="#adding-an-image" title="Permalink to this heading">#</a></h3>
+<p>This is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> comprising a single image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+</pre></div>
+</div>
+<p>Here, by specifying the <code class="docutils literal notranslate"><span class="pre">filename_keyword</span></code> parameter, we tell specvizitor to search for files whose filenames include <code class="docutils literal notranslate"><span class="pre">stack.fits</span></code>. For example, if we load the dataset from the tutorial (see <a class="reference internal" href="../getting-started.html"><span class="doc">Getting started</span></a>), specvizitor will discover the following files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alt_16605</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+<span class="n">alt_26932</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+<span class="n">alt_34927</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+</pre></div>
+</div>
+<p>and select one of them depending on the ID of the current object.</p>
+<p>Sometimes a FITS file contains multiple images (tables). By default, specvizitor loads the first image (table) from such files. To load a different image (table), we can specify the <code class="docutils literal notranslate"><span class="pre">extname</span></code> and <code class="docutils literal notranslate"><span class="pre">extver</span></code> parameters in <code class="docutils literal notranslate"><span class="pre">loader_params</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">loader_params</span><span class="p">:</span>
+        <span class="n">extname</span><span class="p">:</span> <span class="n">SCI</span>
+        <span class="n">extver</span><span class="p">:</span> <span class="n">F356W</span>
+</pre></div>
+</div>
+<p>Finally, it is often useful to configure the default range of the color bar attached to the image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">loader_params</span><span class="p">:</span>
+        <span class="n">extname</span><span class="p">:</span> <span class="n">SCI</span>
+        <span class="n">extver</span><span class="p">:</span> <span class="n">F356W</span>
+    <span class="n">color_bar</span><span class="p">:</span>
+      <span class="n">limits</span><span class="p">:</span>
+        <span class="nb">type</span><span class="p">:</span> <span class="n">user</span>
+        <span class="nb">min</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.015</span>
+        <span class="nb">max</span><span class="p">:</span> <span class="mf">0.015</span>
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">type</span></code> mimics the types of images limits used in <a class="reference external" href="https://github.com/SAOImageDS9/SAOImageDS9/">SAOImage DS9</a> and can be either <code class="docutils literal notranslate"><span class="pre">user</span></code> (in which case it is necessary to specify <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code>), <code class="docutils literal notranslate"><span class="pre">minmax</span></code> (the default value), or <code class="docutils literal notranslate"><span class="pre">zscale</span></code>.</p>
+</section>
+<section id="adding-a-plot">
+<h3>Adding a plot<a class="headerlink" href="#adding-a-plot" title="Permalink to this heading">#</a></h3>
+<p>Similarly to <code class="docutils literal notranslate"><span class="pre">images</span></code>, this is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> comprising a single widget for displaying plots:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
+  <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+</pre></div>
+</div>
+<p>Next, we need to specify the plot(s) that will be shown in this widget:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
+  <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+    <span class="n">plots</span><span class="p">:</span>
+      <span class="n">flux</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">flux</span>
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">wave</span></code> and <code class="docutils literal notranslate"><span class="pre">flux</span></code> refer to the columns of a table loaded from the FITS file.</p>
+<p>In addition, we might want to configure the plot limits:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
+  <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+    <span class="n">plots</span><span class="p">:</span>
+      <span class="n">flux</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">flux</span>
+    <span class="n">y_axis</span><span class="p">:</span>
+      <span class="n">limits</span><span class="p">:</span>
+        <span class="nb">min</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span>
+        <span class="nb">max</span><span class="p">:</span> <span class="mf">1.5</span>
+</pre></div>
+</div>
+<p>Finally, let us add a redshift slider to the widget and make spectral lines visible in the plot:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
+  <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+    <span class="n">plots</span><span class="p">:</span>
+      <span class="n">flux</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">flux</span>
+    <span class="n">y_axis</span><span class="p">:</span>
+      <span class="n">limits</span><span class="p">:</span>
+        <span class="nb">min</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span>
+        <span class="nb">max</span><span class="p">:</span> <span class="mf">1.5</span>
+    <span class="n">redshift_slider</span><span class="p">:</span>
+      <span class="n">visible</span><span class="p">:</span> <span class="n">true</span>
+      <span class="n">max_value</span><span class="p">:</span> <span class="mi">10</span>
+      <span class="n">step</span><span class="p">:</span> <span class="mf">1.0e-6</span>
+      <span class="n">catalog_name</span><span class="p">:</span> <span class="n">redshift</span>
+      <span class="n">show_text_editor</span><span class="p">:</span> <span class="n">true</span>
+      <span class="n">show_save_button</span><span class="p">:</span> <span class="n">true</span>
+    <span class="n">spectral_lines</span><span class="p">:</span>
+      <span class="n">visible</span><span class="p">:</span> <span class="n">true</span>
+</pre></div>
+</div>
+</section>
+<section id="a-full-example">
+<h3>A full example<a class="headerlink" href="#a-full-example" title="Permalink to this heading">#</a></h3>
+<p>This is a full example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> which combines the two previous examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
+  <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">loader_params</span><span class="p">:</span>
+        <span class="n">extname</span><span class="p">:</span> <span class="n">SCI</span>
+        <span class="n">extver</span><span class="p">:</span> <span class="n">F356W</span>
+    <span class="n">color_bar</span><span class="p">:</span>
+      <span class="n">limits</span><span class="p">:</span>
+        <span class="nb">type</span><span class="p">:</span> <span class="n">user</span>
+        <span class="nb">min</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.015</span>
+        <span class="nb">max</span><span class="p">:</span> <span class="mf">0.015</span>
+<span class="n">plots</span><span class="p">:</span>
+  <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">:</span>
+      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+    <span class="n">plots</span><span class="p">:</span>
+      <span class="n">flux</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">flux</span>
+    <span class="n">y_axis</span><span class="p">:</span>
+      <span class="n">limits</span><span class="p">:</span>
+        <span class="nb">min</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span>
+        <span class="nb">max</span><span class="p">:</span> <span class="mf">1.5</span>
+    <span class="n">redshift_slider</span><span class="p">:</span>
+      <span class="n">visible</span><span class="p">:</span> <span class="n">true</span>
+      <span class="n">max_value</span><span class="p">:</span> <span class="mi">10</span>
+      <span class="n">step</span><span class="p">:</span> <span class="mf">1.0e-6</span>
+      <span class="n">catalog_name</span><span class="p">:</span> <span class="n">redshift</span>
+      <span class="n">show_text_editor</span><span class="p">:</span> <span class="n">true</span>
+      <span class="n">show_save_button</span><span class="p">:</span> <span class="n">true</span>
+    <span class="n">spectral_lines</span><span class="p">:</span>
+      <span class="n">visible</span><span class="p">:</span> <span class="n">true</span>
+</pre></div>
+</div>
+<p>If you load this file in specvizitor (<span class="menuselection">Widgets ‣ Restore…</span>), you should see the following:</p>
+<figure class="align-default">
+<img alt="../_images/custom_widget_config_example.png" src="../_images/custom_widget_config_example.png" />
+</figure>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The widget configuration used in specvizitor <em>by default</em> is available <a class="reference external" href="https://github.com/ivkram/specvizitor/blob/main/specvizitor/data/presets/data_widgets.yml">here</a>.</p>
+</div>
+</section>
+</section>
+<section id="templates">
+<h2>Templates<a class="headerlink" href="#templates" title="Permalink to this heading">#</a></h2>
 <p>TBU</p>
 </section>
 </section>
@@ -540,14 +736,22 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-defaults">Configuring the defaults</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-maximum-redshift">Changing the maximum redshift</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-colorbar-range">Changing the colorbar range</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-plot-axes">Linking plot axes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuring-the-default-widgets">Configuring the default widgets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-redshift-range">Changing the redshift range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-the-color-bar-range">Changing the color bar range</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linking-widget-elements">Linking widget elements</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hiding-widget-elements">Hiding widget elements</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-new-widgets">Adding new widgets</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-new-widgets">Adding new widgets</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#widget-types">Widget types</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-an-image">Adding an image</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-plot">Adding a plot</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-full-example">A full example</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#templates">Templates</a></li>
 </ul>
   </nav></div>
 
