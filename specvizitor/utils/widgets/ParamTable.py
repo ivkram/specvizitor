@@ -221,6 +221,7 @@ class ParamTable(QtWidgets.QWidget):
         self._table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self._table.setMinimumHeight(250)
 
         self._create_table_items()
         self._set_table_items()
