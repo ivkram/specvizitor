@@ -140,7 +140,7 @@ class Image2D(ViewerElement):
                              f'Supported types: {self.ALLOWED_CBAR_LIMS}')
             else:
                 if limits_cfg.type == 'minmax':
-                    l1, l2 = np.nanmin(self.data), np.nanmin(self.data)
+                    l1, l2 = np.nanmin(self.data), np.nanmax(self.data)
                 elif limits_cfg.type == 'zscale':
                     l1, l2 = ZScaleInterval().get_limits(self.data)
                 else:
