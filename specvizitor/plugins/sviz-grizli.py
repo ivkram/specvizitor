@@ -161,7 +161,7 @@ class Plugin(PluginCore):
         spec_1d.update_axis_labels()
 
         # update the plot
-        for label in ('flux', 'err'):
+        for label in ('flux', 'err', 'model'):
             plot_data_item = spec_1d.plot_data_items.get(label)
             if plot_data_item is None:
                 continue
