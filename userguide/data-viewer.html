@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../" >
 
   <head>
     <meta charset="utf-8" />
@@ -36,9 +36,9 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=71dfc096"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/documentation_options.js?v=183391d5"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/data-viewer';</script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -385,13 +385,13 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="data-viewer">
-<h1>Data Viewer<a class="headerlink" href="#data-viewer" title="Permalink to this heading">#</a></h1>
+<h1>Data Viewer<a class="headerlink" href="#data-viewer" title="Link to this heading">#</a></h1>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>This section assumes that the reader is already familiar with <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>.</p>
 </div>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">#</a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
 <p>By default, the data viewer in specvizitor is configured to display the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Specifically, it is using data from the following files:</p>
 <table class="table">
 <thead>
@@ -414,10 +414,10 @@ document.write(`
 <p>However, specvizitor’s capabilities go far beyond this. By modifying the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, you can create a custom widget configuration tailored to practically <em>any</em> spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with small tweaks to the default configuration and finishing with a configuration “from scratch”.</p>
 </section>
 <section id="configuring-the-default-widgets">
-<h2>Configuring the default widgets<a class="headerlink" href="#configuring-the-default-widgets" title="Permalink to this heading">#</a></h2>
+<h2>Configuring the default widgets<a class="headerlink" href="#configuring-the-default-widgets" title="Link to this heading">#</a></h2>
 <p>Let us start with some examples of how you can configure the default data widgets.</p>
 <section id="changing-the-redshift-range">
-<h3>Changing the redshift range<a class="headerlink" href="#changing-the-redshift-range" title="Permalink to this heading">#</a></h3>
+<h3>Changing the redshift range<a class="headerlink" href="#changing-the-redshift-range" title="Link to this heading">#</a></h3>
 <p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">plots</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">1D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">redshift_slider</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">max_value</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
 <span class="n">plots</span><span class="p">:</span>
@@ -441,7 +441,7 @@ document.write(`
 <p>This is required because <span class="guilabel">Spectrum 1D</span> and <span class="guilabel">Spectrum 2D</span> share the same redshift. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The maximum value of the redshift slider should be updated accordingly.</p>
 </section>
 <section id="changing-the-color-bar-range">
-<h3>Changing the color bar range<a class="headerlink" href="#changing-the-color-bar-range" title="Permalink to this heading">#</a></h3>
+<h3>Changing the color bar range<a class="headerlink" href="#changing-the-color-bar-range" title="Link to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This example demonstrates how to change the color bar range of <span class="guilabel">Spectrum 2D</span>, however the same applies to any widget in the <code class="docutils literal notranslate"><span class="pre">images</span></code> category.</p>
@@ -462,7 +462,7 @@ document.write(`
 <p>Here, you can set the <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code> parameters of the color bar. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The color bar range in <span class="guilabel">Spectrum 2D</span> should be updated accordingly.</p>
 </section>
 <section id="linking-widget-elements">
-<h3>Linking widget elements<a class="headerlink" href="#linking-widget-elements" title="Permalink to this heading">#</a></h3>
+<h3>Linking widget elements<a class="headerlink" href="#linking-widget-elements" title="Link to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This example demonstrates how to link plot axes, however the same applies to sliders and color bars.</p>
@@ -479,7 +479,7 @@ document.write(`
 <p>Set <code class="docutils literal notranslate"><span class="pre">link_to</span></code> to <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code>. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The y-axis of <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code> and <code class="docutils literal notranslate"><span class="pre">Line</span> <span class="pre">Map</span> <span class="pre">1</span></code> should be linked together.</p>
 </section>
 <section id="hiding-widget-elements">
-<h3>Hiding widget elements<a class="headerlink" href="#hiding-widget-elements" title="Permalink to this heading">#</a></h3>
+<h3>Hiding widget elements<a class="headerlink" href="#hiding-widget-elements" title="Link to this heading">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This example demonstrates how to change the visibility of plot axes, however the same applies to color bars, sliders, spectral lines, and widgets themselves.</p>
@@ -501,10 +501,10 @@ document.write(`
 </section>
 </section>
 <section id="adding-new-widgets">
-<h2>Adding new widgets<a class="headerlink" href="#adding-new-widgets" title="Permalink to this heading">#</a></h2>
+<h2>Adding new widgets<a class="headerlink" href="#adding-new-widgets" title="Link to this heading">#</a></h2>
 <p>Let us continue with some examples of how you can add new widgets to the data viewer.</p>
 <section id="widget-types">
-<h3>Widget types<a class="headerlink" href="#widget-types" title="Permalink to this heading">#</a></h3>
+<h3>Widget types<a class="headerlink" href="#widget-types" title="Link to this heading">#</a></h3>
 <p>There are two types of widgets that can be added to the data viewer — images and plots:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="o">...</span>
@@ -534,7 +534,7 @@ document.write(`
 <p>The difference between <code class="docutils literal notranslate"><span class="pre">images</span></code> and <code class="docutils literal notranslate"><span class="pre">plots</span></code> lies in the parameters that widgets of these types can have. For example, the <code class="docutils literal notranslate"><span class="pre">color_bar</span></code> parameter is unique to widgets listed in <code class="docutils literal notranslate"><span class="pre">images</span></code>, and the <code class="docutils literal notranslate"><span class="pre">plots</span></code> parameter is unique to widgets listed in <code class="docutils literal notranslate"><span class="pre">plots</span></code>.</p>
 </section>
 <section id="adding-an-image">
-<h3>Adding an image<a class="headerlink" href="#adding-an-image" title="Permalink to this heading">#</a></h3>
+<h3>Adding an image<a class="headerlink" href="#adding-an-image" title="Link to this heading">#</a></h3>
 <p>This is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> comprising a single image:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
@@ -577,7 +577,7 @@ document.write(`
 <p>Here, <code class="docutils literal notranslate"><span class="pre">type</span></code> mimics the types of images limits used in <a class="reference external" href="https://github.com/SAOImageDS9/SAOImageDS9/">SAOImage DS9</a> and can be either <code class="docutils literal notranslate"><span class="pre">user</span></code> (in which case it is necessary to specify <code class="docutils literal notranslate"><span class="pre">min</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code>), <code class="docutils literal notranslate"><span class="pre">minmax</span></code> (the default value), or <code class="docutils literal notranslate"><span class="pre">zscale</span></code>.</p>
 </section>
 <section id="adding-a-plot">
-<h3>Adding a plot<a class="headerlink" href="#adding-a-plot" title="Permalink to this heading">#</a></h3>
+<h3>Adding a plot<a class="headerlink" href="#adding-a-plot" title="Link to this heading">#</a></h3>
 <p>Similarly to <code class="docutils literal notranslate"><span class="pre">images</span></code>, this is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> comprising a single widget for displaying plots:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
   <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
@@ -638,7 +638,7 @@ document.write(`
 </div>
 </section>
 <section id="a-full-example">
-<h3>A full example<a class="headerlink" href="#a-full-example" title="Permalink to this heading">#</a></h3>
+<h3>A full example<a class="headerlink" href="#a-full-example" title="Link to this heading">#</a></h3>
 <p>This is a full example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> which combines the two previous examples:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
@@ -686,7 +686,7 @@ document.write(`
 </section>
 </section>
 <section id="templates">
-<h2>Templates<a class="headerlink" href="#templates" title="Permalink to this heading">#</a></h2>
+<h2>Templates<a class="headerlink" href="#templates" title="Link to this heading">#</a></h2>
 <p>TBU</p>
 </section>
 </section>

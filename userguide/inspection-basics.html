@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" data-content_root="../" >
 
   <head>
     <meta charset="utf-8" />
@@ -36,9 +36,9 @@
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="../_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=71dfc096"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/documentation_options.js?v=183391d5"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'userguide/inspection-basics';</script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -373,9 +373,9 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="inspection-basics">
-<h1>Inspection Basics<a class="headerlink" href="#inspection-basics" title="Permalink to this heading">#</a></h1>
+<h1>Inspection Basics<a class="headerlink" href="#inspection-basics" title="Link to this heading">#</a></h1>
 <section id="creating-a-new-inspection-file">
-<h2>Creating a new inspection file<a class="headerlink" href="#creating-a-new-inspection-file" title="Permalink to this heading">#</a></h2>
+<h2>Creating a new inspection file<a class="headerlink" href="#creating-a-new-inspection-file" title="Link to this heading">#</a></h2>
 <p>Every round of inspections starts with creating a new <em>inspection file</em>. To get started, navigate to <span class="menuselection">File ‣ New…</span>:</p>
 <figure class="align-default">
 <img alt="../_images/new_file.png" src="../_images/new_file.png" />
@@ -432,14 +432,16 @@ document.write(`
 <p>Once you have gone through all these steps, click <span class="guilabel">OK</span>. If there are no errors, a new inspection file will be created.</p>
 </section>
 <section id="adding-inspection-fields">
-<h2>Adding inspection fields<a class="headerlink" href="#adding-inspection-fields" title="Permalink to this heading">#</a></h2>
+<h2>Adding inspection fields<a class="headerlink" href="#adding-inspection-fields" title="Link to this heading">#</a></h2>
 <p>In specvizitor, you can create custom inspection fields for carrying out some additional classification besides just assigning a redshift, for example assigning <em>a confidence level</em> to the redshift or marking objects with some unusual properties. To create a new inspection field, navigate to <span class="guilabel">Inspection Results</span> ‣ <span class="guilabel">Edit…</span> ‣ <span class="guilabel">Add…</span> and enter the name of a new field:</p>
 <figure class="align-default">
-<a class="reference internal image-reference" href="../_images/edit_inspection_fields.png"><img alt="../_images/edit_inspection_fields.png" src="../_images/edit_inspection_fields.png" style="width: 10cm;" /></a>
+<a class="reference internal image-reference" href="../_images/edit_inspection_fields.png"><img alt="../_images/edit_inspection_fields.png" src="../_images/edit_inspection_fields.png" style="width: 10cm;" />
+</a>
 </figure>
 <p>Click <span class="guilabel">OK</span> (twice). The new field will appear in <span class="guilabel">Inspection Results</span>:</p>
 <figure class="align-default">
-<a class="reference internal image-reference" href="../_images/new_inspection_field.png"><img alt="../_images/new_inspection_field.png" src="../_images/new_inspection_field.png" style="width: 10cm;" /></a>
+<a class="reference internal image-reference" href="../_images/new_inspection_field.png"><img alt="../_images/new_inspection_field.png" src="../_images/new_inspection_field.png" style="width: 10cm;" />
+</a>
 </figure>
 <p>This field will also appear as a boolean column in the output file (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>).</p>
 <div class="admonition note">
@@ -448,7 +450,7 @@ document.write(`
 </div>
 </section>
 <section id="saving-inspection-results">
-<h2>Saving inspection results<a class="headerlink" href="#saving-inspection-results" title="Permalink to this heading">#</a></h2>
+<h2>Saving inspection results<a class="headerlink" href="#saving-inspection-results" title="Link to this heading">#</a></h2>
 <p>The inspection results (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>) are saved <em>automatically</em> whenever you:</p>
 <ul class="simple">
 <li><p>go from one object to another;</p></li>
@@ -457,10 +459,11 @@ document.write(`
 <p>By design, there is no <em>manual</em> way to save the inspection results. The <kbd class="kbd compound docutils literal notranslate"><kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd></kbd> shortcut updates the redshift in <span class="guilabel">Inspection Results</span> only, and for the <code class="docutils literal notranslate"><span class="pre">*.csv</span></code> file to be saved you still need to trigger one of the two events listed above.</p>
 </section>
 <section id="exporting-a-fits-table">
-<span id="export-fits-table"></span><h2>Exporting a FITS table<a class="headerlink" href="#exporting-a-fits-table" title="Permalink to this heading">#</a></h2>
+<span id="export-fits-table"></span><h2>Exporting a FITS table<a class="headerlink" href="#exporting-a-fits-table" title="Link to this heading">#</a></h2>
 <p>Sometimes it might be useful to export the inspection results (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>) as a FITS table (for example, to load them in Astropy). This can be done by navigating to <span class="menuselection">File ‣ Export FITS Table…</span> and specifying the path to the output file:</p>
 <figure class="align-default">
-<a class="reference internal image-reference" href="../_images/export_fits_table.png"><img alt="../_images/export_fits_table.png" src="../_images/export_fits_table.png" style="width: 10cm;" /></a>
+<a class="reference internal image-reference" href="../_images/export_fits_table.png"><img alt="../_images/export_fits_table.png" src="../_images/export_fits_table.png" style="width: 10cm;" />
+</a>
 </figure>
 </section>
 </section>
