@@ -20,7 +20,7 @@ Keyboard Shortcuts
       - Select checkboxes in :guilabel:`Inspection Results`
     * - :kbd:`S`
       - Star the object
-    * - :kbd:`Return`
+    * - :kbd:`E`
       - Set focus on :guilabel:`Comments`
     * - :kbd:`Esc`
       - Remove focus from :guilabel:`Comments`
