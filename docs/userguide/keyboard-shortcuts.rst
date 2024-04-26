@@ -5,7 +5,7 @@ Keyboard Shortcuts
     :widths: auto
 
     * - :kbd:`→`, :kbd:`←`
-      - Move to the next/previous object
+      - Go to the next/previous object
     * - :kbd:`↑`, :kbd:`↓`
       - Switch between stacked widgets
     * - :kbd:`Q`, :kbd:`W`
@@ -20,12 +20,16 @@ Keyboard Shortcuts
       - Select checkboxes in :guilabel:`Inspection Results`
     * - :kbd:`S`
       - Star the object
-    * - :kbd:`H`
-      - Hide the interface (color bars, sliders, etc.)
-    * - :kbd:`F5`
+    * - :kbd:`Return`
+      - Set focus on the comments box
+    * - :kbd:`Esc`
+      - Remove focus from the comments box
+    * - :kbd:`R`
       - Reset the view
-    * - :kbd:`F11`
-      - Enter fullscreen mode
+    * - :kbd:`H`
+      - Toggle minimal interface mode
+    * - :kbd:`F`
+      - Toggle fullscreen mode
     * - :kbd:`Ctrl+N`
       - Create a new inspection file
     * - :kbd:`Ctrl+O`

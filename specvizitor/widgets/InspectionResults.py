@@ -2,7 +2,7 @@ from qtpy import QtCore, QtWidgets
 
 from ..config import config
 from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
-from ..utils.widgets import AbstractWidget
+from ..utils.widgets import AbstractWidget, MyQTextEdit
 
 
 class InspectionResults(AbstractWidget):
@@ -20,13 +20,16 @@ class InspectionResults(AbstractWidget):
         self._separator: QtWidgets.QFrame | None = None
 
         self._checkbox_widgets: dict[str, QtWidgets.QCheckBox] | None = None
-        self._comments_widget: QtWidgets.QTextEdit | None = None
+        self._comments_widget: MyQTextEdit | None = None
 
         self._edit_fields: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+
+        # add shortcuts
+        QtWidgets.QShortcut("Return", self, self._comments_widget.setFocus)
 
     def _create_checkbox_widgets(self, review: InspectionData | None = None):
         if self._checkbox_widgets is not None:
@@ -57,7 +60,7 @@ class InspectionResults(AbstractWidget):
         self._separator.setFrameShape(QtWidgets.QFrame.HLine)
 
         self._create_checkbox_widgets()
-        self._comments_widget = QtWidgets.QTextEdit(self)
+        self._comments_widget = MyQTextEdit(self)
         self._comments_widget.setPlaceholderText('Comment')
         self._comments_widget.setMinimumWidth(90)
 

@@ -95,7 +95,6 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         # create a `reset view` button
         self._reset_view_button = QtWidgets.QAction(self)
-        self._reset_view_button.setShortcut('R')
         self._reset_view_button.setToolTip('Reset the view')
 
         # create a `reset layout` button

@@ -202,7 +202,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setEnabled(False)
         self._reset_view.triggered.connect(self._data_viewer.view_reset.emit)
-        self._reset_view.setShortcut('F5')
+        self._reset_view.setShortcut('R')
         self._view.addAction(self._reset_view)
 
         self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
@@ -223,7 +223,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._fullscreen = QtWidgets.QAction("Fullscreen")
         self._fullscreen.triggered.connect(lambda:
                                            self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
-        self._fullscreen.setShortcut('F11')
+        self._fullscreen.setShortcut('F')
         self._view.addAction(self._fullscreen)
 
         self._widgets = self._menu.addMenu("&Widgets")
