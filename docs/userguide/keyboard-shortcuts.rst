@@ -21,9 +21,9 @@ Keyboard Shortcuts
     * - :kbd:`S`
       - Star the object
     * - :kbd:`Return`
-      - Set focus on the comments box
+      - Set focus on :guilabel:`Comments`
     * - :kbd:`Esc`
-      - Remove focus from the comments box
+      - Remove focus from :guilabel:`Comments`
     * - :kbd:`R`
       - Reset the view
     * - :kbd:`H`
