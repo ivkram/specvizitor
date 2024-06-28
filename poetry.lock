@@ -399,23 +399,6 @@ files = [
 ]
 
 [[package]]
-name = "dictdiffer"
-version = "0.9.0"
-description = "Dictdiffer is a library that helps you to diff and patch dictionaries."
-optional = false
-python-versions = "*"
-files = [
-    {file = "dictdiffer-0.9.0-py2.py3-none-any.whl", hash = "sha256:442bfc693cfcadaf46674575d2eba1c53b42f5e404218ca2c2ff549f2df56595"},
-    {file = "dictdiffer-0.9.0.tar.gz", hash = "sha256:17bacf5fbfe613ccf1b6d512bd766e6b21fb798822a133aa86098b8ac9997578"},
-]
-
-[package.extras]
-all = ["Sphinx (>=3)", "check-manifest (>=0.42)", "mock (>=1.3.0)", "numpy (>=1.13.0)", "numpy (>=1.15.0)", "numpy (>=1.18.0)", "numpy (>=1.20.0)", "pytest (==5.4.3)", "pytest (>=6)", "pytest-cov (>=2.10.1)", "pytest-isort (>=1.2.0)", "pytest-pycodestyle (>=2)", "pytest-pycodestyle (>=2.2.0)", "pytest-pydocstyle (>=2)", "pytest-pydocstyle (>=2.2.0)", "sphinx (>=3)", "sphinx-rtd-theme (>=0.2)", "tox (>=3.7.0)"]
-docs = ["Sphinx (>=3)", "sphinx-rtd-theme (>=0.2)"]
-numpy = ["numpy (>=1.13.0)", "numpy (>=1.15.0)", "numpy (>=1.18.0)", "numpy (>=1.20.0)"]
-tests = ["check-manifest (>=0.42)", "mock (>=1.3.0)", "pytest (==5.4.3)", "pytest (>=6)", "pytest-cov (>=2.10.1)", "pytest-isort (>=1.2.0)", "pytest-pycodestyle (>=2)", "pytest-pycodestyle (>=2.2.0)", "pytest-pydocstyle (>=2)", "pytest-pydocstyle (>=2.2.0)", "sphinx (>=3)", "tox (>=3.7.0)"]
-
-[[package]]
 name = "docutils"
 version = "0.21.2"
 description = "Docutils -- Python Documentation Utilities"
@@ -666,6 +649,7 @@ files = [
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -974,17 +958,21 @@ files = [
 
 [[package]]
 name = "pyqtdarktheme"
-version = "2.1.0"
+version = "2.2.0"
 description = "Flat dark theme for PySide and PyQt."
 optional = false
-python-versions = ">=3.7,<3.12"
-files = [
-    {file = "pyqtdarktheme-2.1.0-py3-none-any.whl", hash = "sha256:8739d99502230fbaca42551ea033c9ae31c81c4ebfec2f1ffde38f32a18bea7a"},
-    {file = "pyqtdarktheme-2.1.0.tar.gz", hash = "sha256:5f8274ddfa3a5481ed9743cdb0f9debfeb7ff695b3a0d202a8104361d17dadb8"},
-]
+python-versions = ">=3.8,<3.13"
+files = []
+develop = false
 
 [package.dependencies]
-darkdetect = ">=0.7.1,<0.8.0"
+darkdetect = "^0.7.1"
+
+[package.source]
+type = "git"
+url = "https://github.com/ivkram/PyQtDarkTheme.git"
+reference = "python3.12"
+resolved_reference = "dcab630b173c17a7c1b50c65dc28fc4787b6c764"
 
 [[package]]
 name = "pyqtgraph"
@@ -1503,5 +1491,5 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.10,<3.12"
-content-hash = "073e3fa1324c9f50591accc2370bbf68d66903066cc2ceb1c181adc922bafa25"
+python-versions = ">=3.10,<3.13"
+content-hash = "4376bd7ff497022368bd4a8d5cc140e33c99b007e206cc4c5d6f6f8b96e5ec55"
