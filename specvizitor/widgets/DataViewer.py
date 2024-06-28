@@ -240,10 +240,9 @@ class DataViewer(AbstractWidget):
 
             for plugin in self._plugins:
                 plugin.tweak_docks(self.docks)
-
-        except (KeyError, ValueError, TypeError):
+        except (KeyError, ValueError, TypeError) as e:
             self.init_docks()  # to reset the dock layout
-            logger.error('Failed to restore the dock layout')
+            logger.error(f'Failed to restore the dock layout: {e}')
 
     def init_ui(self):
         if self.dock_area is None:
