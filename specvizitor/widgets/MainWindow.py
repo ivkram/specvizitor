@@ -8,8 +8,8 @@ import logging
 import pathlib
 
 from ..appdata import AppData
-from ..config import Config, Cache, DataWidgets, SpectralLineData
 from ..config.appearance import setup_appearance
+from ..config import Config, Cache, DataWidgets, SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..plugins.plugin_core import PluginCore
@@ -127,7 +127,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._cache.last_subset_file:
             self.load_subset(reset_index=False)
 
-        # read cache and try to load the last active project
+        # read cache and try to load the last opened project
         if self._cache.last_inspection_file:
             self.open_file(self._cache.last_inspection_file, self._cache.last_object_index)
 

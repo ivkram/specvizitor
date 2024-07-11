@@ -1,11 +1,17 @@
 import pyqtgraph as pg
-import qdarktheme
 
-from .config import Appearance
+from ..config import Appearance
+from .qdarktheme import setup_theme as setup_qtheme
+
+
+__all__ = [
+    "setup_appearance"
+]
 
 
 def setup_theme(theme: str):
-    qdarktheme.setup_theme(theme)
+    setup_qtheme(theme)
+
     if theme == 'dark':
         pg.setConfigOption('background', "#1d2023")
         pg.setConfigOption('foreground', '#eff0f1')

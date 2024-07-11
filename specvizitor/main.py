@@ -48,7 +48,7 @@ def main():
 
     if args.purge:
         # deleting old configuration files which are no longer in use
-        with open(pathlib.Path(__file__).parent / 'data' / 'presets' / 'legacy.txt', 'r') as file:
+        with open(pathlib.Path(__file__).parent / 'data' / 'config' / 'legacy.txt', 'r') as file:
             for line in file:
                 legacy_config = pathlib.Path(CONFIG_DIR) / line.rstrip()
                 legacy_config.unlink(missing_ok=True)
