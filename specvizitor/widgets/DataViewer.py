@@ -336,7 +336,7 @@ class DataViewer(AbstractWidget):
     def request_redshift(self):
         slider = self._find_active_redshift_slider()
         if slider:
-            self.redshift_requested.connect(slider.save_redshift)
+            self.redshift_requested.connect(slider.save_value)
             self.redshift_requested.emit()
             self.redshift_requested.disconnect()
 
@@ -347,9 +347,13 @@ class DataViewer(AbstractWidget):
     def change_redshift(self, n_steps: int, small_step: bool = False):
         slider = self._find_active_redshift_slider()
         if slider:
+            self.redshift_changed.connect(slider.set_value)
+
+            z = slider.value
             step = self._global_cfg.redshift_small_step if small_step else self._global_cfg.redshift_step
-            self.redshift_changed.connect(slider.change_redshift)
-            self.redshift_changed.emit(n_steps * step)
+            dz = n_steps * step * (1 + z)
+
+            self.redshift_changed.emit(z + dz)
             self.redshift_changed.disconnect()
 
     @QtCore.Slot()

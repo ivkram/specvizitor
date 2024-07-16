@@ -42,8 +42,8 @@ class InspectionResults:
 
 @dataclass
 class DataViewer:
-    redshift_step: float = 0.05
-    redshift_small_step: float = 0.0025
+    redshift_step: float = 0.01
+    redshift_small_step: float = 0.0005
 
 
 @dataclass

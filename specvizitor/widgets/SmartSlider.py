@@ -6,6 +6,10 @@ import logging
 from ..io.catalog import Catalog
 from ..utils.widgets import AbstractWidget
 
+__all__ = [
+    'SmartSlider'
+]
+
 logger = logging.getLogger(__name__)
 
 
@@ -120,7 +124,7 @@ class SmartSlider(AbstractWidget):
 
         self._slider.value_changed.connect(self.update_from_slider)
         self._editor.returnPressed.connect(self._update_from_editor)
-        self._save_button.clicked.connect(self.save_redshift)
+        self._save_button.clicked.connect(self.save_value)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
@@ -159,17 +163,13 @@ class SmartSlider(AbstractWidget):
             self.reset()
 
     @QtCore.Slot()
-    def save_redshift(self):
+    def save_value(self):
         self.save_button_clicked.emit(self.value)
 
-    @QtCore.Slot(float)
-    def change_redshift(self, delta_z: float):
-        self._slider.index = self._slider.index_from_value(self._slider.value + delta_z)
-
-    def update_default_value(self, default_value: float):
+    def set_default_value(self, default_value: float):
         self._slider.default_value = default_value
 
-    def update_default_value_from_catalog(self, cat_entry: Catalog | None):
+    def set_default_value_from_catalog(self, cat_entry: Catalog | None):
         if cat_entry is None or self.catalog_name is None:
             self._slider.default_value = self._default_value_fallback
             return

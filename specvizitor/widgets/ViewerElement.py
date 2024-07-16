@@ -312,11 +312,11 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
             # process sliders
             for slider_name, s in self.sliders.items():
-                s.update_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
+                s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
                 if slider_name == 'redshift':  # load redshift from inspection results
                     redshift = review.get_value(j, 'z_sviz')
                     if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
-                        s.update_default_value(redshift)
+                        s.set_default_value(redshift)
                 s.update_from_slider()  # update the widget according to the slider state
 
             # final preparations
