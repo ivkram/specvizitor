@@ -67,7 +67,7 @@ class Plot1D(ViewerElement):
             self.register_item(plot_data_item)
 
     @staticmethod
-    def update_axis_lims(lims_current: tuple[float, float] | None, plot_data: np.ndarray):
+    def calc_axis_lims(lims_current: tuple[float, float] | None, plot_data: np.ndarray):
         plot_data = plot_data[~np.isinf(plot_data)]
         if all(np.isnan(plot_data)):
             return lims_current
@@ -82,8 +82,8 @@ class Plot1D(ViewerElement):
         xlim, ylim = None, None
         for label, plot_data_item in self.plot_data_items.items():
             x_data, y_data = plot_data_item.getData()
-            xlim = self.update_axis_lims(xlim, x_data)
-            ylim = self.update_axis_lims(ylim, y_data)
+            xlim = self.calc_axis_lims(xlim, x_data)
+            ylim = self.calc_axis_lims(ylim, y_data)
 
         self.set_default_range(xlim, ylim)
         self.set_content_padding(ypad=0.05)

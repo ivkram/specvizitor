@@ -158,6 +158,10 @@ class Image2D(ViewerElement):
         if update:
             self.reset_levels()
 
+    def set_levels(self, levels: tuple[float, float]):
+        self.cbar.setLevels(levels)
+        self.cbar._updateHistogram()  # the histogram is calculated using the current image levels
+
     def apply_qtransform(self, **kwargs):
         super().apply_qtransform(**kwargs)
         self.container.setAspectLocked(lock=True, ratio=self._qtransform.m22() / self._qtransform.m11())
@@ -175,8 +179,7 @@ class Image2D(ViewerElement):
         self.image_item.setImage(smoothed_data, autoLevels=False)
 
     def reset_levels(self):
-        self.cbar.setLevels((self._default_levels.min, self._default_levels.max))
-        self.cbar._updateHistogram()  # the histogram is calculated using the current image levels
+        self.set_levels((self._default_levels.min, self._default_levels.max))
 
     def reset_view(self):
         super().reset_view()

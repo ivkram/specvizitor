@@ -372,7 +372,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
                           apply_qtransform=False, update: bool = False):
         if apply_qtransform:
             if not xrange or not yrange:
-                raise ValueError('Cannot apply transformation to missing axis limits')
+                raise ValueError("Can only apply transformation when both x- and y-axis limits are specified")
 
             x1, y1 = self._qtransform.map(xrange[0], yrange[0])
             x2, y2 = self._qtransform.map(xrange[1], yrange[1])

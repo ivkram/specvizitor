@@ -174,8 +174,8 @@ class DataViewer(AbstractWidget):
                     logger.error(f'Failed to (un)link color bars (source widget: {w.cfg.color_bar.link_to})')
                 else:
                     if w.data is not None and w.has_defined_levels:
-                        source_widget.cbar.sigLevelsChanged[tuple].connect(partial(w.set_default_levels, update=True))
-                        w.cbar.sigLevelsChanged[tuple].connect(partial(source_widget.set_default_levels, update=True))
+                        source_widget.cbar.sigLevelsChanged[tuple].connect(w.set_levels)
+                        w.cbar.sigLevelsChanged[tuple].connect(source_widget.set_levels)
 
     def _disconnect_colorbars(self):
         images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items() if
