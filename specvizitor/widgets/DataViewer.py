@@ -110,7 +110,7 @@ class DataViewer(AbstractWidget):
                                    spectral_lines=self._spectral_lines, parent=self)
 
         for plugin in self._plugins:
-            plugin.overwrite_widget_configs(widgets)
+            plugin.override_widget_configs(widgets)
 
         self.widgets = widgets
         self._connect_widgets()
@@ -223,7 +223,7 @@ class DataViewer(AbstractWidget):
                 self._add_dock(widget)
 
         for plugin in self._plugins:
-            plugin.tweak_docks(self.docks)
+            plugin.update_docks(self.docks)
 
     @QtCore.Slot()
     def init_docks(self):
@@ -239,7 +239,7 @@ class DataViewer(AbstractWidget):
             logger.info('Dock layout restored')
 
             for plugin in self._plugins:
-                plugin.tweak_docks(self.docks)
+                plugin.update_docks(self.docks)
         except (KeyError, ValueError, TypeError) as e:
             self.init_docks()  # to reset the dock layout
             logger.error(f'Failed to restore the dock layout: {e}')
@@ -324,7 +324,8 @@ class DataViewer(AbstractWidget):
         self._update_dock_titles()
 
         for plugin in self._plugins:
-            plugin.tweak_widgets(self.active_widgets, cat_entry)
+            plugin.update_viewer(self.active_widgets, cat_entry)
+            plugin.update_docks(self.docks, cat_entry)
 
     def _find_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.widgets.values():

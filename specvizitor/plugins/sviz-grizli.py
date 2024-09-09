@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 class Plugin(PluginCore):
     LM_NAME = 'Line Map {}'
 
-    def overwrite_widget_configs(self, widgets: dict[str, ViewerElement]):
+    def override_widget_configs(self, widgets: dict[str, ViewerElement]):
+        """Override configurations of line maps.
+        """
         lm: Image2D
 
         i = 1
@@ -32,20 +34,23 @@ class Plugin(PluginCore):
             lm.cfg.data.loader_params['extver_index'] = i - 1  # EXTVER indexing starts at 0
             i += 1
 
-    def tweak_docks(self, docks: dict[str, Dock]):
+    def update_docks(self, docks: dict[str, Dock], cat_entry: Catalog | None = None):
+        """Add keyboard shortcuts to switch between line maps.
+        """
 
         i = 1
-        lm_docks = []
+        lm_docks = {}
+
         while docks.get(self.LM_NAME.format(i)):
-            lm_docks.append(docks.get(self.LM_NAME.format(i)))
+            title = self.LM_NAME.format(i)
+            lm_docks[title] = docks[title]
             i += 1
 
-        stacked_lm_docks = self.get_stacked_lm_docks(lm_docks)
+        stacked_lm_docks = self.get_stacked_docks(lm_docks)
         if not stacked_lm_docks:
             return
 
-        # raise the first line map dock to the top
-        stacked_lm_docks[0].raiseDock()
+        stacked_lm_docks = list(stacked_lm_docks.values())
 
         '''
         * patching a pyqtgraph bug *
@@ -56,40 +61,24 @@ class Plugin(PluginCore):
         if len(stacked_lm_docks) > 1:
             stacked_lm_docks[-1].label.setDim(True)
 
-        # add shortcuts
-        stack = stacked_lm_docks[0].container().stack  # TODO: restore shortcuts when the stack is destroyed
-        QtGui.QShortcut(QtCore.Qt.Key_Up, stack, partial(self.change_current_linemap, lm_docks, -1))
-        QtGui.QShortcut(QtCore.Qt.Key_Down, stack, partial(self.change_current_linemap, lm_docks, 1))
+        # raise the first line map dock to the top
+        stacked_lm_docks[0].raiseDock()
 
-    def change_current_linemap(self, lm_docks: list[Dock], delta_index: int):
-        stacked_lm_docks = self.get_stacked_lm_docks(lm_docks)  # find stacked docks in case the stack is changed
+        # add shortcuts
+        stack = stacked_lm_docks[0].container().stack
+        QtGui.QShortcut(QtCore.Qt.Key_Up, stack, partial(self.switch_current_linemap, lm_docks, -1))
+        QtGui.QShortcut(QtCore.Qt.Key_Down, stack, partial(self.switch_current_linemap, lm_docks, 1))
+
+    def switch_current_linemap(self, lm_docks: dict[str, Dock], delta_index: int):
+        stacked_lm_docks = self.get_stacked_docks(lm_docks)
+
         if stacked_lm_docks:
+            stacked_lm_docks = list(stacked_lm_docks.values())
             stack = stacked_lm_docks[0].container().stack
             stacked_lm_docks[(stack.currentIndex() + delta_index) % stack.count()].raiseDock()
 
-    @staticmethod
-    def get_stacked_lm_docks(lm_docks: list[Dock]) -> list[Dock]:
-        if not lm_docks:
-            return []
+    def update_viewer(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
 
-        # locate the line map stack, if exists
-        i0 = 0
-        while not hasattr(lm_docks[i0].container(), 'stack'):
-            i0 += 1
-            if i0 == len(lm_docks):
-                return []
-
-        stack = lm_docks[i0].container().stack
-
-        stacked_lm_docks = []
-        for i in range(stack.count()):
-            w = stack.widget(i)
-            if isinstance(w, Dock):
-                stacked_lm_docks.append(w)
-
-        return stacked_lm_docks
-
-    def tweak_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         spec_1d: Plot1D | None = widgets.get('Spectrum 1D')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
 
