@@ -23,7 +23,7 @@ def inspection_field_table_factory(review: InspectionData, parent=None) -> Param
                       regex_pattern=regex_pattern, is_unique=is_unique, parent=parent)
 
 
-class InspectionEditor(QtWidgets.QDialog):
+class InspectionFieldEditor(QtWidgets.QDialog):
     data_requested = QtCore.Signal()
     inspection_fields_updated = QtCore.Signal(list, list, bool)
 

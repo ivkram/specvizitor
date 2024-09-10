@@ -115,6 +115,13 @@ class InspectionResults(AbstractWidget):
         for cname, widget in self._checkbox_widgets.items():
             widget.setChecked(review.get_value(j, cname))
 
+    @QtCore.Slot(int, InspectionData)
+    def update_inspection_fields(self, j: int, review: InspectionData):
+        self._create_checkbox_widgets(review=review)
+        self.repopulate()
+
+        self.load_object(j, review)  # not the "cleanest" solution
+
     @QtCore.Slot()
     def collect(self):
         redshift = self._saved_redshift

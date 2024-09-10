@@ -20,7 +20,7 @@ from .NewFile import NewFile
 from .ObjectInfo import ObjectInfo
 from .QuickSearch import QuickSearch
 from .InspectionResults import InspectionResults
-from .InspectionEditor import InspectionEditor
+from .InspectionFieldEditor import InspectionFieldEditor
 from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
     EXIT_CODE_REBOOT = -42
-
     project_loaded = QtCore.Signal(InspectionData)
     object_selected = QtCore.Signal(int, InspectionData, object)
     data_requested = QtCore.Signal()
@@ -39,6 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
+    inspection_fields_changed = QtCore.Signal(int, InspectionData)
     data_source_changed = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
     visible_columns_updated = QtCore.Signal(list)
@@ -278,6 +278,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.theme_changed.connect(self._data_viewer.init_ui)
         self.theme_changed.connect(self._commands_bar._set_icons)
         self.catalogue_changed.connect(self._object_info.update_table_items)
+        self.inspection_fields_changed.connect(self._inspection_res.update_inspection_fields)
         self.data_source_changed.connect(self._data_viewer.load_field_images)
         self.spectral_lines_changed.connect(self._data_viewer.spectral_lines_changed.emit)
         self.visible_columns_updated.connect(self._object_info.update_visible_columns)
@@ -551,10 +552,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showMaximized()
 
     def _edit_inspection_file_action(self):
-        dialog = InspectionEditor(review=self.rd.review, parent=self)
+        dialog = InspectionFieldEditor(review=self.rd.review, parent=self)
         dialog.inspection_fields_updated.connect(self.update_inspection_fields)
         if dialog.exec():
-            self.project_loaded.emit(self.rd.review)
+            self.inspection_fields_changed.emit(self.rd.j, self.rd.review)
 
     def _inspect_subset_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Subset')[0]
