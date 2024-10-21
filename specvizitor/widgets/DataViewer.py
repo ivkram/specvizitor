@@ -207,12 +207,11 @@ class DataViewer(AbstractWidget):
         self.docks = docks
 
     def _add_dock(self, widget: ViewerElement):
+        dock = self.docks[widget.title]
         position = widget.cfg.position if widget.cfg.position is not None else 'bottom'
         relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self.added_docks else None
 
-        self.dock_area.addDock(dock=self.docks[widget.title],
-                               position=position,
-                               relativeTo=relative_to)
+        self.dock_area.addDock(dock=dock, position=position, relativeTo=relative_to)
         self.added_docks.append(widget.title)
 
     def _add_docks(self):
@@ -231,8 +230,20 @@ class DataViewer(AbstractWidget):
         self._add_docks()
         self._update_dock_titles()
 
+    @staticmethod
+    def clean_layout(layout: dict):
+        float_layout_cleaned = []
+        for l in layout['float']:
+            if l[0]['main'] is not None:
+                float_layout_cleaned.append(l)
+
+        layout['float'] = float_layout_cleaned
+
     @QtCore.Slot(dict)
     def restore_dock_layout(self, layout: dict):
+        # fix for a pyqtgraph bug where empty layouts throw an error
+        self.clean_layout(layout)
+
         try:
             # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `layout`
             self.dock_area.restoreState(layout, missing='ignore', extra=None)
