@@ -27,3 +27,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
+
+      - name: Install xvfb for headless display
+        run: sudo apt-get install -y xvfb
+
+      - name: Run Specvizitor
+        run: |
+          xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" specvizitor
+        timeout-minutes: 1
