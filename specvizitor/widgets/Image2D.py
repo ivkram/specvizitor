@@ -12,7 +12,7 @@ import warnings
 from ..config import data_widgets
 from ..io.catalog import Catalog
 from ..io.viewer_data import REQUESTS
-from ..utils.qt_tools import get_qtransform_matrix_from_wcs
+from ..utils.qt_tools import get_qtransform_from_wcs
 from ..utils.widgets import ColorBar
 
 from .ViewerElement import ViewerElement
@@ -121,8 +121,7 @@ class Image2D(ViewerElement):
                 warnings.simplefilter('ignore', FITSFixedWarning)
                 w = WCS(self.meta)
 
-            transformation_matrix = get_qtransform_matrix_from_wcs(w)
-            qtransform.setMatrix(*transformation_matrix.flatten())
+            qtransform *= get_qtransform_from_wcs(w)
 
         if self.cfg.rotate:
             qtransform = qtransform.rotate(self.cfg.rotate)

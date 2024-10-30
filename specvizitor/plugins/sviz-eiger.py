@@ -48,7 +48,8 @@ class Plugin(PluginCore):
     def mark_emline_from_cat(self, spec_2d_arr: tuple[Image2D], cat_entry: Catalog):
         coords = self.get_emline_coords(cat_entry)
         for i, c in enumerate(coords):
-            self.mark_emline_in_spec_2d(c[0], c[1], spec_2d_arr, zoom=True if i == 0 else False,
+            # add "-0.5" assuming that X_IMAGE and Y_IMAGE are calculated from Source-Extractor
+            self.mark_emline_in_spec_2d(c[0]-0.5, c[1]-0.5, spec_2d_arr, zoom=True if i == 0 else False,
                                         color='r' if i == 0 else 'white')
 
     @staticmethod

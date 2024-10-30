@@ -1,6 +1,6 @@
 from astropy.wcs import WCS
 import numpy as np
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 
 def get_widgets(layout: QtWidgets.QLayout) -> list[QtWidgets.QWidget]:
@@ -18,14 +18,19 @@ def get_widgets(layout: QtWidgets.QLayout) -> list[QtWidgets.QWidget]:
     return widgets
 
 
-def get_qtransform_matrix_from_wcs(w: WCS) -> np.ndarray:
+def get_qtransform_from_wcs(w: WCS) -> np.ndarray:
     transformation_matrix = np.zeros((3, 3))
     transformation_matrix[:2, :2] = w.pixel_scale_matrix
-    # transformation_matrix[:2, 2] = w.wcs.crpix
     transformation_matrix[2, :2] = w.wcs.crval
     transformation_matrix[2, 2] = 1.0
 
-    return transformation_matrix
+    # in pyqtgraph, the first pixel spans the [0, 1] range, whereas in WCS it's [-0.5, 0.5]
+    qtransform1 = QtGui.QTransform.fromTranslate(-0.5, -0.5)
+
+    qtransform2 = QtGui.QTransform()
+    qtransform2.setMatrix(*transformation_matrix.flatten())
+
+    return qtransform1 * qtransform2
 
 
 def safe_disconnect(signal: QtCore.Signal):
