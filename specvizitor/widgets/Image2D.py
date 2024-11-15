@@ -95,9 +95,9 @@ class Image2D(ViewerElement):
             x, y = self.data.shape[1], self.data.shape[0]
 
             if self.cfg.central_axes.x:
-                self.register_item((pg.PlotCurveItem([0, x], [y // 2, y // 2], pen=pen)))
+                self.register_item((pg.PlotCurveItem([0, x], [y / 2, y / 2], pen=pen)))
             if self.cfg.central_axes.y:
-                self.register_item((pg.PlotCurveItem([x // 2, x // 2], [0, y], pen=pen)))
+                self.register_item((pg.PlotCurveItem([x / 2, x / 2], [0, y], pen=pen)))
 
         # add a crosshair to the image
         if self.cfg.central_crosshair:
