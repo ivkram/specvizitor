@@ -24,13 +24,16 @@ def get_qtransform_from_wcs(w: WCS) -> np.ndarray:
     transformation_matrix[2, :2] = w.wcs.crval
     transformation_matrix[2, 2] = 1.0
 
-    # in pyqtgraph, the first pixel spans the [0, 1] range, whereas in WCS it's [-0.5, 0.5]
-    qtransform1 = QtGui.QTransform.fromTranslate(-0.5, -0.5)
+    # in pyqtgraph, the first pixel spans the [0, 1] range whereas in WCS we assume it's [0.5, 1.5]
+    qtransform1 = QtGui.QTransform.fromTranslate(0.5, 0.5)
 
-    qtransform2 = QtGui.QTransform()
-    qtransform2.setMatrix(*transformation_matrix.flatten())
+    # bring pixel values to the reference point
+    qtransform2 = QtGui.QTransform.fromTranslate(-w.wcs.crpix[0], -w.wcs.crpix[1])
 
-    return qtransform1 * qtransform2
+    qtransform3 = QtGui.QTransform()
+    qtransform3.setMatrix(*transformation_matrix.flatten())
+
+    return qtransform1 * qtransform2 * qtransform3
 
 
 def safe_disconnect(signal: QtCore.Signal):
