@@ -112,22 +112,8 @@ class Image2D(ViewerElement):
     def has_defined_levels(self) -> bool:
         return np.any(np.isfinite(self.data)) and np.any(np.nonzero(self.data))
 
-    def setup_view(self):
-        qtransform = QtGui.QTransform()
-
-        # create a transformation matrix from metadata
-        if self.cfg.wcs_transform and self.meta is not None:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', FITSFixedWarning)
-                w = WCS(self.meta)
-
-            qtransform *= get_qtransform_from_wcs(w)
-
-        if self.cfg.rotate:
-            qtransform = qtransform.rotate(self.cfg.rotate)
-
-        self._qtransform = qtransform
-
+    def setup_view(self, cat_entry: Catalog | None):
+        self.set_qtransform(cat_entry)
         self.set_default_range((0., float(self.data.shape[1])), (0., float(self.data.shape[0])),
                                apply_qtransform=True)
 
@@ -148,7 +134,31 @@ class Image2D(ViewerElement):
 
                 self.set_default_levels((l1, l2))
 
-        super().setup_view()
+        super().setup_view(cat_entry)
+
+    def set_qtransform(self, cat_entry: Catalog | None):
+        qtransform = QtGui.QTransform()
+
+        # create a transformation matrix from metadata
+        if self.cfg.wcs_transform and self.meta is not None:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FITSFixedWarning)
+                w = WCS(self.meta)
+
+            qtransform *= get_qtransform_from_wcs(w)
+
+        # rotate the image
+        rotation_angle = self.cfg.rotate
+        if self.cfg.rotate == "auto":
+            try:
+                rotation_angle = float(cat_entry.get_col("PA"))
+            except (TypeError, KeyError) as e:
+                logger.warning(e)
+                rotation_angle = None
+        if rotation_angle:
+            qtransform = qtransform.rotate(rotation_angle)
+
+        self._qtransform = qtransform
 
     def set_default_levels(self, levels: tuple[float, float], update: bool = False):
         self._default_levels.min = levels[0]

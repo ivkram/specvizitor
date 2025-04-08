@@ -7,6 +7,8 @@ from scipy.ndimage import gaussian_filter1d
 import logging
 
 from ..config import data_widgets
+from ..io.catalog import Catalog
+
 from .ViewerElement import ViewerElement
 
 __all__ = ['Plot1D']
@@ -28,7 +30,7 @@ class Plot1D(ViewerElement):
         try:
             plot_data = self.data[cname].quantity
         except KeyError:
-            logger.warning(f'Column not found: {cname}')
+            logger.warning(f"Column not found: {cname} (widget: {self.title})")
             return None
 
         return plot_data
@@ -78,7 +80,7 @@ class Plot1D(ViewerElement):
 
         return lims_new
 
-    def setup_view(self):
+    def setup_view(self, cat_entry: Catalog | None):
         xlim, ylim = None, None
         for label, plot_data_item in self.plot_data_items.items():
             x_data, y_data = plot_data_item.getData()
@@ -88,7 +90,7 @@ class Plot1D(ViewerElement):
         self.set_default_range(xlim, ylim)
         self.set_content_padding(ypad=0.05)
 
-        super().setup_view()
+        super().setup_view(cat_entry)
 
     def smooth(self, sigma: float):
         for label, plot_data_item in self.plot_data_items.items():

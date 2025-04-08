@@ -307,7 +307,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
             self.update_axis_labels()
 
             # set up the view *after* adding content because content determines axes limits
-            self.setup_view()
+            self.setup_view(cat_entry)
             self.apply_qtransform()
 
             # process sliders
@@ -356,7 +356,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.container.addItem(item, **kwargs)
         self._registered_items.append(item)
 
-    def setup_view(self):
+    def setup_view(self, cat_entry: Catalog | None):
         xlim = (self.cfg.x_axis.limits.min, self.cfg.x_axis.limits.max)
         ylim = (self.cfg.y_axis.limits.min, self.cfg.y_axis.limits.max)
 
