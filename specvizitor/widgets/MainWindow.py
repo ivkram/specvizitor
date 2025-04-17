@@ -3,7 +3,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
 
 from dataclasses import asdict
-from importlib.metadata import version
+from importlib import metadata
 import logging
 import pathlib
 
@@ -656,7 +656,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self._config.save()
 
     def _about_action(self):
-        QtWidgets.QMessageBox.about(self, "About Specvizitor", "Specvizitor v{}".format(version('specvizitor')))
+        package_name: str = __package__.split('.')[0]
+
+        msg = []
+        msg.append(f"{package_name.capitalize()} v{metadata.version(package_name)}")
+        msg.append(f"Copyright (c) 2025, Ivan Kramarenko, Josephine Kerutt")
+        msg.append(f"\nProject's homepage: {metadata.metadata(package_name).get('Home-page')}")
+
+        QtWidgets.QMessageBox.about(self, f"About {package_name.capitalize()}", '\n'.join(msg))
 
     def closeEvent(self, _):
         self._exit_action()
