@@ -7,6 +7,7 @@ catalogue:
     redshift: [z, Z, Redshift, REDSHIFT, z_vac, z_map, Z_SPEC, z_phot_eazy]
 
 data:
+  id_pattern: '(?<![0-9Ff])\d+(?![0-9Dd])'
   enabled_unit_aliases:
     AA: [ANGSTROMS]
 
