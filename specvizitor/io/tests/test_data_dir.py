@@ -1,17 +1,17 @@
-from specvizitor.io.viewer_data import get_id_from_filename, get_ids_from_dir
+from specvizitor.io.data_dir import _get_id_from_filename, get_ids_from_dir
 
 
 def test_get_id_from_filename():
-    obj_id = get_id_from_filename("stacked_2D_F300M_1.fits", r"\d+")
+    obj_id = _get_id_from_filename("stacked_2D_F300M_1.fits", r"\d+")
     assert obj_id == "300"
 
-    obj_id = get_id_from_filename("stacked_2D_F300M_1.fits", r"(?<![0-9Ff])\d+")
+    obj_id = _get_id_from_filename("stacked_2D_F300M_1.fits", r"(?<![0-9Ff])\d+")
     assert obj_id == "2"
 
-    obj_id = get_id_from_filename("stacked_2D_F300M_1.fits", r"(?<![0-9Ff])\d+(?![0-9Dd])")
+    obj_id = _get_id_from_filename("stacked_2D_F300M_1.fits", r"(?<![0-9Ff])\d+(?![0-9Dd])")
     assert obj_id == "1"
 
-    obj_id = get_id_from_filename("stacked_2D_F300M_1_234.fits", r"(?<![0-9Ff])\d+(?![0-9Dd])")
+    obj_id = _get_id_from_filename("stacked_2D_F300M_1_234.fits", r"(?<![0-9Ff])\d+(?![0-9Dd])")
     assert obj_id == "234"
 
 

@@ -289,17 +289,15 @@ class ViewerElement(AbstractWidget, abc.ABC):
         for s in self.sliders.values():
             s.setEnabled(a0)
 
-    @QtCore.Slot(int, InspectionData, object, list)
-    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, data_files: list[str]):
-        # clear widget contents
+    @QtCore.Slot(int, InspectionData, object, str)
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, data_source: str):
         if self.data is not None:
             self.clear_content()
             for s in self.sliders.values():
                 s.clear()
         self.filename, self.data, self.meta = None, None, None
 
-        # load data to the widget
-        self.load_data(review.get_id(j), data_files, cat_entry)
+        self.load_data(review.get_id(j), data_source, cat_entry)
 
         # display the data
         if self.data is not None:
@@ -325,18 +323,20 @@ class ViewerElement(AbstractWidget, abc.ABC):
         else:
             self.setEnabled(False)
 
-    def load_data(self, obj_id: str | int, data_files: list[str], cat_entry: Catalog | None):
+    def load_data(self, obj_id: str | int, data_source: str, cat_entry: Catalog | None):
         if self.cfg.data.source:
             if cat_entry is None:
                 logger.error(f'Failed to request a shared resource: catalog entry not found (widget: {self.title})')
                 return
             self.request_shared_resource(cat_entry)
-        else:
-            self.filename, self.data, self.meta = load_widget_data(
-                obj_id=obj_id, data_files=data_files, filename_keyword=self.cfg.data.filename_keyword,
-                loader=self.cfg.data.loader, widget_title=self.title, allowed_dtypes=self.ALLOWED_DATA_TYPES,
-                **self.cfg.data.loader_params
-            )
+        elif self.cfg.data.filename is None:
+            logger.error(f"Filename not specified (widget: {self.title})")
+            return
+
+        self.filename, self.data, self.meta = load_widget_data(
+            obj_id, data_source, self.cfg.data.filename, self.cfg.data.loader, self.title,
+            cat_entry=cat_entry, allowed_dtypes=self.ALLOWED_DATA_TYPES, **self.cfg.data.loader_params
+        )
 
     def request_shared_resource(self, cat_entry: Catalog):
         pass

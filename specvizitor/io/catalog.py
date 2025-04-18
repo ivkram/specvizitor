@@ -4,7 +4,7 @@ import numpy as np
 from dataclasses import dataclass, field
 import logging
 
-from .viewer_data import get_ids_from_dir
+from .data_dir import get_ids_from_dir
 from ..utils.widgets import FileBrowser
 
 logger = logging.getLogger(__name__)

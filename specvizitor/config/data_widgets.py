@@ -68,7 +68,7 @@ class Axis:
 @dataclass
 class DataElement:
     source: str | None = None
-    filename_keyword: str | None = None
+    filename: str | None = None
     loader: str = 'auto'
     loader_params: dict[str, Any] = field(default_factory=dict)
 

@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 import pathlib
-import re
 import warnings
 
+from .catalog import Catalog
 from ..utils.widgets import FileBrowser
 
 Image.MAX_IMAGE_PIXELS = None  # ignore warnings when loading large images
@@ -224,16 +224,22 @@ def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | 
     return data, meta
 
 
-def load_widget_data(obj_id: str | int, data_files: list[str], filename_keyword: str, loader: str, widget_title: str,
-                     allowed_dtypes: tuple[type] | None = None, **kwargs):
-    if filename_keyword is None:
-        logger.error(f'Filename keyword not specified (widget: {widget_title})')
-        return None, None, None
+def load_widget_data(obj_id: str | int, data_source: str, filename: str, loader: str, widget_title: str,
+                     cat_entry: Catalog | None, allowed_dtypes: tuple[type] | None = None, **kwargs):
+    root = None
+    if cat_entry:
+        try:
+            root = cat_entry.get_col("root")
+        except KeyError as e:
+            if "{root}" in filename:
+                logger.warning(e)
 
-    filename = get_matching_filename(data_files, filename_keyword)
-    if filename is None:
+    data_path = str(pathlib.Path(data_source) / filename)
+    filename = resolve_data_path(data_path, obj_id, root=root)
+
+    if not filename.exists():
         if not kwargs.get('silent'):
-            logger.error('{} not found (object ID: {})'.format(widget_title, obj_id))
+            logger.error(f"{widget_title} not found (object ID: {obj_id})")
         return None, None, None
 
     data, meta = load(loader, filename, **kwargs)
@@ -241,6 +247,12 @@ def load_widget_data(obj_id: str | int, data_files: list[str], filename_keyword:
         return None, None, None
 
     return filename, data, meta
+
+
+def resolve_data_path(data_path: str, obj_id: str | int, root: str | None = None) -> pathlib.Path:
+    data_path = data_path.format(id=obj_id, root=root)
+    data_path = pathlib.Path(data_path).resolve()
+    return data_path
 
 
 def validate_dtype(data, allowed_dtypes: tuple[type, ...], widget_title: str) -> bool:
@@ -253,87 +265,6 @@ def validate_dtype(data, allowed_dtypes: tuple[type, ...], widget_title: str) ->
 def add_unit_aliases(unit_aliases: dict[str, list[str]]):
     for unit, aliases in unit_aliases.items():
         u.add_enabled_aliases({alias: u.Unit(unit) for alias in aliases})
-
-
-def get_id_from_filename(filename, pattern: str) -> str | None:
-    """Extract the object ID from a file name using regular expressions. If more than one ID is matched to the pattern,
-    return the longest match.
-
-    @param filename: the file name to parse
-    @param pattern: the regular expression used to match the ID
-    @return: the matched ID
-    """
-
-    try:
-        matches: list[str] = re.findall(pattern, pathlib.Path(filename).name)
-    except re.error:
-        return None
-
-    if not matches:
-        return None
-
-    return max(matches, key=len)
-
-
-def get_ids_from_dir(directory, id_pattern: str = r'\d+', recursive: bool = False) -> np.ndarray | None:
-    """Extract IDs from a directory using regular expressions.
-    @param directory: the directory where the search for IDs is performed
-    @param id_pattern: the regular expression used to match the IDs
-    @param recursive: if True, search the directory recursively
-    @return: a list of matched IDs
-    """
-
-    data_files = sorted(pathlib.Path(directory).glob('**/*' if recursive else '*'))
-    ids = [get_id_from_filename(p, id_pattern) for p in data_files]
-    ids = np.array([i for i in ids if i is not None])
-
-    try:
-        ids = ids.astype(np.int64)  # convert IDs to int
-    except ValueError:
-        pass
-
-    ids = np.unique(ids)  # remove duplicates
-
-    if not ids.size:
-        logger.error("No IDs retrieved from the data directory")
-        return
-
-    return ids
-
-
-def get_filenames_from_id(directory: str, object_id: str | int, recursive: bool = False) -> list[str]:
-    filenames: list[pathlib.Path] = sorted(pathlib.Path(directory).glob(f'**/*{object_id}*' if recursive else f'*{object_id}*'))
-    filenames = [p for p in filenames if p.is_file()]
-
-    if isinstance(object_id, int):
-        # make sure that we don't match e.g. '1123' or '1234' to '123' (but match '0123')
-        matched_ids = [re.findall(r'\d*{}\d*'.format(object_id), p.name) for p in filenames]
-        filenames = [p for i, p in enumerate(filenames)
-                     if matched_ids[i] and str(max(matched_ids[i], key=len)).lstrip('0') == str(object_id)]
-
-    # convert pathlib.Path to str to be able to store in cache
-    filenames: list[str] = list(map(str, filenames))
-
-    return filenames
-
-
-def get_matching_filename(filenames: list[str], pattern: str) -> pathlib.Path | None:
-    """ Find a file name matching to pattern. If more than one file name is matched to the pattern,
-    return the first item from an alphabetically ordered list of matched file names.
-
-    @param filenames: the file names to which the pattern is being matched
-    @param pattern: the pattern used to match file names
-    @return: the file name matched to the pattern
-    """
-
-    filenames = [pathlib.Path(p) for p in filenames]
-
-    matched = [p for p in filenames if re.search(pattern, p.name)]
-
-    if matched:
-        return matched[0]
-    else:
-        return
 
 
 def data_browser(default_path, **kwargs) -> FileBrowser:

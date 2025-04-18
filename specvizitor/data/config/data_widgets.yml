@@ -1,7 +1,7 @@
 images:
   Image Cutout:
     data:
-      filename_keyword: full.fits
+      filename: '{root}_{id:05d}.full.fits'
       loader_params:
         extname: DSCI
     x_axis:
@@ -18,7 +18,7 @@ images:
     relative_to: Image Cutout
     dock_title_fmt: long
     data:
-      filename_keyword: stack.fits
+      filename: '{root}_{id:05d}.stack.fits'
       loader_params:
         extname: SCI
         extver_index: -1
@@ -45,7 +45,7 @@ images:
     position: right
     relative_to: Image Cutout
     data:
-      filename_keyword: full.fits
+      filename: '{root}_{id:05d}.full.fits'
       loader_params:
         extname: LINE
         silent: true
@@ -68,7 +68,7 @@ plots:
     position: right
     relative_to: Line Map 7
     data:
-      filename_keyword: full.fits
+      filename: '{root}_{id:05d}.full.fits'
     smoothing_slider:
       visible: False
     plots:
@@ -86,7 +86,7 @@ plots:
     relative_to: Spectrum 2D
     dock_title_fmt: long
     data:
-      filename_keyword: 1D.fits
+      filename: '{root}_{id:05d}.1D.fits'
     x_axis:
       label: wavelength
     y_axis:

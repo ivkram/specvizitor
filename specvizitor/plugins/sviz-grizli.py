@@ -93,7 +93,7 @@ class Plugin(PluginCore):
 
         if spec_1d is not None:
             self.convert_spec1d_flux_unit_to_physical(spec_1d)
-            spec_1d.setup_view()
+            spec_1d.setup_view(cat_entry)
             spec_1d.reset_view()
 
     @staticmethod

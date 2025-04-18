@@ -11,7 +11,7 @@ from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import get_filenames_from_id, load_image, FieldImage, REQUESTS
+from ..io.viewer_data import load_image, FieldImage, REQUESTS
 from ..plugins.plugin_core import PluginCore
 from ..utils.qt_tools import safe_disconnect
 from ..utils.widgets import AbstractWidget
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(int, InspectionData, object, list)
+    object_selected = QtCore.Signal(int, InspectionData, object, str)
     shared_resources_queried = QtCore.Signal(str, pathlib.Path, object, object)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
@@ -322,14 +322,9 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
-        # perform search for files containing the object ID in their filename
-        discovered_data_files = get_filenames_from_id(self._data_cfg.dir, review.get_id(j),
-                                                      recursive=self._data_cfg.recursive_search)
-
         self._disconnect_widgets()
 
-        # load the object data to the widgets
-        self.object_selected.emit(j, review, cat_entry, discovered_data_files)
+        self.object_selected.emit(j, review, cat_entry, self._data_cfg.dir)
 
         self._reconnect_widgets()
         self._update_dock_titles()

@@ -220,12 +220,10 @@ class DataSourceWidget(SettingsWidget):
         self.cfg = cfg
 
         self._browser: FileBrowser | None = None
-        self._recursive_checkbox: QtWidgets.QCheckBox | None = None
         self._images_section: Section | None = None
         self._image_table: ParamTable | None = None
 
         self._new_dir: str | None = None
-        self._new_recursive: bool | None = None
         self._new_images: dict[config.Image] | None = None
 
         self._images_changed: bool = False
@@ -234,9 +232,6 @@ class DataSourceWidget(SettingsWidget):
 
     def init_ui(self):
         self._browser = data_browser(self.cfg.dir, title="Directory:", parent=self)
-
-        self._recursive_checkbox = QtWidgets.QCheckBox("Recursive search", self)
-        self._recursive_checkbox.setChecked(self.cfg.recursive_search)
 
         self._images_section = Section("Images", parent=self)
         self._image_table = image_table_factory(self.cfg.images, self)
@@ -249,7 +244,6 @@ class DataSourceWidget(SettingsWidget):
 
     def populate(self):
         self.layout().addWidget(self._browser)
-        self.layout().addWidget(self._recursive_checkbox)
 
         sub_layout = QtWidgets.QVBoxLayout()
         sub_layout.addWidget(self._image_table)
@@ -263,7 +257,6 @@ class DataSourceWidget(SettingsWidget):
             return False
 
         self._new_dir = self._browser.path
-        self._new_recursive = self._recursive_checkbox.isChecked()
         return True
 
     @QtCore.Slot(list)
@@ -279,7 +272,6 @@ class DataSourceWidget(SettingsWidget):
 
     def accept(self):
         self.cfg.dir = self._new_dir
-        self.cfg.recursive_search = self._new_recursive
         self.cfg.images = self._new_images
 
         if self._images_changed:
