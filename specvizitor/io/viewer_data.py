@@ -256,29 +256,29 @@ def add_unit_aliases(unit_aliases: dict[str, list[str]]):
 
 
 def get_id_from_filename(filename, pattern: str) -> str | None:
-    """ Extract the object ID from a file name using a pattern. If more than one ID is matched to the pattern, return
-    the longest match (a typical case for integer IDs).
+    """Extract the object ID from a file name using regular expressions. If more than one ID is matched to the pattern,
+    return the longest match.
 
     @param filename: the file name to parse
-    @param pattern: the pattern (a regular expression) used to match the ID
+    @param pattern: the regular expression used to match the ID
     @return: the matched ID
     """
 
     try:
         matches: list[str] = re.findall(pattern, pathlib.Path(filename).name)
     except re.error:
-        return
+        return None
 
-    if matches:
-        return max(matches, key=len)
-    else:
-        return
+    if not matches:
+        return None
+
+    return max(matches, key=len)
 
 
 def get_ids_from_dir(directory, id_pattern: str = r'\d+', recursive: bool = False) -> np.ndarray | None:
-    """ Extract IDs from a directory using a pattern.
+    """Extract IDs from a directory using regular expressions.
     @param directory: the directory where the search for IDs is performed
-    @param id_pattern: the pattern (a regular expression) used to match IDs
+    @param id_pattern: the regular expression used to match the IDs
     @param recursive: if True, search the directory recursively
     @return: a list of matched IDs
     """
@@ -292,7 +292,7 @@ def get_ids_from_dir(directory, id_pattern: str = r'\d+', recursive: bool = Fals
     except ValueError:
         pass
 
-    ids = np.unique(ids)  # remove ID duplicates
+    ids = np.unique(ids)  # remove duplicates
 
     if not ids.size:
         logger.error("No IDs retrieved from the data directory")
@@ -302,7 +302,8 @@ def get_ids_from_dir(directory, id_pattern: str = r'\d+', recursive: bool = Fals
 
 
 def get_filenames_from_id(directory: str, object_id: str | int, recursive: bool = False) -> list[str]:
-    filenames = sorted(pathlib.Path(directory).glob(f'**/*{object_id}*' if recursive else f'*{object_id}*'))
+    filenames: list[pathlib.Path] = sorted(pathlib.Path(directory).glob(f'**/*{object_id}*' if recursive else f'*{object_id}*'))
+    filenames = [p for p in filenames if p.is_file()]
 
     if isinstance(object_id, int):
         # make sure that we don't match e.g. '1123' or '1234' to '123' (but match '0123')
@@ -310,8 +311,8 @@ def get_filenames_from_id(directory: str, object_id: str | int, recursive: bool 
         filenames = [p for i, p in enumerate(filenames)
                      if matched_ids[i] and str(max(matched_ids[i], key=len)).lstrip('0') == str(object_id)]
 
-    # convert pathlib.Path to str to store in cache
-    filenames = list(map(str, filenames))
+    # convert pathlib.Path to str to be able to store in cache
+    filenames: list[str] = list(map(str, filenames))
 
     return filenames
 
@@ -325,10 +326,8 @@ def get_matching_filename(filenames: list[str], pattern: str) -> pathlib.Path | 
     @return: the file name matched to the pattern
     """
 
-    # convert to pathlib.Path
     filenames = [pathlib.Path(p) for p in filenames]
 
-    # match to the pattern
     matched = [p for p in filenames if re.search(pattern, p.name)]
 
     if matched:

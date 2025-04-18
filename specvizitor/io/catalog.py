@@ -59,17 +59,16 @@ class Catalog:
 
     @classmethod
     def read(cls, filename: str, translate: dict[str, list[str]] | None = None, data_dir=None, **kwargs):
-        """ Read the catalogue from file.
+        """Read the catalogue from a file.
         @param filename: the catalogue filename
         @param translate:
         @param data_dir:
-        @param id_pattern:
-        @return: the processed catalogue
+        @return: the Catalog object
         """
         try:
             table = Table.read(filename)  # load the catalogue
         except (OSError, ValueError) as e:
-            logger.error(f'Failed to load the catalogue: {e}')
+            logger.error(f"Failed to load the catalogue: {e}")
             return None
 
         cat = cls(table=table, translate=translate)
@@ -85,7 +84,7 @@ class Catalog:
             cat.table = cat.table[np.isin(cat.get_col('id'), ids, assume_unique=False)]
 
         if len(cat.table) == 0:
-            logger.error('The processed catalogue is empty')
+            logger.error("The processed catalogue is empty")
             return None
 
         return cat
