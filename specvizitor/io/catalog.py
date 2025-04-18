@@ -58,7 +58,7 @@ class Catalog:
         return True
 
     @classmethod
-    def read(cls, filename: str, translate: dict[str, list[str]] | None = None, data_dir=None, id_pattern=r'\d+'):
+    def read(cls, filename: str, translate: dict[str, list[str]] | None = None, data_dir=None, **kwargs):
         """ Read the catalogue from file.
         @param filename: the catalogue filename
         @param translate:
@@ -77,12 +77,12 @@ class Catalog:
             return None
 
         if data_dir is not None:
-            ids = get_ids_from_dir(data_dir, id_pattern)
+            ids = get_ids_from_dir(data_dir, **kwargs)
             if ids is None:
                 return None
 
             # filter objects based on the list of IDs
-            cat.table = cat.table[np.in1d(cat.get_col('id'), ids, assume_unique=False)]
+            cat.table = cat.table[np.isin(cat.get_col('id'), ids, assume_unique=False)]
 
         if len(cat.table) == 0:
             logger.error('The processed catalogue is empty')

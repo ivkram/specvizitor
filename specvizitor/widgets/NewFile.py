@@ -135,7 +135,8 @@ class NewFile(QtWidgets.QDialog):
     def get_catalogue(self):
         # create a new catalogue if necessary
         if self._browsers['cat'].isHidden():
-            ids = get_ids_from_dir(self._browsers['data'].path, self._id_pattern.text())
+            ids = get_ids_from_dir(self._browsers['data'].path, self._id_pattern.text(),
+                                   recursive=self.cfg.data.recursive_search)
             if ids is None:
                 return
             return Catalog.create(ids)
@@ -144,7 +145,7 @@ class NewFile(QtWidgets.QDialog):
         data_dir = self._browsers['data'].path if self._filter_check_box.isChecked() else None
 
         return Catalog.read(self._browsers['cat'].path, translate=self.cfg.catalogue.translate, data_dir=data_dir,
-                            id_pattern=self.cfg.data.id_pattern)
+                            id_pattern=self.cfg.data.id_pattern, recursive=self.cfg.data.recursive_search)
 
     def accept(self):
         if not self.validate():

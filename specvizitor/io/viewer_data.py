@@ -1,6 +1,5 @@
 from astropy.io import fits
 from astropy.io.fits.header import Header
-from astropy.io.fits.hdu import HDUList
 from astropy.table import Table
 import astropy.units as u
 from astropy.utils.exceptions import AstropyWarning
@@ -276,28 +275,27 @@ def get_id_from_filename(filename, pattern: str) -> str | None:
         return
 
 
-def get_ids_from_dir(directory, id_pattern: str) -> np.ndarray | None:
+def get_ids_from_dir(directory, id_pattern: str = r'\d+', recursive: bool = False) -> np.ndarray | None:
     """ Extract IDs from a directory using a pattern.
     @param directory: the directory where the search for IDs is performed
     @param id_pattern: the pattern (a regular expression) used to match IDs
+    @param recursive: if True, search the directory recursively
     @return: a list of matched IDs
     """
 
-    data_files = sorted(pathlib.Path(directory).glob('*'))  # includes subdirectories, if any
+    data_files = sorted(pathlib.Path(directory).glob('**/*' if recursive else '*'))
     ids = [get_id_from_filename(p, id_pattern) for p in data_files]
     ids = np.array([i for i in ids if i is not None])
 
     try:
-        # convert IDs to int
-        ids = ids.astype(np.int64)
+        ids = ids.astype(np.int64)  # convert IDs to int
     except ValueError:
         pass
 
-    # remove ID duplicates
-    ids = np.unique(ids)
+    ids = np.unique(ids)  # remove ID duplicates
 
     if not ids.size:
-        logger.error('No IDs retrieved from the data directory')
+        logger.error("No IDs retrieved from the data directory")
         return
 
     return ids
