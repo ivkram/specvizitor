@@ -16,7 +16,7 @@ class PluginCore(ABC):
         pass
 
     @abstractmethod
-    def update_viewer(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
+    def update_active_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         pass
 
     @staticmethod

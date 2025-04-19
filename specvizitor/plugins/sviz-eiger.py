@@ -5,10 +5,10 @@ from qtpy import QtCore
 
 import logging
 
-from ..io.catalog import Catalog
-from .plugin_core import PluginCore
-from ..widgets.ViewerElement import ViewerElement
+from specvizitor.io.catalog import Catalog
+from specvizitor.plugins.plugin_core import PluginCore
 
+from specvizitor.widgets.ViewerElement import ViewerElement
 from specvizitor.widgets.Image2D import Image2D
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class Plugin(PluginCore):
         if rgb_stack and cat_entry:
             self.raise_rgb_dock(rgb_stack, cat_entry)
 
-    def update_viewer(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
+    def update_active_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
 
         spec_2d_stack: Image2D | None = widgets.get('Spectrum 2D [Stack]')
         spec_2d_beams: tuple[Image2D | None, ...] = tuple(widgets.get(f'Spectrum 2D [{label}]') for label in

@@ -171,14 +171,13 @@ class SmartSlider(AbstractWidget):
 
     def set_default_value_from_catalog(self, cat_entry: Catalog | None):
         if cat_entry is None or self.catalog_name is None:
-            self._slider.default_value = self._default_value_fallback
             return
 
         try:
             self._slider.default_value = cat_entry.get_col(self.catalog_name)
         except KeyError as e:
             logger.warning(e)
-            self._slider.default_value = self._default_value_fallback
+            return
 
     def reset(self):
         if self.link_to is not None:
@@ -190,4 +189,5 @@ class SmartSlider(AbstractWidget):
         self._update_editor_text()
 
     def clear(self):
+        self._slider.default_value = self._default_value_fallback
         self._editor.setText("")

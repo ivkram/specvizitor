@@ -8,8 +8,9 @@ from qtpy import QtGui, QtWidgets
 from functools import partial
 import logging
 
-from specvizitor.plugins.plugin_core import PluginCore
 from specvizitor.io.catalog import Catalog
+from specvizitor.plugins.plugin_core import PluginCore
+
 from specvizitor.widgets.ViewerElement import ViewerElement
 from specvizitor.widgets.Image2D import Image2D
 from specvizitor.widgets.Plot1D import Plot1D
@@ -84,8 +85,7 @@ class Plugin(PluginCore):
         stack = stacked_lm_docks[0].container().stack
         stacked_lm_docks[(stack.currentIndex() + delta_index) % stack.count()].raiseDock()
 
-    def update_viewer(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
-
+    def update_active_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         spec_1d: Plot1D | None = widgets.get('Spectrum 1D')
         z_pdf: Plot1D | None = widgets.get('Redshift PDF')
 
@@ -154,9 +154,7 @@ class Plugin(PluginCore):
         scale[scale == np.inf] = np.nan
 
         spec_1d._axes.y.unit = (t['flux'] * scale).unit
-        spec_1d.update_axis_labels()
 
-        # update the plot
         for label in ('flux', 'err', 'model'):
             plot_data_item = spec_1d.plot_data_items.get(label)
             if plot_data_item is None:

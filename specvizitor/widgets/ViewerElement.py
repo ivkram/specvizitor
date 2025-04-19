@@ -110,7 +110,7 @@ class UnitTransform(PlotTransformBase):
         return plot_data
 
 
-class ViewerElement(AbstractWidget, abc.ABC):
+class ViewerElement(AbstractWidget):
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal(str)
@@ -142,16 +142,16 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self._spectral_lines = spectral_lines
         self._spectral_line_artists: dict[str, tuple[pg.InfiniteLine, pg.TextItem]] = {}
 
-        # sliders
         self.sliders: dict[str, SmartSlider] = {}  # has to be a dictionary to enable links
         self.smoothing_slider: SmartSlider | None = None
         self.redshift_slider: SmartSlider | None = None
 
         super().__init__(parent=parent)
-        self.content_cleared.connect(ViewerData().close)
 
         self.init_view()
         self.setEnabled(False)
+
+        self.content_cleared.connect(ViewerData().close)
 
     def _apply_axis_data_transform(self, plot_data: Quantity | np.ndarray, scale: str,
                                    unit: u.Unit | None) -> Quantity | np.ndarray:
@@ -200,26 +200,24 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 self.container.addItem(line_artist[1])
 
     def init_ui(self):
-        # create the graphics view
         self._graphics_view = pg.GraphicsView(parent=self)
 
-        # create the graphics layout
         self.graphics_layout = pg.GraphicsLayout()
         self._graphics_view.setCentralItem(self.graphics_layout)
 
-        # create the graphics container
         self.container = pg.PlotItem(name=self.title, viewBox=MyViewBox(enableMenu=False))
         self.set_axes_visibility()
         self.container.hideButtons()
         self.container.setMouseEnabled(True, True)
 
-        self.graphics_layout.addItem(self.container, 0, 0)
-
-        # add spectral lines to the container
         self._create_line_artists()
         self._add_line_artists()
 
-        # adding sliders to the UI
+        self.graphics_layout.addItem(self.container, 0, 0)
+
+        self._init_sliders()
+
+    def _init_sliders(self):
         self.smoothing_slider = SmartSlider(short_name='sigma', action='smooth the data', parent=self,
                                             **asdict(self.cfg.smoothing_slider))
         self.redshift_slider = SmartSlider(short_name='z', full_name='redshift', parent=self,
@@ -228,7 +226,6 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.sliders['smoothing'] = self.smoothing_slider
         self.sliders['redshift'] = self.redshift_slider
 
-        # connect signals from sliders to slots
         self.smoothing_slider.value_changed[float].connect(self.smooth)
         self.redshift_slider.value_changed[float].connect(self.redshift_changed_action)
 
@@ -261,11 +258,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def init_view(self):
         x_unit = u.Unit(self.cfg.x_axis.unit) if self.cfg.x_axis.unit else None
         y_unit = u.Unit(self.cfg.y_axis.unit) if self.cfg.y_axis.unit else None
-
         self._axes = Axes(x=Axis(unit=x_unit, scale=self.cfg.x_axis.scale, label=self.cfg.x_axis.label),
                           y=Axis(unit=y_unit, scale=self.cfg.y_axis.scale, label=self.cfg.y_axis.label))
-        self.update_axis_labels()
-
         self._qtransform = QtGui.QTransform()
 
     def set_axes_visibility(self):
@@ -292,36 +286,20 @@ class ViewerElement(AbstractWidget, abc.ABC):
 
     @QtCore.Slot(int, InspectionData, config.DataSources, object)
     def load_object(self, j: int, review: InspectionData, data_sources: config.DataSources, cat_entry: Catalog | None):
+        self.setEnabled(False)
         if self.data is not None:
             self.clear_content()
-            for s in self.sliders.values():
-                s.clear()
+            self.clear_sliders()
         self.filename, self.data, self.meta = None, None, None
 
         self.load_data(review.get_id(j), data_sources, cat_entry)
 
         if self.data is None:
             self.filename, self.meta = None, None
-            self.setEnabled(False)
             return
 
-        self.add_content()
-        self.update_axis_labels()
-
-        # set up the view *after* adding content because content determines axes limits
-        self.setup_view(cat_entry)
-        self.apply_qtransform()
-
-        # process sliders
-        for slider_name, s in self.sliders.items():
-            s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
-            if slider_name == 'redshift':  # load redshift from inspection results
-                redshift = review.get_value(j, 'z_sviz')
-                if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
-                    s.set_default_value(redshift)
-            s.update_from_slider()  # update the widget according to the slider state
-
-        # final preparations
+        self.add_content(cat_entry)
+        self.setup_slider_view(j, review, cat_entry)
         self.reset_view()
         self.setEnabled(True)
 
@@ -350,13 +328,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
             filename = str(pathlib.Path(data_sources.dir) / self.cfg.data.filename)
 
         self.filename, self.data, self.meta = load_widget_data(
-            obj_id, filename, self.cfg.data.loader, self.title, cat_entry=cat_entry,
-            allowed_dtypes=self.ALLOWED_DATA_TYPES, **self.cfg.data.loader_params, **kwargs
+            obj_id, filename, self.cfg.data.loader, self.title, cat_entry, allowed_dtypes=self.ALLOWED_DATA_TYPES,
+            **self.cfg.data.loader_params, **kwargs
         )
 
-    @abc.abstractmethod
-    def add_content(self):
-        pass
+    def add_content(self, cat_entry: Catalog | None):
+        self.setup_view(cat_entry)
 
     def register_item(self, item: pg.GraphicsItem, **kwargs):
         item.setTransform(self._qtransform)
@@ -374,6 +351,17 @@ class ViewerElement(AbstractWidget, abc.ABC):
                 ylim[1] if ylim[1] is not None else self._axes.y.limits[1])
 
         self.set_default_range(xrange=xlim, yrange=ylim)
+
+        self.update_axis_labels()
+        self.apply_qtransform()
+
+    def setup_slider_view(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+        for slider_name, s in self.sliders.items():
+            s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
+            if slider_name == 'redshift':  # load redshift from inspection results
+                redshift = review.get_value(j, 'z_sviz')
+                if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
+                    s.set_default_value(redshift)
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
                           apply_qtransform=False, update: bool = False):
@@ -455,7 +443,12 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def clear_content(self):
         self.remove_registered_items()
         self.init_view()
+
         self.content_cleared.emit(str(self.filename))
+
+    def clear_sliders(self):
+        for s in self.sliders.values():
+            s.clear()
 
     @QtCore.Slot()
     def hide_interface(self):
