@@ -3,7 +3,7 @@ import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Dock import Dock
-from qtpy import QtCore, QtGui
+from qtpy import QtGui, QtWidgets
 
 from functools import partial
 import logging
@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 
 class Plugin(PluginCore):
     LM_NAME = 'Line Map {}'
+
+    def __init__(self):
+        super().__init__()
+
+        self._shortcuts_added = False
 
     def override_widget_configs(self, widgets: dict[str, ViewerElement]):
         """Override configurations of line maps.
@@ -64,18 +69,20 @@ class Plugin(PluginCore):
         # raise the first line map dock to the top
         stacked_lm_docks[0].raiseDock()
 
-        # add shortcuts
-        stack = stacked_lm_docks[0].container().stack
-        QtGui.QShortcut(QtCore.Qt.Key_Up, stack, partial(self.switch_current_linemap, lm_docks, -1))
-        QtGui.QShortcut(QtCore.Qt.Key_Down, stack, partial(self.switch_current_linemap, lm_docks, 1))
+        if not self._shortcuts_added:
+            data_viewer = stacked_lm_docks[0].area.parent()
+            QtWidgets.QShortcut('Up', data_viewer, partial(self.switch_current_linemap, lm_docks, -1))
+            QtWidgets.QShortcut('Down', data_viewer, partial(self.switch_current_linemap, lm_docks, 1))
+            self._shortcuts_added = True
 
     def switch_current_linemap(self, lm_docks: dict[str, Dock], delta_index: int):
         stacked_lm_docks = self.get_stacked_docks(lm_docks)
+        if not stacked_lm_docks:
+            return
 
-        if stacked_lm_docks:
-            stacked_lm_docks = list(stacked_lm_docks.values())
-            stack = stacked_lm_docks[0].container().stack
-            stacked_lm_docks[(stack.currentIndex() + delta_index) % stack.count()].raiseDock()
+        stacked_lm_docks = list(stacked_lm_docks.values())
+        stack = stacked_lm_docks[0].container().stack
+        stacked_lm_docks[(stack.currentIndex() + delta_index) % stack.count()].raiseDock()
 
     def update_viewer(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
 
