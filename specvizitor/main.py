@@ -26,13 +26,18 @@ CACHE_DIR = user_cache_dir(APPLICATION_NAME)
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('-v', '--verbosity', action='count', default=0)
     parser.add_argument('--purge', action='store_true')
 
     args = parser.parse_args()
 
     # configure logging parameters
-    level = logging.INFO if args.verbose else logging.WARNING
+    if args.verbosity == 0:
+        level = logging.WARNING
+    elif args.verbosity == 1:
+        level = logging.INFO
+    else:
+        level = logging.DEBUG
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
     # configure pyqtgraph options
