@@ -334,9 +334,13 @@ class ViewerElement(AbstractWidget, abc.ABC):
             if not image:
                 logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
                 return
+
             filename = image.filename
             wcs_source = image.wcs_source if image.wcs_source else image.filename
+
             kwargs = get_cutout_params(cat_entry, wcs_source)
+            if kwargs is None:
+                return
         else:
             if self.cfg.data.filename is None:
                 logger.error(f"Filename not specified (widget: {self.title})")

@@ -334,26 +334,26 @@ class DataViewer(AbstractWidget):
 
     def _update_dock_titles(self):
         for w in self.widgets.values():
-            if w.filename is not None and w.meta is not None:
-                title = w.filename.name if isinstance(w.filename, pathlib.Path) else w.filename
-
-                # adding EXTNAME and EXTVER to the dock title
-                fits_meta = w.meta.get('EXTNAME'), w.meta.get('EXTVER')
-                j = 0
-                while j < len(fits_meta) and fits_meta[j] is not None:
-                    j += 1
-                title_extra = ', '.join(map(str, fits_meta[:j]))
-
-                if title_extra:
-                    if w.cfg.dock_title_fmt == 'short':
-                        title = title_extra  # str(fits_meta[j - 1])
-                    else:
-                        title += f' [{title_extra}]'
-
-                self.docks[w.title].setTitle(title)
-
-            else:
+            if w.filename is None or w.meta is None:
                 self.docks[w.title].setTitle(w.title)
+                continue
+
+            title = w.filename.name if isinstance(w.filename, pathlib.Path) else w.filename
+
+            # adding EXTNAME and EXTVER to the dock title
+            fits_meta = w.meta.get('EXTNAME'), w.meta.get('EXTVER')
+            j = 0
+            while j < len(fits_meta) and fits_meta[j] is not None:
+                j += 1
+            title_meta = ', '.join(map(str, fits_meta[:j]))
+
+            if title_meta:
+                if w.cfg.dock_title_fmt == 'short':
+                    title = title_meta  # str(fits_meta[j - 1])
+                else:
+                    title += f' [{title_meta}]'
+
+            self.docks[w.title].setTitle(title)
 
     @QtCore.Slot()
     def hide_interface(self):

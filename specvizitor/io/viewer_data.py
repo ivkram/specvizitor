@@ -60,6 +60,8 @@ class BaseLoader(abc.ABC):
         if y0 is None:
             y0 = arr_shape[0] // 2
 
+        x0, y0 = int(x0), int(y0)
+
         x1, x2 = x0 - cutout_size, x0 + cutout_size
         y1, y2 = y0 - cutout_size, y0 + cutout_size
 
@@ -180,7 +182,7 @@ class ViewerData(metaclass=QSingleton):
         logger.info(f"Database connection open (filename: {filename})")
         return self._data[filename]
 
-    def load(self, filename: str, allowed_dtypes=None, **kwargs):
+    def load(self, filename: str, allowed_dtypes=None, silent: bool = False, **kwargs):
         if not self._data.get(filename):
             if not self.add(filename, **kwargs):
                 return None, None
@@ -189,10 +191,11 @@ class ViewerData(metaclass=QSingleton):
         try:
             data, meta = loader.load(**kwargs)
         except Exception as e:
-            logger.error(f"{loader.name}: {e} (filename: {filename})")
+            if not silent:
+                logger.error(f"{loader.name}: {e} (filename: {filename})")
             return None, None
 
-        if allowed_dtypes and not _validate_dtype(data, allowed_dtypes):
+        if allowed_dtypes and not self._validate_dtype(data, allowed_dtypes):
             logger.error(f"Invalid input data type: {type(data)} (filename: {filename})")
             return None, None
 
@@ -205,6 +208,12 @@ class ViewerData(metaclass=QSingleton):
         self._data.get(filename)[0].close()
         logger.info(f"Database connection closed (filename: {filename})")
 
+    @staticmethod
+    def _validate_dtype(data, allowed_dtypes: tuple[type, ...]) -> bool:
+        if not any(isinstance(data, t) for t in allowed_dtypes):
+            return False
+        return True
+
 
 def add_image(filename: str, loader: str, wcs_source: str | None = None, **kwargs):
     ViewerData().add(filename, loader=loader, **kwargs)
@@ -212,20 +221,15 @@ def add_image(filename: str, loader: str, wcs_source: str | None = None, **kwarg
         ViewerData().add(wcs_source)
 
 
-def get_cutout_params(cat_entry: Catalog, wcs_source: str) -> dict:
+def get_cutout_params(cat_entry: Catalog, wcs_source: str) -> dict | None:
     params = dict(create_cutout=True)
 
-    ra, dec = None, None
     try:
         ra = cat_entry.get_col('ra')
-    except KeyError as e:
-        logger.warning(e)
-    try:
         dec = cat_entry.get_col('dec')
     except KeyError as e:
-        logger.warning(e)
-    if ra is None or dec is None:
-        return params
+        logger.error(e)
+        return None
 
     _, meta = ViewerData().load(wcs_source)
     with warnings.catch_warnings():
@@ -233,23 +237,20 @@ def get_cutout_params(cat_entry: Catalog, wcs_source: str) -> dict:
         try:
             wcs = WCS(meta)
         except Exception as e:
-            logger.warning(f"Failed to create a WCS object from image: {e} (image: {wcs_source})")
-            return params
-
-    x0, y0 = wcs.all_world2pix(ra, dec, 0)
-    if not np.isfinite(x0) or not np.isfinite(y0):
-        logger.debug(f"Calculation of pixel coordinates failed (image: {wcs_source})")
-        return params
-    x0, y0 = int(x0), int(y0)
+            logger.error(f"Failed to create a WCS object from image: {e} (image: {wcs_source})")
+            return None
+    try:
+        x0, y0 = wcs.all_world2pix(ra, dec, 0)
+    except Exception as e:
+        logger.error(f"Calculation of pixel coordinates failed: {e} (image: {wcs_source})")
+        return None
     params.update(x0=x0, y0=y0)
 
     return params
 
 
-def load_widget_data(obj_id: str | int, filename: str, loader: str, widget_title: str,
-                     cat_entry: Catalog | None, allowed_dtypes: tuple[type] | None = None, silent: bool = False,
-                     **kwargs):
-    logger.disabled = True if silent else False
+def load_widget_data(obj_id: str | int, filename: str, loader: str, widget_title: str, cat_entry: Catalog | None,
+                     allowed_dtypes: tuple[type] | None = None, **kwargs):
 
     field_values = dict(id=obj_id)
 
@@ -290,12 +291,6 @@ def _resolve_filename(filename: str, **field_values) -> pathlib.Path:
     filename = filename.format(**field_values)
     filename = pathlib.Path(filename).resolve()
     return filename
-
-
-def _validate_dtype(data, allowed_dtypes: tuple[type, ...]) -> bool:
-    if not any(isinstance(data, t) for t in allowed_dtypes):
-        return False
-    return True
 
 
 def add_unit_aliases(unit_aliases: dict[str, list[str]]):
