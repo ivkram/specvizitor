@@ -278,18 +278,18 @@ def load_widget_data(obj_id: str | int, filename: str, loader: str, widget_title
 
     filename = _resolve_filename(filename, **field_values)
 
-    if not pathlib.Path(filename).exists():
+    if not filename.exists():
         logger.error(f"{widget_title} not found (filename: {filename})")
         return None, None, None
 
-    data, meta = ViewerData().load(filename, loader=loader, allowed_dtypes=allowed_dtypes, **kwargs)
+    data, meta = ViewerData().load(str(filename), loader=loader, allowed_dtypes=allowed_dtypes, **kwargs)
     return filename, data, meta
 
 
-def _resolve_filename(filename: str, **field_values) -> str:
+def _resolve_filename(filename: str, **field_values) -> pathlib.Path:
     filename = filename.format(**field_values)
     filename = pathlib.Path(filename).resolve()
-    return str(filename)
+    return filename
 
 
 def _validate_dtype(data, allowed_dtypes: tuple[type, ...]) -> bool:
