@@ -228,12 +228,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._widgets = self._menu.addMenu("&Widgets")
 
-        self._add_widget = QtWidgets.QAction("Add...")
-        self._add_widget.setEnabled(False)
-        self._widgets.addAction(self._add_widget)
-
-        self._widgets.addSeparator()
-
         self._backup_viewer_config = QtWidgets.QAction("Backup...")
         self._backup_viewer_config.triggered.connect(self._backup_viewer_config_action)
         self._widgets.addAction(self._backup_viewer_config)
