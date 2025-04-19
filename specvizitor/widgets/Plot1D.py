@@ -33,7 +33,7 @@ class Plot1D(ViewerElement):
             logger.warning(f"Column not found: {cname} (widget: {self.title})")
             return None
 
-        return plot_data
+        return Quantity(plot_data)  # return a copy to prevent any modifications to self.data
 
     def add_content(self):
         default_pen = pg.getConfigOption('foreground')
