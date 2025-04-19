@@ -157,7 +157,6 @@ class SmartSlider(AbstractWidget):
 
             # the true slider value might stay the same, which would require a manual update of the text editor
             self._update_editor_text()
-
         except ValueError:
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()

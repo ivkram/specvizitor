@@ -289,7 +289,7 @@ class ViewerElement(AbstractWidget):
         self.setEnabled(False)
         if self.data is not None:
             self.clear_content()
-            self.clear_sliders()
+            self.clear_slider_view()
         self.filename, self.data, self.meta = None, None, None
 
         self.load_data(review.get_id(j), data_sources, cat_entry)
@@ -300,6 +300,7 @@ class ViewerElement(AbstractWidget):
 
         self.add_content(cat_entry)
         self.setup_slider_view(j, review, cat_entry)
+        self.update_widgets_from_sliders()
         self.reset_view()
         self.setEnabled(True)
 
@@ -362,6 +363,10 @@ class ViewerElement(AbstractWidget):
                 redshift = review.get_value(j, 'z_sviz')
                 if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
                     s.set_default_value(redshift)
+
+    def update_widgets_from_sliders(self):
+        for s in self.sliders.values():
+            s.update_from_slider()
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
                           apply_qtransform=False, update: bool = False):
@@ -446,7 +451,7 @@ class ViewerElement(AbstractWidget):
 
         self.content_cleared.emit(str(self.filename))
 
-    def clear_sliders(self):
+    def clear_slider_view(self):
         for s in self.sliders.values():
             s.clear()
 

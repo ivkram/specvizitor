@@ -153,7 +153,8 @@ class Plugin(PluginCore):
             scale = 1 / flat
         scale[scale == np.inf] = np.nan
 
-        spec_1d._axes.y.unit = (t['flux'] * scale).unit
+        y_unit = (t['flux'] * scale).unit
+        spec_1d._axes.y.unit = y_unit
 
         for label in ('flux', 'err', 'model'):
             plot_data_item = spec_1d.plot_data_items.get(label)
@@ -166,4 +167,5 @@ class Plugin(PluginCore):
             y_data *= scale
             y_data = spec_1d.apply_ydata_transform(y_data)
 
+            t[label] = y_data * y_unit  # replace the original data
             plot_data_item.setData(x=x_data, y=y_data)
