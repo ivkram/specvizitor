@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 import pathlib
+from string import Formatter
 import warnings
 
 from .catalog import Catalog
@@ -177,8 +178,6 @@ class RasterIOLoader(BaseLoader):
 
 
 def load(loader_name: str | None, filename: pathlib.Path, memmap: bool = False, **kwargs):
-    logger.disabled = True if kwargs.get('silent') else False
-
     registered_loaders: dict[str, type(BaseLoader)] = {loader.name: loader for loader in (GenericFITSLoader,
                                                                                           PILLoader,
                                                                                           RasterIOLoader)}
@@ -212,7 +211,7 @@ def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | 
         return None, None
 
     data, meta = load(loader, filename, memmap=memmap, **kwargs)
-    if data is None or not validate_dtype(data, (np.ndarray, rasterio.DatasetReader), widget_title):
+    if data is None or not _validate_dtype(data, (np.ndarray, rasterio.DatasetReader), widget_title):
         return None, None
 
     if wcs_source:
@@ -225,39 +224,58 @@ def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | 
 
 
 def load_widget_data(obj_id: str | int, data_source: str, filename: str, loader: str, widget_title: str,
-                     cat_entry: Catalog | None, allowed_dtypes: tuple[type] | None = None, **kwargs):
-    root = None
-    if cat_entry:
-        try:
-            root = cat_entry.get_col("root")
-        except KeyError as e:
-            if "{root}" in filename:
-                logger.warning(e)
+                     cat_entry: Catalog | None, allowed_dtypes: tuple[type] | None = None, silent: bool = False,
+                     **kwargs):
+    logger.disabled = True if silent else False
+
+    field_values = dict(id=obj_id)
+
+    try:
+        field_names = [fn for _, fn, _, _ in Formatter().parse(filename) if fn is not None]
+    except Exception as e:
+        logger.error(e)
+        return None, None, None
+
+    if "id" in field_names:
+        field_names.remove("id")
+
+    if field_names:
+        if not cat_entry:
+            logger.error(f"Failed to resolve the filename: Catalog entry not loaded (widget: {widget_title})")
+            return None, None, None
+
+        for fn in field_names:
+            try:
+                fv = cat_entry.get_col(fn)
+            except KeyError as e:
+                logger.error(f"Failed to resolve the filename: {e} (widget: {widget_title})")
+                return None, None, None
+            else:
+                field_values[fn] = fv
 
     data_path = str(pathlib.Path(data_source) / filename)
-    filename = resolve_data_path(data_path, obj_id, root=root)
+    filename = _resolve_data_path(data_path, **field_values)
 
     if not filename.exists():
-        if not kwargs.get('silent'):
-            logger.error(f"{widget_title} not found (object ID: {obj_id})")
+        logger.error(f"{widget_title} not found (object ID: {obj_id})")
         return None, None, None
 
     data, meta = load(loader, filename, **kwargs)
-    if data is None or (allowed_dtypes and not validate_dtype(data, allowed_dtypes, widget_title)):
+    if data is None or (allowed_dtypes and not _validate_dtype(data, allowed_dtypes, widget_title)):
         return None, None, None
 
     return filename, data, meta
 
 
-def resolve_data_path(data_path: str, obj_id: str | int, root: str | None = None) -> pathlib.Path:
-    data_path = data_path.format(id=obj_id, root=root)
+def _resolve_data_path(data_path: str, **field_values) -> pathlib.Path:
+    data_path = data_path.format(**field_values)
     data_path = pathlib.Path(data_path).resolve()
     return data_path
 
 
-def validate_dtype(data, allowed_dtypes: tuple[type, ...], widget_title: str) -> bool:
+def _validate_dtype(data, allowed_dtypes: tuple[type, ...], widget_title: str) -> bool:
     if not any(isinstance(data, t) for t in allowed_dtypes):
-        logger.error(f'Invalid input data type: {type(data)} (widget: {widget_title})')
+        logger.error(f"Invalid input data type: {type(data)} (widget: {widget_title})")
         return False
     return True
 

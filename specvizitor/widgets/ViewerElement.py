@@ -326,7 +326,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def load_data(self, obj_id: str | int, data_source: str, cat_entry: Catalog | None):
         if self.cfg.data.source:
             if cat_entry is None:
-                logger.error(f'Failed to request a shared resource: catalog entry not found (widget: {self.title})')
+                logger.error(f'Failed to request a shared resource: catalog entry not loaded (widget: {self.title})')
                 return
             self.request_shared_resource(cat_entry)
         elif self.cfg.data.filename is None:
