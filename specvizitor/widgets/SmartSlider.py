@@ -142,6 +142,7 @@ class SmartSlider(AbstractWidget):
 
     def set_value(self, value):
         self._slider.index = self._slider.index_from_value(value)
+        self._update_editor_text()
 
     def _update_editor_text(self):
         self._editor.setText('{value:.{num_decimal_places}f}'.format(value=self.value,
@@ -154,12 +155,12 @@ class SmartSlider(AbstractWidget):
     def _update_from_editor(self):
         try:
             self._slider.index = self._slider.index_from_value(float(self._editor.text()))
-
-            # the true slider value might stay the same, which would require a manual update of the text editor
-            self._update_editor_text()
         except ValueError:
             logger.error(f'Invalid {self.full_name} value: {self._editor.text()}')
             self.reset()
+        else:
+            # the true slider value might stay the same, which would require a manual update of the text editor
+            self.update_from_slider()
 
     @QtCore.Slot()
     def save_value(self):
@@ -179,13 +180,8 @@ class SmartSlider(AbstractWidget):
             return
 
     def reset(self):
-        if self.link_to is not None:
-            return
-
         self._slider.reset()
-
-        # see a comment in _update_from_editor
-        self._update_editor_text()
+        self.update_from_slider()  # see comment in _update_from_editor
 
     def clear(self):
         self._slider.default_value = self._default_value_fallback

@@ -432,13 +432,14 @@ class ViewerElement(AbstractWidget):
         self.set_spectral_line_positions(redshift)
 
     def reset_range(self):
+        # TODO: check if axes limits are linked
         self.container.setRange(xRange=self._axes.x.limits_padded, yRange=self._axes.y.limits_padded, padding=0)
 
     def reset_view(self):
         self.reset_range()
 
-        self.redshift_slider.reset()
-        self.redshift_changed_action(self.redshift_slider.value)
+        if not self.redshift_slider.link_to:
+            self.redshift_slider.reset()
 
     def remove_registered_items(self):
         while self._registered_items:
