@@ -14,7 +14,7 @@ from ..config import config, data_widgets
 from ..config import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
-from ..io.viewer_data import get_cutout_params, load_widget_data
+from ..io.viewer_data import ViewerData, get_cutout_params, load_widget_data
 from ..utils.widgets import AbstractWidget, MyViewBox
 
 from .SmartSlider import SmartSlider
@@ -113,7 +113,7 @@ class UnitTransform(PlotTransformBase):
 class ViewerElement(AbstractWidget, abc.ABC):
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
-    content_cleared = QtCore.Signal()
+    content_cleared = QtCore.Signal(str)
     smoothing_applied = QtCore.Signal(float)
 
     ALLOWED_DATA_TYPES: tuple[type] | None = None
@@ -148,6 +148,8 @@ class ViewerElement(AbstractWidget, abc.ABC):
         self.redshift_slider: SmartSlider | None = None
 
         super().__init__(parent=parent)
+        self.content_cleared.connect(ViewerData().close)
+
         self.init_view()
         self.setEnabled(False)
 
@@ -453,6 +455,7 @@ class ViewerElement(AbstractWidget, abc.ABC):
     def clear_content(self):
         self.remove_registered_items()
         self.init_view()
+        self.content_cleared.emit(str(self.filename))
 
     @QtCore.Slot()
     def hide_interface(self):

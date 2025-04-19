@@ -6,8 +6,10 @@ from astropy.wcs import WCS
 import numpy as np
 from PIL import Image, ImageOps
 import rasterio
+from qtpy import QtCore
 
 import abc
+from collections import OrderedDict
 import logging
 import pathlib
 from string import Formatter
@@ -20,6 +22,7 @@ from ..utils.widgets import FileBrowser
 
 
 __all__ = [
+    "ViewerData",
     "add_image",
     "get_cutout_params",
     "load_widget_data",
@@ -144,13 +147,14 @@ class RasterIOLoader(BaseLoader):
         return data, self._meta
 
 
-class ViewerData(metaclass=QSingleton):
+class ViewerData(QtCore.QObject, metaclass=QSingleton):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self._data: dict[str, tuple[BaseLoader, dict[str, Any]]] = {}
-        self._loaders: dict[str, type(BaseLoader)] = {
-            loader.name: loader for loader in (GenericFITSLoader, RasterIOLoader, PILLoader)
-        }
+        self._loaders: OrderedDict[str, type(BaseLoader)] = OrderedDict(
+            [(loader.name, loader) for loader in (GenericFITSLoader, RasterIOLoader, PILLoader)]
+        )
 
     @property
     def loader_names(self):
@@ -202,10 +206,11 @@ class ViewerData(metaclass=QSingleton):
         logger.info(f"Data loaded (filename: {filename})")
         return data, meta
 
+    @QtCore.Slot(str)
     def close(self, filename: str):
         if not self._data.get(filename):
             return
-        self._data.get(filename)[0].close()
+        self._data.pop(filename)[0].close()
         logger.info(f"Database connection closed (filename: {filename})")
 
     @staticmethod

@@ -102,8 +102,8 @@ class Plot1D(ViewerElement):
             plot_data_item.setData(x=x_data, y=y_data_smoothed)
 
     def clear_content(self):
-        super().clear_content()
-
         # TODO: submit issue to the pyqtgraph repo
         # if self.container.legend:
         #     self.container.vb.removeItem(self.container.legend)  # removing from the ViewBox, not PlotItem
+
+        super().clear_content()
