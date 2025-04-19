@@ -216,7 +216,7 @@ class DataSourceWidget(SettingsWidget):
     data_requested = QtCore.Signal()
     images_changed = QtCore.Signal()
 
-    def __init__(self, cfg: config.DataSource, parent=None):
+    def __init__(self, cfg: config.DataSources, parent=None):
         self.cfg = cfg
 
         self._browser: FileBrowser | None = None

@@ -1,5 +1,4 @@
 from astropy.io import fits
-from astropy.io.fits.header import Header
 from astropy.table import Table
 import astropy.units as u
 from astropy.utils.exceptions import AstropyWarning
@@ -9,98 +8,73 @@ from PIL import Image, ImageOps
 import rasterio
 
 import abc
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import pathlib
 from string import Formatter
+from typing import Any
 import warnings
 
 from .catalog import Catalog
+from ..utils.qt_tools import QSingleton
 from ..utils.widgets import FileBrowser
+
+
+__all__ = [
+    "add_image",
+    "get_cutout_params",
+    "load_widget_data",
+    "add_unit_aliases",
+    "data_browser"
+]
 
 Image.MAX_IMAGE_PIXELS = None  # ignore warnings when loading large images
 logger = logging.getLogger(__name__)
 
 
-class REQUESTS(Enum):
-    CUTOUT = 0
-
-
-@dataclass
-class FieldImage:
-    filename: pathlib.Path
-    data: np.ndarray | rasterio.DatasetReader
-    meta: dict | Header | None = None
-
-    def create_cutout(self, cutout_size: float, ra=None, dec=None):
-        x, y = self.data.shape[0] // 2, self.data.shape[1] // 2
-
-        if ra and dec:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', AstropyWarning)
-                try:
-                    wcs = WCS(self.meta)
-                except Exception as e:
-                    logger.error(f'Failed to create a WCS object from image: {e} (image: {self.filename.name})')
-                    return None
-            x, y = wcs.all_world2pix(ra, dec, 0)
-            if not np.isfinite(x) or not np.isfinite(y):
-                #logger.error(f'Cutout error: Failed to convert pixel coordinates to world coordinates '
-                #             f'(image: {self.filename.name}, RA: {ra}, Dec: {dec})')
-                return None
-            x, y = int(x), int(y)
-
-        x1, x2 = x - cutout_size, x + cutout_size
-        y1, y2 = y - cutout_size, y + cutout_size
-
-        if isinstance(self.data, rasterio.DatasetReader):
-            # wow, this actually worked
-            data = self.data.read(window=rasterio.windows.Window(x1, self.data.height - y2,
-                                                                 2 * cutout_size, 2 * cutout_size))
-            data = np.moveaxis(data, 0, -1)
-            data = np.flip(data, 0)
-
-            # reopen the dataset to free resources
-            self.data.close()
-            self.data, _ = RasterIOLoader().load(self.filename)
-        else:
-            data = self.data[y1:y2, x1:x2]
-        return data
-
-
-@dataclass
 class BaseLoader(abc.ABC):
     name: str
-    supports_memmap: bool = False
     extensions: tuple[str, ...] = ()
 
+    def __init__(self):
+        self._dataset = None
+        self._meta = None
+
     @abc.abstractmethod
-    def load(self, filename: pathlib.Path, **kwargs):
+    def open(self, filename: str, **kwargs):
         pass
+
+    def load(self, **kwargs):
+        return self._dataset, self._meta
+
+    def close(self):
+        self._dataset.close()
 
     @classmethod
     def validate_extension(cls, filename: str | pathlib.Path):
         return any(str(filename).endswith(s) for s in cls.extensions)
 
-    def raise_error(self, e):
-        logger.error(f'{type(self).__name__}: {e}')
+    @staticmethod
+    def get_cutout_params(arr_shape, x0=None, y0=None, cutout_size=100, **kwargs):
+        if x0 is None:
+            x0 = arr_shape[1] // 2
+        if y0 is None:
+            y0 = arr_shape[0] // 2
+
+        x1, x2 = x0 - cutout_size, x0 + cutout_size
+        y1, y2 = y0 - cutout_size, y0 + cutout_size
+
+        return (x1, x2, y1, y2), cutout_size
 
 
-@dataclass
 class GenericFITSLoader(BaseLoader):
-    name: str = 'generic_fits'
-    supports_memmap: bool = True
-    extensions: tuple[str, ...] = ('.fits', '.fits.gz')
+    name = 'generic_fits'
+    extensions = ('.fits', '.fits.gz')
 
-    def load(self, filename: pathlib.Path, extname: str = None, extver: str = None, extver_index: int = None,
-             reverse_search=False, memmap=True, **kwargs):
+    def open(self, filename: str, **kwargs):
+        self._dataset = fits.open(filename, **kwargs)
 
-        try:
-            hdul = fits.open(filename, memmap=memmap, **kwargs)
-        except Exception as e:
-            self.raise_error(e)
-            return None, None
+    def load(self, extname: str = None, extver: str = None, extver_index: int = None, create_cutout=False, **kwargs):
+        hdul = self._dataset
 
         if extname is not None and extver is not None:
             index = (extname, extver)
@@ -109,9 +83,7 @@ class GenericFITSLoader(BaseLoader):
             try:
                 index = extname_match_indices[extver_index]
             except IndexError:
-                self.raise_error(f'EXTVER `{extver_index}` out of range (filename: {filename.name})')
-                hdul.close()
-                return None, None
+                IndexError(f"EXTVER `{extver_index}` out of range")
         elif extname is not None:
             index = extname
         elif len(hdul) > 1:
@@ -122,108 +94,159 @@ class GenericFITSLoader(BaseLoader):
         try:
             hdu = hdul[index]
         except KeyError:
-            self.raise_error(f'Extension `{index}` not found (filename: {filename.name})')
-            hdul.close()
-            return None, None
+            KeyError(f"Extension `{index}` not found")
 
-        # read the header
         meta = hdu.header
-
         if meta.get('XTENSION') and meta['XTENSION'] in ('TABLE', 'BINTABLE'):
-            # read table data
             data = Table.read(hdu)
         else:
-            # read image data
             data = hdu.data
 
-        hdul.close()
+        if create_cutout:
+            (x1, x2, y1, y2), _ = self.get_cutout_params(data.shape, **kwargs)
+            data = data[y1:y2, x1:x2]
+
         return data, meta
 
 
-@dataclass
 class PILLoader(BaseLoader):
-    name: str = 'pil'
+    name = 'pil'
 
-    def load(self, filename: pathlib.Path, **kwargs):
+    def open(self, filename: pathlib.Path, **kwargs):
+        image = Image.open(filename, **kwargs)
+        image = ImageOps.flip(image)
+        self._dataset, self._meta = np.array(image), image.info
+
+
+class RasterIOLoader(BaseLoader):
+    name = 'rasterio'
+    extensions = ('.tif', '.tiff')
+
+    def open(self, filename: pathlib.Path, **kwargs):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
+            self._dataset = rasterio.open(filename, **kwargs)
+
+    def load(self, create_cutout=False, **kwargs):
+        if create_cutout:
+            (x1, x2, y1, y2), cutout_size = self.get_cutout_params(self._dataset.shape, **kwargs)
+
+            # wow, this actually works!
+            data = self._dataset.read(window=rasterio.windows.Window(x1, self._dataset.height - y2,
+                                                                     2 * cutout_size, 2 * cutout_size))
+            data = np.moveaxis(data, 0, -1)
+            data = np.flip(data, 0)
+        else:
+            data = self._dataset.read()
+
+        return data, self._meta
+
+
+class ViewerData(metaclass=QSingleton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._data: dict[str, tuple[BaseLoader, dict[str, Any]]] = {}
+        self._loaders: dict[str, type(BaseLoader)] = {
+            loader.name: loader for loader in (GenericFITSLoader, RasterIOLoader, PILLoader)
+        }
+
+    @property
+    def loader_names(self):
+        return ('auto',) + tuple(loader.name for loader in self._loaders.values())
+
+    def _get_loader(self, filename: str) -> str:
+        for ln, loader in self._loaders.items():
+            if loader.validate_extension(filename):
+                return ln
+        return GenericFITSLoader.name
+
+    def add(self, filename: str, loader: str | None = None, **loader_params):
+        loader: str
+        if loader is None:
+            loader = 'auto'
+        if loader not in self.loader_names:
+            logger.error(f"Unknown loader type: `{loader}`. Available loaders: {', '.join(self.loader_names)}")
+        if loader == 'auto':
+            loader = self._get_loader(filename)
+
+        loader: BaseLoader = self._loaders[loader]()
         try:
-            image = Image.open(filename, **kwargs)
+            loader.open(filename, **loader_params)
         except Exception as e:
-            self.raise_error(e)
+            logger.error(f"{loader.name}: {e} (filename: {filename})")
+            return None
+
+        self._data[filename] = (loader, loader_params)
+        logger.info(f"Database connection open (filename: {filename})")
+        return self._data[filename]
+
+    def load(self, filename: str, allowed_dtypes=None, **kwargs):
+        if not self._data.get(filename):
+            if not self.add(filename, **kwargs):
+                return None, None
+
+        loader = self._data[filename][0]
+        try:
+            data, meta = loader.load(**kwargs)
+        except Exception as e:
+            logger.error(f"{loader.name}: {e} (filename: {filename})")
             return None, None
 
-        image = ImageOps.flip(image)
+        if allowed_dtypes and not _validate_dtype(data, allowed_dtypes):
+            logger.error(f"Invalid input data type: {type(data)} (filename: {filename})")
+            return None, None
 
-        data, meta = np.array(image), image.info
-        image.close()
-
+        logger.info(f"Data loaded (filename: {filename})")
         return data, meta
 
-
-@dataclass
-class RasterIOLoader(BaseLoader):
-    name: str = 'rasterio'
-    supports_memmap: bool = True
-
-    def load(self, filename: pathlib.Path, memmap=True, **kwargs):
-        try:
-            warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
-            dataset = rasterio.open(filename, **kwargs)
-        except Exception as e:
-            self.raise_error(e)
-            return None, None
-
-        meta = dataset.meta
-
-        return dataset, meta
+    def close(self, filename: str):
+        if not self._data.get(filename):
+            return
+        self._data.get(filename)[0].close()
+        logger.info(f"Database connection closed (filename: {filename})")
 
 
-def load(loader_name: str | None, filename: pathlib.Path, memmap: bool = False, **kwargs):
-    registered_loaders: dict[str, type(BaseLoader)] = {loader.name: loader for loader in (GenericFITSLoader,
-                                                                                          PILLoader,
-                                                                                          RasterIOLoader)}
-
-    allowed_loader_names = ('auto',) + tuple(loader.name for loader in registered_loaders.values())
-    if loader_name not in allowed_loader_names:
-        logger.error(f'Unknown loader type: `{loader_name}`. Available loaders: {allowed_loader_names}')
-        return None, None
-
-    if loader_name == 'auto':
-        if GenericFITSLoader.validate_extension(filename):
-            loader_name = 'generic_fits'
-        else:
-            if memmap:
-                loader_name = 'rasterio'
-            else:
-                loader_name = 'pil'
-
-    loader: BaseLoader = registered_loaders[loader_name]()
-    if loader.supports_memmap:
-        return loader.load(filename, memmap=memmap, **kwargs)
-    else:
-        return loader.load(filename, **kwargs)
-
-
-def load_image(filename: str, loader: str, widget_title: str, wcs_source: str | None = None,
-               memmap=True, **kwargs):
-    filename = pathlib.Path(filename)
-    if not filename.exists():
-        logger.error(f'Image not found: {filename} (widget: {widget_title})')
-        return None, None
-
-    data, meta = load(loader, filename, memmap=memmap, **kwargs)
-    if data is None or not _validate_dtype(data, (np.ndarray, rasterio.DatasetReader), widget_title):
-        return None, None
-
+def add_image(filename: str, loader: str, wcs_source: str | None = None, **kwargs):
+    ViewerData().add(filename, loader=loader, **kwargs)
     if wcs_source:
-        wcs_source = pathlib.Path(wcs_source)
-        if not wcs_source.exists():
-            logger.error(f'Image not found: {wcs_source} (widget: {widget_title})')
-        _, meta = load('auto', wcs_source)
-
-    return data, meta
+        ViewerData().add(wcs_source)
 
 
-def load_widget_data(obj_id: str | int, data_source: str, filename: str, loader: str, widget_title: str,
+def get_cutout_params(cat_entry: Catalog, wcs_source: str) -> dict:
+    params = dict(create_cutout=True)
+
+    ra, dec = None, None
+    try:
+        ra = cat_entry.get_col('ra')
+    except KeyError as e:
+        logger.warning(e)
+    try:
+        dec = cat_entry.get_col('dec')
+    except KeyError as e:
+        logger.warning(e)
+    if ra is None or dec is None:
+        return params
+
+    _, meta = ViewerData().load(wcs_source)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', AstropyWarning)
+        try:
+            wcs = WCS(meta)
+        except Exception as e:
+            logger.warning(f"Failed to create a WCS object from image: {e} (image: {wcs_source})")
+            return params
+
+    x0, y0 = wcs.all_world2pix(ra, dec, 0)
+    if not np.isfinite(x0) or not np.isfinite(y0):
+        logger.debug(f"Calculation of pixel coordinates failed (image: {wcs_source})")
+        return params
+    x0, y0 = int(x0), int(y0)
+    params.update(x0=x0, y0=y0)
+
+    return params
+
+
+def load_widget_data(obj_id: str | int, filename: str, loader: str, widget_title: str,
                      cat_entry: Catalog | None, allowed_dtypes: tuple[type] | None = None, silent: bool = False,
                      **kwargs):
     logger.disabled = True if silent else False
@@ -253,29 +276,24 @@ def load_widget_data(obj_id: str | int, data_source: str, filename: str, loader:
             else:
                 field_values[fn] = fv
 
-    data_path = str(pathlib.Path(data_source) / filename)
-    filename = _resolve_data_path(data_path, **field_values)
+    filename = _resolve_filename(filename, **field_values)
 
-    if not filename.exists():
-        logger.error(f"{widget_title} not found (object ID: {obj_id})")
+    if not pathlib.Path(filename).exists():
+        logger.error(f"{widget_title} not found (filename: {filename})")
         return None, None, None
 
-    data, meta = load(loader, filename, **kwargs)
-    if data is None or (allowed_dtypes and not _validate_dtype(data, allowed_dtypes, widget_title)):
-        return None, None, None
-
+    data, meta = ViewerData().load(filename, loader=loader, allowed_dtypes=allowed_dtypes, **kwargs)
     return filename, data, meta
 
 
-def _resolve_data_path(data_path: str, **field_values) -> pathlib.Path:
-    data_path = data_path.format(**field_values)
-    data_path = pathlib.Path(data_path).resolve()
-    return data_path
+def _resolve_filename(filename: str, **field_values) -> str:
+    filename = filename.format(**field_values)
+    filename = pathlib.Path(filename).resolve()
+    return str(filename)
 
 
-def _validate_dtype(data, allowed_dtypes: tuple[type, ...], widget_title: str) -> bool:
+def _validate_dtype(data, allowed_dtypes: tuple[type, ...]) -> bool:
     if not any(isinstance(data, t) for t in allowed_dtypes):
-        logger.error(f"Invalid input data type: {type(data)} (widget: {widget_title})")
         return False
     return True
 

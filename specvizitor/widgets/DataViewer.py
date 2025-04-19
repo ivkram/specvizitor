@@ -11,7 +11,7 @@ from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import load_image, FieldImage, REQUESTS
+from ..io.viewer_data import add_image
 from ..plugins.plugin_core import PluginCore
 from ..utils.qt_tools import safe_disconnect
 from ..utils.widgets import AbstractWidget
@@ -25,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(int, InspectionData, object, str)
-    shared_resources_queried = QtCore.Signal(str, pathlib.Path, object, object)
+    object_selected = QtCore.Signal(int, InspectionData, config.DataSources, object)
     view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
     redshift_requested = QtCore.Signal()
@@ -39,7 +38,7 @@ class DataViewer(AbstractWidget):
 
     def __init__(self,
                  global_cfg: config.DataViewer,
-                 data_cfg: config.DataSource,
+                 data_cfg: config.DataSources,
                  widget_cfg: DataWidgets,
                  appearance: config.Appearance,
                  spectral_lines: SpectralLineData,
@@ -53,8 +52,7 @@ class DataViewer(AbstractWidget):
         self._spectral_lines = spectral_lines
         self._plugins = plugins
 
-        # images that are shared between widgets and can be used to create cutouts
-        self._field_images: dict[str, FieldImage] = {}
+        # load images that are shared between widgets and can be used to create cutouts
         self.load_field_images()
 
         self.dock_area: DockArea | None = None
@@ -82,7 +80,6 @@ class DataViewer(AbstractWidget):
         self.object_selected.disconnect()
         self.zen_mode_activated.disconnect()
         self.visibility_changed.disconnect()
-        self.shared_resources_queried.disconnect()
         self.spectral_lines_changed.disconnect()
         safe_disconnect(self.view_reset)
 
@@ -120,10 +117,8 @@ class DataViewer(AbstractWidget):
             self.object_selected.connect(w.load_object)
             self.zen_mode_activated.connect(w.hide_interface)
             self.visibility_changed.connect(w.update_visibility)
-            self.shared_resources_queried.connect(w.get_shared_resource)
             self.spectral_lines_changed.connect(w.update_spectral_lines)
 
-            w.shared_resource_requested.connect(self._query_shared_resources)
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
         self._connect_sliders()  # sliders always stay connected
@@ -275,46 +270,12 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def load_field_images(self):
-        self._field_images = {}
-
         if self._data_cfg.images is None:
             return
 
         for img_label, img_cfg in self._data_cfg.images.items():
-            data, meta = load_image(filename=img_cfg.filename, loader=img_cfg.loader, widget_title='Data Viewer',
-                                    wcs_source=img_cfg.wcs_source, **img_cfg.loader_params)
-            if data is None:
-                continue
-
-            self._field_images[img_label] = FieldImage(pathlib.Path(img_cfg.filename), data, meta)
-
-    @QtCore.Slot(str, object, dict)
-    def _query_shared_resources(self, widget_title: str, request: REQUESTS, request_params: dict):
-        if request == REQUESTS.CUTOUT:
-            label = request_params.get('image')
-            if label not in self._field_images:
-                logger.error(f'Shared image not found (label: {label})')
-                return
-
-            img = self._field_images[label]
-
-            cutout_size = request_params.get('cutout_size')
-            if cutout_size:
-                ra, dec = request_params.get('ra'), request_params.get('dec')
-                data = img.create_cutout(cutout_size, ra=ra, dec=dec)
-                if data is not None:
-                    self._share_resource(widget_title, img.filename, data, img.meta)
-                return
-
-            self._share_resource(widget_title, img.filename, img.data, img.meta)
-
-    def _share_resource(self, widget_title, *args):
-        w = self.widgets.get(widget_title)
-        if w is None:
-            logger.error(f'Failed to share the resource: Widget `{widget_title}` not found')
-            return
-
-        self.shared_resources_queried.emit(w.title, *args)
+            add_image(filename=img_cfg.filename, loader=img_cfg.loader, wcs_source=img_cfg.wcs_source,
+                      **img_cfg.loader_params)
 
     @QtCore.Slot()
     def load_project(self):
@@ -324,7 +285,7 @@ class DataViewer(AbstractWidget):
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
         self._disconnect_widgets()
 
-        self.object_selected.emit(j, review, cat_entry, self._data_cfg.dir)
+        self.object_selected.emit(j, review, self._data_cfg, cat_entry)
 
         self._reconnect_widgets()
         self._update_dock_titles()
@@ -374,7 +335,7 @@ class DataViewer(AbstractWidget):
     def _update_dock_titles(self):
         for w in self.widgets.values():
             if w.filename is not None and w.meta is not None:
-                title = w.filename.name
+                title = w.filename.name if isinstance(w.filename, pathlib.Path) else w.filename
 
                 # adding EXTNAME and EXTVER to the dock title
                 fits_meta = w.meta.get('EXTNAME'), w.meta.get('EXTVER')

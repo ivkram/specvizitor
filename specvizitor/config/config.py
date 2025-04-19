@@ -19,7 +19,7 @@ class Image:
 
 
 @dataclass
-class DataSource:
+class DataSources:
     dir: str = '.'
     images: dict[str, Image] = field(default_factory=dict)
     id_pattern: str = r'\d+'
@@ -49,7 +49,7 @@ class DataViewer:
 class Config(Params):
     appearance: Appearance = field(default_factory=Appearance)
     catalogue: Catalogue = field(default_factory=Catalogue)
-    data: DataSource = field(default_factory=DataSource)
+    data: DataSources = field(default_factory=DataSources)
     data_viewer: DataViewer = field(default_factory=DataViewer)
     inspection_results: InspectionResults = field(default_factory=InspectionResults)
     plugins: list[str] = field(default_factory=list)

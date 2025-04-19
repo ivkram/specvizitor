@@ -11,7 +11,6 @@ import warnings
 
 from ..config import data_widgets
 from ..io.catalog import Catalog
-from ..io.viewer_data import REQUESTS
 from ..utils.qt_tools import get_qtransform_from_wcs
 from ..utils.widgets import ColorBar
 
@@ -66,24 +65,6 @@ class Image2D(ViewerElement):
     def init_view(self):
         super().init_view()
         self._default_levels = Image2DLevels()
-    
-    def request_shared_resource(self, cat_entry: Catalog | None):
-        if self.cfg.data.cutout_size is None:
-            logger.warning(f'Image cutout size not specified (widget: {self.title})')
-
-        ra, dec = None, None
-        try:
-            ra = cat_entry.get_col('ra')
-        except KeyError as e:
-            logger.warning(e)
-        try:
-            dec = cat_entry.get_col('dec')
-        except KeyError as e:
-            logger.warning(e)
-
-        request = REQUESTS.CUTOUT
-        request_params = {'image': self.cfg.data.source, 'cutout_size': self.cfg.data.cutout_size, 'ra': ra, 'dec': dec}
-        self.shared_resource_requested.emit(self.title, request, request_params)
 
     def add_content(self):
         self.image_item.setImage(self.data, autoLevels=False)

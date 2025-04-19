@@ -14,7 +14,7 @@ from ..config import config, data_widgets
 from ..config import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
-from ..io.viewer_data import load_widget_data, REQUESTS
+from ..io.viewer_data import get_cutout_params, load_widget_data
 from ..utils.widgets import AbstractWidget, MyViewBox
 
 from .SmartSlider import SmartSlider
@@ -111,7 +111,6 @@ class UnitTransform(PlotTransformBase):
 
 
 class ViewerElement(AbstractWidget, abc.ABC):
-    shared_resource_requested = QtCore.Signal(str, REQUESTS, dict)
     content_added = QtCore.Signal()
     view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal()
@@ -289,63 +288,65 @@ class ViewerElement(AbstractWidget, abc.ABC):
         for s in self.sliders.values():
             s.setEnabled(a0)
 
-    @QtCore.Slot(int, InspectionData, object, str)
-    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, data_source: str):
+    @QtCore.Slot(int, InspectionData, config.DataSources, object)
+    def load_object(self, j: int, review: InspectionData, data_sources: config.DataSources, cat_entry: Catalog | None):
         if self.data is not None:
             self.clear_content()
             for s in self.sliders.values():
                 s.clear()
         self.filename, self.data, self.meta = None, None, None
 
-        self.load_data(review.get_id(j), data_source, cat_entry)
+        self.load_data(review.get_id(j), data_sources, cat_entry)
 
-        # display the data
-        if self.data is not None:
-            self.add_content()
-            self.update_axis_labels()
-
-            # set up the view *after* adding content because content determines axes limits
-            self.setup_view(cat_entry)
-            self.apply_qtransform()
-
-            # process sliders
-            for slider_name, s in self.sliders.items():
-                s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
-                if slider_name == 'redshift':  # load redshift from inspection results
-                    redshift = review.get_value(j, 'z_sviz')
-                    if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
-                        s.set_default_value(redshift)
-                s.update_from_slider()  # update the widget according to the slider state
-
-            # final preparations
-            self.reset_view()
-            self.setEnabled(True)
-        else:
+        if self.data is None:
+            self.filename, self.meta = None, None
             self.setEnabled(False)
-
-    def load_data(self, obj_id: str | int, data_source: str, cat_entry: Catalog | None):
-        if self.cfg.data.source:
-            if cat_entry is None:
-                logger.error(f'Failed to request a shared resource: catalog entry not loaded (widget: {self.title})')
-                return
-            self.request_shared_resource(cat_entry)
-        elif self.cfg.data.filename is None:
-            logger.error(f"Filename not specified (widget: {self.title})")
             return
+
+        self.add_content()
+        self.update_axis_labels()
+
+        # set up the view *after* adding content because content determines axes limits
+        self.setup_view(cat_entry)
+        self.apply_qtransform()
+
+        # process sliders
+        for slider_name, s in self.sliders.items():
+            s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
+            if slider_name == 'redshift':  # load redshift from inspection results
+                redshift = review.get_value(j, 'z_sviz')
+                if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
+                    s.set_default_value(redshift)
+            s.update_from_slider()  # update the widget according to the slider state
+
+        # final preparations
+        self.reset_view()
+        self.setEnabled(True)
+
+    def load_data(self, obj_id: str | int, data_sources: config.DataSources, cat_entry: Catalog | None):
+        kwargs = dict()
+
+        if self.cfg.data.source:  # for now assume this is equivalent to self.cfg.data.source.startswith("image")
+            if cat_entry is None:
+                logger.error(f"Failed to create an image cutout: Catalog entry not loaded (widget: {self.title})")
+                return
+            image = data_sources.images.get(self.cfg.data.source)
+            if not image:
+                logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
+                return
+            filename = image.filename
+            wcs_source = image.wcs_source if image.wcs_source else image.filename
+            kwargs = get_cutout_params(cat_entry, wcs_source)
+        else:
+            if self.cfg.data.filename is None:
+                logger.error(f"Filename not specified (widget: {self.title})")
+                return
+            filename = str(pathlib.Path(data_sources.dir) / self.cfg.data.filename)
 
         self.filename, self.data, self.meta = load_widget_data(
-            obj_id, data_source, self.cfg.data.filename, self.cfg.data.loader, self.title,
-            cat_entry=cat_entry, allowed_dtypes=self.ALLOWED_DATA_TYPES, **self.cfg.data.loader_params
+            obj_id, filename, self.cfg.data.loader, self.title, cat_entry=cat_entry,
+            allowed_dtypes=self.ALLOWED_DATA_TYPES, **self.cfg.data.loader_params, **kwargs
         )
-
-    def request_shared_resource(self, cat_entry: Catalog):
-        pass
-
-    @QtCore.Slot(str, pathlib.Path, object, object)
-    def get_shared_resource(self, widget_title: str, filename: pathlib.Path, data, meta):
-        if widget_title != self.title:
-            return
-        self.filename, self.data, self.meta = filename, data, meta
 
     @abc.abstractmethod
     def add_content(self):
