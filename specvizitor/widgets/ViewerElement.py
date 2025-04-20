@@ -300,8 +300,6 @@ class ViewerElement(AbstractWidget):
 
         self.add_content(cat_entry)
         self.setup_slider_view(j, review, cat_entry)
-        self.update_widgets_from_sliders()
-        self.reset_view()
         self.setEnabled(True)
 
     def load_data(self, obj_id: str | int, data_sources: config.DataSources, cat_entry: Catalog | None):
@@ -363,10 +361,6 @@ class ViewerElement(AbstractWidget):
                 redshift = review.get_value(j, 'z_sviz')
                 if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
                     s.set_default_value(redshift)
-
-    def update_widgets_from_sliders(self):
-        for s in self.sliders.values():
-            s.update_from_slider()
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
                           apply_qtransform=False, update: bool = False):
@@ -440,6 +434,8 @@ class ViewerElement(AbstractWidget):
 
         if not self.redshift_slider.link_to:
             self.redshift_slider.reset()
+        if not self.smoothing_slider.link_to:
+            self.smoothing_slider.update_from_slider()  # only update, do not reset
 
     def remove_registered_items(self):
         while self._registered_items:

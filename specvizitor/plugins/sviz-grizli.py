@@ -93,7 +93,6 @@ class Plugin(PluginCore):
             for w in widgets.values():
                 if 'Spectrum 2D' in w.title:
                     self.transform_spec2d(w, spec_1d)
-                    w.reset_view()
 
         if spec_1d is not None and z_pdf is not None:
             self.add_current_redshift_to_z_pdf(spec_1d, z_pdf)
@@ -101,7 +100,6 @@ class Plugin(PluginCore):
         if spec_1d is not None:
             self.convert_spec1d_flux_unit_to_physical(spec_1d)
             spec_1d.setup_view(cat_entry)
-            spec_1d.reset_view()
 
     @staticmethod
     def transform_spec2d(spec_2d: Image2D, spec_1d: Plot1D):

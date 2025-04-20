@@ -294,6 +294,8 @@ class DataViewer(AbstractWidget):
             plugin.update_active_widgets(self.active_widgets, cat_entry=cat_entry)
             plugin.update_docks(self.docks, cat_entry=cat_entry)
 
+        self.view_reset.emit()
+
     def _find_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():
             if w.redshift_slider.isVisible():

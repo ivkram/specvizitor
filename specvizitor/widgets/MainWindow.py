@@ -402,9 +402,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rd.j = j
 
-        # cache the index of the object
         self._cache.last_object_index = j
         self._cache.save()
+
+        self._update_window_title()
 
         # get object data from the catalogue
         obj_id = self.rd.review.get_id(j, full=True)
@@ -412,7 +413,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.object_selected.emit(self.rd.j, self.rd.review, cat_entry)
 
-        self._update_window_title()
 
     @QtCore.Slot(str, bool)
     def switch_object(self, command: str, switch_to_starred: bool):
