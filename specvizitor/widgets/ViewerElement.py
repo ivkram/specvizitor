@@ -111,10 +111,7 @@ class UnitTransform(PlotTransformBase):
 
 
 class ViewerElement(AbstractWidget):
-    content_added = QtCore.Signal()
-    view_reset = QtCore.Signal()
     content_cleared = QtCore.Signal(str)
-    smoothing_applied = QtCore.Signal(float)
 
     ALLOWED_DATA_TYPES: tuple[type] | None = None
 
@@ -363,7 +360,7 @@ class ViewerElement(AbstractWidget):
                     s.set_default_value(redshift)
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
-                          apply_qtransform=False, update: bool = False):
+                          apply_qtransform=False):
         if apply_qtransform:
             if not xrange or not yrange:
                 raise ValueError("Can only apply transformation when both x- and y-axis limits are specified")
@@ -377,9 +374,6 @@ class ViewerElement(AbstractWidget):
             self._axes.x.limits = xrange
         if yrange:
             self._axes.y.limits = yrange
-
-        if update:
-            self.reset_range()
 
     def set_content_padding(self, xpad: float | None = None, ypad: float | None = None):
         if xpad:
@@ -425,16 +419,18 @@ class ViewerElement(AbstractWidget):
     def redshift_changed_action(self, redshift: float):
         self.set_spectral_line_positions(redshift)
 
-    def reset_range(self):
-        # TODO: check if axes limits are linked
-        self.container.setRange(xRange=self._axes.x.limits_padded, yRange=self._axes.y.limits_padded, padding=0)
+    def reset_range(self, active_widgets: list[str]):
+        x_range = self._axes.x.limits_padded if self.cfg.x_axis.link_to not in active_widgets else None
+        y_range = self._axes.y.limits_padded if self.cfg.y_axis.link_to not in active_widgets else None
+        self.container.setRange(xRange=x_range, yRange=y_range, padding=0)
 
-    def reset_view(self):
-        self.reset_range()
+    @QtCore.Slot(list)
+    def reset_view(self, active_widgets: list[str]):
+        self.reset_range(active_widgets)
 
-        if not self.redshift_slider.link_to:
+        if self.redshift_slider.link_to not in active_widgets:
             self.redshift_slider.reset()
-        if not self.smoothing_slider.link_to:
+        if self.smoothing_slider.link_to not in active_widgets:
             self.smoothing_slider.update_from_slider()  # only update, do not reset
 
     def remove_registered_items(self):

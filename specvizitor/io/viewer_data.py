@@ -179,7 +179,7 @@ class ViewerData(QtCore.QObject, metaclass=QSingleton):
         try:
             loader.open(filename, **loader_params)
         except Exception as e:
-            logger.error(f"{loader.name}: {e} (filename: {filename})")
+            logger.error(f"{type(loader).__name__}: {e} (filename: {filename})")
             return None
 
         self._data[filename] = (loader, loader_params)
@@ -196,7 +196,7 @@ class ViewerData(QtCore.QObject, metaclass=QSingleton):
             data, meta = loader.load(**kwargs)
         except Exception as e:
             if not silent:
-                logger.error(f"{loader.name}: {e} (filename: {filename})")
+                logger.error(f"{type(loader).__name__}: {e} (filename: {filename})")
             return None, None
 
         if allowed_dtypes and not self._validate_dtype(data, allowed_dtypes):

@@ -26,12 +26,12 @@ logger = logging.getLogger(__name__)
 
 class DataViewer(AbstractWidget):
     object_selected = QtCore.Signal(int, InspectionData, config.DataSources, object)
-    view_reset = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
     redshift_requested = QtCore.Signal()
     redshift_changed = QtCore.Signal(float)
     redshift_obtained = QtCore.Signal(float)
 
+    view_reset = QtCore.Signal(list)
     zen_mode_activated = QtCore.Signal()
     visibility_changed = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
@@ -76,12 +76,8 @@ class DataViewer(AbstractWidget):
         return {title: w for title, w in self.widgets.items() if w.data is not None}
 
     def _delete_widgets(self):
-        # disconnect signals
-        self.object_selected.disconnect()
-        self.zen_mode_activated.disconnect()
-        self.visibility_changed.disconnect()
-        self.spectral_lines_changed.disconnect()
-        safe_disconnect(self.view_reset)
+        self._disconnect_widgets()
+        self._unlink_widgets()
 
         for w in self.widgets.values():
             w.graphics_layout.clear()
@@ -90,18 +86,15 @@ class DataViewer(AbstractWidget):
         self.widgets = {}
 
     def _create_widgets(self):
-        # delete previously created widgets
         if self.widgets:
             self._delete_widgets()
 
         widgets = {}
 
-        # create widgets for images (e.g. image cutouts, 2D spectra)
         for name, image_cfg in self._widget_cfg.images.items():
             widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
                                     spectral_lines=self._spectral_lines, parent=self)
 
-        # create widgets for plots, including 1D spectra
         for name, plot_cfg in self._widget_cfg.plots.items():
             widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
                                    spectral_lines=self._spectral_lines, parent=self)
@@ -110,7 +103,6 @@ class DataViewer(AbstractWidget):
             plugin.override_widget_configs(widgets)
 
         self.widgets = widgets
-        self._connect_widgets()
 
     def _connect_widgets(self):
         for w in self.widgets.values():
@@ -121,48 +113,62 @@ class DataViewer(AbstractWidget):
 
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
-        self._connect_sliders()  # sliders always stay connected
+    def _disconnect_widgets(self):
+        self.object_selected.disconnect()
+        self.zen_mode_activated.disconnect()
+        self.visibility_changed.disconnect()
+        self.spectral_lines_changed.disconnect()
 
-    def _connect_sliders(self):
         for w in self.widgets.values():
+            w.redshift_slider.save_button_clicked.disconnect()
+
+    def _link_widgets(self):
+        self._link_views()
+        self._link_sliders()
+        self._link_colorbars()
+
+    def _unlink_widgets(self):
+        self._unlink_views()
+        self._unlink_colorbars()
+
+    def _link_views(self):
+        for w in self.active_widgets.values():
+            self.view_reset.connect(w.reset_view)
+
+            # TODO: throw a warning if two axes have different unit/scale
+            if w.cfg.x_axis.link_to in self.active_widgets:
+                w.container.setXLink(w.cfg.x_axis.link_to)
+            if w.cfg.y_axis.link_to in self.active_widgets:
+                w.container.setYLink(w.cfg.y_axis.link_to)
+
+    def _unlink_views(self):
+        safe_disconnect(self.view_reset)
+        for w in self.widgets.values():
+            w.container.setXLink(None)
+            w.container.setYLink(None)
+
+    def _link_sliders(self):
+        for w in self.active_widgets.values():
             for slider_name, slider in w.sliders.items():
-                if slider.link_to is not None:
+                if slider.link_to in self.active_widgets:
                     try:
-                        source_slider = self.widgets[slider.link_to].sliders[slider_name]
+                        source_slider = self.active_widgets[slider.link_to].sliders[slider_name]
                     except KeyError:
                         logger.error(f'Failed to link sliders (source widget: {slider.link_to}, slider: {slider_name})')
                     else:
                         source_slider.value_changed[float].connect(slider.set_value)
                         slider.value_changed[float].connect(source_slider.set_value)
 
-    def _reconnect_widgets(self):
-        self._connect_views()
-        self._connect_colorbars()
-
-    def _disconnect_widgets(self):
-        self._disconnect_views()
-        self._disconnect_colorbars()
-
-    def _connect_views(self):
-        for w in self.active_widgets.values():
-            self.view_reset.connect(w.reset_view)
-
-            # TODO: throw a warning if two axes have different unit/scale
-            if w.cfg.x_axis.link_to:
-                w.container.setXLink(w.cfg.x_axis.link_to)
-            if w.cfg.y_axis.link_to:
-                w.container.setYLink(w.cfg.y_axis.link_to)
-
-    def _disconnect_views(self):
-        safe_disconnect(self.view_reset)
+    def _unlink_sliders(self):
         for w in self.widgets.values():
-            w.container.setXLink(None)
-            w.container.setYLink(None)
+            for slider_name, slider in w.sliders.items():
+                safe_disconnect(slider.value_changed[float])
 
-    def _connect_colorbars(self):
-        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items() if isinstance(w, Image2D)}
+    def _link_colorbars(self):
+        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.active_widgets.items()
+                                      if isinstance(w, Image2D)}
         for w in images.values():
-            if w.cfg.color_bar.link_to is not None:
+            if w.cfg.color_bar.link_to in self.active_widgets:
                 try:
                     source_widget = images[w.cfg.color_bar.link_to]
                 except KeyError:
@@ -172,9 +178,9 @@ class DataViewer(AbstractWidget):
                         source_widget.cbar.sigLevelsChanged[tuple].connect(w.set_levels)
                         w.cbar.sigLevelsChanged[tuple].connect(source_widget.set_levels)
 
-    def _disconnect_colorbars(self):
-        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items() if
-                                      isinstance(w, Image2D)}
+    def _unlink_colorbars(self):
+        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items()
+                                      if isinstance(w, Image2D)}
         for w in images.values():
             safe_disconnect(w.cbar.sigLevelsChanged[tuple])
 
@@ -255,6 +261,7 @@ class DataViewer(AbstractWidget):
             self.dock_area = DockArea(parent=self)
         self._create_widgets()
         self.init_docks()
+        self._connect_widgets()
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
@@ -283,24 +290,28 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
-        self._disconnect_widgets()
+        self._unlink_widgets()
 
         self.object_selected.emit(j, review, self._data_cfg, cat_entry)
 
-        self._reconnect_widgets()
+        self._link_widgets()
         self._update_dock_titles()
 
         for plugin in self._plugins:
             plugin.update_active_widgets(self.active_widgets, cat_entry=cat_entry)
             plugin.update_docks(self.docks, cat_entry=cat_entry)
 
-        self.view_reset.emit()
+        self.reset_view()
 
     def _find_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():
             if w.redshift_slider.isVisible():
                 return w.redshift_slider
         return None
+
+    @QtCore.Slot()
+    def reset_view(self):
+        self.view_reset.emit(list(self.active_widgets.keys()))
 
     @QtCore.Slot()
     def request_redshift(self):

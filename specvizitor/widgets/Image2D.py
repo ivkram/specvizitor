@@ -143,12 +143,9 @@ class Image2D(ViewerElement):
 
         self._qtransform = qtransform
 
-    def set_default_levels(self, levels: tuple[float, float], update: bool = False):
+    def set_default_levels(self, levels: tuple[float, float]):
         self._default_levels.min = levels[0]
         self._default_levels.max = levels[1]
-
-        if update:
-            self.reset_levels()
 
     def set_levels(self, levels: tuple[float, float]):
         self.cbar.setLevels(levels)
@@ -173,9 +170,12 @@ class Image2D(ViewerElement):
     def reset_levels(self):
         self.set_levels((self._default_levels.min, self._default_levels.max))
 
-    def reset_view(self):
-        super().reset_view()
-        self.reset_levels()
+    @QtCore.Slot(list)
+    def reset_view(self, active_widgets: list[str]):
+        super().reset_view(active_widgets)
+
+        if self.cfg.color_bar.link_to not in active_widgets:
+            self.reset_levels()
 
     @QtCore.Slot()
     def hide_interface(self):

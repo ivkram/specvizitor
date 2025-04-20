@@ -97,7 +97,7 @@ class Plugin(PluginCore):
 
             if zoom:
                 yrange = (0., float(spec_2d.data.shape[0]))
-                spec_2d.set_default_range(xrange=(x1, x2), yrange=yrange, apply_qtransform=True, update=True)
+                spec_2d.set_default_range(xrange=(x1, x2), yrange=yrange, apply_qtransform=True)
 
     @staticmethod
     def raise_rgb_dock(rgb_stack: dict[str, Dock], cat_entry: Catalog):

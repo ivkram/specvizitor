@@ -201,7 +201,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setEnabled(False)
-        self._reset_view.triggered.connect(self._data_viewer.view_reset.emit)
+        self._reset_view.triggered.connect(self._data_viewer.reset_view)
         self._reset_view.setShortcut('R')
         self._view.addAction(self._reset_view)
 
@@ -313,7 +313,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # connect the child widgets between each other
         self._data_viewer.redshift_obtained.connect(self._inspection_res.set_redshift_value)
-        self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.view_reset.emit)
+        self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.reset_view)
         self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.init_docks)
 
     def populate(self):
