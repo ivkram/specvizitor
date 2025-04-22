@@ -148,8 +148,6 @@ class ViewerElement(AbstractWidget):
         self.init_view()
         self.setEnabled(False)
 
-        self.content_cleared.connect(ViewerData().close)
-
     def _apply_axis_data_transform(self, plot_data: Quantity | np.ndarray, scale: str,
                                    unit: u.Unit | None) -> Quantity | np.ndarray:
         # order is important: first convert units, then apply scaling
@@ -287,6 +285,7 @@ class ViewerElement(AbstractWidget):
         self.setEnabled(False)
         if self.data is not None:
             self.clear_content()
+            self.clear_view()
             self.clear_slider_view()
         self.data_path, self.data, self.meta = None, None, None
 
@@ -296,7 +295,8 @@ class ViewerElement(AbstractWidget):
             self.data_path, self.meta = None, None
             return
 
-        self.add_content(cat_entry)
+        self.add_content()
+        self.setup_view(cat_entry)
         self.setup_slider_view(j, review, cat_entry)
         self.setEnabled(True)
 
@@ -369,8 +369,9 @@ class ViewerElement(AbstractWidget):
 
         return params
 
-    def add_content(self, cat_entry: Catalog | None):
-        self.setup_view(cat_entry)
+    @abc.abstractmethod
+    def add_content(self):
+        pass
 
     def register_item(self, item: pg.GraphicsItem, **kwargs):
         item.setTransform(self._qtransform)
@@ -481,9 +482,10 @@ class ViewerElement(AbstractWidget):
 
     def clear_content(self):
         self.remove_registered_items()
-        self.init_view()
-
         self.content_cleared.emit(str(self.data_path))
+
+    def clear_view(self):
+        self.init_view()
 
     def clear_slider_view(self):
         for s in self.sliders.values():

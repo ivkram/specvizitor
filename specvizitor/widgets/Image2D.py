@@ -66,7 +66,7 @@ class Image2D(ViewerElement):
         super().init_view()
         self._default_levels = Image2DLevels()
 
-    def add_content(self, cat_entry: Catalog | None):
+    def add_content(self):
         self.image_item.setImage(self.data, autoLevels=False)
         self.register_item(self.image_item)
 
@@ -88,8 +88,6 @@ class Image2D(ViewerElement):
 
             self.register_item(pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen))
             self.register_item(pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen))
-
-        super().add_content(cat_entry)
 
     @property
     def has_defined_levels(self) -> bool:

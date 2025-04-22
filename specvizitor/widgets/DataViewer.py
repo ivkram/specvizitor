@@ -111,6 +111,7 @@ class DataViewer(AbstractWidget):
             self.visibility_changed.connect(w.update_visibility)
             self.spectral_lines_changed.connect(w.update_spectral_lines)
 
+            w.content_cleared.connect(self._close_connection)
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
     def _disconnect_widgets(self):
@@ -120,6 +121,7 @@ class DataViewer(AbstractWidget):
         self.spectral_lines_changed.disconnect()
 
         for w in self.widgets.values():
+            w.content_cleared.disconnect()
             w.redshift_slider.save_button_clicked.disconnect()
 
     def _link_widgets(self):
@@ -312,6 +314,10 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot()
     def reset_view(self):
         self.view_reset.emit(list(self.active_widgets.keys()))
+
+    @QtCore.Slot(str)
+    def _close_connection(self, data_path: str):
+        self._data.close(data_path)
 
     @QtCore.Slot()
     def request_redshift(self):

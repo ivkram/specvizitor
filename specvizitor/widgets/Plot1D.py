@@ -35,7 +35,7 @@ class Plot1D(ViewerElement):
 
         return Quantity(plot_data)  # return a copy to prevent any modifications to self.data
 
-    def add_content(self, cat_entry: Catalog | None):
+    def add_content(self):
         default_pen = pg.getConfigOption('foreground')
         for label, line_plot in self.cfg.plots.items():
             x_data, y_data = self.get_plot_data(line_plot.x), self.get_plot_data(line_plot.y)
@@ -67,8 +67,6 @@ class Plot1D(ViewerElement):
             plot_data_item = pg.PlotDataItem(x=x_data, y=y_data, pen=pen, name=name)
             self.plot_data_items[label] = plot_data_item
             self.register_item(plot_data_item)
-
-        super().add_content(cat_entry)
 
     @staticmethod
     def calc_axis_lims(lims_current: tuple[float, float] | None, plot_data: np.ndarray):

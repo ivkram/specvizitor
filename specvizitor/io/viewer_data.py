@@ -180,7 +180,7 @@ class ViewerData:
             return None
 
         self._data[filename] = (loader, loader_params)
-        logger.info(f"Database connection open (filename: {filename})")
+        logger.info(f"Database connection opened (filename: {filename})")
         return self._data[filename]
 
     def open_image(self, filename: str, loader: str, wcs_source: str | None = None, **kwargs):
