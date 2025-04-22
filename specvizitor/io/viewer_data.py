@@ -249,8 +249,7 @@ class DataPath(abc.ABC):
 
         self._path = self._path.format(**field_values)
 
-    @abc.abstractmethod
-    def validate(self) -> bool:
+    def validate(self):
         pass
 
 
@@ -267,13 +266,13 @@ class LocalPath(DataPath):
         super().resolve(obj_id, cat_entry)
         self._path = str(self._path_obj.resolve())
 
-    def validate(self) -> bool:
-        return self._path_obj.exists()
+    def validate(self):
+        if not self._path_obj.exists():
+            raise FileNotFoundError
 
 
 class URLPath(DataPath):
-    def validate(self) -> bool:
-        return True
+    pass
 
 
 def get_cutout_params(cat_entry: Catalog, wcs_source: str, viewer_data: ViewerData) -> dict | None:

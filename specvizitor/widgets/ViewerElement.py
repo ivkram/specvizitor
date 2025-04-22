@@ -312,6 +312,15 @@ class ViewerElement(AbstractWidget):
             logger.error(f"Failed to resolve the filename: {e} (widget: {self.title})")
             return
 
+        try:
+            self.data_path.validate()
+        except FileNotFoundError:
+            logger.error(f"`{self.title}` not found (filename: {self.data_path.name})")
+            return
+        except Exception as e:
+            logger.error(f"{e} (widget: {self.title})")
+            return
+
         loader_params = self._get_loader_params(data_sources, viewer_data, cat_entry)
         if loader_params is None:
             return
@@ -344,17 +353,17 @@ class ViewerElement(AbstractWidget):
 
         if cat_entry is None:
             logger.error(f"Failed to create an image cutout: Catalog entry not loaded (widget: {self.title})")
-            return
+            return None
 
         image = data_sources.images.get(self.cfg.data.source)
         if not image:
             logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
-            return
+            return None
 
         wcs_source = image.wcs_source if image.wcs_source else image.filename
         cutout_params = get_cutout_params(cat_entry, wcs_source, viewer_data)
-        if not cutout_params:
-            return
+        if cutout_params is None:
+            return None
 
         params.update(cutout_params)
 
