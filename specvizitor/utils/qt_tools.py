@@ -41,16 +41,3 @@ def safe_disconnect(signal: QtCore.Signal):
         signal.disconnect()
     except TypeError:
         pass
-
-
-class QSingleton(type(QtCore.QObject)):
-    """Metaclass for Qt classes that are singletons."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.instance = None
-
-    def __call__(self, *args, **kwargs):
-        if self.instance is None:
-            self.instance = super().__call__(*args, **kwargs)
-        return self.instance

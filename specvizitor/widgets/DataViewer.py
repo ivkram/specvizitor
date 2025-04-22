@@ -11,7 +11,7 @@ from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import add_image
+from ..io.viewer_data import ViewerData
 from ..plugins.plugin_core import PluginCore
 from ..utils.qt_tools import safe_disconnect
 from ..utils.widgets import AbstractWidget
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(int, InspectionData, config.DataSources, object)
+    object_selected = QtCore.Signal(int, InspectionData, ViewerData, config.DataSources, object)
     data_collected = QtCore.Signal(dict)
     redshift_requested = QtCore.Signal()
     redshift_changed = QtCore.Signal(float)
@@ -52,8 +52,8 @@ class DataViewer(AbstractWidget):
         self._spectral_lines = spectral_lines
         self._plugins = plugins
 
-        # load images that are shared between widgets and can be used to create cutouts
-        self.load_field_images()
+        self._data = ViewerData()
+        self.open_images()
 
         self.dock_area: DockArea | None = None
         self.added_docks: list[str] = []
@@ -276,13 +276,13 @@ class DataViewer(AbstractWidget):
         self.init_ui()
 
     @QtCore.Slot()
-    def load_field_images(self):
+    def open_images(self):
         if self._data_cfg.images is None:
             return
 
         for img_label, img_cfg in self._data_cfg.images.items():
-            add_image(filename=img_cfg.filename, loader=img_cfg.loader, wcs_source=img_cfg.wcs_source,
-                      **img_cfg.loader_params)
+            self._data.open_image(filename=img_cfg.filename, loader=img_cfg.loader, wcs_source=img_cfg.wcs_source,
+                                  **img_cfg.loader_params)
 
     @QtCore.Slot()
     def load_project(self):
@@ -292,7 +292,7 @@ class DataViewer(AbstractWidget):
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
         self._unlink_widgets()
 
-        self.object_selected.emit(j, review, self._data_cfg, cat_entry)
+        self.object_selected.emit(j, review, self._data, self._data_cfg, cat_entry)
 
         self._link_widgets()
         self._update_dock_titles()
@@ -347,11 +347,11 @@ class DataViewer(AbstractWidget):
 
     def _update_dock_titles(self):
         for w in self.widgets.values():
-            if w.filename is None or w.meta is None:
+            if w.data_path is None or w.meta is None:
                 self.docks[w.title].setTitle(w.title)
                 continue
 
-            title = w.filename.name if isinstance(w.filename, pathlib.Path) else w.filename
+            title = w.data_path.name
 
             # adding EXTNAME and EXTVER to the dock title
             fits_meta = w.meta.get('EXTNAME'), w.meta.get('EXTVER')

@@ -6,7 +6,6 @@ from astropy.wcs import WCS
 import numpy as np
 from PIL import Image, ImageOps
 import rasterio
-from qtpy import QtCore
 
 import abc
 from collections import OrderedDict
@@ -17,15 +16,15 @@ from typing import Any
 import warnings
 
 from .catalog import Catalog
-from ..utils.qt_tools import QSingleton
 from ..utils.widgets import FileBrowser
 
 
 __all__ = [
     "ViewerData",
-    "add_image",
+    "DataPath",
+    "LocalPath",
+    "URLPath",
     "get_cutout_params",
-    "load_widget_data",
     "add_unit_aliases",
     "data_browser"
 ]
@@ -147,10 +146,8 @@ class RasterIOLoader(BaseLoader):
         return data, self._meta
 
 
-class ViewerData(QtCore.QObject, metaclass=QSingleton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+class ViewerData:
+    def __init__(self):
         self._data: dict[str, tuple[BaseLoader, dict[str, Any]]] = {}
         self._loaders: OrderedDict[str, type(BaseLoader)] = OrderedDict(
             [(loader.name, loader) for loader in (GenericFITSLoader, RasterIOLoader, PILLoader)]
@@ -166,7 +163,7 @@ class ViewerData(QtCore.QObject, metaclass=QSingleton):
                 return ln
         return GenericFITSLoader.name
 
-    def add(self, filename: str, loader: str | None = None, **loader_params):
+    def open(self, filename: str, loader: str | None = None, **loader_params):
         loader: str
         if loader is None:
             loader = 'auto'
@@ -186,9 +183,14 @@ class ViewerData(QtCore.QObject, metaclass=QSingleton):
         logger.info(f"Database connection open (filename: {filename})")
         return self._data[filename]
 
+    def open_image(self, filename: str, loader: str, wcs_source: str | None = None, **kwargs):
+        self.open(filename, loader=loader, **kwargs)
+        if wcs_source:
+            self.open(wcs_source)
+
     def load(self, filename: str, allowed_dtypes=None, silent: bool = False, **kwargs):
         if not self._data.get(filename):
-            if not self.add(filename, **kwargs):
+            if not self.open(filename, **kwargs):
                 return None, None
 
         loader = self._data[filename][0]
@@ -206,7 +208,6 @@ class ViewerData(QtCore.QObject, metaclass=QSingleton):
         logger.info(f"Data loaded (filename: {filename})")
         return data, meta
 
-    @QtCore.Slot(str)
     def close(self, filename: str):
         if not self._data.get(filename):
             return
@@ -220,13 +221,62 @@ class ViewerData(QtCore.QObject, metaclass=QSingleton):
         return True
 
 
-def add_image(filename: str, loader: str, wcs_source: str | None = None, **kwargs):
-    ViewerData().add(filename, loader=loader, **kwargs)
-    if wcs_source:
-        ViewerData().add(wcs_source)
+class DataPath(abc.ABC):
+    def __init__(self, path: str):
+        self._path: str = path
+
+    def __str__(self):
+        return self._path
+
+    @property
+    def name(self) -> str:
+        return self._path
+
+    def resolve(self, obj_id: str | int, cat_entry: Catalog | None):
+        field_values = dict(id=obj_id)
+        field_names = [fn for _, fn, _, _ in Formatter().parse(self._path) if fn is not None]
+
+        if "id" in field_names:
+            field_names.remove("id")
+
+        if field_names:
+            if not cat_entry:
+                raise ValueError("Catalog entry not loaded")
+
+            for fn in field_names:
+                fv = cat_entry.get_col(fn)
+                field_values[fn] = fv
+
+        self._path = self._path.format(**field_values)
+
+    @abc.abstractmethod
+    def validate(self) -> bool:
+        pass
 
 
-def get_cutout_params(cat_entry: Catalog, wcs_source: str) -> dict | None:
+class LocalPath(DataPath):
+    @property
+    def name(self) -> str:
+        return self._path_obj.name
+
+    @property
+    def _path_obj(self) -> pathlib.Path:
+        return pathlib.Path(self._path)
+
+    def resolve(self, obj_id: str | int, cat_entry: Catalog | None):
+        super().resolve(obj_id, cat_entry)
+        self._path = str(self._path_obj.resolve())
+
+    def validate(self) -> bool:
+        return self._path_obj.exists()
+
+
+class URLPath(DataPath):
+    def validate(self) -> bool:
+        return True
+
+
+def get_cutout_params(cat_entry: Catalog, wcs_source: str, viewer_data: ViewerData) -> dict | None:
     params = dict(create_cutout=True)
 
     try:
@@ -236,7 +286,7 @@ def get_cutout_params(cat_entry: Catalog, wcs_source: str) -> dict | None:
         logger.error(e)
         return None
 
-    _, meta = ViewerData().load(wcs_source)
+    _, meta = viewer_data.load(wcs_source)
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', AstropyWarning)
         try:
@@ -252,50 +302,6 @@ def get_cutout_params(cat_entry: Catalog, wcs_source: str) -> dict | None:
     params.update(x0=x0, y0=y0)
 
     return params
-
-
-def load_widget_data(obj_id: str | int, filename: str, loader: str, widget_title: str, cat_entry: Catalog | None,
-                     allowed_dtypes: tuple[type] | None = None, **kwargs):
-
-    field_values = dict(id=obj_id)
-
-    try:
-        field_names = [fn for _, fn, _, _ in Formatter().parse(filename) if fn is not None]
-    except Exception as e:
-        logger.error(e)
-        return None, None, None
-
-    if "id" in field_names:
-        field_names.remove("id")
-
-    if field_names:
-        if not cat_entry:
-            logger.error(f"Failed to resolve the filename: Catalog entry not loaded (widget: {widget_title})")
-            return None, None, None
-
-        for fn in field_names:
-            try:
-                fv = cat_entry.get_col(fn)
-            except KeyError as e:
-                logger.error(f"Failed to resolve the filename: {e} (widget: {widget_title})")
-                return None, None, None
-            else:
-                field_values[fn] = fv
-
-    filename = _resolve_filename(filename, **field_values)
-
-    if not filename.exists():
-        logger.error(f"{widget_title} not found (filename: {filename})")
-        return None, None, None
-
-    data, meta = ViewerData().load(str(filename), loader=loader, allowed_dtypes=allowed_dtypes, **kwargs)
-    return filename, data, meta
-
-
-def _resolve_filename(filename: str, **field_values) -> pathlib.Path:
-    filename = filename.format(**field_values)
-    filename = pathlib.Path(filename).resolve()
-    return filename
 
 
 def add_unit_aliases(unit_aliases: dict[str, list[str]]):

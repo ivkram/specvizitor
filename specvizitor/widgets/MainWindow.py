@@ -273,7 +273,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.theme_changed.connect(self._commands_bar._set_icons)
         self.catalogue_changed.connect(self._object_info.update_table_items)
         self.inspection_fields_changed.connect(self._inspection_res.update_inspection_fields)
-        self.data_source_changed.connect(self._data_viewer.load_field_images)
+        self.data_source_changed.connect(self._data_viewer.open_images)
         self.spectral_lines_changed.connect(self._data_viewer.spectral_lines_changed.emit)
         self.visible_columns_updated.connect(self._object_info.update_visible_columns)
         self.dock_layout_updated.connect(self._data_viewer.restore_dock_layout)
@@ -405,14 +405,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.last_object_index = j
         self._cache.save()
 
-        self._update_window_title()
-
         # get object data from the catalogue
         obj_id = self.rd.review.get_id(j, full=True)
         cat_entry = self.rd.cat.get_cat_entry(obj_id)
 
         self.object_selected.emit(self.rd.j, self.rd.review, cat_entry)
 
+        self._update_window_title()
 
     @QtCore.Slot(str, bool)
     def switch_object(self, command: str, switch_to_starred: bool):

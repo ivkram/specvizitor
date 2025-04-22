@@ -14,7 +14,7 @@ from ..config import config, data_widgets
 from ..config import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
-from ..io.viewer_data import ViewerData, get_cutout_params, load_widget_data
+from ..io.viewer_data import ViewerData, DataPath, LocalPath, get_cutout_params
 from ..utils.widgets import AbstractWidget, MyViewBox
 
 from .SmartSlider import SmartSlider
@@ -121,7 +121,7 @@ class ViewerElement(AbstractWidget):
         self.cfg = cfg
         self.appearance = appearance
 
-        self.filename: pathlib.Path | None = None
+        self.data_path: DataPath | None = None
         self.data = None
         self.meta: dict | Header | None = None
 
@@ -281,52 +281,84 @@ class ViewerElement(AbstractWidget):
         for s in self.sliders.values():
             s.setEnabled(a0)
 
-    @QtCore.Slot(int, InspectionData, config.DataSources, object)
-    def load_object(self, j: int, review: InspectionData, data_sources: config.DataSources, cat_entry: Catalog | None):
+    @QtCore.Slot(int, InspectionData, ViewerData, config.DataSources, object)
+    def load_object(self, j: int, review: InspectionData, viewer_data: ViewerData, data_sources: config.DataSources,
+                    cat_entry: Catalog | None):
         self.setEnabled(False)
         if self.data is not None:
             self.clear_content()
             self.clear_slider_view()
-        self.filename, self.data, self.meta = None, None, None
+        self.data_path, self.data, self.meta = None, None, None
 
-        self.load_data(review.get_id(j), data_sources, cat_entry)
+        self._load_data(review.get_id(j), viewer_data, data_sources, cat_entry)
 
         if self.data is None:
-            self.filename, self.meta = None, None
+            self.data_path, self.meta = None, None
             return
 
         self.add_content(cat_entry)
         self.setup_slider_view(j, review, cat_entry)
         self.setEnabled(True)
 
-    def load_data(self, obj_id: str | int, data_sources: config.DataSources, cat_entry: Catalog | None):
-        kwargs = dict()
+    def _load_data(self, obj_id: str | int, viewer_data: ViewerData, data_sources: config.DataSources,
+                   cat_entry: Catalog | None):
+        self.data_path = self._get_data_path(data_sources)
+        if not self.data_path:
+            return
 
-        if self.cfg.data.source:  # for now assume this is equivalent to self.cfg.data.source.startswith("image")
-            if cat_entry is None:
-                logger.error(f"Failed to create an image cutout: Catalog entry not loaded (widget: {self.title})")
-                return
-            image = data_sources.images.get(self.cfg.data.source)
-            if not image:
-                logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
-                return
+        try:
+            self.data_path.resolve(obj_id, cat_entry)
+        except Exception as e:
+            logger.error(f"Failed to resolve the filename: {e} (widget: {self.title})")
+            return
 
-            filename = image.filename
-            wcs_source = image.wcs_source if image.wcs_source else image.filename
+        loader_params = self._get_loader_params(data_sources, viewer_data, cat_entry)
+        if not loader_params:
+            return
 
-            kwargs = get_cutout_params(cat_entry, wcs_source)
-            if kwargs is None:
-                return
-        else:
-            if self.cfg.data.filename is None:
+        self.data, self.meta = viewer_data.load(str(self.data_path),
+                                                loader=self.cfg.data.loader,
+                                                allowed_dtypes=self.ALLOWED_DATA_TYPES,
+                                                **loader_params)
+
+    def _get_data_path(self, data_sources: config.DataSources) -> LocalPath | None:
+        if not self.cfg.data.source:
+            if not self.cfg.data.filename:
                 logger.error(f"Filename not specified (widget: {self.title})")
                 return
-            filename = str(pathlib.Path(data_sources.dir) / self.cfg.data.filename)
+            return LocalPath(str(pathlib.Path(data_sources.dir) / self.cfg.data.filename))
 
-        self.filename, self.data, self.meta = load_widget_data(
-            obj_id, filename, self.cfg.data.loader, self.title, cat_entry, allowed_dtypes=self.ALLOWED_DATA_TYPES,
-            **self.cfg.data.loader_params, **kwargs
-        )
+        # for now assume that a non-empty data source == image
+        image = data_sources.images.get(self.cfg.data.source)
+        if not image:
+            logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
+            return
+
+        return LocalPath(image.filename)
+
+    def _get_loader_params(self, data_sources: config.DataSources, viewer_data: ViewerData, cat_entry: Catalog | None) -> dict | None:
+        params = self.cfg.data.loader_params
+
+        if not self.cfg.data.source:
+            return params
+
+        if cat_entry is None:
+            logger.error(f"Failed to create an image cutout: Catalog entry not loaded (widget: {self.title})")
+            return
+
+        image = data_sources.images.get(self.cfg.data.source)
+        if not image:
+            logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
+            return
+
+        wcs_source = image.wcs_source if image.wcs_source else image.filename
+        cutout_params = get_cutout_params(cat_entry, wcs_source, viewer_data)
+        if not cutout_params:
+            return
+
+        params.update(cutout_params)
+
+        return params
 
     def add_content(self, cat_entry: Catalog | None):
         self.setup_view(cat_entry)
@@ -442,7 +474,7 @@ class ViewerElement(AbstractWidget):
         self.remove_registered_items()
         self.init_view()
 
-        self.content_cleared.emit(str(self.filename))
+        self.content_cleared.emit(str(self.data_path))
 
     def clear_slider_view(self):
         for s in self.sliders.values():
