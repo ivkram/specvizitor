@@ -56,7 +56,7 @@ class DataViewer(AbstractWidget):
         self.open_images()
 
         self.dock_area: DockArea | None = None
-        self.added_docks: list[str] = []
+        self._added_docks: list[str] = []
 
         self.widgets: dict[str, ViewerElement] = {}
         self.docks: dict[str, Dock] = {}
@@ -91,13 +91,17 @@ class DataViewer(AbstractWidget):
 
         widgets = {}
 
+        kwargs = dict(
+            appearance=self._appearance,
+            spectral_lines=self._spectral_lines,
+            parent=self
+        )
+
         for name, image_cfg in self._widget_cfg.images.items():
-            widgets[name] = Image2D(cfg=image_cfg, title=name, appearance=self._appearance,
-                                    spectral_lines=self._spectral_lines, parent=self)
+            widgets[name] = Image2D(cfg=image_cfg, title=name, **kwargs)
 
         for name, plot_cfg in self._widget_cfg.plots.items():
-            widgets[name] = Plot1D(cfg=plot_cfg, title=name, appearance=self._appearance,
-                                   spectral_lines=self._spectral_lines, parent=self)
+            widgets[name] = Plot1D(cfg=plot_cfg, title=name, **kwargs)
 
         for plugin in self._plugins:
             plugin.override_widget_configs(widgets)
@@ -111,6 +115,9 @@ class DataViewer(AbstractWidget):
             self.visibility_changed.connect(w.update_visibility)
             self.spectral_lines_changed.connect(w.update_spectral_lines)
 
+            self.view_reset.connect(w.reset_view)
+
+            w.object_loaded.connect(self._link_widget)
             w.content_cleared.connect(self._close_connection)
             w.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
@@ -119,6 +126,8 @@ class DataViewer(AbstractWidget):
         self.zen_mode_activated.disconnect()
         self.visibility_changed.disconnect()
         self.spectral_lines_changed.disconnect()
+
+        self.view_reset.disconnect()
 
         for w in self.widgets.values():
             w.content_cleared.disconnect()
@@ -135,8 +144,6 @@ class DataViewer(AbstractWidget):
 
     def _link_views(self):
         for w in self.active_widgets.values():
-            self.view_reset.connect(w.reset_view)
-
             # TODO: throw a warning if two axes have different unit/scale
             if w.cfg.x_axis.link_to in self.active_widgets:
                 w.container.setXLink(w.cfg.x_axis.link_to)
@@ -144,7 +151,6 @@ class DataViewer(AbstractWidget):
                 w.container.setYLink(w.cfg.y_axis.link_to)
 
     def _unlink_views(self):
-        safe_disconnect(self.view_reset)
         for w in self.widgets.values():
             w.container.setXLink(None)
             w.container.setYLink(None)
@@ -186,21 +192,21 @@ class DataViewer(AbstractWidget):
         for w in images.values():
             safe_disconnect(w.cbar.sigLevelsChanged[tuple])
 
-    def _close_dock(self, dock: Dock):
+    def _close_dock(self, dock: Dock, title: str):
         container = dock.container()
         if container and not isinstance(container, DockArea):
-            self._close_dock(container)
+            self._close_dock(container, title)
         else:
             dock.close()
+            self._added_docks.remove(title)
             return
 
     def _close_docks(self):
-        for d in self.docks.values():
-            self._close_dock(d)
+        for title, dock in self.docks.items():
+            self._close_dock(dock, title)
         self.docks = {}
 
     def _create_docks(self):
-        # delete previously created docks
         self._close_docks()
 
         docks = {}
@@ -209,20 +215,19 @@ class DataViewer(AbstractWidget):
 
         self.docks = docks
 
-    def _add_dock(self, widget: ViewerElement):
-        dock = self.docks[widget.title]
+    def _add_dock(self, dock: Dock, title: str):
+        widget = self.widgets[title]
         position = widget.cfg.position if widget.cfg.position is not None else 'bottom'
-        relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self.added_docks else None
+        relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self._added_docks else None
 
         self.dock_area.addDock(dock=dock, position=position, relativeTo=relative_to)
-        self.added_docks.append(widget.title)
+        self._added_docks.append(title)
 
     def _add_docks(self):
-        self.added_docks = []
-
-        for widget in self.widgets.values():
-            if widget.cfg.visible:
-                self._add_dock(widget)
+        for title, dock in self.docks.items():
+            if not self.widgets[title].cfg.visible:
+                continue
+            self._add_dock(dock, title)
 
         for plugin in self._plugins:
             plugin.update_docks(self.docks)
@@ -231,7 +236,6 @@ class DataViewer(AbstractWidget):
     def init_docks(self):
         self._create_docks()
         self._add_docks()
-        self._update_dock_titles()
 
     @staticmethod
     def clean_layout(layout: dict):
@@ -293,17 +297,20 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
         self._unlink_widgets()
-
         self.object_selected.emit(j, review, self._data, self._data_cfg, cat_entry)
-
         self._link_widgets()
-        self._update_dock_titles()
 
         for plugin in self._plugins:
             plugin.update_active_widgets(self.active_widgets, cat_entry=cat_entry)
             plugin.update_docks(self.docks, cat_entry=cat_entry)
 
         self.reset_view()
+
+    @QtCore.Slot(str)
+    def _link_widget(self, title: str):
+        w = self.widgets[title]
+
+        self.docks[title].setTitle(w.get_dock_title())
 
     def _find_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():
@@ -350,29 +357,6 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot(str)
     def take_screenshot(self, filename: str):
         self.grab().save(filename)
-
-    def _update_dock_titles(self):
-        for w in self.widgets.values():
-            if w.data_path is None or w.meta is None:
-                self.docks[w.title].setTitle(w.title)
-                continue
-
-            title = w.data_path.name
-
-            # adding EXTNAME and EXTVER to the dock title
-            fits_meta = w.meta.get('EXTNAME'), w.meta.get('EXTVER')
-            j = 0
-            while j < len(fits_meta) and fits_meta[j] is not None:
-                j += 1
-            title_meta = ', '.join(map(str, fits_meta[:j]))
-
-            if title_meta:
-                if w.cfg.dock_title_fmt == 'short':
-                    title = title_meta  # str(fits_meta[j - 1])
-                else:
-                    title += f' [{title_meta}]'
-
-            self.docks[w.title].setTitle(title)
 
     @QtCore.Slot()
     def hide_interface(self):

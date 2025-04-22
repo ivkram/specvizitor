@@ -112,6 +112,7 @@ class UnitTransform(PlotTransformBase):
 
 class ViewerElement(AbstractWidget):
     content_cleared = QtCore.Signal(str)
+    object_loaded = QtCore.Signal(str)
 
     ALLOWED_DATA_TYPES: tuple[type] | None = None
 
@@ -282,13 +283,13 @@ class ViewerElement(AbstractWidget):
     @QtCore.Slot(int, InspectionData, ViewerData, config.DataSources, object)
     def load_object(self, j: int, review: InspectionData, viewer_data: ViewerData, data_sources: config.DataSources,
                     cat_entry: Catalog | None):
-        self.setEnabled(False)
         if self.data is not None:
             self.clear_content()
             self.clear_view()
             self.clear_slider_view()
-        self.data_path, self.data, self.meta = None, None, None
+            self.setEnabled(False)
 
+        self.data_path, self.data, self.meta = None, None, None
         self._load_data(review.get_id(j), viewer_data, data_sources, cat_entry)
 
         if self.data is None:
@@ -299,6 +300,8 @@ class ViewerElement(AbstractWidget):
         self.setup_view(cat_entry)
         self.setup_slider_view(j, review, cat_entry)
         self.setEnabled(True)
+
+        self.object_loaded.emit(self.title)
 
     def _load_data(self, obj_id: str | int, viewer_data: ViewerData, data_sources: config.DataSources,
                    cat_entry: Catalog | None):
@@ -468,8 +471,10 @@ class ViewerElement(AbstractWidget):
 
     @QtCore.Slot(list)
     def reset_view(self, active_widgets: list[str]):
-        self.reset_range(active_widgets)
+        if self.data is None:
+            return
 
+        self.reset_range(active_widgets)
         if self.redshift_slider.link_to not in active_widgets:
             self.redshift_slider.reset()
         if self.smoothing_slider.link_to not in active_widgets:
@@ -490,6 +495,28 @@ class ViewerElement(AbstractWidget):
     def clear_slider_view(self):
         for s in self.sliders.values():
             s.clear()
+
+    def get_dock_title(self) -> str:
+        if self.data_path is None:
+            return self.title
+
+        if self.meta is None:
+            return self.data_path.name
+
+        # adding EXTNAME and EXTVER to the dock title
+        fits_meta = self.meta.get('EXTNAME'), self.meta.get('EXTVER')
+        j = 0
+        while j < len(fits_meta) and fits_meta[j] is not None:
+            j += 1
+        title_meta = ', '.join(map(str, fits_meta[:j]))
+
+        if not title_meta:
+            return self.data_path.name
+
+        if self.cfg.dock_title_fmt == 'short':
+            return title_meta  # str(fits_meta[j - 1])
+
+        return f"{self.data_path.name} [{title_meta}]"
 
     @QtCore.Slot()
     def hide_interface(self):
