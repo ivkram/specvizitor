@@ -303,7 +303,7 @@ class ViewerElement(AbstractWidget):
     def _load_data(self, obj_id: str | int, viewer_data: ViewerData, data_sources: config.DataSources,
                    cat_entry: Catalog | None):
         self.data_path = self._get_data_path(data_sources)
-        if not self.data_path:
+        if self.data_path is None:
             return
 
         try:
@@ -313,7 +313,7 @@ class ViewerElement(AbstractWidget):
             return
 
         loader_params = self._get_loader_params(data_sources, viewer_data, cat_entry)
-        if not loader_params:
+        if loader_params is None:
             return
 
         self.data, self.meta = viewer_data.load(str(self.data_path),
