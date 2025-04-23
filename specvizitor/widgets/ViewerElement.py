@@ -522,7 +522,7 @@ class ViewerElement(AbstractWidget):
             s.clear()
 
     def get_dock_title(self) -> str:
-        if self.data_path is None:
+        if self.data_path is None or self.cfg.dock_title_fmt == 'fixed':
             return self.title
 
         if self.meta is None:
