@@ -5,7 +5,7 @@ from qtpy import QtWidgets, QtCore
 from functools import partial
 import logging
 
-from ..config import config
+from ..config import config, data_widgets
 from ..config.data_widgets import DataWidgets
 from ..config.spectral_lines import SpectralLineData
 from ..io.catalog import Catalog
@@ -80,11 +80,14 @@ class DataViewer(AbstractWidget):
     def active_widgets(self) -> dict[str, ViewerElement]:
         return {wt: w for wt, w in self.widgets.items() if w.data is not None}
 
-    def _create_widgets(self):
-        for wt in list(self.widgets):
-            self._delete_widget(wt)
-
-        widgets = {}
+    def _create_widget(self, wt: str, cfg: data_widgets.ViewerElement):
+        constructor = None
+        if isinstance(cfg, data_widgets.Image):
+            constructor = Image2D
+        elif isinstance(cfg, data_widgets.Plot1D):
+            constructor = Plot1D
+        if constructor is None:
+            logger.error(f"Unknown widget configuration type: {type(cfg)}")
 
         kwargs = dict(
             appearance=self._appearance,
@@ -92,16 +95,21 @@ class DataViewer(AbstractWidget):
             parent=self
         )
 
+        self.widgets[wt] = constructor(cfg=cfg, title=wt, **kwargs)
+        self._connect_widget(wt)
+
+    def _create_widgets(self):
+        for wt in list(self.widgets):
+            self._delete_widget(wt)
+
         for name, image_cfg in self._widget_cfg.images.items():
-            widgets[name] = Image2D(cfg=image_cfg, title=name, **kwargs)
+            self._create_widget(name, image_cfg)
 
         for name, plot_cfg in self._widget_cfg.plots.items():
-            widgets[name] = Plot1D(cfg=plot_cfg, title=name, **kwargs)
+            self._create_widget(name, plot_cfg)
 
         for plugin in self._plugins:
-            plugin.override_widget_configs(widgets)
-
-        self.widgets = widgets
+            plugin.override_widget_configs(self.widgets)
 
     def _delete_widget(self, wt: str):
         self._unlink_widget(wt)
@@ -173,30 +181,29 @@ class DataViewer(AbstractWidget):
             self.docks.pop(dt)
             return
 
-    def _create_docks(self):
-        for dt in list(self.docks):
-            self._close_dock(dt)
-
-        docks = {}
-        for widget in self.widgets.values():
-            docks[widget.title] = Dock(widget.title, widget=widget)
-
-        self.docks = docks
+    def _create_dock(self, dt: str):
+        w0 = self.widgets[dt]
+        self.docks[dt] = Dock(dt, widget=w0)
+        self._add_dock(dt)
 
     def _add_dock(self, dt: str):
-        dock, widget = self.docks[dt], self.widgets[dt]
-        position = widget.cfg.position if widget.cfg.position is not None else 'bottom'
-        relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self._added_docks else None
+        dock, w0 = self.docks[dt], self.widgets[dt]
+        if not w0.cfg.visible:
+            return
+
+        position = w0.cfg.position if w0.cfg.position is not None else 'bottom'
+        relative_to = w0.cfg.relative_to if w0.cfg.relative_to in self._added_docks else None
 
         self.dock_area.addDock(dock=dock, position=position, relativeTo=relative_to)
         self._update_visibility(dt)
         self._added_docks.append(dt)
 
-    def _add_docks(self):
-        for dt in self.docks:
-            if not self.widgets[dt].cfg.visible:
-                continue
-            self._add_dock(dt)
+    def _create_docks(self):
+        for dt in list(self.docks):
+            self._close_dock(dt)
+
+        for wt in self.widgets:
+            self._create_dock(wt)
 
         for plugin in self._plugins:
             plugin.update_docks(self.docks)
@@ -204,7 +211,6 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot()
     def reset_dock_layout(self):
         self._create_docks()
-        self._add_docks()
 
     @staticmethod
     def _clean_dock_layout(layout: dict):
@@ -237,10 +243,6 @@ class DataViewer(AbstractWidget):
 
         self._create_widgets()
         self._create_docks()
-        self._add_docks()
-
-        for wt in self.widgets:
-            self._connect_widget(wt)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
