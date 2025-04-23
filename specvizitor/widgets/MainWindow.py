@@ -214,8 +214,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._zen = QtWidgets.QAction("Hide Interface")
         self._zen.triggered.connect(lambda:
-                                    self._hide_interface() if not self.interface_hidden else self._show_interface())
+                                    self._enter_zen_mode() if not self.interface_hidden else self._exit_zen_mode())
         self._zen.setShortcut('H')
+        self._auxiliary_docks = (self._quick_search_dock, self._object_info_dock, self._subsets_dock)
         self._view.addAction(self._zen)
 
         self._view.addSeparator()
@@ -512,14 +513,18 @@ class MainWindow(QtWidgets.QMainWindow):
             save_yaml(path, asdict(self._widget_cfg))
             logger.info('Viewer configuration saved')
 
-    def _hide_interface(self):
+    def _enter_zen_mode(self):
         self.interface_hidden = True
-        self._zen.setText('Show Interface')
+        self._zen.setText("Enter Zen Mode")
+        for w in self._auxiliary_docks:
+            w.setVisible(False)
         self.zen_mode_activated.emit()
 
-    def _show_interface(self):
+    def _exit_zen_mode(self):
         self.interface_hidden = False
-        self._zen.setText('Hide Interface')
+        self._zen.setText("Exit Zen Mode")
+        for w in self._auxiliary_docks:
+            w.setVisible(True)
         self.zen_mode_deactivated.emit()
 
     def _enter_fullscreen(self):
@@ -652,6 +657,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close_action_invoked.emit()
 
         # save the state and geometry of the main window
+        self._exit_zen_mode()
         settings = QtCore.QSettings()
         settings.setValue('geometry', self.saveGeometry())
         settings.setValue('windowState', self.saveState())
