@@ -96,14 +96,11 @@ class Subsets(AbstractWidget):
                 self.set_subset_info(str(j_subset + 1))
 
     @QtCore.Slot(bool)
-    def pause_inspecting_subset(self, is_paused: bool):
-        if is_paused:
-            self._pause_inspecting.setText('Resume')
-        else:
-            self._pause_inspecting.setText('Pause')
+    def pause_subset_inspection(self, is_paused: bool):
+        self._pause_inspecting.setText("Resume" if is_paused else "Pause")
 
     @QtCore.Slot()
-    def stop_inspecting_subset(self):
+    def stop_subset_inspection(self):
         self._subset_cat = None
         self._subset_name = None
         self._pause_inspecting.setText('Pause')

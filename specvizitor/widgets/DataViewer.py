@@ -31,8 +31,7 @@ class DataViewer(AbstractWidget):
     redshift_changed = QtCore.Signal(float)
     redshift_obtained = QtCore.Signal(float)
 
-    zen_mode_activated = QtCore.Signal()
-    visibility_changed = QtCore.Signal()
+    visibility_changed = QtCore.Signal(bool)
     view_reset = QtCore.Signal(object)
     spectral_lines_changed = QtCore.Signal()
 
@@ -51,6 +50,8 @@ class DataViewer(AbstractWidget):
         self._appearance = appearance
         self._spectral_lines = spectral_lines
         self._plugins = plugins
+
+        self._zen_mode_activated: bool = False
 
         self._data = ViewerData()
         self.open_images()
@@ -115,8 +116,6 @@ class DataViewer(AbstractWidget):
         w0 = self.widgets[wt]
 
         self.object_selected.connect(w0.load_object)
-        self.zen_mode_activated.connect(w0.hide_interface)
-        self.visibility_changed.connect(w0.update_visibility)
         self.view_reset.connect(w0.reset_view)
         self.spectral_lines_changed.connect(w0.update_spectral_lines)
 
@@ -128,8 +127,6 @@ class DataViewer(AbstractWidget):
         w0 = self.widgets[wt]
 
         self.object_selected.disconnect(w0.load_object)
-        self.zen_mode_activated.disconnect(w0.hide_interface)
-        self.visibility_changed.disconnect(w0.update_visibility)
         self.view_reset.disconnect(w0.reset_view)
         self.spectral_lines_changed.disconnect(w0.update_spectral_lines)
 
@@ -167,10 +164,11 @@ class DataViewer(AbstractWidget):
             dock = self.docks[dt]
 
         container = dock.container()
+        dock.close()
+
         if container and not isinstance(container, DockArea):
             self._close_dock(dt, container)
         else:
-            dock.close()
             self._added_docks.remove(dt)
             self.docks.pop(dt)
             return
@@ -191,6 +189,7 @@ class DataViewer(AbstractWidget):
         relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self._added_docks else None
 
         self.dock_area.addDock(dock=dock, position=position, relativeTo=relative_to)
+        self._update_visibility(dt)
         self._added_docks.append(dt)
 
     def _add_docks(self):
@@ -338,17 +337,24 @@ class DataViewer(AbstractWidget):
     def take_screenshot(self, filename: str):
         self.grab().save(filename)
 
-    @QtCore.Slot()
-    def hide_interface(self):
-        for dock in self.docks.values():
-            dock.hideTitleBar()
-        self.zen_mode_activated.emit()
+    @QtCore.Slot(bool)
+    def enter_zen_mode(self, is_zen: bool):
+        self._zen_mode_activated = is_zen
+        for wt in self.widgets:
+            self._update_visibility(wt)
 
-    @QtCore.Slot()
-    def restore_visibility(self):
-        for dock in self.docks.values():
+    def _update_visibility(self, wt: str):
+        w0 = self.widgets[wt]
+        dock = self.docks[wt]
+
+        if self._zen_mode_activated:
+            dock.hideTitleBar()
+        else:
             dock.showTitleBar()
-        self.visibility_changed.emit()
+
+        self.visibility_changed.connect(w0.update_visibility)
+        self.visibility_changed.emit(self._zen_mode_activated)
+        self.visibility_changed.disconnect(w0.update_visibility)
 
     @QtCore.Slot()
     def free_resources(self):

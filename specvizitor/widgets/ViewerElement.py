@@ -543,15 +543,20 @@ class ViewerElement(AbstractWidget):
 
         return f"{self.data_path.name} [{title_meta}]"
 
-    @QtCore.Slot()
-    def hide_interface(self):
+    def _enter_zen_mode(self):
         self.container.showAxes(False, showValues=False)
         self.smoothing_slider.setVisible(False)
 
-    @QtCore.Slot()
-    def update_visibility(self):
+    def _update_visibility(self):
         self.set_axes_visibility()
         self.smoothing_slider.setVisible(self.cfg.smoothing_slider.visible)
+
+    @QtCore.Slot(bool)
+    def update_visibility(self, is_zen: bool):
+        self._update_visibility()
+
+        if is_zen:
+            self._enter_zen_mode()
 
     @QtCore.Slot()
     def update_spectral_lines(self):

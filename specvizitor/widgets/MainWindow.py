@@ -49,11 +49,10 @@ class MainWindow(QtWidgets.QMainWindow):
     screenshot_path_selected = QtCore.Signal(str)
 
     subset_loaded = QtCore.Signal(str, object)
-    subset_inspection_paused = QtCore.Signal(bool)
+    is_subset_inspection_paused = QtCore.Signal(bool)
     subset_inspection_stopped = QtCore.Signal()
 
-    zen_mode_activated = QtCore.Signal()
-    zen_mode_deactivated = QtCore.Signal()
+    is_zen_mode_activated = QtCore.Signal(bool)
 
     def __init__(self,
                  config: Config | None = None,
@@ -78,8 +77,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._restart_requested = False
 
-        self.interface_hidden: bool = False
-        self.was_maximized: bool = False
+        self._zen_mode_activated: bool = False
+        self._was_maximized: bool = False
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self._update_window_title()  # set the title of the main window
@@ -212,9 +211,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._view.addSeparator()
 
-        self._zen = QtWidgets.QAction("Hide Interface")
-        self._zen.triggered.connect(lambda:
-                                    self._enter_zen_mode() if not self.interface_hidden else self._exit_zen_mode())
+        self._zen = QtWidgets.QAction("Enter Zen Mode")
+        self._zen.triggered.connect(self._zen_mode_action)
         self._zen.setShortcut('H')
         self._auxiliary_docks = (self._quick_search_dock, self._object_info_dock, self._subsets_dock)
         self._view.addAction(self._zen)
@@ -282,23 +280,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
         self.subset_loaded.connect(self._subsets.load_subset)
-        self.subset_inspection_paused.connect(self._subsets.pause_inspecting_subset)
-        self.subset_inspection_stopped.connect(self._subsets.stop_inspecting_subset)
+        self.is_subset_inspection_paused.connect(self._subsets.pause_subset_inspection)
+        self.subset_inspection_stopped.connect(self._subsets.stop_subset_inspection)
 
         self.save_action_invoked.connect(self._data_viewer.request_redshift)
         self.delete_action_invoked.connect(self._inspection_res.clear_redshift_value)
         self.close_action_invoked.connect(self._data_viewer.free_resources)
 
-        self.zen_mode_activated.connect(self._data_viewer.hide_interface)
-        self.zen_mode_deactivated.connect(self._data_viewer.restore_visibility)
+        self.is_zen_mode_activated.connect(self._data_viewer.enter_zen_mode)
 
         # connect the child widgets to the main window
         self._quick_search.id_selected.connect(self.load_by_id)
         self._quick_search.index_selected.connect(self.load_by_index)
 
         self._subsets.inspect_button_clicked.connect(self._inspect_subset_action)
-        self._subsets.pause_inspecting_button_clicked.connect(self._pause_inspecting_subset_action)
-        self._subsets.stop_inspecting_button_clicked.connect(self._stop_inspecting_subset_action)
+        self._subsets.pause_inspecting_button_clicked.connect(self._pause_subset_inspection_action)
+        self._subsets.stop_inspecting_button_clicked.connect(self._stop_subset_inspection_action)
 
         self._commands_bar.navigation_button_clicked.connect(self.switch_object)
         self._commands_bar.star_button_clicked.connect(self.update_starred_state)
@@ -513,27 +510,20 @@ class MainWindow(QtWidgets.QMainWindow):
             save_yaml(path, asdict(self._widget_cfg))
             logger.info('Viewer configuration saved')
 
-    def _enter_zen_mode(self):
-        self.interface_hidden = True
-        self._zen.setText("Enter Zen Mode")
+    def _zen_mode_action(self):
+        self._zen_mode_activated = not self._zen_mode_activated
+        self._zen.setText("Exit Zen Mode" if self._zen_mode_activated else "Enter Zen Mode")
         for w in self._auxiliary_docks:
-            w.setVisible(False)
-        self.zen_mode_activated.emit()
-
-    def _exit_zen_mode(self):
-        self.interface_hidden = False
-        self._zen.setText("Exit Zen Mode")
-        for w in self._auxiliary_docks:
-            w.setVisible(True)
-        self.zen_mode_deactivated.emit()
+            w.setVisible(not self._zen_mode_activated)
+        self.is_zen_mode_activated.emit(self._zen_mode_activated)
 
     def _enter_fullscreen(self):
-        self.was_maximized = True if self.isMaximized() else False
+        self._was_maximized = True if self.isMaximized() else False
         self.showFullScreen()
 
     def _exit_fullscreen(self):
         self.showNormal()
-        if self.was_maximized:
+        if self._was_maximized:
             self.showMaximized()
 
     def _edit_inspection_file_action(self):
@@ -564,11 +554,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self._cache.last_subset_file = None
             self._cache.save()
 
-    def _pause_inspecting_subset_action(self):
+    def _pause_subset_inspection_action(self):
         self._subset_inspection_paused = not self._subset_inspection_paused
-        self.subset_inspection_paused.emit(self._subset_inspection_paused)
+        self.is_subset_inspection_paused.emit(self._subset_inspection_paused)
 
-    def _stop_inspecting_subset_action(self):
+    def _stop_subset_inspection_action(self):
         self._subset_cat = None
         self._subset_inspection_paused = False
 
@@ -657,7 +647,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close_action_invoked.emit()
 
         # save the state and geometry of the main window
-        self._exit_zen_mode()
+        if self._zen_mode_activated:
+            self._zen_mode_action()
         settings = QtCore.QSettings()
         settings.setValue('geometry', self.saveGeometry())
         settings.setValue('windowState', self.saveState())

@@ -183,12 +183,10 @@ class Image2D(ViewerElement):
         if self.title not in widget_links.get(LinkableItem.COLORBAR):
             self.reset_levels()
 
-    @QtCore.Slot()
-    def hide_interface(self):
-        super().hide_interface()
+    def _enter_zen_mode(self):
+        super()._enter_zen_mode()
         self.cbar.setVisible(False)
 
-    @QtCore.Slot()
-    def update_visibility(self):
-        super().update_visibility()
+    def _update_visibility(self):
+        super()._update_visibility()
         self.cbar.setVisible(self.cfg.color_bar.visible)
