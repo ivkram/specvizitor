@@ -7,6 +7,7 @@ import pyqtgraph as pg
 
 import abc
 from dataclasses import asdict, dataclass, field
+from enum import Enum, auto
 import logging
 import pathlib
 
@@ -110,11 +111,25 @@ class UnitTransform(PlotTransformBase):
         return plot_data
 
 
-class ViewerElement(AbstractWidget):
-    content_cleared = QtCore.Signal(str)
-    object_loaded = QtCore.Signal(str)
+# TODO: create Enum dynamically from SliderItem
+class LinkableItem(Enum):
+    XAXIS = auto()
+    YAXIS = auto()
+    COLORBAR = auto()
+    S_SLIDER = auto()
+    S_REDSHIFT = auto()
 
-    ALLOWED_DATA_TYPES: tuple[type] | None = None
+
+class SliderItem(Enum):
+    SMOOTHING = auto()
+    REDSHIFT = auto()
+
+
+class ViewerElement(AbstractWidget):
+    object_loaded = QtCore.Signal(str)
+    object_destroyed = QtCore.Signal(str)
+
+    allowed_data_types: tuple[type] | None = None
 
     def __init__(self, title: str, cfg: data_widgets.ViewerElement, appearance: config.Appearance,
                  spectral_lines: SpectralLineData, parent=None):
@@ -140,7 +155,7 @@ class ViewerElement(AbstractWidget):
         self._spectral_lines = spectral_lines
         self._spectral_line_artists: dict[str, tuple[pg.InfiniteLine, pg.TextItem]] = {}
 
-        self.sliders: dict[str, SmartSlider] = {}  # has to be a dictionary to enable links
+        self.sliders: dict[SliderItem, SmartSlider] = {}
         self.smoothing_slider: SmartSlider | None = None
         self.redshift_slider: SmartSlider | None = None
 
@@ -211,16 +226,16 @@ class ViewerElement(AbstractWidget):
 
         self.graphics_layout.addItem(self.container, 0, 0)
 
-        self._init_sliders()
+        self._create_sliders()
 
-    def _init_sliders(self):
+    def _create_sliders(self):
         self.smoothing_slider = SmartSlider(short_name='sigma', action='smooth the data', parent=self,
                                             **asdict(self.cfg.smoothing_slider))
         self.redshift_slider = SmartSlider(short_name='z', full_name='redshift', parent=self,
                                            **asdict(self.cfg.redshift_slider))
 
-        self.sliders['smoothing'] = self.smoothing_slider
-        self.sliders['redshift'] = self.redshift_slider
+        self.sliders[SliderItem.SMOOTHING] = self.smoothing_slider
+        self.sliders[SliderItem.REDSHIFT] = self.redshift_slider
 
         self.smoothing_slider.value_changed[float].connect(self.smooth)
         self.redshift_slider.value_changed[float].connect(self.redshift_changed_action)
@@ -284,12 +299,8 @@ class ViewerElement(AbstractWidget):
     def load_object(self, j: int, review: InspectionData, viewer_data: ViewerData, data_sources: config.DataSources,
                     cat_entry: Catalog | None):
         if self.data is not None:
-            self.clear_content()
-            self.clear_view()
-            self.clear_slider_view()
-            self.setEnabled(False)
+            self._destroy_object()
 
-        self.data_path, self.data, self.meta = None, None, None
         self._load_data(review.get_id(j), viewer_data, data_sources, cat_entry)
 
         if self.data is None:
@@ -302,6 +313,16 @@ class ViewerElement(AbstractWidget):
         self.setEnabled(True)
 
         self.object_loaded.emit(self.title)
+
+    def _destroy_object(self):
+        self.data_path, self.data, self.meta = None, None, None
+
+        self.clear_content()
+        self.clear_view()
+        self.clear_slider_view()
+        self.setEnabled(False)
+
+        self.object_destroyed.emit(self.title)
 
     def _load_data(self, obj_id: str | int, viewer_data: ViewerData, data_sources: config.DataSources,
                    cat_entry: Catalog | None):
@@ -330,7 +351,7 @@ class ViewerElement(AbstractWidget):
 
         self.data, self.meta = viewer_data.load(str(self.data_path),
                                                 loader=self.cfg.data.loader,
-                                                allowed_dtypes=self.ALLOWED_DATA_TYPES,
+                                                allowed_dtypes=self.allowed_data_types,
                                                 **loader_params)
 
     def _get_data_path(self, data_sources: config.DataSources) -> LocalPath | None:
@@ -464,20 +485,25 @@ class ViewerElement(AbstractWidget):
     def redshift_changed_action(self, redshift: float):
         self.set_spectral_line_positions(redshift)
 
-    def reset_range(self, active_widgets: list[str]):
-        x_range = self._axes.x.limits_padded if self.cfg.x_axis.link_to not in active_widgets else None
-        y_range = self._axes.y.limits_padded if self.cfg.y_axis.link_to not in active_widgets else None
+    def reset_range(self, x_axis_links: dict | None = None, y_axis_links: dict | None = None):
+        x_range, y_range = self._axes.x.limits_padded, self._axes.y.limits_padded
+        if x_axis_links and self.title in x_axis_links:
+            x_range = None
+        if y_axis_links and self.title in y_axis_links:
+            y_range = None
         self.container.setRange(xRange=x_range, yRange=y_range, padding=0)
 
-    @QtCore.Slot(list)
-    def reset_view(self, active_widgets: list[str]):
+    @QtCore.Slot(object)
+    def reset_view(self, widget_links: dict | None = None):
         if self.data is None:
             return
+        if widget_links is None:
+            widget_links = dict()
 
-        self.reset_range(active_widgets)
-        if self.redshift_slider.link_to not in active_widgets:
+        self.reset_range(widget_links.get(LinkableItem.XAXIS), widget_links.get(LinkableItem.YAXIS))
+        if self.title not in widget_links.get(LinkableItem.S_REDSHIFT, dict()):
             self.redshift_slider.reset()
-        if self.smoothing_slider.link_to not in active_widgets:
+        if self.title not in widget_links.get(LinkableItem.S_SLIDER, dict()):
             self.smoothing_slider.update_from_slider()  # only update, do not reset
 
     def remove_registered_items(self):
@@ -487,7 +513,6 @@ class ViewerElement(AbstractWidget):
 
     def clear_content(self):
         self.remove_registered_items()
-        self.content_cleared.emit(str(self.data_path))
 
     def clear_view(self):
         self.init_view()

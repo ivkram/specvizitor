@@ -4,7 +4,6 @@ from qtpy import QtWidgets, QtCore
 
 from functools import partial
 import logging
-import pathlib
 
 from ..config import config
 from ..config.data_widgets import DataWidgets
@@ -13,13 +12,13 @@ from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import ViewerData
 from ..plugins.plugin_core import PluginCore
-from ..utils.qt_tools import safe_disconnect
 from ..utils.widgets import AbstractWidget
 
-from .ViewerElement import ViewerElement
+from .ViewerElement import ViewerElement, LinkableItem, SliderItem
 from .Image2D import Image2D
 from .Plot1D import Plot1D
 from .SmartSlider import SmartSlider
+from .ItemLinker import ItemLinker, XAxisLinker, YAxisLinker, SliderLinker, ColorBarLinker
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +26,14 @@ logger = logging.getLogger(__name__)
 class DataViewer(AbstractWidget):
     object_selected = QtCore.Signal(int, InspectionData, ViewerData, config.DataSources, object)
     data_collected = QtCore.Signal(dict)
+
     redshift_requested = QtCore.Signal()
     redshift_changed = QtCore.Signal(float)
     redshift_obtained = QtCore.Signal(float)
 
-    view_reset = QtCore.Signal(list)
     zen_mode_activated = QtCore.Signal()
     visibility_changed = QtCore.Signal()
+    view_reset = QtCore.Signal(object)
     spectral_lines_changed = QtCore.Signal()
 
     def __init__(self,
@@ -55,6 +55,10 @@ class DataViewer(AbstractWidget):
         self._data = ViewerData()
         self.open_images()
 
+        self._widget_links: dict[LinkableItem, dict] = {item: dict() for item in LinkableItem}
+        self._widget_linkers: dict[LinkableItem, ItemLinker] | None = None
+        self._create_widget_linkers()
+
         self.dock_area: DockArea | None = None
         self._added_docks: list[str] = []
 
@@ -73,21 +77,11 @@ class DataViewer(AbstractWidget):
 
     @property
     def active_widgets(self) -> dict[str, ViewerElement]:
-        return {title: w for title, w in self.widgets.items() if w.data is not None}
-
-    def _delete_widgets(self):
-        self._disconnect_widgets()
-        self._unlink_widgets()
-
-        for w in self.widgets.values():
-            w.graphics_layout.clear()
-            w.deleteLater()
-
-        self.widgets = {}
+        return {wt: w for wt, w in self.widgets.items() if w.data is not None}
 
     def _create_widgets(self):
-        if self.widgets:
-            self._delete_widgets()
+        for wt in list(self.widgets):
+            self._delete_widget(wt)
 
         widgets = {}
 
@@ -108,106 +102,82 @@ class DataViewer(AbstractWidget):
 
         self.widgets = widgets
 
-    def _connect_widgets(self):
-        for w in self.widgets.values():
-            self.object_selected.connect(w.load_object)
-            self.zen_mode_activated.connect(w.hide_interface)
-            self.visibility_changed.connect(w.update_visibility)
-            self.spectral_lines_changed.connect(w.update_spectral_lines)
+    def _delete_widget(self, wt: str):
+        self._unlink_widget(wt)
+        self._disconnect_widget(wt)
 
-            self.view_reset.connect(w.reset_view)
+        w0 = self.widgets.pop(wt)
 
-            w.object_loaded.connect(self._link_widget)
-            w.content_cleared.connect(self._close_connection)
-            w.redshift_slider.save_button_clicked.connect(self._save_redshift)
+        w0.graphics_layout.clear()
+        w0.deleteLater()
 
-    def _disconnect_widgets(self):
-        self.object_selected.disconnect()
-        self.zen_mode_activated.disconnect()
-        self.visibility_changed.disconnect()
-        self.spectral_lines_changed.disconnect()
+    def _connect_widget(self, wt: str):
+        w0 = self.widgets[wt]
 
-        self.view_reset.disconnect()
+        self.object_selected.connect(w0.load_object)
+        self.zen_mode_activated.connect(w0.hide_interface)
+        self.visibility_changed.connect(w0.update_visibility)
+        self.view_reset.connect(w0.reset_view)
+        self.spectral_lines_changed.connect(w0.update_spectral_lines)
 
-        for w in self.widgets.values():
-            w.content_cleared.disconnect()
-            w.redshift_slider.save_button_clicked.disconnect()
+        w0.object_loaded.connect(self._attach_widget)
+        w0.object_destroyed.connect(self._detach_widget)
+        w0.redshift_slider.save_button_clicked.connect(self._save_redshift)
 
-    def _link_widgets(self):
-        self._link_views()
-        self._link_sliders()
-        self._link_colorbars()
+    def _disconnect_widget(self, wt: str):
+        w0 = self.widgets[wt]
 
-    def _unlink_widgets(self):
-        self._unlink_views()
-        self._unlink_colorbars()
+        self.object_selected.disconnect(w0.load_object)
+        self.zen_mode_activated.disconnect(w0.hide_interface)
+        self.visibility_changed.disconnect(w0.update_visibility)
+        self.view_reset.disconnect(w0.reset_view)
+        self.spectral_lines_changed.disconnect(w0.update_spectral_lines)
 
-    def _link_views(self):
+        w0.object_loaded.disconnect()
+        w0.object_destroyed.disconnect()
+        w0.redshift_slider.save_button_clicked.disconnect()
+
+    def _create_widget_linkers(self):
+        self._widget_linkers = {
+            LinkableItem.XAXIS: XAxisLinker(),
+            LinkableItem.YAXIS: YAxisLinker(),
+            LinkableItem.COLORBAR: ColorBarLinker(),
+            LinkableItem.S_SLIDER: SliderLinker(SliderItem.SMOOTHING),
+            LinkableItem.S_REDSHIFT: SliderLinker(SliderItem.REDSHIFT)
+        }
+
+    def _link_widget(self, wt: str):
+        w0 = self.widgets[wt]
+
         for w in self.active_widgets.values():
-            # TODO: throw a warning if two axes have different unit/scale
-            if w.cfg.x_axis.link_to in self.active_widgets:
-                w.container.setXLink(w.cfg.x_axis.link_to)
-            if w.cfg.y_axis.link_to in self.active_widgets:
-                w.container.setYLink(w.cfg.y_axis.link_to)
+            for linked_item, linker in self._widget_linkers.items():
+                linker.link(w0, w, self._widget_links[linked_item])
+                linker.link(w, w0, self._widget_links[linked_item])
 
-    def _unlink_views(self):
-        for w in self.widgets.values():
-            w.container.setXLink(None)
-            w.container.setYLink(None)
+    def _unlink_widget(self, wt: str):
+        w0 = self.widgets[wt]
 
-    def _link_sliders(self):
         for w in self.active_widgets.values():
-            for slider_name, slider in w.sliders.items():
-                if slider.link_to in self.active_widgets:
-                    try:
-                        source_slider = self.active_widgets[slider.link_to].sliders[slider_name]
-                    except KeyError:
-                        logger.error(f'Failed to link sliders (source widget: {slider.link_to}, slider: {slider_name})')
-                    else:
-                        source_slider.value_changed[float].connect(slider.set_value)
-                        slider.value_changed[float].connect(source_slider.set_value)
+            for linked_item, linker in self._widget_linkers.items():
+                linker.unlink(w0, w, self._widget_links[linked_item])
+                linker.unlink(w, w0, self._widget_links[linked_item])
 
-    def _unlink_sliders(self):
-        for w in self.widgets.values():
-            for slider_name, slider in w.sliders.items():
-                safe_disconnect(slider.value_changed[float])
+    def _close_dock(self, dt: str, dock: Dock | None = None):
+        if dock is None:
+            dock = self.docks[dt]
 
-    def _link_colorbars(self):
-        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.active_widgets.items()
-                                      if isinstance(w, Image2D)}
-        for w in images.values():
-            if w.cfg.color_bar.link_to in self.active_widgets:
-                try:
-                    source_widget = images[w.cfg.color_bar.link_to]
-                except KeyError:
-                    logger.error(f'Failed to (un)link color bars (source widget: {w.cfg.color_bar.link_to})')
-                else:
-                    if w.data is not None and w.has_defined_levels:
-                        source_widget.cbar.sigLevelsChanged[tuple].connect(w.set_levels)
-                        w.cbar.sigLevelsChanged[tuple].connect(source_widget.set_levels)
-
-    def _unlink_colorbars(self):
-        images: dict[str, Image2D] = {widget_name: w for widget_name, w in self.widgets.items()
-                                      if isinstance(w, Image2D)}
-        for w in images.values():
-            safe_disconnect(w.cbar.sigLevelsChanged[tuple])
-
-    def _close_dock(self, dock: Dock, title: str):
         container = dock.container()
         if container and not isinstance(container, DockArea):
-            self._close_dock(container, title)
+            self._close_dock(dt, container)
         else:
             dock.close()
-            self._added_docks.remove(title)
+            self._added_docks.remove(dt)
+            self.docks.pop(dt)
             return
 
-    def _close_docks(self):
-        for title, dock in self.docks.items():
-            self._close_dock(dock, title)
-        self.docks = {}
-
     def _create_docks(self):
-        self._close_docks()
+        for dt in list(self.docks):
+            self._close_dock(dt)
 
         docks = {}
         for widget in self.widgets.values():
@@ -215,19 +185,19 @@ class DataViewer(AbstractWidget):
 
         self.docks = docks
 
-    def _add_dock(self, dock: Dock, title: str):
-        widget = self.widgets[title]
+    def _add_dock(self, dt: str):
+        dock, widget = self.docks[dt], self.widgets[dt]
         position = widget.cfg.position if widget.cfg.position is not None else 'bottom'
         relative_to = widget.cfg.relative_to if widget.cfg.relative_to in self._added_docks else None
 
         self.dock_area.addDock(dock=dock, position=position, relativeTo=relative_to)
-        self._added_docks.append(title)
+        self._added_docks.append(dt)
 
     def _add_docks(self):
-        for title, dock in self.docks.items():
-            if not self.widgets[title].cfg.visible:
+        for dt in self.docks:
+            if not self.widgets[dt].cfg.visible:
                 continue
-            self._add_dock(dock, title)
+            self._add_dock(dt)
 
         for plugin in self._plugins:
             plugin.update_docks(self.docks)
@@ -265,9 +235,12 @@ class DataViewer(AbstractWidget):
     def init_ui(self):
         if self.dock_area is None:
             self.dock_area = DockArea(parent=self)
+
         self._create_widgets()
         self.init_docks()
-        self._connect_widgets()
+
+        for wt in self.widgets:
+            self._connect_widget(wt)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QGridLayout())
@@ -296,9 +269,7 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
-        self._unlink_widgets()
         self.object_selected.emit(j, review, self._data, self._data_cfg, cat_entry)
-        self._link_widgets()
 
         for plugin in self._plugins:
             plugin.update_active_widgets(self.active_widgets, cat_entry=cat_entry)
@@ -307,12 +278,20 @@ class DataViewer(AbstractWidget):
         self.reset_view()
 
     @QtCore.Slot(str)
-    def _link_widget(self, title: str):
-        w = self.widgets[title]
+    def _attach_widget(self, wt: str):
+        w0 = self.widgets[wt]
+        self._link_widget(wt)
+        self.docks[wt].setTitle(w0.get_dock_title())
 
-        self.docks[title].setTitle(w.get_dock_title())
+    @QtCore.Slot(str)
+    def _detach_widget(self, wt: str):
+        w0 = self.widgets[wt]
+        self._unlink_widget(wt)
+        self.docks[wt].setTitle(w0.title)
 
-    def _find_active_redshift_slider(self) -> SmartSlider | None:
+        self._data.close(str(w0.data_path))
+
+    def _get_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():
             if w.redshift_slider.isVisible():
                 return w.redshift_slider
@@ -320,35 +299,35 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def reset_view(self):
-        self.view_reset.emit(list(self.active_widgets.keys()))
-
-    @QtCore.Slot(str)
-    def _close_connection(self, data_path: str):
-        self._data.close(data_path)
+        self.view_reset.emit(self._widget_links)
 
     @QtCore.Slot()
     def request_redshift(self):
-        slider = self._find_active_redshift_slider()
-        if slider:
-            self.redshift_requested.connect(slider.save_value)
-            self.redshift_requested.emit()
-            self.redshift_requested.disconnect()
+        slider = self._get_active_redshift_slider()
+        if slider is None:
+            return
+
+        self.redshift_requested.connect(slider.save_value)
+        self.redshift_requested.emit()
+        self.redshift_requested.disconnect()
 
     @QtCore.Slot(float)
     def _save_redshift(self, redshift: float):
         self.redshift_obtained.emit(redshift)
 
     def change_redshift(self, n_steps: int, small_step: bool = False):
-        slider = self._find_active_redshift_slider()
-        if slider:
-            self.redshift_changed.connect(slider.set_value)
+        slider = self._get_active_redshift_slider()
+        if slider is None:
+            return
 
-            z = slider.value
-            step = self._global_cfg.redshift_small_step if small_step else self._global_cfg.redshift_step
-            dz = n_steps * step * (1 + z)
+        self.redshift_changed.connect(slider.set_value)
 
-            self.redshift_changed.emit(z + dz)
-            self.redshift_changed.disconnect()
+        z = slider.value
+        step = self._global_cfg.redshift_small_step if small_step else self._global_cfg.redshift_step
+        dz = n_steps * step * (1 + z)
+
+        self.redshift_changed.emit(z + dz)
+        self.redshift_changed.disconnect()
 
     @QtCore.Slot()
     def collect(self):

@@ -14,7 +14,12 @@ from ..io.catalog import Catalog
 from ..utils.qt_tools import get_qtransform_from_wcs
 from ..utils.widgets import ColorBar
 
-from .ViewerElement import ViewerElement
+from .ViewerElement import ViewerElement, LinkableItem
+
+
+__all__ = [
+    "Image2D"
+]
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +31,8 @@ class Image2DLevels:
 
 
 class Image2D(ViewerElement):
-    ALLOWED_DATA_TYPES: tuple[type] = (np.ndarray,)
-    ALLOWED_CBAR_LIMS: tuple[str] = ('minmax', 'zscale', 'user')
+    allowed_data_types: tuple[type] = (np.ndarray,)
+    allowed_cbar_lims: tuple[str] = ('minmax', 'zscale', 'user')
 
     def __init__(self, cfg: data_widgets.Image, **kwargs):
         self.cfg = cfg
@@ -101,9 +106,9 @@ class Image2D(ViewerElement):
         # compute default image levels
         if self.has_defined_levels:
             limits_cfg = self.cfg.color_bar.limits
-            if limits_cfg.type not in self.ALLOWED_CBAR_LIMS:
+            if limits_cfg.type not in self.allowed_cbar_lims:
                 logger.error(f'Unknown type of colorbar limits: {limits_cfg}.'
-                             f'Supported types: {self.ALLOWED_CBAR_LIMS}')
+                             f'Supported types: {self.allowed_cbar_lims}')
             else:
                 if limits_cfg.type == 'minmax':
                     l1, l2 = np.nanmin(self.data), np.nanmax(self.data)
@@ -168,11 +173,14 @@ class Image2D(ViewerElement):
     def reset_levels(self):
         self.set_levels((self._default_levels.min, self._default_levels.max))
 
-    @QtCore.Slot(list)
-    def reset_view(self, active_widgets: list[str]):
-        super().reset_view(active_widgets)
+    @QtCore.Slot(object)
+    def reset_view(self, widget_links: dict | None = None):
+        super().reset_view(widget_links=widget_links)
 
-        if self.cfg.color_bar.link_to not in active_widgets:
+        if widget_links is None:
+            widget_links = dict()
+
+        if self.title not in widget_links.get(LinkableItem.COLORBAR):
             self.reset_levels()
 
     @QtCore.Slot()

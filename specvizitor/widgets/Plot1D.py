@@ -11,13 +11,14 @@ from ..io.catalog import Catalog
 
 from .ViewerElement import ViewerElement
 
-__all__ = ['Plot1D']
+
+__all__ = ["Plot1D"]
 
 logger = logging.getLogger(__name__)
 
 
 class Plot1D(ViewerElement):
-    ALLOWED_DATA_TYPES = (Table,)
+    allowed_data_types = (Table,)
 
     def __init__(self, cfg: data_widgets.Plot1D, **kwargs):
         self.cfg = cfg
