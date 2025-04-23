@@ -35,8 +35,8 @@ class MainWindow(QtWidgets.QMainWindow):
     data_requested = QtCore.Signal()
     save_action_invoked = QtCore.Signal()
     delete_action_invoked = QtCore.Signal()
+    close_action_invoked = QtCore.Signal()
 
-    theme_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
     inspection_fields_changed = QtCore.Signal(int, InspectionData)
     data_source_changed = QtCore.Signal()
@@ -193,7 +193,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._file.addSeparator()
 
         self._quit = QtWidgets.QAction("&Quit")
-        self._quit.triggered.connect(self._exit_action)
+        self._quit.triggered.connect(self.close)
         self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self._file.addAction(self._quit)
 
@@ -207,7 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
         self._reset_dock_layout.setEnabled(False)
-        self._reset_dock_layout.triggered.connect(self._data_viewer.init_docks)
+        self._reset_dock_layout.triggered.connect(self._data_viewer.reset_dock_layout)
         self._view.addAction(self._reset_dock_layout)
 
         self._view.addSeparator()
@@ -269,8 +269,6 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._data_viewer, self._commands_bar, self._object_info, self._inspection_res, self._subsets):
             self.object_selected.connect(w.load_object)
 
-        self.theme_changed.connect(self._data_viewer.init_ui)
-        self.theme_changed.connect(self._commands_bar._set_icons)
         self.catalogue_changed.connect(self._object_info.update_table_items)
         self.inspection_fields_changed.connect(self._inspection_res.update_inspection_fields)
         self.data_source_changed.connect(self._data_viewer.open_images)
@@ -288,6 +286,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.save_action_invoked.connect(self._data_viewer.request_redshift)
         self.delete_action_invoked.connect(self._inspection_res.clear_redshift_value)
+        self.close_action_invoked.connect(self._data_viewer.free_resources)
 
         self.zen_mode_activated.connect(self._data_viewer.hide_interface)
         self.zen_mode_deactivated.connect(self._data_viewer.restore_visibility)
@@ -314,7 +313,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect the child widgets between each other
         self._data_viewer.redshift_obtained.connect(self._inspection_res.set_redshift_value)
         self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.reset_view)
-        self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.init_docks)
+        self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.reset_dock_layout)
 
     def populate(self):
         self.setCentralWidget(self._data_viewer)
@@ -487,18 +486,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if path:
             self.rd.review.write(path, 'fits')
 
-    def _exit_action(self):
-        if self.rd.j is not None:
-            self.data_requested.emit()
-
-        # save the state and geometry of the main window
-        settings = QtCore.QSettings()
-        settings.setValue('geometry', self.saveGeometry())
-        settings.setValue('windowState', self.saveState())
-
-        self.close()
-        logger.info("Application closed")
-
     def _restore_viewer_config_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Viewer Configuration',
                                            filters='YAML Files (*.yml)')[0]
@@ -658,8 +645,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         QtWidgets.QMessageBox.about(self, f"About {package_name.capitalize()}", '\n'.join(msg))
 
-    def closeEvent(self, _):
-        self._exit_action()
+    def closeEvent(self, a0):
+        if self.rd.j is not None:
+            self.data_requested.emit()
+
+        self.close_action_invoked.emit()
+
+        # save the state and geometry of the main window
+        settings = QtCore.QSettings()
+        settings.setValue('geometry', self.saveGeometry())
+        settings.setValue('windowState', self.saveState())
+
+        super().closeEvent(a0)
 
     @QtCore.Slot()
     def update_starred_state(self):
@@ -689,5 +686,5 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot()
     def restart(self):
         self._restart_requested = True
-        self._exit_action()
+        self.close()
         QtWidgets.QApplication.exit(MainWindow.EXIT_CODE_REBOOT)

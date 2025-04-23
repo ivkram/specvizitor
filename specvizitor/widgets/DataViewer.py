@@ -203,12 +203,12 @@ class DataViewer(AbstractWidget):
             plugin.update_docks(self.docks)
 
     @QtCore.Slot()
-    def init_docks(self):
+    def reset_dock_layout(self):
         self._create_docks()
         self._add_docks()
 
     @staticmethod
-    def clean_layout(layout: dict):
+    def _clean_dock_layout(layout: dict):
         float_layout_cleaned = []
         for l in layout['float']:
             if l[0]['main'] is not None:
@@ -219,25 +219,26 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot(dict)
     def restore_dock_layout(self, layout: dict):
         # fix for a pyqtgraph bug where empty layouts throw an error
-        self.clean_layout(layout)
+        self._clean_dock_layout(layout)
 
         try:
             # set `extra` to None to catch an exception (KeyError) when adding extra docks not mentioned in `layout`
             self.dock_area.restoreState(layout, missing='ignore', extra=None)
-            logger.info('Dock layout restored')
+            logger.info("Dock layout restored")
 
             for plugin in self._plugins:
                 plugin.update_docks(self.docks)
         except (KeyError, ValueError, TypeError) as e:
-            self.init_docks()  # to reset the dock layout
-            logger.error(f'Failed to restore the dock layout: {e}')
+            self.reset_dock_layout()
+            logger.error(f"Failed to restore the dock layout: {e}")
 
     def init_ui(self):
         if self.dock_area is None:
             self.dock_area = DockArea(parent=self)
 
         self._create_widgets()
-        self.init_docks()
+        self._create_docks()
+        self._add_docks()
 
         for wt in self.widgets:
             self._connect_widget(wt)
@@ -348,3 +349,7 @@ class DataViewer(AbstractWidget):
         for dock in self.docks.values():
             dock.showTitleBar()
         self.visibility_changed.emit()
+
+    @QtCore.Slot()
+    def free_resources(self):
+        self._data.close_all()

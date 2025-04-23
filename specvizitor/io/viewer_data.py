@@ -214,6 +214,10 @@ class ViewerData:
         self._data.pop(filename)[0].close()
         logger.info(f"Database connection closed (filename: {filename})")
 
+    def close_all(self):
+        for filename in list(self._data):
+            self.close(filename)
+
     @staticmethod
     def _validate_dtype(data, allowed_dtypes: tuple[type, ...]) -> bool:
         if not any(isinstance(data, t) for t in allowed_dtypes):

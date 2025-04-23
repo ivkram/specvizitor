@@ -102,6 +102,7 @@ def main():
 
         exit_code = app.exec_()
         app = None
+        logger.info("Application closed")
 
     sys.exit(exit_code)
 
