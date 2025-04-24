@@ -44,7 +44,7 @@ class ItemLinker(abc.ABC):
 
         self._link(w1, w2)
         links[w1.title] = w2.title
-        logger.info(f"Widgets linked (link: {w1.title} --> {w2.title}, linker: {type(self).__name__})")
+        logger.debug(f"Widgets linked (link: {w1.title} --> {w2.title}, linker: {type(self).__name__})")
 
     @abc.abstractmethod
     def _unlink(self, w1: ViewerElement, w2: ViewerElement):
@@ -56,7 +56,7 @@ class ItemLinker(abc.ABC):
 
         self._unlink(w1, w2)
         links.pop(w1.title)
-        logger.info(f"Widgets unlinked (link: {w1.title} --> {w2.title}, linker: {type(self).__name__})")
+        logger.debug(f"Widgets unlinked (link: {w1.title} --> {w2.title}, linker: {type(self).__name__})")
 
 
 class XAxisLinker(ItemLinker):

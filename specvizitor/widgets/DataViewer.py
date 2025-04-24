@@ -321,7 +321,6 @@ class DataViewer(AbstractWidget):
         self.reset_view()
 
         self._lock = False
-        logger.info(f"Object loaded (ID: {review.get_id(j)}, loading time: {time.perf_counter()-self._t_worker_start:.3f} s)")
         self.object_loaded.emit()
 
     @QtCore.Slot(str)
@@ -329,12 +328,14 @@ class DataViewer(AbstractWidget):
         w0 = self.widgets[wt]
         self._link_widget(wt)
         self.docks[wt].setTitle(w0.get_dock_title())
+        logger.debug(f"`{wt}` attached")
 
     @QtCore.Slot(str)
     def _detach_widget(self, wt: str):
         w0 = self.widgets[wt]
         self._unlink_widget(wt)
         self.docks[wt].setTitle(w0.title)
+        logger.debug(f"`{wt}` detached")
 
     def _get_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():

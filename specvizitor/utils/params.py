@@ -41,13 +41,13 @@ class LocalFile:
 
         save_yaml(self.path, data)
 
-        logger.info(msg)
+        logger.debug(msg)
 
     @missing_ok
     def backup(self) -> None:
         dst = self.path.parent / (self.filename + '.bak')
         shutil.copy(self.path, dst)
-        logger.info(f'{self.full_name} backed up (path: {dst})')
+        logger.debug(f'{self.full_name} backed up (path: {dst})')
 
     @missing_ok
     def delete(self) -> None:
@@ -57,7 +57,7 @@ class LocalFile:
 
         # delete the file
         self.path.unlink()
-        logger.info(f'{self.full_name} deleted (path: {self.path})')
+        logger.debug(f'{self.full_name} deleted (path: {self.path})')
 
 
 @dataclass

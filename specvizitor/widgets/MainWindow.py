@@ -6,6 +6,7 @@ from dataclasses import asdict
 from importlib import metadata
 import logging
 import pathlib
+import time
 
 from ..appdata import AppData
 from ..config.appearance import setup_appearance
@@ -75,6 +76,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
 
         self._object_loaded: bool = True
+        self._t_load_object_start = None
         self._restart_requested: bool = False
         self._zen_mode_activated: bool = False
         self._was_maximized: bool = False
@@ -400,15 +402,13 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         if not self._object_loaded:
             self.loading_aborted.emit()
-        self._object_loaded = False
-
-        if request_data:
+        elif request_data:
             self.data_requested.emit()
 
-        self.rd.j = j
+        self._object_loaded = False
+        self._t_load_object_start = time.perf_counter()
 
-        self._cache.last_object_index = j
-        self._cache.save()
+        self.rd.j = j
 
         self._load_object(self._data_viewer)
         self._update_window_title()
@@ -420,17 +420,22 @@ class MainWindow(QtWidgets.QMainWindow):
         obj_id = self.rd.review.get_id(self.rd.j, full=True)
         return self.rd.cat.get_cat_entry(obj_id)
 
-    @QtCore.Slot()
-    def finalize_loading(self):
-        self._load_object(self._commands_bar, self._inspection_res,self._subsets, self._object_info)
-        self._object_loaded = True
-
     def _load_object(self, *widgets):
         for w in widgets:
             self.object_selected.connect(w.load_object)
         self.object_selected.emit(self.rd.j, self.rd.review, self._get_cat_entry())
         for w in widgets:
             self.object_selected.disconnect(w.load_object)
+
+    @QtCore.Slot()
+    def finalize_loading(self):
+        self._load_object(self._commands_bar, self._inspection_res,self._subsets, self._object_info)
+        self._object_loaded = True
+
+        self._cache.last_object_index = self.rd.j
+        self._cache.save()
+
+        logger.info(f"Object loaded (ID: {self.rd.review.get_id(self.rd.j)}, loading time: {time.perf_counter()-self._t_load_object_start:.3f} s)")
 
     @QtCore.Slot(str, bool)
     def switch_object(self, command: str, switch_to_starred: bool):

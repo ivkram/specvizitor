@@ -213,7 +213,7 @@ class ViewerData:
             return None
 
         self._loaders[filename] = loader
-        logger.info(f"Database connection opened (filename: {filename})")
+        logger.debug(f"Database connection opened (filename: {filename})")
 
         return loader
 
@@ -250,14 +250,14 @@ class ViewerData:
             logger.error(f"Invalid input data type: {type(data)} (filename: {filename})")
             return None, None
 
-        logger.info(f"Data loaded (filename: {filename})")
+        logger.debug(f"Data loaded (filename: {filename})")
         return data, meta
 
     def close(self, filename: str):
         if not self._loaders.get(filename):
             return
         self._loaders.pop(filename).close()
-        logger.info(f"Database connection closed (filename: {filename})")
+        logger.debug(f"Database connection closed (filename: {filename})")
 
     def close_all(self):
         for filename in list(self._loaders):
