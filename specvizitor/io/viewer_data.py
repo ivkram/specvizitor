@@ -183,6 +183,14 @@ class ViewerData:
         logger.info(f"Database connection opened (filename: {filename})")
         return self._data[filename]
 
+    def reopen(self, filename: str):
+        if not self._data.get(filename):
+            logger.error(f"Failed to re-open the connection: connection not open (filename: {filename})")
+            return
+        loader, loader_params = self._data[filename]
+        self.close(filename)
+        self.open(filename, loader.name, **loader_params)
+
     def open_image(self, filename: str, loader: str, wcs_source: str | None = None, **kwargs):
         self.open(filename, loader=loader, **kwargs)
         if wcs_source:

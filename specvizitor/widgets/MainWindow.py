@@ -32,6 +32,7 @@ class MainWindow(QtWidgets.QMainWindow):
     EXIT_CODE_REBOOT = -42
     project_loaded = QtCore.Signal(InspectionData)
     object_selected = QtCore.Signal(int, InspectionData, object)
+    loading_aborted = QtCore.Signal()
     data_requested = QtCore.Signal()
     save_action_invoked = QtCore.Signal()
     delete_action_invoked = QtCore.Signal()
@@ -72,13 +73,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self._spectral_lines = spectral_lines if spectral_lines else SpectralLineData()
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
 
+        self._object_loaded: bool = True
+        self._restart_requested: bool = False
+        self._zen_mode_activated: bool = False
+        self._was_maximized: bool = False
+
         self._subset_cat: Catalog | None = None
         self._subset_inspection_paused: bool = False
 
-        self._restart_requested = False
-
-        self._zen_mode_activated: bool = False
-        self._was_maximized: bool = False
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self._update_window_title()  # set the title of the main window
@@ -267,6 +269,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         for w in (self._data_viewer, self._commands_bar, self._object_info, self._inspection_res, self._subsets):
             self.object_selected.connect(w.load_object)
+        self.loading_aborted.connect(self._data_viewer.loading_aborted.emit)
 
         self.catalogue_changed.connect(self._object_info.update_table_items)
         self.inspection_fields_changed.connect(self._inspection_res.update_inspection_fields)
@@ -303,6 +306,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._commands_bar.settings_button_clicked.connect(self._settings_action)
 
         self._inspection_res.edit_button_clicked.connect(self._edit_inspection_file_action)
+
+        self._data_viewer.object_loaded.connect(self.finalize_loading)
 
         self._data_viewer.data_collected.connect(self.save_viewer_data)
         self._object_info.data_collected.connect(self.save_obj_info_data)
@@ -394,6 +399,10 @@ class MainWindow(QtWidgets.QMainWindow):
         @param j: the index of the object to display
         @param request_data:
         """
+        if not self._object_loaded:
+            self.loading_aborted.emit()
+        self._object_loaded = False
+
         if request_data:
             self.data_requested.emit()
 
@@ -409,6 +418,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.object_selected.emit(self.rd.j, self.rd.review, cat_entry)
 
         self._update_window_title()
+
+    @QtCore.Slot()
+    def finalize_loading(self):
+        self._object_loaded = True
 
     @QtCore.Slot(str, bool)
     def switch_object(self, command: str, switch_to_starred: bool):

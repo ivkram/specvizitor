@@ -180,7 +180,7 @@ class Image2D(ViewerElement):
         if widget_links is None:
             widget_links = dict()
 
-        if self.title not in widget_links.get(LinkableItem.COLORBAR):
+        if self.title not in widget_links.get(LinkableItem.COLORBAR, dict()):
             self.reset_levels()
 
     def _enter_zen_mode(self):

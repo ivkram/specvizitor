@@ -1,9 +1,12 @@
+from types import NoneType
+
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
 
 from functools import partial
 import logging
+import time
 
 from ..config import config, data_widgets
 from ..config.data_widgets import DataWidgets
@@ -24,15 +27,17 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    object_selected = QtCore.Signal(int, InspectionData, ViewerData, config.DataSources, object)
+    data_loaded = QtCore.Signal(int, InspectionData, object)
+    object_loaded = QtCore.Signal()
+    loading_aborted = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
 
     redshift_requested = QtCore.Signal()
     redshift_changed = QtCore.Signal(float)
     redshift_obtained = QtCore.Signal(float)
 
-    visibility_changed = QtCore.Signal(bool)
     view_reset = QtCore.Signal(object)
+    visibility_changed = QtCore.Signal(bool)
     spectral_lines_changed = QtCore.Signal()
 
     def __init__(self,
@@ -60,6 +65,8 @@ class DataViewer(AbstractWidget):
         self._widget_linkers: dict[LinkableItem, ItemLinker] | None = None
         self._create_widget_linkers()
 
+        self.worker: WidgetLoader | None = None
+
         self.dock_area: DockArea | None = None
         self._added_docks: list[str] = []
 
@@ -70,11 +77,11 @@ class DataViewer(AbstractWidget):
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        QtWidgets.QShortcut('Q', self, partial(self.change_redshift, -1))
-        QtWidgets.QShortcut('W', self, partial(self.change_redshift, 1))
+        QtWidgets.QShortcut('Q', self, partial(self._change_redshift, -1))
+        QtWidgets.QShortcut('W', self, partial(self._change_redshift, 1))
 
-        QtWidgets.QShortcut('Shift+Q', self, partial(self.change_redshift, -1, True))
-        QtWidgets.QShortcut('Shift+W', self, partial(self.change_redshift, 1, True))
+        QtWidgets.QShortcut('Shift+Q', self, partial(self._change_redshift, -1, True))
+        QtWidgets.QShortcut('Shift+W', self, partial(self._change_redshift, 1, True))
 
     @property
     def active_widgets(self) -> dict[str, ViewerElement]:
@@ -123,7 +130,7 @@ class DataViewer(AbstractWidget):
     def _connect_widget(self, wt: str):
         w0 = self.widgets[wt]
 
-        self.object_selected.connect(w0.load_object)
+        self.data_loaded.connect(w0.show_object)
         self.view_reset.connect(w0.reset_view)
         self.spectral_lines_changed.connect(w0.update_spectral_lines)
 
@@ -134,7 +141,7 @@ class DataViewer(AbstractWidget):
     def _disconnect_widget(self, wt: str):
         w0 = self.widgets[wt]
 
-        self.object_selected.disconnect(w0.load_object)
+        self.data_loaded.disconnect(w0.show_object)
         self.view_reset.disconnect(w0.reset_view)
         self.spectral_lines_changed.disconnect(w0.update_spectral_lines)
 
@@ -271,13 +278,21 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
-        self.object_selected.emit(j, review, self._data, self._data_cfg, cat_entry)
+        self.worker = WidgetLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry)
+        self.loading_aborted.connect(self.worker.abort)
+        self.worker.finished.connect(partial(self.finalize_loading, j, review, cat_entry))
+        self.worker.start()
+
+    @QtCore.Slot(int, InspectionData, object)
+    def finalize_loading(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+        self.data_loaded.emit(j, review, cat_entry)
 
         for plugin in self._plugins:
             plugin.update_active_widgets(self.active_widgets, cat_entry=cat_entry)
             plugin.update_docks(self.docks, cat_entry=cat_entry)
 
         self.reset_view()
+        self.object_loaded.emit()
 
     @QtCore.Slot(str)
     def _attach_widget(self, wt: str):
@@ -290,8 +305,6 @@ class DataViewer(AbstractWidget):
         w0 = self.widgets[wt]
         self._unlink_widget(wt)
         self.docks[wt].setTitle(w0.title)
-
-        self._data.close(str(w0.data_path))
 
     def _get_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():
@@ -317,7 +330,7 @@ class DataViewer(AbstractWidget):
     def _save_redshift(self, redshift: float):
         self.redshift_obtained.emit(redshift)
 
-    def change_redshift(self, n_steps: int, small_step: bool = False):
+    def _change_redshift(self, n_steps: int, small_step: bool = False):
         slider = self._get_active_redshift_slider()
         if slider is None:
             return
@@ -361,3 +374,48 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot()
     def free_resources(self):
         self._data.close_all()
+
+
+class WidgetLoader(QtCore.QThread):
+    object_selected = QtCore.Signal(int, InspectionData, ViewerData, config.DataSources, object)
+    finished = QtCore.Signal()
+
+    def __init__(self, widgets, *args):
+        super().__init__(parent=None)
+
+        self._widgets = widgets
+        self._load_object_args = args
+        self._runs = True
+
+    def run(self):
+        i = 0
+        n = 1000
+        t = 0.15
+        dt = t / n
+        while self._runs and i < n:
+            time.sleep(dt)
+            i += 1
+
+        if i < n:
+            return
+
+        widgets = list(self._widgets.values())
+
+        i = 0
+        n = len(widgets)
+
+        while self._runs and i < n:
+            w0 = widgets[i]
+            self.object_selected.connect(w0.load_data)
+            self.object_selected.emit(*self._load_object_args)
+            self.object_selected.disconnect(w0.load_data)
+            i += 1
+
+        if i < n:
+            return
+
+        self.finished.emit()
+
+    @QtCore.Slot()
+    def abort(self):
+        self._runs = False

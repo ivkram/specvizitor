@@ -126,6 +126,7 @@ class SliderItem(Enum):
 
 
 class ViewerElement(AbstractWidget):
+    data_loaded = QtCore.Signal(str)
     object_loaded = QtCore.Signal(str)
     object_destroyed = QtCore.Signal(str)
 
@@ -140,6 +141,9 @@ class ViewerElement(AbstractWidget):
         self.data_path: DataPath | None = None
         self.data = None
         self.meta: dict | Header | None = None
+
+        self._old_data = None
+        self._old_data_path: DataPath | None = None
 
         self._graphics_view: pg.GraphicsView | None = None
         self.graphics_layout: pg.GraphicsLayout | None = None
@@ -296,15 +300,24 @@ class ViewerElement(AbstractWidget):
             s.setEnabled(a0)
 
     @QtCore.Slot(int, InspectionData, ViewerData, config.DataSources, object)
-    def load_object(self, j: int, review: InspectionData, viewer_data: ViewerData, data_sources: config.DataSources,
-                    cat_entry: Catalog | None):
+    def load_data(self, j: int, review: InspectionData, viewer_data: ViewerData, data_sources: config.DataSources,
+                  cat_entry: Catalog | None):
         if self.data is not None:
-            self._destroy_object()
+            self._close_resources(viewer_data)
+        self._old_data = self.data
 
         self._load_data(review.get_id(j), viewer_data, data_sources, cat_entry)
-
         if self.data is None:
             self.data_path, self.meta = None, None
+
+        self.data_loaded.emit(self.title)
+
+    @QtCore.Slot(int, InspectionData, object)
+    def show_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+        if self._old_data is not None:
+            self._destroy_object()
+
+        if self.data is None:
             return
 
         self.add_content()
@@ -315,8 +328,6 @@ class ViewerElement(AbstractWidget):
         self.object_loaded.emit(self.title)
 
     def _destroy_object(self):
-        self.data_path, self.data, self.meta = None, None, None
-
         self.clear_content()
         self.clear_view()
         self.clear_slider_view()
@@ -353,6 +364,13 @@ class ViewerElement(AbstractWidget):
                                                 loader=self.cfg.data.loader,
                                                 allowed_dtypes=self.allowed_data_types,
                                                 **loader_params)
+
+    def _close_resources(self, viewer_data: ViewerData):
+        if not self.cfg.data.source:
+            viewer_data.close(str(self.data_path))
+            return
+
+        viewer_data.reopen(str(self.data_path))
 
     def _get_data_path(self, data_sources: config.DataSources) -> LocalPath | None:
         if not self.cfg.data.source:
