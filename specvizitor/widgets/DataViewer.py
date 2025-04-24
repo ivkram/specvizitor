@@ -61,7 +61,7 @@ class DataViewer(AbstractWidget):
         self.open_images()
 
         self._widget_links: dict[LinkableItem, dict] = {item: dict() for item in LinkableItem}
-        self._widget_linkers: dict[LinkableItem, ItemLinker] | None = None
+        self._widget_linkers: dict[LinkableItem, ItemLinker] = dict()
         self._create_widget_linkers()
 
         self._worker: ViewerDataLoader | None = None
@@ -281,6 +281,9 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+        if self._worker and self._worker.isRunning():
+            self._worker.wait()
+
         self._t_worker_start = time.perf_counter()
         t_grace = self._get_t_grace()
         self._t_old_worker_start = self._t_worker_start

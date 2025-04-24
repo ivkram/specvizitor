@@ -33,7 +33,7 @@ class ViewerDataLoader(QtCore.QThread):
         self.data_sources: config.DataSources = data_sources
         self.cat_entry: Catalog | None = cat_entry
         self.viewer_data = viewer_data
-        
+
         self.t_grace = t_grace
         
         self._runs = True
@@ -45,6 +45,9 @@ class ViewerDataLoader(QtCore.QThread):
         while self._runs and i < n:
             time.sleep(dt)
             i += 1
+
+        if i < n:
+            return
 
         widgets = list(self.widgets.values())
 
