@@ -31,6 +31,7 @@ class Catalog:
             table_data = [ids]
 
         table = Table(table_data, names=colnames)
+        logger.info("Catalog created")
         return cls(table=table, indices=colnames)
 
     def _add_indices(self) -> bool:
@@ -87,6 +88,7 @@ class Catalog:
             logger.error("The processed catalogue is empty")
             return None
 
+        logger.info(f"Catalog loaded (path: {filename})")
         return cat
 
     def update_translate(self, new_translate: dict[str, list[str]] | None):

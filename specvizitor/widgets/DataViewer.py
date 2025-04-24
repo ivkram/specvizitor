@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
+    project_loaded = QtCore.Signal()
     data_loaded = QtCore.Signal(int, InspectionData, object)
     object_loaded = QtCore.Signal()
     loading_aborted = QtCore.Signal()
@@ -132,7 +133,8 @@ class DataViewer(AbstractWidget):
     def _connect_widget(self, wt: str):
         w0 = self.widgets[wt]
 
-        self.data_loaded.connect(w0.show_object)
+        self.project_loaded.connect(w0.load_project)
+        self.data_loaded.connect(w0.load_object)
         self.view_reset.connect(w0.reset_view)
         self.spectral_lines_changed.connect(w0.update_spectral_lines)
 
@@ -143,7 +145,8 @@ class DataViewer(AbstractWidget):
     def _disconnect_widget(self, wt: str):
         w0 = self.widgets[wt]
 
-        self.data_loaded.disconnect(w0.show_object)
+        self.project_loaded.disconnect(w0.load_project)
+        self.data_loaded.disconnect(w0.load_object)
         self.view_reset.disconnect(w0.reset_view)
         self.spectral_lines_changed.disconnect(w0.update_spectral_lines)
 
@@ -276,8 +279,9 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def load_project(self):
-        self.setEnabled(True)
         self._lock = True
+        self.setEnabled(True)
+        self.project_loaded.emit()
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):

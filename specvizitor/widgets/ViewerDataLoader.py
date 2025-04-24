@@ -55,7 +55,12 @@ class ViewerDataLoader(QtCore.QThread):
         n = len(widgets)
         while self._runs and i < n:
             w0 = widgets[i]
-            self._load_data(w0)
+            res = self._load_data(w0)
+            if res is None:
+                res = (None, None, None)
+            self.data_loaded.connect(w0.set_data)
+            self.data_loaded.emit(*res)
+            self.data_loaded.disconnect(w0.set_data)
             i += 1
 
     @QtCore.Slot()
@@ -68,35 +73,33 @@ class ViewerDataLoader(QtCore.QThread):
         
         data_path = self._get_data_path(w0)
         if data_path is None:
-            return
+            return None
 
         try:
             data_path.resolve(self.review.get_id(self.j), self.cat_entry)
         except Exception as e:
             logger.error(f"Failed to resolve the filename: {e} (widget: {w0.title})")
-            return
+            return None
 
         try:
             data_path.validate()
         except FileNotFoundError:
             logger.error(f"`{w0.title}` not found (filename: {data_path.name})")
-            return
+            return None
         except Exception as e:
             logger.error(f"{e} (widget: {w0.title})")
-            return
+            return None
 
         loader_params = self._get_loader_params(w0)
         if loader_params is None:
-            return
+            return None
 
         data, meta = self.viewer_data.load(str(data_path),
                                            loader=w0.cfg.data.loader,
                                            allowed_dtypes=w0.allowed_data_types,
                                            **loader_params)
 
-        self.data_loaded.connect(w0.set_data)
-        self.data_loaded.emit(data, meta, data_path)
-        self.data_loaded.disconnect(w0.set_data)
+        return data, meta, data_path
 
     def _free_resources(self, w0: ViewerElement):
         if not w0.cfg.data.source:

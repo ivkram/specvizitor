@@ -140,8 +140,7 @@ class ViewerElement(AbstractWidget):
         self.data = None
         self.meta: dict | Header | None = None
 
-        self._old_data = None
-        self._old_data_path: DataPath | None = None
+        self._object_loaded: bool = False
 
         self._graphics_view: pg.GraphicsView | None = None
         self.graphics_layout: pg.GraphicsLayout | None = None
@@ -297,21 +296,24 @@ class ViewerElement(AbstractWidget):
         for s in self.sliders.values():
             s.setEnabled(a0)
 
+    @QtCore.Slot()
+    def load_project(self):
+        if self._object_loaded:
+            self._destroy_object()
+
     @QtCore.Slot(object, object, object)
     def set_data(self, data, meta: dict | Header | None, data_path: DataPath | None):
         if data is not None and data_path is None:
             logger.error(f"Failed to set the widget data: data path not provided (widget: {self.title})")
             return
 
-        self._old_data = self.data
-
         self.data, self.meta, self.data_path = data, meta, data_path
         if self.data is None:
             self.meta, self.data_path = None, None
 
     @QtCore.Slot(int, InspectionData, object)
-    def show_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
-        if self._old_data is not None:
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+        if self._object_loaded:
             self._destroy_object()
 
         if self.data is None:
@@ -322,6 +324,7 @@ class ViewerElement(AbstractWidget):
         self.setup_slider_view(j, review, cat_entry)
         self.setEnabled(True)
 
+        self._object_loaded = True
         self.object_loaded.emit(self.title)
 
     def _destroy_object(self):
@@ -330,6 +333,7 @@ class ViewerElement(AbstractWidget):
         self.clear_slider_view()
         self.setEnabled(False)
 
+        self._object_loaded = False
         self.object_destroyed.emit(self.title)
 
     @abc.abstractmethod
