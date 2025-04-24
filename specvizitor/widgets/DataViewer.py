@@ -401,7 +401,7 @@ class WidgetLoader(QtCore.QThread):
 
     def run(self):
         i = 0
-        n = 1000
+        n = 30
         dt = self.t_grace / n
         while self._runs and i < n:
             time.sleep(dt)

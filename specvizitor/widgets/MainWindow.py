@@ -24,6 +24,7 @@ from .InspectionFieldEditor import InspectionFieldEditor
 from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
+from ..utils.widgets import AbstractWidget
 
 logger = logging.getLogger(__name__)
 
@@ -267,8 +268,6 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._data_viewer, self._object_info, self._inspection_res):
             self.data_requested.connect(w.collect)
 
-        for w in (self._data_viewer, self._commands_bar, self._object_info, self._inspection_res, self._subsets):
-            self.object_selected.connect(w.load_object)
         self.loading_aborted.connect(self._data_viewer.loading_aborted.emit)
 
         self.catalogue_changed.connect(self._object_info.update_table_items)
@@ -411,17 +410,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.last_object_index = j
         self._cache.save()
 
-        # get object data from the catalogue
-        obj_id = self.rd.review.get_id(j, full=True)
-        cat_entry = self.rd.cat.get_cat_entry(obj_id)
-
-        self.object_selected.emit(self.rd.j, self.rd.review, cat_entry)
-
+        self._load_object(self._data_viewer)
         self._update_window_title()
+
+    def _get_cat_entry(self) -> Catalog | None:
+        if self.rd.j is None:
+            return None
+
+        obj_id = self.rd.review.get_id(self.rd.j, full=True)
+        return self.rd.cat.get_cat_entry(obj_id)
 
     @QtCore.Slot()
     def finalize_loading(self):
+        self._load_object(self._commands_bar, self._inspection_res,self._subsets, self._object_info)
         self._object_loaded = True
+
+    def _load_object(self, *widgets):
+        for w in widgets:
+            self.object_selected.connect(w.load_object)
+        self.object_selected.emit(self.rd.j, self.rd.review, self._get_cat_entry())
+        for w in widgets:
+            self.object_selected.disconnect(w.load_object)
 
     @QtCore.Slot(str, bool)
     def switch_object(self, command: str, switch_to_starred: bool):
