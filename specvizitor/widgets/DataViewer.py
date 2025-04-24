@@ -64,7 +64,8 @@ class DataViewer(AbstractWidget):
         self._widget_linkers: dict[LinkableItem, ItemLinker] | None = None
         self._create_widget_linkers()
 
-        self.worker: ViewerDataLoader | None = None
+        self._worker: ViewerDataLoader | None = None
+        self._lock: bool = False
         self._t_worker_start = None
         self._t_old_worker_start = None
 
@@ -276,6 +277,7 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot()
     def load_project(self):
         self.setEnabled(True)
+        self._lock = True
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
@@ -283,15 +285,18 @@ class DataViewer(AbstractWidget):
         t_grace = self._get_t_grace()
         self._t_old_worker_start = self._t_worker_start
 
-        self.worker = ViewerDataLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry, t_grace=t_grace)
-        self.loading_aborted.connect(self.worker.abort)
-        self.worker.finished.connect(self.finalize_loading)
-        self.worker.start()
+        self._worker = ViewerDataLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry, t_grace=t_grace)
+        self.loading_aborted.connect(self._worker.abort)
+        self._worker.finished.connect(self.finalize_loading)
+        self._worker.start()
+
+        if self._lock:
+            self._worker.wait()
 
     @QtCore.Slot()
     def abort_loading(self):
-        if self.worker.isRunning():
-            self.worker.finished.disconnect(self.finalize_loading)
+        if self._worker.isRunning():
+            self._worker.finished.disconnect(self.finalize_loading)
 
         self.loading_aborted.emit()
 
@@ -302,7 +307,7 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def finalize_loading(self):
-        j, review, cat_entry = self.worker.j, self.worker.review, self.worker.cat_entry
+        j, review, cat_entry = self._worker.j, self._worker.review, self._worker.cat_entry
 
         self.data_loaded.emit(j, review, cat_entry)
 
@@ -312,6 +317,7 @@ class DataViewer(AbstractWidget):
 
         self.reset_view()
 
+        self._lock = False
         logger.info(f"Object loaded (ID: {review.get_id(j)}, loading time: {time.perf_counter()-self._t_worker_start:.3f} s)")
         self.object_loaded.emit()
 
