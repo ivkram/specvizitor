@@ -268,7 +268,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._data_viewer, self._object_info, self._inspection_res):
             self.data_requested.connect(w.collect)
 
-        self.loading_aborted.connect(self._data_viewer.loading_aborted.emit)
+        self.loading_aborted.connect(self._data_viewer.abort_loading)
 
         self.catalogue_changed.connect(self._object_info.update_table_items)
         self.inspection_fields_changed.connect(self._inspection_res.update_inspection_fields)

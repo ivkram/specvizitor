@@ -24,7 +24,6 @@ __all__ = [
     "DataPath",
     "LocalPath",
     "URLPath",
-    "get_cutout_params",
     "add_unit_aliases",
     "data_browser"
 ]
@@ -323,30 +322,6 @@ class LocalPath(DataPath):
 
 class URLPath(DataPath):
     pass
-
-
-def get_cutout_params(cat_entry: Catalog, wcs_source: str, viewer_data: ViewerData) -> dict | None:
-    params = dict(create_cutout=True)
-
-    try:
-        ra = cat_entry.get_col('ra')
-        dec = cat_entry.get_col('dec')
-    except KeyError as e:
-        logger.error(e)
-        return None
-
-    _, meta = viewer_data.load(wcs_source, lazy=True, create_wcs=True)
-    if meta is None:
-        return
-
-    try:
-        x0, y0 = meta.wcs.all_world2pix(ra, dec, 0)
-    except Exception as e:
-        logger.error(f"Calculation of pixel coordinates failed: {e} (image: {wcs_source})")
-        return None
-    params.update(x0=x0, y0=y0)
-
-    return params
 
 
 def add_unit_aliases(unit_aliases: dict[str, list[str]]):

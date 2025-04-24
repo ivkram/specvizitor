@@ -19,6 +19,7 @@ from .ViewerElement import ViewerElement, LinkableItem, SliderItem
 from .Image2D import Image2D
 from .Plot1D import Plot1D
 from .SmartSlider import SmartSlider
+from .ViewerDataLoader import ViewerDataLoader
 from .ItemLinker import ItemLinker, XAxisLinker, YAxisLinker, SliderLinker, ColorBarLinker
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ class DataViewer(AbstractWidget):
         self._widget_linkers: dict[LinkableItem, ItemLinker] | None = None
         self._create_widget_linkers()
 
-        self.worker: WidgetLoader | None = None
+        self.worker: ViewerDataLoader | None = None
         self._t_worker_start = None
         self._t_old_worker_start = None
 
@@ -169,7 +170,7 @@ class DataViewer(AbstractWidget):
     def _unlink_widget(self, wt: str):
         w0 = self.widgets[wt]
 
-        for w in self.active_widgets.values():
+        for w in self.widgets.values():
             for linked_item, linker in self._widget_linkers.items():
                 linker.unlink(w0, w, self._widget_links[linked_item])
                 linker.unlink(w, w0, self._widget_links[linked_item])
@@ -282,18 +283,27 @@ class DataViewer(AbstractWidget):
         t_grace = self._get_t_grace()
         self._t_old_worker_start = self._t_worker_start
 
-        self.worker = WidgetLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry, t_grace=t_grace)
+        self.worker = ViewerDataLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry, t_grace=t_grace)
         self.loading_aborted.connect(self.worker.abort)
-        self.worker.finished.connect(partial(self.finalize_loading, j, review, cat_entry))
+        self.worker.finished.connect(self.finalize_loading)
         self.worker.start()
+
+    @QtCore.Slot()
+    def abort_loading(self):
+        if self.worker.isRunning():
+            self.worker.finished.disconnect(self.finalize_loading)
+
+        self.loading_aborted.emit()
 
     def _get_t_grace(self):
         dt = 1000 if self._t_old_worker_start is None else self._t_worker_start - self._t_old_worker_start
-        t_grace = 0.35 if dt < 0.35 else 0.1
+        t_grace = 0.35 if dt < 0.35 else 0.10
         return t_grace
 
-    @QtCore.Slot(int, InspectionData, object)
-    def finalize_loading(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+    @QtCore.Slot()
+    def finalize_loading(self):
+        j, review, cat_entry = self.worker.j, self.worker.review, self.worker.cat_entry
+
         self.data_loaded.emit(j, review, cat_entry)
 
         for plugin in self._plugins:
@@ -302,7 +312,7 @@ class DataViewer(AbstractWidget):
 
         self.reset_view()
 
-        logger.info(f"Object loaded (ID: {j}, loading time: {time.perf_counter()-self._t_worker_start:.3f} s)")
+        logger.info(f"Object loaded (ID: {review.get_id(j)}, loading time: {time.perf_counter()-self._t_worker_start:.3f} s)")
         self.object_loaded.emit()
 
     @QtCore.Slot(str)
@@ -385,48 +395,3 @@ class DataViewer(AbstractWidget):
     @QtCore.Slot()
     def free_resources(self):
         self._data.close_all()
-
-
-class WidgetLoader(QtCore.QThread):
-    object_selected = QtCore.Signal(int, InspectionData, ViewerData, config.DataSources, object)
-    finished = QtCore.Signal()
-
-    def __init__(self, widgets, *args, t_grace=0.1):
-        super().__init__(parent=None)
-
-        self.t_grace = t_grace
-        self.widgets = widgets
-        self.load_object_args = args
-        self._runs = True
-
-    def run(self):
-        i = 0
-        n = 30
-        dt = self.t_grace / n
-        while self._runs and i < n:
-            time.sleep(dt)
-            i += 1
-
-        if i < n:
-            return
-
-        widgets = list(self.widgets.values())
-
-        i = 0
-        n = len(widgets)
-
-        while self._runs and i < n:
-            w0 = widgets[i]
-            self.object_selected.connect(w0.load_data)
-            self.object_selected.emit(*self.load_object_args)
-            self.object_selected.disconnect(w0.load_data)
-            i += 1
-
-        if i < n:
-            return
-
-        self.finished.emit()
-
-    @QtCore.Slot()
-    def abort(self):
-        self._runs = False

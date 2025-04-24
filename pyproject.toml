@@ -20,7 +20,6 @@ pyqtgraph = ">=0.13.3"
 qtpy = "2.4.1"
 rasterio = ">=1.3.9"
 scipy = ">=1.12.0"
-fsspec = "^2025.3.2"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"

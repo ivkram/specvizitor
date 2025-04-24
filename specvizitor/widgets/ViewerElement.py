@@ -9,13 +9,12 @@ import abc
 from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
 import logging
-import pathlib
 
 from ..config import config, data_widgets
 from ..config import SpectralLineData
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
-from ..io.viewer_data import ViewerData, DataPath, LocalPath, get_cutout_params
+from ..io.viewer_data import DataPath
 from ..utils.widgets import AbstractWidget, MyViewBox
 
 from .SmartSlider import SmartSlider
@@ -126,7 +125,6 @@ class SliderItem(Enum):
 
 
 class ViewerElement(AbstractWidget):
-    data_loaded = QtCore.Signal(str)
     object_loaded = QtCore.Signal(str)
     object_destroyed = QtCore.Signal(str)
 
@@ -299,18 +297,17 @@ class ViewerElement(AbstractWidget):
         for s in self.sliders.values():
             s.setEnabled(a0)
 
-    @QtCore.Slot(int, InspectionData, ViewerData, config.DataSources, object)
-    def load_data(self, j: int, review: InspectionData, viewer_data: ViewerData, data_sources: config.DataSources,
-                  cat_entry: Catalog | None):
-        if self.data is not None:
-            self._close_resources(viewer_data)
+    @QtCore.Slot(object, object, object)
+    def set_data(self, data, meta: dict | Header | None, data_path: DataPath | None):
+        if data is not None and data_path is None:
+            logger.error(f"Failed to set the widget data: data path not provided (widget: {self.title})")
+            return
+
         self._old_data = self.data
 
-        self._load_data(review.get_id(j), viewer_data, data_sources, cat_entry)
+        self.data, self.meta, self.data_path = data, meta, data_path
         if self.data is None:
-            self.data_path, self.meta = None, None
-
-        self.data_loaded.emit(self.title)
+            self.meta, self.data_path = None, None
 
     @QtCore.Slot(int, InspectionData, object)
     def show_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
@@ -334,82 +331,6 @@ class ViewerElement(AbstractWidget):
         self.setEnabled(False)
 
         self.object_destroyed.emit(self.title)
-
-    def _load_data(self, obj_id: str | int, viewer_data: ViewerData, data_sources: config.DataSources,
-                   cat_entry: Catalog | None):
-        self.data_path = self._get_data_path(data_sources)
-        if self.data_path is None:
-            return
-
-        try:
-            self.data_path.resolve(obj_id, cat_entry)
-        except Exception as e:
-            logger.error(f"Failed to resolve the filename: {e} (widget: {self.title})")
-            return
-
-        try:
-            self.data_path.validate()
-        except FileNotFoundError:
-            logger.error(f"`{self.title}` not found (filename: {self.data_path.name})")
-            return
-        except Exception as e:
-            logger.error(f"{e} (widget: {self.title})")
-            return
-
-        loader_params = self._get_loader_params(data_sources, viewer_data, cat_entry)
-        if loader_params is None:
-            return
-
-        self.data, self.meta = viewer_data.load(str(self.data_path),
-                                                loader=self.cfg.data.loader,
-                                                allowed_dtypes=self.allowed_data_types,
-                                                **loader_params)
-
-    def _close_resources(self, viewer_data: ViewerData):
-        if not self.cfg.data.source:
-            viewer_data.close(str(self.data_path))
-            return
-
-        viewer_data.reopen(str(self.data_path))
-
-    def _get_data_path(self, data_sources: config.DataSources) -> LocalPath | None:
-        if not self.cfg.data.source:
-            if not self.cfg.data.filename:
-                logger.error(f"Filename not specified (widget: {self.title})")
-                return
-            return LocalPath(str(pathlib.Path(data_sources.dir) / self.cfg.data.filename))
-
-        # for now assume that a non-empty data source == image
-        image = data_sources.images.get(self.cfg.data.source)
-        if not image:
-            logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
-            return
-
-        return LocalPath(image.filename)
-
-    def _get_loader_params(self, data_sources: config.DataSources, viewer_data: ViewerData, cat_entry: Catalog | None) -> dict | None:
-        params = self.cfg.data.loader_params
-
-        if not self.cfg.data.source:
-            return params
-
-        if cat_entry is None:
-            logger.error(f"Failed to create an image cutout: Catalog entry not loaded (widget: {self.title})")
-            return None
-
-        image = data_sources.images.get(self.cfg.data.source)
-        if not image:
-            logger.error(f"Shared image not found (label: {self.cfg.data.source}, widget: {self.title})")
-            return None
-
-        wcs_source = image.wcs_source if image.wcs_source else image.filename
-        cutout_params = get_cutout_params(cat_entry, wcs_source, viewer_data)
-        if cutout_params is None:
-            return None
-
-        params.update(cutout_params)
-
-        return params
 
     @abc.abstractmethod
     def add_content(self):
