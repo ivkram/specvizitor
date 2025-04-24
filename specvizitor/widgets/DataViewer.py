@@ -289,7 +289,7 @@ class DataViewer(AbstractWidget):
 
     def _get_t_grace(self):
         dt = 1000 if self._t_old_worker_start is None else self._t_worker_start - self._t_old_worker_start
-        t_grace = 0.3 if dt < 0.3 else 0.1
+        t_grace = 0.35 if dt < 0.35 else 0.1
         return t_grace
 
     @QtCore.Slot(int, InspectionData, object)
