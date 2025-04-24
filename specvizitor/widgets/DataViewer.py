@@ -1,5 +1,3 @@
-from types import NoneType
-
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
 from qtpy import QtWidgets, QtCore
@@ -66,6 +64,8 @@ class DataViewer(AbstractWidget):
         self._create_widget_linkers()
 
         self.worker: WidgetLoader | None = None
+        self._t_worker_start = None
+        self._t_old_worker_start = None
 
         self.dock_area: DockArea | None = None
         self._added_docks: list[str] = []
@@ -278,10 +278,19 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
-        self.worker = WidgetLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry)
+        self._t_worker_start = time.perf_counter()
+        t_grace = self._get_t_grace()
+        self._t_old_worker_start = self._t_worker_start
+
+        self.worker = WidgetLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry, t_grace=t_grace)
         self.loading_aborted.connect(self.worker.abort)
         self.worker.finished.connect(partial(self.finalize_loading, j, review, cat_entry))
         self.worker.start()
+
+    def _get_t_grace(self):
+        dt = 1000 if self._t_old_worker_start is None else self._t_worker_start - self._t_old_worker_start
+        t_grace = 0.3 if dt < 0.3 else 0.1
+        return t_grace
 
     @QtCore.Slot(int, InspectionData, object)
     def finalize_loading(self, j: int, review: InspectionData, cat_entry: Catalog | None):
@@ -292,6 +301,8 @@ class DataViewer(AbstractWidget):
             plugin.update_docks(self.docks, cat_entry=cat_entry)
 
         self.reset_view()
+
+        logger.info(f"Object loaded (ID: {j}, loading time: {time.perf_counter()-self._t_worker_start})")
         self.object_loaded.emit()
 
     @QtCore.Slot(str)
@@ -380,18 +391,18 @@ class WidgetLoader(QtCore.QThread):
     object_selected = QtCore.Signal(int, InspectionData, ViewerData, config.DataSources, object)
     finished = QtCore.Signal()
 
-    def __init__(self, widgets, *args):
+    def __init__(self, widgets, *args, t_grace=0.1):
         super().__init__(parent=None)
 
-        self._widgets = widgets
-        self._load_object_args = args
+        self.t_grace = t_grace
+        self.widgets = widgets
+        self.load_object_args = args
         self._runs = True
 
     def run(self):
         i = 0
         n = 1000
-        t = 0.15
-        dt = t / n
+        dt = self.t_grace / n
         while self._runs and i < n:
             time.sleep(dt)
             i += 1
@@ -399,7 +410,7 @@ class WidgetLoader(QtCore.QThread):
         if i < n:
             return
 
-        widgets = list(self._widgets.values())
+        widgets = list(self.widgets.values())
 
         i = 0
         n = len(widgets)
@@ -407,7 +418,7 @@ class WidgetLoader(QtCore.QThread):
         while self._runs and i < n:
             w0 = widgets[i]
             self.object_selected.connect(w0.load_data)
-            self.object_selected.emit(*self._load_object_args)
+            self.object_selected.emit(*self.load_object_args)
             self.object_selected.disconnect(w0.load_data)
             i += 1
 
