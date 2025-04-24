@@ -39,24 +39,40 @@ class BaseLoader(abc.ABC):
 
     def __init__(self):
         self._dataset = None
-        self._meta = None
+        self._meta: dict | None = None
+
+        self._last_kwargs: dict | None = None
+        self.last_data: tuple[Any, Any] | None = None
+
+    def open(self, filename: str, **kwargs):
+        self._open(filename, **kwargs)
+        self._last_kwargs = kwargs
 
     @abc.abstractmethod
-    def open(self, filename: str, **kwargs):
+    def _open(self, filename: str, **kwargs):
         pass
 
-    def load(self, **kwargs):
+    def reopen(self, filename: str):
+        if self._last_kwargs is None:
+            raise RuntimeError("Failed to re-open the file: file was never opened")
+        self.open(filename, **self._last_kwargs)
+
+    def load(self, **kwargs) -> tuple[Any, Any]:
+        self.last_data = self._load(**kwargs)
+        return self.last_data
+
+    def _load(self, **kwargs):
         return self._dataset, self._meta
 
     def close(self):
         self._dataset.close()
 
     @classmethod
-    def validate_extension(cls, filename: str | pathlib.Path):
+    def validate_extension(cls, filename: str | pathlib.Path) -> bool:
         return any(str(filename).endswith(s) for s in cls.extensions)
 
     @staticmethod
-    def get_cutout_params(arr_shape, x0=None, y0=None, cutout_size=100, **kwargs):
+    def get_cutout_params(arr_shape, x0=None, y0=None, cutout_size=100, **kwargs) -> tuple[tuple[float, float, float, float], float]:
         if x0 is None:
             x0 = arr_shape[1] // 2
         if y0 is None:
@@ -74,10 +90,11 @@ class GenericFITSLoader(BaseLoader):
     name = 'generic_fits'
     extensions = ('.fits', '.fits.gz')
 
-    def open(self, filename: str, **kwargs):
+    def _open(self, filename: str, **kwargs):
         self._dataset = fits.open(filename, **kwargs)
 
-    def load(self, extname: str = None, extver: str = None, extver_index: int = None, create_cutout=False, **kwargs):
+    def _load(self, extname: str = None, extver: str = None, extver_index: int = None, create_cutout=False,
+              create_wcs=False, **kwargs):
         hdul = self._dataset
 
         if extname is not None and extver is not None:
@@ -107,16 +124,30 @@ class GenericFITSLoader(BaseLoader):
             data = hdu.data
 
         if create_cutout:
-            (x1, x2, y1, y2), _ = self.get_cutout_params(data.shape, **kwargs)
-            data = data[y1:y2, x1:x2]
+            coords, _ = self.get_cutout_params(data.shape, **kwargs)
+            data = self._create_cutout(data, *coords)
+
+        if create_wcs:
+            meta.wcs = self._create_wcs(meta)
 
         return data, meta
+
+    @staticmethod
+    def _create_cutout(data, x1, x2, y1, y2):
+        return data[y1:y2, x1:x2]
+
+    @staticmethod
+    def _create_wcs(meta):
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', AstropyWarning)
+            wcs = WCS(meta)
+        return wcs
 
 
 class PILLoader(BaseLoader):
     name = 'pil'
 
-    def open(self, filename: pathlib.Path, **kwargs):
+    def _open(self, filename: pathlib.Path, **kwargs):
         image = Image.open(filename, **kwargs)
         image = ImageOps.flip(image)
         self._dataset, self._meta = np.array(image), image.info
@@ -126,39 +157,42 @@ class RasterIOLoader(BaseLoader):
     name = 'rasterio'
     extensions = ('.tif', '.tiff')
 
-    def open(self, filename: pathlib.Path, **kwargs):
+    def _open(self, filename: pathlib.Path, **kwargs):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
             self._dataset = rasterio.open(filename, **kwargs)
 
-    def load(self, create_cutout=False, **kwargs):
+    def _load(self, create_cutout=False, **kwargs):
         if create_cutout:
             (x1, x2, y1, y2), cutout_size = self.get_cutout_params(self._dataset.shape, **kwargs)
-
-            # wow, this actually works!
-            data = self._dataset.read(window=rasterio.windows.Window(x1, self._dataset.height - y2,
-                                                                     2 * cutout_size, 2 * cutout_size))
-            data = np.moveaxis(data, 0, -1)
-            data = np.flip(data, 0)
+            data = self._create_cutout(x1, y2, cutout_size)
         else:
             data = self._dataset.read()
 
         return data, self._meta
 
+    def _create_cutout(self, x1, y2, cutout_size):
+        # wow, this actually works!
+        data = self._dataset.read(window=rasterio.windows.Window(x1, self._dataset.height - y2,
+                                                                 2 * cutout_size, 2 * cutout_size))
+        data = np.moveaxis(data, 0, -1)
+        data = np.flip(data, 0)
+        return data
+
 
 class ViewerData:
     def __init__(self):
-        self._data: dict[str, tuple[BaseLoader, dict[str, Any]]] = {}
-        self._loaders: OrderedDict[str, type(BaseLoader)] = OrderedDict(
+        self._loaders: dict[str, BaseLoader] = {}
+        self._loader_constructors: OrderedDict[str, type(BaseLoader)] = OrderedDict(
             [(loader.name, loader) for loader in (GenericFITSLoader, RasterIOLoader, PILLoader)]
         )
 
     @property
     def loader_names(self):
-        return ('auto',) + tuple(loader.name for loader in self._loaders.values())
+        return ('auto',) + tuple(loader.name for loader in self._loader_constructors.values())
 
     def _get_loader(self, filename: str) -> str:
-        for ln, loader in self._loaders.items():
+        for ln, loader in self._loader_constructors.items():
             if loader.validate_extension(filename):
                 return ln
         return GenericFITSLoader.name
@@ -172,36 +206,40 @@ class ViewerData:
         if loader == 'auto':
             loader = self._get_loader(filename)
 
-        loader: BaseLoader = self._loaders[loader]()
+        loader: BaseLoader = self._loader_constructors[loader]()
         try:
             loader.open(filename, **loader_params)
         except Exception as e:
             logger.error(f"{type(loader).__name__}: {e} (filename: {filename})")
             return None
 
-        self._data[filename] = (loader, loader_params)
+        self._loaders[filename] = loader
         logger.info(f"Database connection opened (filename: {filename})")
-        return self._data[filename]
+
+        return loader
 
     def reopen(self, filename: str):
-        if not self._data.get(filename):
-            logger.error(f"Failed to re-open the connection: connection not open (filename: {filename})")
+        loader = self._loaders.get(filename)
+        if not loader:
+            logger.error(f"Failed to re-open connection: connection not open (filename: {filename})")
             return
-        loader, loader_params = self._data[filename]
-        self.close(filename)
-        self.open(filename, loader.name, **loader_params)
+
+        loader.reopen(filename)
 
     def open_image(self, filename: str, loader: str, wcs_source: str | None = None, **kwargs):
         self.open(filename, loader=loader, **kwargs)
         if wcs_source:
             self.open(wcs_source)
 
-    def load(self, filename: str, allowed_dtypes=None, silent: bool = False, **kwargs):
-        if not self._data.get(filename):
+    def load(self, filename: str, allowed_dtypes=None, silent: bool = False, lazy: bool = False, **kwargs):
+        if not self._loaders.get(filename):
             if not self.open(filename, **kwargs):
                 return None, None
 
-        loader = self._data[filename][0]
+        loader = self._loaders.get(filename)
+        if lazy and loader.last_data is not None:
+            return loader.last_data
+
         try:
             data, meta = loader.load(**kwargs)
         except Exception as e:
@@ -217,13 +255,13 @@ class ViewerData:
         return data, meta
 
     def close(self, filename: str):
-        if not self._data.get(filename):
+        if not self._loaders.get(filename):
             return
-        self._data.pop(filename)[0].close()
+        self._loaders.pop(filename).close()
         logger.info(f"Database connection closed (filename: {filename})")
 
     def close_all(self):
-        for filename in list(self._data):
+        for filename in list(self._loaders):
             self.close(filename)
 
     @staticmethod
@@ -297,16 +335,12 @@ def get_cutout_params(cat_entry: Catalog, wcs_source: str, viewer_data: ViewerDa
         logger.error(e)
         return None
 
-    _, meta = viewer_data.load(wcs_source)
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', AstropyWarning)
-        try:
-            wcs = WCS(meta)
-        except Exception as e:
-            logger.error(f"Failed to create a WCS object from image: {e} (image: {wcs_source})")
-            return None
+    _, meta = viewer_data.load(wcs_source, lazy=True, create_wcs=True)
+    if meta is None:
+        return
+
     try:
-        x0, y0 = wcs.all_world2pix(ra, dec, 0)
+        x0, y0 = meta.wcs.all_world2pix(ra, dec, 0)
     except Exception as e:
         logger.error(f"Calculation of pixel coordinates failed: {e} (image: {wcs_source})")
         return None

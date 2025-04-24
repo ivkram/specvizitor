@@ -302,7 +302,7 @@ class DataViewer(AbstractWidget):
 
         self.reset_view()
 
-        logger.info(f"Object loaded (ID: {j}, loading time: {time.perf_counter()-self._t_worker_start})")
+        logger.info(f"Object loaded (ID: {j}, loading time: {time.perf_counter()-self._t_worker_start:.3f} s)")
         self.object_loaded.emit()
 
     @QtCore.Slot(str)
