@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ItemLinker(abc.ABC):
     allowed_widget_type: type[ViewerElement] = ViewerElement
 
-    def _validate_widget_type(self, *args):
+    def _validate(self, *args):
         if any(not isinstance(a, self.allowed_widget_type) for a in args):
             return False
         return True
@@ -33,7 +33,7 @@ class ItemLinker(abc.ABC):
         pass
 
     def link(self, w1: ViewerElement, w2: ViewerElement, links: dict):
-        if not self._validate_widget_type(w1, w2):
+        if not self._validate(w1, w2):
             return
         if not self._get_link_from_cfg(w1) == w2.title:
             return
@@ -51,8 +51,6 @@ class ItemLinker(abc.ABC):
         pass
 
     def unlink(self, w1: ViewerElement, w2: ViewerElement, links: dict):
-        if not self._validate_widget_type(w1, w2):
-            return
         if not links.get(w1.title) == w2.title:
             return
 
