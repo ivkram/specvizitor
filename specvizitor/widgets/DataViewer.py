@@ -302,7 +302,7 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def abort_loading(self):
-        if self._worker.isRunning():
+        if self._worker and self._worker.isRunning():
             self._worker.finished.disconnect(self.finalize_loading)
 
         self.loading_aborted.emit()

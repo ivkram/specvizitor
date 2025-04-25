@@ -25,6 +25,7 @@ class AppData:
             return
 
         self.review = InspectionData.create(*[list(self.cat.get_col(ind)) for ind in self.cat.indices], **kwargs)
+        logger.info(f"Project created (path: {self.output_path})")
 
     def read(self):
         """ Read the inspection file.
@@ -34,6 +35,7 @@ class AppData:
             return
 
         self.review = InspectionData.read(self.output_path)
+        logger.info(f"Project loaded (path: {self.output_path})")
 
     def save(self):
         """ Save inspection data to the output file.
@@ -43,3 +45,4 @@ class AppData:
             return
 
         self.review.write(self.output_path)
+        logger.info(f"Project saved (path: {self.output_path})")

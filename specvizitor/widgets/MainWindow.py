@@ -75,7 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._spectral_lines = spectral_lines if spectral_lines else SpectralLineData()
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
 
-        self._object_loaded: bool = True
+        self._object_loaded: bool = False
         self._t_load_object_start = None
         self._restart_requested: bool = False
         self._zen_mode_activated: bool = False
@@ -392,18 +392,18 @@ class MainWindow(QtWidgets.QMainWindow):
         if j is None or (j < 0 or j >= self.rd.review.n_objects):
             j = 0
 
-        self.load_object(j, request_data=False)
+        self._object_loaded = False
+        self.load_object(j)
 
     @QtCore.Slot(int)
-    def load_object(self, j: int, request_data=True):
+    def load_object(self, j: int):
         """ Load a new object to the central widget.
         @param j: the index of the object to display
-        @param request_data:
         """
-        if not self._object_loaded:
-            self.loading_aborted.emit()
-        elif request_data:
+        if self._object_loaded:
             self.data_requested.emit()
+        else:
+            self.loading_aborted.emit()
 
         self._object_loaded = False
         self._t_load_object_start = time.perf_counter()
@@ -634,6 +634,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(pathlib.Path)
     def update_output_path(self, path: pathlib.Path | None):
+        if self._object_loaded:
+            self.data_requested.emit()
+
         self.rd.output_path = path
         self._cache.last_inspection_file = None if path is None else str(path)
         self._cache.save()
