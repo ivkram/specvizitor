@@ -1,10 +1,9 @@
 import pyqtgraph as pg
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 
 import argparse
 import importlib
 import logging
-import pathlib
 from platformdirs import user_config_dir, user_cache_dir
 import sys
 
@@ -18,7 +17,7 @@ from .widgets.MainWindow import MainWindow
 logger = logging.getLogger(__name__)
 
 ORGANIZATION_NAME = 'FRESCO'
-APPLICATION_NAME = __package__.split('.')[0]
+APPLICATION_NAME = __package__.split('.')[0].capitalize()
 
 CONFIG_DIR = user_config_dir(APPLICATION_NAME)
 CACHE_DIR = user_cache_dir(APPLICATION_NAME)
@@ -52,13 +51,9 @@ def main():
     }
 
     if args.purge:
-        # deleting old configuration files which are no longer in use
-        with open(pathlib.Path(__file__).parent / 'data' / 'config' / 'legacy.txt', 'r') as file:
-            for line in file:
-                legacy_config = pathlib.Path(CONFIG_DIR) / line.rstrip()
-                legacy_config.unlink(missing_ok=True)
-                (legacy_config.parent / (legacy_config.name + '.bak')).unlink(missing_ok=True)
-
+        settings = QtCore.QSettings(ORGANIZATION_NAME, APPLICATION_NAME)
+        settings.clear()
+        settings.sync()
         for f in local_files.values():
             f.delete()  # safe delete
 
@@ -85,7 +80,7 @@ def main():
         # start the application
         app = QtWidgets.QApplication(sys.argv)
         app.setOrganizationName(ORGANIZATION_NAME)
-        app.setApplicationName(APPLICATION_NAME.capitalize())
+        app.setApplicationName(APPLICATION_NAME)
         logger.info("Application started")
 
         # set up the GUI appearance

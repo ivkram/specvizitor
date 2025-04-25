@@ -1,3 +1,0 @@
-specvizitor.yml
-docks.yml
-lines.yml
