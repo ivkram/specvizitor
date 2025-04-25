@@ -11,7 +11,11 @@ class QLogHandler(logging.Handler):
             msg = str(msg)
             if msg.startswith("'") and msg.endswith("'"):
                 msg = msg[1:-1]
-        LogMessageBox(record.levelno, msg, parent=QtWidgets.QApplication.focusWidget())
+
+        level = record.levelno
+        if level <= logging.INFO:
+            return
+        LogMessageBox(level, msg, parent=QtWidgets.QApplication.focusWidget())
 
 
 class LogMessageBox(QtWidgets.QMessageBox):
