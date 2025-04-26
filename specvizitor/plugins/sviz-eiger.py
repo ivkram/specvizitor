@@ -1,5 +1,6 @@
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph.dockarea.Container import StackedWidget
 from pyqtgraph.dockarea.Dock import Dock
 from qtpy import QtCore
 
@@ -19,19 +20,27 @@ class Plugin(PluginCore):
         pass
 
     def update_docks(self, docks: dict[str, Dock], cat_entry: Catalog | None = None):
-        rgb_stack = self.get_rgb_stack(docks)
+        rgb_docks = {title: d for title, d in docks.items() if "RGB" in title}
 
-        if not rgb_stack:
+        rgb_stack = self.get_dock_stack(rgb_docks)
+
+        if rgb_stack:
+            self.fix_dock_stack_labels(rgb_stack)
+            if cat_entry:
+                self.raise_rgb_dock(rgb_stack, cat_entry)
+
+    @staticmethod
+    def raise_rgb_dock(rgb_stack: StackedWidget, cat_entry: Catalog):
+        try:
+            field = cat_entry.get_col('FIELD')
+        except KeyError:
             return
 
-        # fix a pyqtgraph bug, see the sviz-grizli plugin
-        if len(rgb_stack) > 1:
-            for d in rgb_stack.values():
-                d.label.setDim(True)
-
-        # raise the relevant RGB dock to top
-        if rgb_stack and cat_entry:
-            self.raise_rgb_dock(rgb_stack, cat_entry)
+        for i in range(rgb_stack.count()):
+            d: Dock = rgb_stack.widget(i)
+            if field in d.name():
+                d.raiseDock()
+                break
 
     def update_active_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
 
@@ -77,12 +86,6 @@ class Plugin(PluginCore):
 
         return coords_array
 
-    def get_rgb_stack(self, docks: dict[str, Dock]):
-        rgb_docks = {title: d for title, d in docks.items() if "RGB" in title}
-        rgb_stack = self.get_stacked_docks(rgb_docks)
-
-        return rgb_stack
-
     @staticmethod
     def mark_emline_in_spec_2d(x0: float, y0: float, spec_2d_arr: tuple[Image2D], zoom=False, color='r'):
         zoom_level = 25
@@ -98,15 +101,3 @@ class Plugin(PluginCore):
             if zoom:
                 yrange = (0., float(spec_2d.data.shape[0]))
                 spec_2d.set_default_range(xrange=(x1, x2), yrange=yrange, apply_qtransform=True)
-
-    @staticmethod
-    def raise_rgb_dock(rgb_stack: dict[str, Dock], cat_entry: Catalog):
-        try:
-            field = cat_entry.get_col('FIELD')
-        except KeyError:
-            return
-
-        for title, d in rgb_stack.items():
-            if field in title:
-                d.raiseDock()
-                return

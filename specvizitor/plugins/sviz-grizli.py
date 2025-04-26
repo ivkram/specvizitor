@@ -2,6 +2,7 @@ from astropy.table import Table
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph.dockarea.Container import StackedWidget
 from pyqtgraph.dockarea.Dock import Dock
 from qtpy import QtGui, QtWidgets
 
@@ -52,38 +53,52 @@ class Plugin(PluginCore):
             lm_docks[title] = docks[title]
             i += 1
 
-        stacked_lm_docks = self.get_stacked_docks(lm_docks)
-        if not stacked_lm_docks:
+        lm_stack = self.get_dock_stack(lm_docks)
+
+        if lm_stack:
+            self.fix_dock_stack_labels(lm_stack)
+            if cat_entry:
+                self.raise_lm_dock(lm_stack, cat_entry)
+            if not self._shortcuts_added:
+                self._add_shortcuts(lm_stack, parent=lm_stack.widget(0).area.parent())
+
+    @staticmethod
+    def raise_lm_dock(lm_stack: StackedWidget, cat_entry: Catalog):
+        lines = []
+        for i in range(lm_stack.count()):
+            d = lm_stack.widget(i)
+            try:
+                extver = d.widgets[0].meta["EXTVER"]
+            except (TypeError, KeyError):
+                lines.append(None)
+            else:
+                lines.append(extver)
+
+        snr = []
+        for i, line in enumerate(lines):
+            try:
+                snr_from_cat = cat_entry.get_col(f"sn_{line}")
+            except KeyError:
+                snr.append(0.)
+            else:
+                snr.append(snr_from_cat)
+
+        i = int(np.argmax(snr))
+        lm_stack.widget(i).raiseDock()
+
+
+    def _add_shortcuts(self, lm_docks: dict[str, Dock], parent=None):
+        QtWidgets.QShortcut('Up', parent, partial(self._switch_current_linemap, lm_docks, -1))
+        QtWidgets.QShortcut('Down', parent, partial(self._switch_current_linemap, lm_docks, 1))
+        self._shortcuts_added = True
+
+    def _switch_current_linemap(self, lm_docks: dict[str, Dock], delta_index: int):
+        lm_stack = self.get_dock_stack(lm_docks)
+        if not lm_stack:
             return
 
-        stacked_lm_docks = list(stacked_lm_docks.values())
-
-        '''
-        * patching a pyqtgraph bug *
-        when the dock area state is restored, the current active widget of the line map stack is changed to Line Map 1,
-        however the last Line Map remains active (i.e. its label is still highlighted). therefore, when Line Map 1 is
-        raised to the top, the last Line Map remains active
-        '''
-        if len(stacked_lm_docks) > 1:
-            stacked_lm_docks[-1].label.setDim(True)
-
-        # raise the first line map dock to the top
-        stacked_lm_docks[0].raiseDock()
-
-        if not self._shortcuts_added:
-            data_viewer = stacked_lm_docks[0].area.parent()
-            QtWidgets.QShortcut('Up', data_viewer, partial(self.switch_current_linemap, lm_docks, -1))
-            QtWidgets.QShortcut('Down', data_viewer, partial(self.switch_current_linemap, lm_docks, 1))
-            self._shortcuts_added = True
-
-    def switch_current_linemap(self, lm_docks: dict[str, Dock], delta_index: int):
-        stacked_lm_docks = self.get_stacked_docks(lm_docks)
-        if not stacked_lm_docks:
-            return
-
-        stacked_lm_docks = list(stacked_lm_docks.values())
-        stack = stacked_lm_docks[0].container().stack
-        stacked_lm_docks[(stack.currentIndex() + delta_index) % stack.count()].raiseDock()
+        i = (lm_stack.currentIndex() + delta_index) % lm_stack.count()
+        lm_stack.widget(i).raiseDock()
 
     def update_active_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
         spec_1d: Plot1D | None = widgets.get('Spectrum 1D')

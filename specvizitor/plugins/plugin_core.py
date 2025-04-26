@@ -1,3 +1,4 @@
+from pyqtgraph.dockarea.Container import StackedWidget
 from pyqtgraph.dockarea.Dock import Dock
 
 from abc import ABC, abstractmethod
@@ -20,7 +21,7 @@ class PluginCore(ABC):
         pass
 
     @staticmethod
-    def get_stacked_docks(docks: dict[str, Dock]) -> dict[str, Dock] | None:
+    def get_dock_stack(docks: dict[str, Dock]) -> StackedWidget | None:
         """Locate a stack of docks, if exists. If multiple stacked are found, return the largest stack.
         """
 
@@ -38,12 +39,18 @@ class PluginCore(ABC):
         if dock_in_stack is None:
             return None
 
-        stack = dock_in_stack.container().stack
+        return dock_in_stack.container().stack
 
-        # find the stacked docks
-        stacked_docks = {}
-        for title, d in docks.items():
-            if hasattr(d.container(), 'stack') and d.container().stack is stack:
-                stacked_docks[title] = d
-
-        return stacked_docks
+    @staticmethod
+    def fix_dock_stack_labels(stack: StackedWidget):
+        """
+        * patching a pyqtgraph bug *
+        when the dock area state is restored, the current active widget of the line map stack is changed to Line Map 1,
+        however the last Line Map remains active (i.e. its label is still highlighted). therefore, when Line Map 1 is
+        raised to the top, the last Line Map remains active
+        """
+        if stack.count() <= 1:
+            return
+        for i in range(stack.count()):
+            stack.widget(i).label.setDim(True)
+        stack.widget(0).raiseDock()
