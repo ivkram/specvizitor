@@ -9,7 +9,7 @@
 project = 'specvizitor'
 copyright = '2025, Ivan Kramarenko, Josie Kerutt'
 author = 'Ivan Kramarenko, Josie Kerutt'
-release = '0.5.0'
+release = '0.5.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
