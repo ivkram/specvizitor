@@ -363,7 +363,7 @@ class ViewerElement(AbstractWidget):
     def setup_slider_view(self, j: int, review: InspectionData, cat_entry: Catalog | None):
         for slider_name, s in self.sliders.items():
             s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
-            if slider_name == 'redshift':  # load redshift from inspection results
+            if slider_name is SliderItem.REDSHIFT:  # load redshift from inspection results
                 redshift = review.get_value(j, 'z_sviz')
                 if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
                     s.set_default_value(redshift)
