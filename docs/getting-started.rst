@@ -68,7 +68,7 @@ In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https:/
 
    .. figure:: screenshots/demo6.png
 
-   The 2D spectrum shows only a single emission line which prevents us from unambiguously identifying the redshift of this object. However, we can see that Grizli suggests that this is an Halpha-emitter at z ≈ 4.31, which seems very plausible.
+   The 2D spectrum shows only a single emission line which prevents us from unambiguously identifying the redshift of this object. However, we can see that Grizli suggests that this is an Halpha-emitter at z ≈ 4.31, which seems plausible considering the morphology of the source.
 
 #. Save the redshift of the last object and close the window.
 
