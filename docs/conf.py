@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'specvizitor'
-copyright = '2024, Ivan Kramarenko, Josie Kerutt'
+copyright = '2025, Ivan Kramarenko, Josie Kerutt'
 author = 'Ivan Kramarenko, Josie Kerutt'
-release = '0.4.3'
+release = '0.5.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

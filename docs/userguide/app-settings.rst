@@ -23,7 +23,7 @@ Some basic settings such as the data path are available in :menuselection:`Tools
     * - :guilabel:`Catalog`
       - Load a new catalog, configure aliases for column names
     * - :guilabel:`Data Source`
-      - Change the data path, enable recursive search [#f2]_, add new images
+      - Change the data path, add new images
     * - :guilabel:`Data Viewer`
       - Add spectral lines to the data viewer
 
@@ -41,7 +41,7 @@ Click :guilabel:`OK`. The new line should appear in the data viewer.
 Advanced settings
 +++++++++++++++++
 
-Some applications settings, for example widget configurations, cannot be modified from the GUI (yet). To view and modify these settings, open the directory indicated at the bottom of :guilabel:`Settings` (under the "Advanced settings"):
+Some applications settings, for example the widget configuration, cannot be modified from the GUI (yet). To view and modify these settings, open the directory indicated at the bottom of :guilabel:`Settings` (under the "Advanced settings"):
 
 .. figure:: ../screenshots/advanced_settings.png
 
@@ -72,9 +72,8 @@ Open one of these files in the text editor, and make the desired changes. Restar
 
         If the ``*.yml`` file contains errors, it will be overwritten by specvizitor at startup. However, the original file will still be accessible from the same directory under the name ``*.yml.bkp`` (e.g., ``config.yml.bkp``).
 
-Most of the parameters stored in these ``*.yml`` files can be modified directly from the GUI, with the important exception of widget configurations (``data_widgets.yml``). A comprehensive guide on how to modify of the ``data_widgets.yml`` file (add new widgets, configure existing ones) can be found in the :doc:`data-viewer` section.
+Most of the parameters stored in these ``*.yml`` files can be modified directly from the GUI, with the important exception of the widget configuration (``data_widgets.yml``). A comprehensive guide on how to modify the ``data_widgets.yml`` file (add new widgets, configure existing ones) can be found in the :doc:`data-viewer` section.
 
 .. rubric:: Footnotes
 
 .. [#f1] Enabling antialiasing might decrease the GUI responsiveness.
-.. [#f2] Enabling recursive search might severely slow down the transition between objects.

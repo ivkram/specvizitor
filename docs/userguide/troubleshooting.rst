@@ -9,7 +9,7 @@ If you run specvizitor for the first time, you might encounter the following err
         ...
         TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
 
-This means that you are using an older version of Python than the version required to run specvizitor (3.10 and higher). You can install Python 3.10+ using `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_, for example.
+This means that you are using an older version of Python than the version required to run specvizitor (3.10 and higher). You can install Python 3.10+ using `conda <https://docs.conda.io/en/latest/>`_, for example.
 
 Widget(s) disappeared from the GUI
 ++++++++++++++++++++++++++++++++++
@@ -24,7 +24,7 @@ What to do if none of the above helped
 
 1. Check the console output - error messages can help you to pinpoint the exact source of the problem.
 
-2. `Update specvizitor <../gettingstarted.html#updating-specvizitor>`__ - some bugs might have been fixed in the latest version.
+2. `Update specvizitor <../getting-started.html#updating-specvizitor>`__ - some bugs might have been fixed in the latest version.
 
 3. Reset specvizitor to its initial state::
 
@@ -32,11 +32,11 @@ What to do if none of the above helped
 
 .. warning::
 
-        Running specvizitor with the ``--purge`` option will erase user-defined paths, custom widget configurations and other application settings.
+        Running specvizitor with the ``--purge`` option will reset all application settings.
 
 .. note::
 
         Running specvizitor with the ``--purge`` option will NOT affect any inspection files (``*.csv``).
 
-4. `Open issue on GitHub <https://github.com/ivkram/specvizitor/issues/new?title=Issue%20on%20page%20%2Fuserguide/troubleshooting.html&body=Your%20issue%20content%20here.>`_.
+4. `Open issue on GitHub <https://github.com/ivkram/specvizitor/issues/new>`_.
 
