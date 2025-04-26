@@ -4,23 +4,18 @@ from qtpy import QtCore, QtWidgets
 import argparse
 import importlib
 import logging
-from platformdirs import user_config_dir, user_cache_dir
 import sys
 
+from . import ORGANIZATION, APPLICATION
 from .config.appearance import setup_appearance
-from .config import Config, DataWidgets, SpectralLineData, Cache
+from .config import Cache, Config, DataWidgets, SpectralLineData
+from .config import CACHE_DIR, CONFIG_DIR
 from .io.viewer_data import add_unit_aliases
 from .utils.params import LocalFile
 
 from .widgets.MainWindow import MainWindow
 
 logger = logging.getLogger(__name__)
-
-ORGANIZATION_NAME = 'FRESCO'
-APPLICATION_NAME = __package__.split('.')[0].capitalize()
-
-CONFIG_DIR = user_config_dir(APPLICATION_NAME)
-CACHE_DIR = user_cache_dir(APPLICATION_NAME)
 
 
 def main():
@@ -51,7 +46,7 @@ def main():
     }
 
     if args.purge:
-        settings = QtCore.QSettings(ORGANIZATION_NAME, APPLICATION_NAME)
+        settings = QtCore.QSettings(ORGANIZATION, APPLICATION)
         settings.clear()
         settings.sync()
         for f in local_files.values():
@@ -79,8 +74,8 @@ def main():
     while exit_code == MainWindow.EXIT_CODE_REBOOT:
         # start the application
         app = QtWidgets.QApplication(sys.argv)
-        app.setOrganizationName(ORGANIZATION_NAME)
-        app.setApplicationName(APPLICATION_NAME)
+        app.setOrganizationName(ORGANIZATION)
+        app.setApplicationName(APPLICATION)
         logger.info("Application started")
 
         # set up the GUI appearance

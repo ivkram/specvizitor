@@ -1,11 +1,10 @@
 import numpy as np
-from platformdirs import user_config_dir
 from qtpy import QtWidgets, QtCore
 
 from abc import abstractmethod
 import logging
 
-from ..config import config
+from ..config import config, CONFIG_DIR
 from ..config.spectral_lines import SpectralLineData
 from ..io.catalog import Catalog, cat_browser
 from ..io.viewer_data import data_browser
@@ -394,7 +393,7 @@ class Settings(QtWidgets.QDialog):
         self.create_tabs()
         self.add_tabs()
 
-        self._info_label = QtWidgets.QLabel(f"Advanced settings: {user_config_dir('specvizitor')}", self)
+        self._info_label = QtWidgets.QLabel(f"Advanced settings: {CONFIG_DIR}", self)
         self._info_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
 
         # add OK/Cancel buttons

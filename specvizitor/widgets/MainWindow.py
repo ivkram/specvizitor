@@ -8,6 +8,7 @@ import logging
 import pathlib
 import time
 
+from .. import APPLICATION
 from ..appdata import AppData
 from ..config.appearance import setup_appearance
 from ..config import Config, Cache, DataWidgets, SpectralLineData
@@ -25,7 +26,6 @@ from .InspectionFieldEditor import InspectionFieldEditor
 from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
-from ..utils.widgets import AbstractWidget
 
 logger = logging.getLogger(__name__)
 
@@ -502,7 +502,7 @@ class MainWindow(QtWidgets.QMainWindow):
             obj_id = obj_id if isinstance(obj_id, tuple) else (obj_id,)
             id_str = ', '.join(map(str, obj_id))
             title += f"ID {id_str} [#{self.rd.j + 1}/{self.rd.review.n_objects}] – "
-        title += 'Specvizitor'
+        title += APPLICATION
         self.setWindowTitle(title)
 
     def _export_action(self):
