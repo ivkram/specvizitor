@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Inspection Basics &#8212; specvizitor 0.4.3 documentation</title>
+    <title>Inspection Basics &#8212; specvizitor 0.5.0 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=0f4711b3"></script>
+    <script src="../_static/documentation_options.js?v=e4e9a439"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">specvizitor 0.4.3 documentation</p>
+    <p class="title logo__title">specvizitor 0.5.0 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -392,14 +392,18 @@
 </tbody>
 </table>
 </div>
-<p>The output file (also known as the <em>inspection file</em>) is stored in the comma-separated values (CSV) format, enabling a quick access to the inspection results from any text editor. Optionally, you can export the inspection results as a FITS table (see <a class="reference internal" href="#export-fits-table"><span class="std std-ref">Exporting a FITS table</span></a>).</p>
-<p><strong>Second</strong>, specify the path to the data directory. The files stored in the data directory must contain object IDs in their filenames, otherwise the files will not be discovered. Apart from that, there are no special requirements to the filenames.</p>
+<p>The output file (also known as the <em>inspection file</em>) is stored in the comma-separated values (CSV) format, enabling a quick access to inspection results from any text editor. Optionally, you can export inspection results as a FITS table (see <a class="reference internal" href="#export-fits-table"><span class="std std-ref">Exporting a FITS table</span></a>).</p>
+<p><strong>Second</strong>, specify the path to the data directory. The files stored in the data directory must comply with the filename convention defined in the widget configuration (see <a class="reference internal" href="data-viewer.html"><span class="doc">Data Viewer</span></a>). By default, specvizitor assumes the Grizli filename convention (<code class="docutils literal notranslate"><span class="pre">{root}_{id:05d}.*.fits</span></code>).</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Currently, specvizitor works with only a single data directory at a time. If your files are spread across different directories, consider moving them into a single directory. Alternatively, you could specify a path to the top-level directory and enable recursive search (see <a class="reference internal" href="app-settings.html"><span class="doc">Application Settings</span></a>), however this might slow down the discovery of the data files.</p>
+<p>Currently, specvizitor works with only a single data directory at a time. If your files are spread across different directories, consider moving them into a single directory.</p>
 </div>
 <p><strong>Third</strong>, you can optionally specify the path to the catalog with some additional information about the objects you are inspecting (photometric redshifts, for example). This information will appear in <span class="guilabel">Object Information</span> in the main window.</p>
-<p>All IDs found in the catalog will become part of the inspection file even if the respective data files are not found. To avoid having such IDs in the inspection file, select the checkbox at the bottom of the window.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For Grizli data products, loading such catalog is necessary because specvizitor needs to know <code class="docutils literal notranslate"><span class="pre">root</span></code> to resolve their filenames.</p>
+</div>
+<p>All IDs retrieved from the catalog will be included in the inspection file even if the respective data files are not found. To avoid adding IDs with no data to the inspection file, select the checkbox at the bottom of the window.</p>
 <figure class="align-default">
 <img alt="../_images/new_file_filter_catalog.png" src="../_images/new_file_filter_catalog.png" />
 </figure>
@@ -411,19 +415,19 @@
 <figure class="align-default">
 <img alt="../_images/new_file_no_catalog.png" src="../_images/new_file_no_catalog.png" />
 </figure>
-<p>This creates a dummy catalog comprising a single column of object IDs that are automatically extracted from the filenames of the files found in the data directory. For each filename, specvizitor extracts an ID by finding the longest substring of digits, which is done by matching a particular regular expression (RegEx) pattern (<code class="docutils literal notranslate"><span class="pre">\d+</span></code>) to the filename. You can change this behaviour by modifying the regex pattern in the same the window:</p>
+<p>This creates a dummy catalog comprising a single column of object IDs that are automatically extracted from the filenames of files discovered in the data directory. For each filename, specvizitor extracts an ID by finding the longest substring of digits, which is done by matching a particular regular expression (RegEx) pattern (<code class="docutils literal notranslate"><span class="pre">?&lt;![0-9Ff])\d+(?![0-9Dd]</span></code>) to the filename. You can change this behaviour by modifying the regex pattern in the same the window:</p>
 <figure class="align-default">
 <img alt="../_images/new_file_no_catalog_regex.png" src="../_images/new_file_no_catalog_regex.png" />
 </figure>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Some features of the data viewer work only if certain columns are discovered in the catalog. In particular, cutouts from astronomical images can be created only if object coordinates (<code class="docutils literal notranslate"><span class="pre">RA</span></code> and <code class="docutils literal notranslate"><span class="pre">Dec</span></code>) are present in the catalog.</p>
+<p>Some features of the data viewer work only if certain columns are present in the catalog. In particular, cutouts from astronomical images can be created only if the catalog includes object coordinates (<code class="docutils literal notranslate"><span class="pre">RA</span></code> and <code class="docutils literal notranslate"><span class="pre">Dec</span></code> columns).</p>
 </div>
-<p>Once you have gone through all these steps, click <span class="guilabel">OK</span>. If there are no errors, a new inspection file will be created.</p>
+<p>Once you have gone through these steps, click <span class="guilabel">OK</span>. If there are no errors, a new inspection file will be created.</p>
 </section>
 <section id="adding-inspection-fields">
 <h2>Adding inspection fields<a class="headerlink" href="#adding-inspection-fields" title="Link to this heading">#</a></h2>
-<p>In specvizitor, you can create custom inspection fields for carrying out some additional classification besides just assigning a redshift, for example assigning <em>a confidence level</em> to the redshift or marking objects with some unusual properties. To create a new inspection field, navigate to <span class="guilabel">Inspection Results</span> ‣ <span class="guilabel">Edit…</span> ‣ <span class="guilabel">Add…</span> and enter the name of a new field:</p>
+<p>In specvizitor, you can create custom inspection fields for carrying out some additional classification besides just assigning a redshift, for example assigning <em>a confidence level</em> to redshifts or marking objects with some unusual properties. To create a new inspection field, navigate to <span class="guilabel">Inspection Results</span> ‣ <span class="guilabel">Edit…</span> ‣ <span class="guilabel">Add…</span> and enter the name of a new field:</p>
 <figure class="align-default">
 <a class="reference internal image-reference" href="../_images/edit_inspection_fields.png"><img alt="../_images/edit_inspection_fields.png" src="../_images/edit_inspection_fields.png" style="width: 10cm;" />
 </a>
@@ -436,17 +440,17 @@
 <p>This field will also appear as a boolean column in the output file (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>At any time, inspection fields can be renamed or deleted using the same editor. If you attempt to delete an inspection field that contains some data, you will be prompted to confirm this action.</p>
+<p>At any time, inspection fields can be renamed or deleted using the same editor. If you attempt to delete an inspection field that has some data, you will be prompted to confirm this action.</p>
 </div>
 </section>
 <section id="saving-inspection-results">
 <h2>Saving inspection results<a class="headerlink" href="#saving-inspection-results" title="Link to this heading">#</a></h2>
 <p>The inspection results (<code class="docutils literal notranslate"><span class="pre">*.csv</span></code>) are saved <em>automatically</em> whenever you:</p>
 <ul class="simple">
-<li><p>go from one object to another;</p></li>
+<li><p>switch between objects;</p></li>
 <li><p>exit the application (close the window, navigate to <span class="menuselection">File ‣ Quit</span>, or press <kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">Q</kbd>).</p></li>
 </ul>
-<p>By design, there is no <em>manual</em> way to save the inspection results. The <kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd> shortcut updates the redshift in <span class="guilabel">Inspection Results</span> only, and for the <code class="docutils literal notranslate"><span class="pre">*.csv</span></code> file to be saved you still need to trigger one of the two events listed above.</p>
+<p>By design, there is no <em>manual</em> way to save inspection results. The <kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd> shortcut updates the redshift in <span class="guilabel">Inspection Results</span> only, and for the <code class="docutils literal notranslate"><span class="pre">*.csv</span></code> file to be saved you still need to trigger one of the two events listed above.</p>
 </section>
 <section id="exporting-a-fits-table">
 <span id="export-fits-table"></span><h2>Exporting a FITS table<a class="headerlink" href="#exporting-a-fits-table" title="Link to this heading">#</a></h2>
@@ -532,7 +536,7 @@ By Ivan Kramarenko, Josie Kerutt
 
   <p class="copyright">
     
-      © Copyright 2024, Ivan Kramarenko, Josie Kerutt.
+      © Copyright 2025, Ivan Kramarenko, Josie Kerutt.
       <br/>
     
   </p>

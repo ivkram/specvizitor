@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Getting started &#8212; specvizitor 0.4.3 documentation</title>
+    <title>Getting started &#8212; specvizitor 0.5.0 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=0f4711b3"></script>
+    <script src="_static/documentation_options.js?v=e4e9a439"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">specvizitor 0.4.3 documentation</p>
+    <p class="title logo__title">specvizitor 0.5.0 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -366,7 +366,7 @@
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>Python <strong>&gt;=3.10</strong> is required to run specvizitor. If you have an older version of Python installed in your system, you can use <a class="reference external" href="https://conda.io/projects/conda/en/latest/user-guide/getting-started.html">conda</a> to create a virtual environment with Python version 3.10+.</p>
+<p>Python <strong>&gt;=3.10</strong> is required to run specvizitor. If you have an older version of Python installed in your system, you can use <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> to create a virtual environment with Python version 3.10+ (if you are looking for a minimal conda installer, check out <a class="reference external" href="https://github.com/conda-forge/miniforge">miniforge</a>).</p>
 </div>
 <p>Install the latest version of specvizitor using <a class="extlink-pypi reference external" href="https://pypi.org/project/pip">pip</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">specvizitor</span>
@@ -378,14 +378,14 @@
 <h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">#</a></h2>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>This tutorial shows how to do inspections of <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Detailed instructions on how to inspect other types of spectroscopic datasets in specvizitor can be found in the <a class="reference internal" href="userguide/index.html"><span class="doc">User Guide</span></a>.</p>
+<p>This tutorial shows how to do inspections of <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Instructions on how to inspect other kinds of spectroscopic datasets in specvizitor can be found in the <a class="reference internal" href="userguide/index.html"><span class="doc">User Guide</span></a>.</p>
 </div>
-<p>In this demo, we will be using data produced by <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> for the JWST Cycle 2 program “<a class="reference external" href="https://www.stsci.edu/jwst/phase2-public/3516.pdf">ALT</a>”.</p>
+<p>In this demo, we will be using data from the JWST Cycle 2 program “<a class="reference external" href="https://www.stsci.edu/jwst/phase2-public/3516.pdf">ALT</a>”, reduced using the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> tool.</p>
 <ol class="arabic">
 <li><p>Download the data as a ZIP file from <a class="reference external" href="https://seafile.ist.ac.at/d/1409d984220043f5bcc7/">here</a> (total size: 25.5 MB).</p></li>
 <li><p>Unzip the archive and navigate to the directory where the files have been extracted to:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">unzip</span> <span class="n">specvizitor_0</span><span class="mf">.4</span><span class="o">.</span><span class="n">x_demo</span><span class="o">.</span><span class="n">zip</span>
-<span class="o">&gt;&gt;</span> <span class="n">cd</span> <span class="n">specvizitor_0</span><span class="mf">.4</span><span class="o">.</span><span class="n">x_demo</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">unzip</span> <span class="n">specvizitor_demo</span><span class="o">.</span><span class="n">zip</span>
+<span class="o">&gt;&gt;</span> <span class="n">cd</span> <span class="n">specvizitor_demo</span>
 </pre></div>
 </div>
 </li>
@@ -394,60 +394,51 @@
 </pre></div>
 </div>
 </li>
-<li><p>Navigate to <span class="menuselection">File ‣ New…</span> and select <span class="guilabel">Create a new catalog</span>:</p>
+<li><p>Navigate to <span class="menuselection">File ‣ New…</span>. Optionally give a name to the project (we use <code class="docutils literal notranslate"><span class="pre">demo.csv</span></code> for this tutorial) and specify the path to the catalog (the <code class="docutils literal notranslate"><span class="pre">catalog.fits</span></code> file in the <code class="docutils literal notranslate"><span class="pre">specvizitor_demo</span></code> directory):</p>
 <figure class="align-default">
 <img alt="_images/demo1.png" src="_images/demo1.png" />
 </figure>
-<p>Click <span class="guilabel">OK</span>. You should now see the data produced by Grizli for the first out of three galaxies included in this demo:</p>
+<p>Click <span class="guilabel">OK</span>. You should now see the Grizli data products created for the first of the three galaxies included in this demo:</p>
 <figure class="align-default">
 <img alt="_images/demo2.png" src="_images/demo2.png" />
 </figure>
 <p>Below is the description of what is shown in the data viewer.</p>
 <ul class="simple">
 <li><p><strong>Top row, left to right:</strong> an image cutout in the F356W filter (the filter used in the NIRCam/grism observations), a series of emission line maps, and a redshift probability distribution function (z-PDF);</p></li>
-<li><p><strong>Middle row:</strong> a stacked 2D spectrum of all exposures;</p></li>
+<li><p><strong>Middle row:</strong> a 2D spectrum stack of all exposures;</p></li>
 <li><p><strong>Bottom row:</strong> a 1D spectrum.</p></li>
 </ul>
 </li>
-<li><p>Find the redshift that best describes the data by interacting with the slider at the bottom of the window:</p>
+<li><p>This galaxy was correctly identified by Grizli as an OIII-emitter at z ≈ 5.76 (you can see this on the right under <span class="guilabel">Object Information</span>). Save the redshift by pressing <kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd> or by clicking <span class="guilabel">Save!</span> next to the redshift slider. The saved value will appear in <span class="guilabel">Inspection Results</span>:</p>
 <figure class="align-default">
-<img alt="_images/demo3.gif" src="_images/demo3.gif" />
+<img alt="_images/demo3.png" src="_images/demo3.png" />
 </figure>
-<p>This galaxy is an OIII-emitter at z ≈ 5.75!</p>
 </li>
-<li><p>Save the redshift by pressing <kbd class="kbd docutils literal notranslate">Ctrl</kbd>+<kbd class="kbd docutils literal notranslate">S</kbd> or by clicking <span class="guilabel">Save!</span> next to the redshift slider. The saved value should appear in <span class="guilabel">Inspection Results</span>:</p>
+<li><p>Go to the next object by pressing <kbd class="kbd docutils literal notranslate">→</kbd>:</p>
 <figure class="align-default">
 <img alt="_images/demo4.png" src="_images/demo4.png" />
 </figure>
 </li>
-<li><p>Go to the next object by pressing <kbd class="kbd docutils literal notranslate">→</kbd> and repeat steps 5 &amp; 6:</p>
+<li><p>This object has an unphysical redshift value of <code class="docutils literal notranslate"><span class="pre">-1.0</span></code> stored in the catalog (which means that spectrum fitting failed). Find the redshift that best describes the data by interacting with the slider at the bottom of the window:</p>
 <figure class="align-default">
-<img alt="_images/demo5.png" src="_images/demo5.png" />
+<img alt="_images/demo5.gif" src="_images/demo5.gif" />
 </figure>
-<p>This galaxy is most likely a SIII-emitter at z ≈ 2.67.</p>
+<p>This galaxy is likely to be an SIII-emitter at z ≈ 2.68!</p>
 </li>
+<li><p>Save the redshift of the second object (see step 5).</p></li>
 <li><p>Go to the last object by pressing <kbd class="kbd docutils literal notranslate">→</kbd> one more time:</p>
 <figure class="align-default">
 <img alt="_images/demo6.png" src="_images/demo6.png" />
 </figure>
-<p>The 2D spectrum shows only a single emission line, therefore we cannot classify this galaxy. However, we can load a catalog to check the redshift suggested by Grizli (see the next step).</p>
+<p>The 2D spectrum shows only a single emission line which prevents us from unambiguously identifying the redshift of this object. However, we can see that Grizli suggests that this is an Halpha-emitter at z ≈ 4.31, which seems very plausible.</p>
 </li>
-<li><p>Navigate to <span class="menuselection">Tools ‣ Settings ‣ Catalogue</span> and specify the path to the catalog that was shared together with other data files (<code class="docutils literal notranslate"><span class="pre">catalog.fits</span></code>):</p>
-<figure class="align-default">
-<img alt="_images/demo7.png" src="_images/demo7.png" />
-</figure>
-<p>Click <span class="guilabel">OK</span>. We can see that Grizli suggests that this galaxy is an Halpha-emitter at z ≈ 4.31, which seems very plausible:</p>
-<figure class="align-default">
-<img alt="_images/demo8.png" src="_images/demo8.png" />
-</figure>
-</li>
-<li><p>Save the redshift of the final object and close the window.</p></li>
+<li><p>Save the redshift of the last object and close the window.</p></li>
 <li><p>Finally, check the contents of the output file (also known as the <em>inspection file</em>) created by specvizitor:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">cat</span> <span class="n">Untitled</span><span class="o">.</span><span class="n">csv</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">cat</span> <span class="n">demo</span><span class="o">.</span><span class="n">csv</span>
 <span class="nb">id</span><span class="p">,</span><span class="n">starred</span><span class="p">,</span><span class="n">z_sviz</span><span class="p">,</span><span class="n">comment</span>
-<span class="mi">16605</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="mf">5.757807</span><span class="p">,</span>
-<span class="mi">26932</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="mf">2.672491</span><span class="p">,</span>
-<span class="mi">34927</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="mi">16605</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="mf">5.760862</span><span class="p">,</span>
+<span class="mi">26932</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="mf">2.677225</span><span class="p">,</span>
+<span class="mi">34927</span><span class="p">,</span><span class="kc">False</span><span class="p">,</span><span class="mf">4.307806</span><span class="p">,</span>
 </pre></div>
 </div>
 <p>Here, <code class="docutils literal notranslate"><span class="pre">id</span></code> is the ID of the object, and <code class="docutils literal notranslate"><span class="pre">z_sviz</span></code> is the redshift saved in <span class="guilabel">Inspection Results</span>.</p>
@@ -463,7 +454,7 @@
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>If you see error messages after installing the update, try to run specvizitor with the <code class="docutils literal notranslate"><span class="pre">--purge</span></code> option: <code class="docutils literal notranslate"><span class="pre">specvizitor</span> <span class="pre">--purge</span></code>. Note, however, that this action will completely erase application settings, including custom widget configurations. If “purging” specvizitor does not help, refer to the <a class="reference internal" href="userguide/troubleshooting.html"><span class="doc">Troubleshooting</span></a> section.</p>
+<p>If you see error messages after installing the update, try to run specvizitor with the <code class="docutils literal notranslate"><span class="pre">--purge</span></code> option: <code class="docutils literal notranslate"><span class="pre">specvizitor</span> <span class="pre">--purge</span></code>. Note that this action will erase application settings, including custom widget configurations. If “purging” specvizitor does not help, refer to the <a class="reference internal" href="userguide/troubleshooting.html"><span class="doc">Troubleshooting</span></a> section.</p>
 </div>
 </section>
 </section>
@@ -541,7 +532,7 @@ By Ivan Kramarenko, Josie Kerutt
 
   <p class="copyright">
     
-      © Copyright 2024, Ivan Kramarenko, Josie Kerutt.
+      © Copyright 2025, Ivan Kramarenko, Josie Kerutt.
       <br/>
     
   </p>

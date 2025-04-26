@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Data Viewer &#8212; specvizitor 0.4.3 documentation</title>
+    <title>Data Viewer &#8212; specvizitor 0.5.0 documentation</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../_static/documentation_options.js?v=0f4711b3"></script>
+    <script src="../_static/documentation_options.js?v=e4e9a439"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">specvizitor 0.4.3 documentation</p>
+    <p class="title logo__title">specvizitor 0.5.0 documentation</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -381,7 +381,7 @@
 </div>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
-<p>By default, the data viewer in specvizitor is configured to display the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Specifically, it is using data from the following files:</p>
+<p>By default, the data viewer in specvizitor is configured to display the <a class="reference external" href="https://github.com/gbrammer/grizli">Grizli</a> data products. Specifically, it is loading data from the following files:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>File</p></th>
@@ -389,19 +389,19 @@
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*1D.fits</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">{root}_{id:05d}.1D.fits</span></code></p></td>
 <td><p>1D spectrum</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">*stack.fits</span></code></p></td>
-<td><p>2D stacked spectrum of all exposures</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">{root}_{id:05d}.stack.fits</span></code></p></td>
+<td><p>2D spectrum stack of all exposures</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">*full.fits</span></code></p></td>
-<td><p>Various extraction products including emission line maps and image cutouts</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">{root}_{id:05d}.full.fits</span></code></p></td>
+<td><p>Additional products including emission line maps and image cutouts</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>However, specvizitor’s capabilities go far beyond this. By modifying the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, you can create a custom widget configuration tailored to practically <em>any</em> spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with small tweaks to the default configuration and finishing with a configuration “from scratch”.</p>
+<p>However, data products handled by specvizitor are not limited to this list. By modifying the <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> file, you can create a custom widget configuration tailored to practically <em>any</em> spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with making small tweaks to the default configuration and finishing with writing a configuration “from scratch”.</p>
 </section>
 <section id="configuring-the-default-widgets">
 <h2>Configuring the default widgets<a class="headerlink" href="#configuring-the-default-widgets" title="Link to this heading">#</a></h2>
@@ -466,7 +466,7 @@
       <span class="n">link_to</span><span class="p">:</span> <span class="n">null</span>
 </pre></div>
 </div>
-<p>Set <code class="docutils literal notranslate"><span class="pre">link_to</span></code> to <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code>. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The y-axis of <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code> and <code class="docutils literal notranslate"><span class="pre">Line</span> <span class="pre">Map</span> <span class="pre">1</span></code> should be linked together.</p>
+<p>Set <code class="docutils literal notranslate"><span class="pre">link_to</span></code> to <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code>. Once you have made the changes, save <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> and launch specvizitor. The y-axes of <code class="docutils literal notranslate"><span class="pre">Image</span> <span class="pre">Cutout</span></code> and <code class="docutils literal notranslate"><span class="pre">Line</span> <span class="pre">Map</span> <span class="pre">1</span></code> should be linked together.</p>
 </section>
 <section id="hiding-widget-elements">
 <h3>Hiding widget elements<a class="headerlink" href="#hiding-widget-elements" title="Link to this heading">#</a></h3>
@@ -476,7 +476,7 @@
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Most of the widget elements can be hidden simultaneously by pressing <kbd class="kbd docutils literal notranslate">H</kbd>.</p>
+<p>Most of the widget elements can be hidden from the UI by pressing <kbd class="kbd docutils literal notranslate">H</kbd>.</p>
 </div>
 <p>In <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code>, navigate to <code class="docutils literal notranslate"><span class="pre">images</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">Spectrum</span> <span class="pre">2D</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">x_axis</span></code> ‣ <code class="docutils literal notranslate"><span class="pre">visible</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
@@ -502,7 +502,7 @@
   <span class="o">...</span>
 </pre></div>
 </div>
-<p>Both <code class="docutils literal notranslate"><span class="pre">images</span></code> and <code class="docutils literal notranslate"><span class="pre">plots</span></code> can comprise multiple items:</p>
+<p>Both <code class="docutils literal notranslate"><span class="pre">images</span></code> and <code class="docutils literal notranslate"><span class="pre">plots</span></code> can include multiple items:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="n">Image</span><span class="p">:</span>
     <span class="o">...</span>
@@ -525,35 +525,28 @@
 </section>
 <section id="adding-an-image">
 <h3>Adding an image<a class="headerlink" href="#adding-an-image" title="Link to this heading">#</a></h3>
-<p>This is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> comprising a single image:</p>
+<p>This is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> with a single image configuration:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.stack.fits&#39;</span>
 </pre></div>
 </div>
-<p>Here, by specifying the <code class="docutils literal notranslate"><span class="pre">filename_keyword</span></code> parameter, we tell specvizitor to search for files whose filenames include <code class="docutils literal notranslate"><span class="pre">stack.fits</span></code>. For example, if we load the dataset from the tutorial (see <a class="reference internal" href="../getting-started.html"><span class="doc">Getting started</span></a>), specvizitor will discover the following files:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alt_16605</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
-<span class="n">alt_26932</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
-<span class="n">alt_34927</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
-</pre></div>
-</div>
-<p>and select one of them depending on the ID of the current object.</p>
 <p>Sometimes a FITS file contains multiple images (tables). By default, specvizitor loads the first image (table) from such files. To load a different image (table), we can specify the <code class="docutils literal notranslate"><span class="pre">extname</span></code> and <code class="docutils literal notranslate"><span class="pre">extver</span></code> parameters in <code class="docutils literal notranslate"><span class="pre">loader_params</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.stack.fits&#39;</span>
       <span class="n">loader_params</span><span class="p">:</span>
         <span class="n">extname</span><span class="p">:</span> <span class="n">SCI</span>
         <span class="n">extver</span><span class="p">:</span> <span class="n">F356W</span>
 </pre></div>
 </div>
-<p>Finally, it is often useful to configure the default range of the color bar attached to the image:</p>
+<p>In addition, it is often useful to configure the default range of the color bar displayed next to the image:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.stack.fits&#39;</span>
       <span class="n">loader_params</span><span class="p">:</span>
         <span class="n">extname</span><span class="p">:</span> <span class="n">SCI</span>
         <span class="n">extver</span><span class="p">:</span> <span class="n">F356W</span>
@@ -568,30 +561,30 @@
 </section>
 <section id="adding-a-plot">
 <h3>Adding a plot<a class="headerlink" href="#adding-a-plot" title="Link to this heading">#</a></h3>
-<p>Similarly to <code class="docutils literal notranslate"><span class="pre">images</span></code>, this is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> comprising a single widget for displaying plots:</p>
+<p>Similarly to <code class="docutils literal notranslate"><span class="pre">images</span></code>, this is a minimal example of <code class="docutils literal notranslate"><span class="pre">data_widgets.yml</span></code> with a single plot configuration:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
   <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.1D.fits&#39;</span>
 </pre></div>
 </div>
-<p>Next, we need to specify the plot(s) that will be shown in this widget:</p>
+<p>This is how we can specify which plot(s) will be shown in this widget:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
   <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.1D.fits&#39;</span>
     <span class="n">plots</span><span class="p">:</span>
       <span class="n">flux</span><span class="p">:</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
         <span class="n">y</span><span class="p">:</span> <span class="n">flux</span>
 </pre></div>
 </div>
-<p>Here, <code class="docutils literal notranslate"><span class="pre">wave</span></code> and <code class="docutils literal notranslate"><span class="pre">flux</span></code> refer to the columns of a table loaded from the FITS file.</p>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">wave</span></code> and <code class="docutils literal notranslate"><span class="pre">flux</span></code> refer to the columns of the table loaded from the FITS file.</p>
 <p>In addition, we might want to configure the plot limits:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
   <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.1D.fits&#39;</span>
     <span class="n">plots</span><span class="p">:</span>
       <span class="n">flux</span><span class="p">:</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
@@ -606,7 +599,7 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plots</span><span class="p">:</span>
   <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.1D.fits&#39;</span>
     <span class="n">plots</span><span class="p">:</span>
       <span class="n">flux</span><span class="p">:</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
@@ -633,7 +626,7 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">:</span>
   <span class="n">Image</span> <span class="n">Cutout</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="n">stack</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.stack.fits&#39;</span>
       <span class="n">loader_params</span><span class="p">:</span>
         <span class="n">extname</span><span class="p">:</span> <span class="n">SCI</span>
         <span class="n">extver</span><span class="p">:</span> <span class="n">F356W</span>
@@ -645,7 +638,7 @@
 <span class="n">plots</span><span class="p">:</span>
   <span class="n">Spectrum</span> <span class="mi">1</span><span class="n">D</span><span class="p">:</span>
     <span class="n">data</span><span class="p">:</span>
-      <span class="n">filename_keyword</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span><span class="o">.</span><span class="n">fits</span>
+      <span class="n">filename</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{root}</span><span class="s1">_</span><span class="si">{id:05d}</span><span class="s1">.1D.fits&#39;</span>
     <span class="n">plots</span><span class="p">:</span>
       <span class="n">flux</span><span class="p">:</span>
         <span class="n">x</span><span class="p">:</span> <span class="n">wave</span>
@@ -671,7 +664,7 @@
 </figure>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The widget configuration used in specvizitor <em>by default</em> is available <a class="reference external" href="https://github.com/ivkram/specvizitor/blob/main/specvizitor/data/presets/data_widgets.yml">here</a>.</p>
+<p>The default widget configuration is available <a class="reference external" href="https://github.com/ivkram/specvizitor/blob/main/specvizitor/data/config/data_widgets.yml">here</a>.</p>
 </div>
 </section>
 </section>
@@ -767,7 +760,7 @@ By Ivan Kramarenko, Josie Kerutt
 
   <p class="copyright">
     
-      © Copyright 2024, Ivan Kramarenko, Josie Kerutt.
+      © Copyright 2025, Ivan Kramarenko, Josie Kerutt.
       <br/>
     
   </p>

@@ -8,7 +8,7 @@ Data Viewer
 Introduction
 ++++++++++++
 
-By default, the data viewer in specvizitor is configured to display the `Grizli <https://github.com/gbrammer/grizli>`_ data products. Specifically, it is using data from the following files:
+By default, the data viewer in specvizitor is configured to display the `Grizli <https://github.com/gbrammer/grizli>`_ data products. Specifically, it is loading data from the following files:
 
 .. list-table::
     :header-rows: 1
@@ -16,14 +16,14 @@ By default, the data viewer in specvizitor is configured to display the `Grizli 
 
     * - File
       - Description
-    * - ``*1D.fits``
+    * - ``{root}_{id:05d}.1D.fits``
       - 1D spectrum
-    * - ``*stack.fits``
-      - 2D stacked spectrum of all exposures
-    * - ``*full.fits``
-      - Various extraction products including emission line maps and image cutouts
+    * - ``{root}_{id:05d}.stack.fits``
+      - 2D spectrum stack of all exposures
+    * - ``{root}_{id:05d}.full.fits``
+      - Additional products including emission line maps and image cutouts
 
-However, specvizitor's capabilities go far beyond this. By modifying the ``data_widgets.yml`` file, you can create a custom widget configuration tailored to practically *any* spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with small tweaks to the default configuration and finishing with a configuration "from scratch".
+However, data products handled by specvizitor are not limited to this list. By modifying the ``data_widgets.yml`` file, you can create a custom widget configuration tailored to practically *any* spectroscopic dataset. In this section, you will learn how to configure data widgets in specvizitor, starting with making small tweaks to the default configuration and finishing with writing a configuration "from scratch".
 
 Configuring the default widgets
 +++++++++++++++++++++++++++++++
@@ -93,7 +93,7 @@ In ``data_widgets.yml``, navigate to ``images`` ‣ ``Line Map 1`` ‣ ``x_axis`
             link_to: null
 
 
-Set ``link_to`` to ``Image Cutout``. Once you have made the changes, save ``data_widgets.yml`` and launch specvizitor. The y-axis of ``Image Cutout`` and ``Line Map 1`` should be linked together.
+Set ``link_to`` to ``Image Cutout``. Once you have made the changes, save ``data_widgets.yml`` and launch specvizitor. The y-axes of ``Image Cutout`` and ``Line Map 1`` should be linked together.
 
 Hiding widget elements
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -104,7 +104,7 @@ Hiding widget elements
 
 .. tip::
 
-    Most of the widget elements can be hidden simultaneously by pressing :kbd:`H`.
+    Most of the widget elements can be hidden from the UI by pressing :kbd:`H`.
 
 In ``data_widgets.yml``, navigate to ``images`` ‣ ``Spectrum 2D`` ‣ ``x_axis`` ‣ ``visible``::
 
@@ -132,7 +132,7 @@ There are two types of widgets that can be added to the data viewer --- images a
     plots:
       ...
 
-Both ``images`` and ``plots`` can comprise multiple items::
+Both ``images`` and ``plots`` can include multiple items::
 
     images:
       Image:
@@ -156,37 +156,30 @@ The difference between ``images`` and ``plots`` lies in the parameters that widg
 Adding an image
 ^^^^^^^^^^^^^^^
 
-This is a minimal example of ``data_widgets.yml`` comprising a single image::
+This is a minimal example of ``data_widgets.yml`` with a single image configuration::
 
     images:
       Image Cutout:
         data:
-          filename_keyword: stack.fits
+          filename: '{root}_{id:05d}.stack.fits'
 
-Here, by specifying the ``filename_keyword`` parameter, we tell specvizitor to search for files whose filenames include ``stack.fits``. For example, if we load the dataset from the tutorial (see :doc:`../getting-started`), specvizitor will discover the following files::
-
-    alt_16605.stack.fits
-    alt_26932.stack.fits
-    alt_34927.stack.fits
-
-and select one of them depending on the ID of the current object.
 
 Sometimes a FITS file contains multiple images (tables). By default, specvizitor loads the first image (table) from such files. To load a different image (table), we can specify the ``extname`` and ``extver`` parameters in ``loader_params``::
 
     images:
       Image Cutout:
         data:
-          filename_keyword: stack.fits
+          filename: '{root}_{id:05d}.stack.fits'
           loader_params:
             extname: SCI
             extver: F356W
 
-Finally, it is often useful to configure the default range of the color bar attached to the image::
+In addition, it is often useful to configure the default range of the color bar displayed next to the image::
 
     images:
       Image Cutout:
         data:
-          filename_keyword: stack.fits
+          filename: '{root}_{id:05d}.stack.fits'
           loader_params:
             extname: SCI
             extver: F356W
@@ -201,32 +194,32 @@ Here, ``type`` mimics the types of images limits used in `SAOImage DS9 <https://
 Adding a plot
 ^^^^^^^^^^^^^
 
-Similarly to ``images``, this is a minimal example of ``data_widgets.yml`` comprising a single widget for displaying plots::
+Similarly to ``images``, this is a minimal example of ``data_widgets.yml`` with a single plot configuration::
 
     plots:
       Spectrum 1D:
         data:
-          filename_keyword: 1D.fits
+          filename: '{root}_{id:05d}.1D.fits'
 
-Next, we need to specify the plot(s) that will be shown in this widget::
+This is how we can specify which plot(s) will be shown in this widget::
 
     plots:
       Spectrum 1D:
         data:
-          filename_keyword: 1D.fits
+          filename: '{root}_{id:05d}.1D.fits'
         plots:
           flux:
             x: wave
             y: flux
 
-Here, ``wave`` and ``flux`` refer to the columns of a table loaded from the FITS file.
+Here, ``wave`` and ``flux`` refer to the columns of the table loaded from the FITS file.
 
 In addition, we might want to configure the plot limits::
 
     plots:
       Spectrum 1D:
         data:
-          filename_keyword: 1D.fits
+          filename: '{root}_{id:05d}.1D.fits'
         plots:
           flux:
             x: wave
@@ -241,7 +234,7 @@ Finally, let us add a redshift slider to the widget and make spectral lines visi
     plots:
       Spectrum 1D:
         data:
-          filename_keyword: 1D.fits
+          filename: '{root}_{id:05d}.1D.fits'
         plots:
           flux:
             x: wave
@@ -268,7 +261,7 @@ This is a full example of ``data_widgets.yml`` which combines the two previous e
     images:
       Image Cutout:
         data:
-          filename_keyword: stack.fits
+          filename: '{root}_{id:05d}.stack.fits'
           loader_params:
             extname: SCI
             extver: F356W
@@ -280,7 +273,7 @@ This is a full example of ``data_widgets.yml`` which combines the two previous e
     plots:
       Spectrum 1D:
         data:
-          filename_keyword: 1D.fits
+          filename: '{root}_{id:05d}.1D.fits'
         plots:
           flux:
             x: wave
@@ -304,7 +297,7 @@ If you load this file in specvizitor (:menuselection:`Widgets --> Restore...`), 
 .. figure:: ../screenshots/custom_widget_config_example.png
 
 .. note::
-    The widget configuration used in specvizitor *by default* is available `here <https://github.com/ivkram/specvizitor/blob/main/specvizitor/data/presets/data_widgets.yml>`_.
+    The default widget configuration is available `here <https://github.com/ivkram/specvizitor/blob/main/specvizitor/data/config/data_widgets.yml>`_.
 
 Templates
 +++++++++
