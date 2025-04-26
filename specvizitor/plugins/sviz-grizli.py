@@ -60,7 +60,7 @@ class Plugin(PluginCore):
             if cat_entry:
                 self.raise_lm_dock(lm_stack, cat_entry)
             if not self._shortcuts_added:
-                self._add_shortcuts(lm_stack, parent=lm_stack.widget(0).area.parent())
+                self._add_shortcuts(lm_docks, parent=lm_stack.widget(0).area.parent())
 
     @staticmethod
     def raise_lm_dock(lm_stack: StackedWidget, cat_entry: Catalog):
