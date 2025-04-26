@@ -30,6 +30,8 @@ Keyboard Shortcuts
       - Toggle minimal interface mode
     * - :kbd:`F`
       - Toggle fullscreen mode
+    * - :kbd:`P`
+      - Pause subset inspection
     * - :kbd:`Ctrl+N`
       - Create a new inspection file
     * - :kbd:`Ctrl+O`

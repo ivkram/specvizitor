@@ -30,6 +30,8 @@ class Subsets(AbstractWidget):
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
+        self._set_pause_shortcut()
+
     def init_ui(self):
         self._inspect_subset = QtWidgets.QPushButton('Inspect Subset...', parent=self)
         self._pause_inspecting = QtWidgets.QPushButton('Pause', parent=self)
@@ -65,6 +67,9 @@ class Subsets(AbstractWidget):
 
         self.layout().addWidget(self._subset_info)
 
+    def _set_pause_shortcut(self):
+        self._pause_inspecting.setShortcut('P')
+
     @QtCore.Slot()
     def load_project(self):
         self.setEnabled(True)
@@ -98,6 +103,7 @@ class Subsets(AbstractWidget):
     @QtCore.Slot(bool)
     def pause_subset_inspection(self, is_paused: bool):
         self._pause_inspecting.setText("Resume" if is_paused else "Pause")
+        self._set_pause_shortcut()
 
     @QtCore.Slot()
     def stop_subset_inspection(self):

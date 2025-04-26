@@ -225,8 +225,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._view.addSeparator()
 
         self._fullscreen = QtWidgets.QAction("Fullscreen")
-        self._fullscreen.triggered.connect(lambda:
-                                           self._exit_fullscreen() if self.isFullScreen() else self._enter_fullscreen())
+        self._fullscreen.triggered.connect(self._fullscreen_action)
         self._fullscreen.setShortcut('F')
         self._view.addAction(self._fullscreen)
 
@@ -545,6 +544,13 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in self._auxiliary_docks:
             w.setVisible(not self._zen_mode_activated)
         self.is_zen_mode_activated.emit(self._zen_mode_activated)
+
+    @QtCore.Slot()
+    def _fullscreen_action(self):
+        if self.isFullScreen():
+            self._exit_fullscreen()
+        else:
+            self._enter_fullscreen()
 
     def _enter_fullscreen(self):
         self._was_maximized = True if self.isMaximized() else False
