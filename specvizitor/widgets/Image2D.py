@@ -158,7 +158,7 @@ class Image2D(ViewerElement):
         super().apply_qtransform(**kwargs)
         self.container.setAspectLocked(lock=True, ratio=self._qtransform.m22() / self._qtransform.m11())
 
-    def smooth(self, sigma: float):
+    def smooth_data(self, sigma: float):
         if sigma > 0:
             # create a smoothing kernel
             gauss_kernel = Gaussian2DKernel(sigma)

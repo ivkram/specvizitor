@@ -93,7 +93,7 @@ class Plot1D(ViewerElement):
 
         super().setup_view(cat_entry)
 
-    def smooth(self, sigma: float):
+    def smooth_data(self, sigma: float):
         for label, plot_data_item in self.plot_data_items.items():
             x_data, _ = plot_data_item.getData()
             y_data = self.get_plot_data(self.cfg.plots[label].y)

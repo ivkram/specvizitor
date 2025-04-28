@@ -238,7 +238,7 @@ class ViewerElement(AbstractWidget):
         self.sliders[SliderItem.SMOOTHING] = self.smoothing_slider
         self.sliders[SliderItem.REDSHIFT] = self.redshift_slider
 
-        self.smoothing_slider.value_changed[float].connect(self.smooth)
+        self.smoothing_slider.value_changed[float].connect(self.smooth_data)
         self.redshift_slider.value_changed[float].connect(self.redshift_changed_action)
 
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
@@ -397,7 +397,7 @@ class ViewerElement(AbstractWidget):
         for item in self._registered_items:
             item.setTransform(self._qtransform)
 
-    def smooth(self, sigma: float):
+    def smooth_data(self, sigma: float):
         pass
 
     def set_spectral_line_positions(self, redshift: float = 0):
@@ -445,9 +445,10 @@ class ViewerElement(AbstractWidget):
 
         self.reset_range(widget_links.get(LinkableItem.XAXIS), widget_links.get(LinkableItem.YAXIS))
         if self.title not in widget_links.get(LinkableItem.S_REDSHIFT, dict()):
-            self.redshift_slider.reset()
-        if self.title not in widget_links.get(LinkableItem.S_SLIDER, dict()):
-            self.smoothing_slider.update_from_slider()  # only update, do not reset
+            self.redshift_slider.reset()  # reset only the redshift slider
+
+        for s in self.sliders.values():
+            s.update_from_slider()
 
     def remove_registered_items(self):
         while self._registered_items:
