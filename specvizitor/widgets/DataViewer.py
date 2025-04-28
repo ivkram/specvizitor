@@ -332,14 +332,14 @@ class DataViewer(AbstractWidget):
         w0 = self.widgets[wt]
         self._link_widget(wt)
         self.docks[wt].setTitle(w0.get_dock_title())
-        logger.debug(f"`{wt}` attached")
+        logger.debug(f"`{wt}` attached to the viewer")
 
     @QtCore.Slot(str)
     def _detach_widget(self, wt: str):
         w0 = self.widgets[wt]
         self._unlink_widget(wt)
         self.docks[wt].setTitle(w0.title)
-        logger.debug(f"`{wt}` detached")
+        logger.debug(f"`{wt}` detached from the viewer")
 
     def _get_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():

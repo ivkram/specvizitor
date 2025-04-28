@@ -165,6 +165,7 @@ class Image2D(ViewerElement):
 
             # FFT algorithm is faster for large arrays (n > 500), which is a typical case for astronomy images
             smoothed_data = convolve_fft(self.data, gauss_kernel, preserve_nan=True)
+            logger.debug(f"Image smoothing applied (sigma: {sigma:.2f}, widget: {self.title})")
         else:
             smoothed_data = self.data
 

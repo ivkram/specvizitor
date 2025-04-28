@@ -8,6 +8,7 @@ import pyqtgraph as pg
 import abc
 from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
+from functools import partial
 import logging
 
 from ..config import config, data_widgets
@@ -157,6 +158,7 @@ class ViewerElement(AbstractWidget):
         self._spectral_line_artists: dict[str, tuple[pg.InfiniteLine, pg.TextItem]] = {}
 
         self.sliders: dict[SliderItem, SmartSlider] = {}
+        self._invoked_sliders: set[SliderItem] = set()
         self.smoothing_slider: SmartSlider | None = None
         self.redshift_slider: SmartSlider | None = None
 
@@ -238,8 +240,12 @@ class ViewerElement(AbstractWidget):
         self.sliders[SliderItem.SMOOTHING] = self.smoothing_slider
         self.sliders[SliderItem.REDSHIFT] = self.redshift_slider
 
+
         self.smoothing_slider.value_changed[float].connect(self.smooth_data)
         self.redshift_slider.value_changed[float].connect(self.redshift_changed_action)
+
+        for sname, s in self.sliders.items():
+            s.value_changed[float].connect(partial(self._register_slider_invocation, sname))
 
     def set_geometry(self, spacing: int, margins: int | tuple[int, int, int, int]):
         super().set_geometry(spacing=spacing, margins=margins)
@@ -368,6 +374,10 @@ class ViewerElement(AbstractWidget):
                 if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
                     s.set_default_value(redshift)
 
+    @QtCore.Slot(float)
+    def _register_slider_invocation(self, sname: SliderItem):
+        self._invoked_sliders.add(sname)
+
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
                           apply_qtransform=False):
         if apply_qtransform:
@@ -447,7 +457,9 @@ class ViewerElement(AbstractWidget):
         if self.title not in widget_links.get(LinkableItem.S_REDSHIFT, dict()):
             self.redshift_slider.reset()  # reset only the redshift slider
 
-        for s in self.sliders.values():
+        for sname, s in self.sliders.items():
+            if sname in self._invoked_sliders:
+                continue
             s.update_from_slider()
 
     def remove_registered_items(self):
@@ -457,6 +469,7 @@ class ViewerElement(AbstractWidget):
 
     def clear_content(self):
         self.remove_registered_items()
+        self._invoked_sliders = set()
 
     def clear_view(self):
         self.init_view()
