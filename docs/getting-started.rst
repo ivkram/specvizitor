@@ -68,7 +68,7 @@ In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https:/
 
    .. figure:: screenshots/demo6.png
 
-   The 2D spectrum shows only a single emission line which prevents us from unambiguously identifying the redshift of this object. However, we can see that Grizli suggests that this is an Halpha-emitter at z ≈ 4.31, which seems plausible considering the morphology of the source.
+   The 2D spectrum shows only a single emission line which prevents us from unambiguously identifying the redshift of this object. However, we can see that Grizli suggests that this is an Halpha-emitter at z ≈ 4.31, which seems plausible considering the compact morphology of the source.
 
 #. Save the redshift of the last object and close the window.
 
@@ -95,4 +95,4 @@ To update specvizitor to the latest version, run the following command::
 
 .. tip::
 
-        If you see error messages after installing the update, try to run specvizitor with the ``--purge`` option: ``specvizitor --purge``. Note that this action will erase application settings, including custom widget configurations. If "purging" specvizitor does not help, refer to the :doc:`userguide/troubleshooting` section.
+        If you see error messages after installing the update, try to run specvizitor with the ``--purge`` option: ``specvizitor --purge``. Note that this action will erase application settings, including any custom widget configurations. If the issue still persists, refer to the :doc:`userguide/troubleshooting` section.

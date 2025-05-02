@@ -1,3 +1,6 @@
+from datetime import UTC, datetime
+from importlib import metadata
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -6,10 +9,12 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'specvizitor'
-copyright = '2025, Ivan Kramarenko, Josie Kerutt'
-author = 'Ivan Kramarenko, Josie Kerutt'
-release = '0.5.1'
+project = "specvizitor"
+author = "Ivan Kramarenko, Josie Kerutt"
+copyright = f"2023–{datetime.now(tz=UTC).year}, " + author
+
+release = metadata.version(project)
+version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

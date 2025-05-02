@@ -296,10 +296,5 @@ If you load this file in specvizitor (:menuselection:`Widgets --> Restore...`), 
 
 .. figure:: ../screenshots/custom_widget_config_example.png
 
-.. note::
+.. tip::
     The default widget configuration is available `here <https://github.com/ivkram/specvizitor/blob/main/specvizitor/data/config/data_widgets.yml>`_.
-
-Templates
-+++++++++
-
-TBU
