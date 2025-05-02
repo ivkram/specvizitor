@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from importlib import metadata
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -13,8 +12,7 @@ project = "specvizitor"
 author = "Ivan Kramarenko, Josie Kerutt"
 copyright = f"2023–{datetime.now(tz=UTC).year}, " + author
 
-release = metadata.version(project)
-version = ".".join(release.split(".")[:2])
+version = "0.5.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
