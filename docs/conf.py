@@ -12,7 +12,7 @@ project = "specvizitor"
 author = "Ivan Kramarenko, Josie Kerutt"
 copyright = f"2023–{datetime.now(tz=UTC).year}, " + author
 
-version = "0.5.1"
+release = "0.5.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
