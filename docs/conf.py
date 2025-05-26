@@ -9,10 +9,10 @@ from datetime import UTC, datetime
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "specvizitor"
-author = "Ivan Kramarenko, Josie Kerutt"
+author = "Ivan Kramarenko, Josephine Kerutt"
 copyright = f"2023–{datetime.now(tz=UTC).year}, " + author
 
-release = "0.5.1"
+release = "0.5.2"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

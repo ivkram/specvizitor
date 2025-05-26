@@ -219,7 +219,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._zen = QtWidgets.QAction("Enter Zen Mode")
         self._zen.triggered.connect(self._zen_mode_action)
         self._zen.setShortcut('H')
-        self._auxiliary_docks = (self._quick_search_dock, self._object_info_dock, self._subsets_dock)
+        self._auxiliary_docks = ()  # (self._quick_search_dock, self._object_info_dock, self._subsets_dock)
         self._view.addAction(self._zen)
 
         self._view.addSeparator()
