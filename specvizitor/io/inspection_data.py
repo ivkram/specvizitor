@@ -180,7 +180,7 @@ class InspectionData:
 
     def has_data(self, column_name: str) -> bool:
         if column_name in self.flag_columns or column_name == 'starred':
-            return self.df[column_name].sum() > 0
+            return bool(self.df[column_name].sum() > 0)
         else:
             logger.warning(f"Cannot determine if a column has data or not (column: {column_name})")
             return True
@@ -192,7 +192,7 @@ class InspectionData:
         try:
             obj_id = self.ids[j] if not full else self.ids_full[j]
         except (TypeError, IndexError):
-            return
+            return None
 
         if self.ids_are_int and not isinstance(obj_id, tuple):
             # convert int64 to int
