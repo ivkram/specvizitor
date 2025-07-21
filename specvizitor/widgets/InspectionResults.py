@@ -6,13 +6,14 @@ from ..utils.widgets import AbstractWidget, MyQTextEdit
 
 
 class InspectionResults(AbstractWidget):
+    redshift_set = QtCore.Signal(bool)
     data_collected = QtCore.Signal(float, str, dict)
     edit_button_clicked = QtCore.Signal()
 
     def __init__(self, cfg: config.InspectionResults, parent=None):
 
         self.cfg = cfg
-        self._saved_redshift: float | None = None
+        self._redshift: float | None = None
 
         self._redshift_widget: QtWidgets.QLabel | None = None
         self._spacer: QtWidgets.QWidget | None = None
@@ -67,7 +68,7 @@ class InspectionResults(AbstractWidget):
         self._edit_fields = QtWidgets.QPushButton("Edit...", self)
         self._edit_fields.clicked.connect(self.edit_button_clicked.emit)
 
-        self._clear_redshift.clicked.connect(self.clear_redshift_value)
+        self._clear_redshift.clicked.connect(self.clear_redshift)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -97,20 +98,22 @@ class InspectionResults(AbstractWidget):
         self.repopulate()
 
     @QtCore.Slot(float)
-    def set_redshift_value(self, redshift: float):
+    def set_redshift(self, redshift: float):
         if redshift != REDSHIFT_FILL_VALUE:
             self._redshift_widget.setText(f"Redshift: {redshift:.4f}")
+            self.redshift_set.emit(True)
         else:
             self._redshift_widget.setText(f"Redshift: --")
-        self._saved_redshift = redshift
+            self.redshift_set.emit(False)
+        self._redshift = redshift
 
     @QtCore.Slot()
-    def clear_redshift_value(self):
-        self.set_redshift_value(REDSHIFT_FILL_VALUE)
+    def clear_redshift(self):
+        self.set_redshift(REDSHIFT_FILL_VALUE)
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):
-        self.set_redshift_value(review.get_value(j, 'z_sviz'))
+        self.set_redshift(review.get_value(j, 'z_sviz'))
         self._comments_widget.setText(review.get_value(j, 'comment'))
         for cname, widget in self._checkbox_widgets.items():
             widget.setChecked(review.get_value(j, cname))
@@ -124,7 +127,7 @@ class InspectionResults(AbstractWidget):
 
     @QtCore.Slot()
     def collect(self):
-        redshift = self._saved_redshift
+        redshift = self._redshift
         comment = self._comments_widget.toPlainText()
         checkboxes = {cname: widget.isChecked() for cname, widget in self._checkbox_widgets.items()}
 

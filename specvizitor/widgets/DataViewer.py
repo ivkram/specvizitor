@@ -34,7 +34,7 @@ class DataViewer(AbstractWidget):
 
     redshift_requested = QtCore.Signal()
     redshift_changed = QtCore.Signal(float)
-    redshift_obtained = QtCore.Signal(float)
+    redshift_collected = QtCore.Signal(float)
 
     view_reset = QtCore.Signal(object)
     visibility_changed = QtCore.Signal(bool)
@@ -140,7 +140,7 @@ class DataViewer(AbstractWidget):
 
         w0.object_loaded.connect(self._attach_widget)
         w0.object_destroyed.connect(self._detach_widget)
-        w0.redshift_slider.save_button_clicked.connect(self._save_redshift)
+        w0.redshift_slider.save_button_clicked.connect(self.redshift_collected.emit)
 
     def _disconnect_widget(self, wt: str):
         w0 = self.widgets[wt]
@@ -360,10 +360,6 @@ class DataViewer(AbstractWidget):
         self.redshift_requested.connect(slider.save_value)
         self.redshift_requested.emit()
         self.redshift_requested.disconnect()
-
-    @QtCore.Slot(float)
-    def _save_redshift(self, redshift: float):
-        self.redshift_obtained.emit(redshift)
 
     def _change_redshift(self, n_steps: int, small_step: bool = False):
         slider = self._get_active_redshift_slider()

@@ -92,8 +92,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # add a status bar
         # self.statusBar().showMessage("Message in the statusbar")
 
-        QtWidgets.QShortcut('Ctrl+S', self, self.save_action_invoked.emit)
-        QtWidgets.QShortcut('Ctrl+D', self, self.delete_action_invoked.emit)
         QtWidgets.QShortcut('Esc', self, lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._data_viewer: DataViewer | None = None
@@ -201,6 +199,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self._file.addAction(self._quit)
 
+        self._edit = self._menu.addMenu("&Edit")
+
+        self._save_redshift = QtWidgets.QAction("&Save Redshift")
+        self._save_redshift.setEnabled(False)
+        self._save_redshift.triggered.connect(self.save_action_invoked.emit)
+        self._save_redshift.setShortcut(QtGui.QKeySequence('Ctrl+S'))
+        self._edit.addAction(self._save_redshift)
+
+        self._delete_redshift = QtWidgets.QAction("&Delete Redshift")
+        self._delete_redshift.setEnabled(False)
+        self._delete_redshift.triggered.connect(self.delete_action_invoked.emit)
+        self._delete_redshift.setShortcut(QtGui.QKeySequence('Ctrl+D'))
+        self._edit.addAction(self._delete_redshift)
+
         self._view = self._menu.addMenu("&View")
 
         self._reset_view = QtWidgets.QAction("Reset View")
@@ -287,7 +299,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.subset_inspection_stopped.connect(self._subsets.stop_subset_inspection)
 
         self.save_action_invoked.connect(self._data_viewer.request_redshift)
-        self.delete_action_invoked.connect(self._inspection_res.clear_redshift_value)
+        self.delete_action_invoked.connect(self._inspection_res.clear_redshift)
         self.close_action_invoked.connect(self._data_viewer.free_resources)
 
         self.is_zen_mode_activated.connect(self._data_viewer.enter_zen_mode)
@@ -305,6 +317,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._commands_bar.screenshot_button_clicked.connect(self._screenshot_action)
         self._commands_bar.settings_button_clicked.connect(self._settings_action)
 
+        self._inspection_res.redshift_set.connect(self._delete_redshift.setEnabled)
         self._inspection_res.edit_button_clicked.connect(self._edit_inspection_file_action)
 
         self._data_viewer.object_loaded.connect(self.finalize_loading)
@@ -314,7 +327,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._inspection_res.data_collected.connect(self.save_review_data)
 
         # connect the child widgets between each other
-        self._data_viewer.redshift_obtained.connect(self._inspection_res.set_redshift_value)
+        self._data_viewer.redshift_collected.connect(self._inspection_res.set_redshift)
         self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.reset_view)
         self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.reset_dock_layout)
 
@@ -383,7 +396,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def load_project(self, j: int | None = None):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
-        for w in (self._export, self._reset_view, self._reset_dock_layout):
+        for w in (self._export, self._save_redshift, self._reset_view, self._reset_dock_layout):
             w.setEnabled(True)
 
         self.project_loaded.emit(self.rd.review)
