@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class Plugin(PluginCore):
-    LM_NAME = 'Line Map {}'
+    LM_NAME = "Line Map {}"
 
     def __init__(self):
         super().__init__()
@@ -101,12 +101,12 @@ class Plugin(PluginCore):
         lm_stack.widget(i).raiseDock()
 
     def update_active_widgets(self, widgets: dict[str, ViewerElement], cat_entry: Catalog | None = None):
-        spec_1d: Plot1D | None = widgets.get('Spectrum 1D')
-        z_pdf: Plot1D | None = widgets.get('Redshift PDF')
+        spec_1d: Plot1D | None = widgets.get("Spectrum 1D")
+        z_pdf: Plot1D | None = widgets.get("Redshift PDF")
 
         if spec_1d is not None:
             for w in widgets.values():
-                if 'Spectrum 2D' in w.title:
+                if "Spectrum 2D" in w.title:
                     self.transform_spec2d(w, spec_1d)
 
         if spec_1d is not None and z_pdf is not None:
@@ -127,14 +127,15 @@ class Plugin(PluginCore):
         spec_2d.update_axis_labels()
 
         scale = (1 * u.Unit('micron')).to(wave_unit).value
-        x_data, _ = next(iter(spec_1d.plot_data_items.values())).getData()  # assume 1:1 mapping
 
         try:
             dlam = spec_2d.meta["CD1_1"] * scale
             crval = spec_2d.meta["CRVAL1"] * scale
             crpix = spec_2d.meta["CRPIX1"]
         except KeyError as e:
-            logger.error(f"{e} (widget: {spec_2d.title})")
+            missing_key = str(e).split("'")[1]
+            logger.debug(f"FITS keyword `{missing_key}` not found; assuming 1:1 mapping between {spec_1d.title} and {spec_2d.title} (widget: {spec_2d.title})")
+            x_data, _ = next(iter(spec_1d.plot_data_items.values())).getData()  # assume 1:1 mapping
             dlam, crval, crpix = x_data[1]-x_data[0], x_data[0], 1.0
 
         qtransform1 = QtGui.QTransform.fromTranslate(0.5, 0.5)
@@ -151,42 +152,32 @@ class Plugin(PluginCore):
 
     @staticmethod
     def convert_spec1d_flux_unit_to_physical(spec_1d: Plot1D):
-        t = spec_1d.data
-        if not isinstance(t, Table):
-            logger.error('Spectrum 1D data must be of the `astropy.table.Table` type')
+        flux = spec_1d.get_plot_data("flux")
+        if flux is None:
             return
 
-        # check that the `flux` and `flat` columns are in the table
-        if 'flux' not in t.colnames:
-            logger.error('Column not found: flux')
-        if 'flat' not in t.colnames:
-            logger.error('Column not found: flat')
-
-        # check that the flux unit is correct
-        if not t['flux'].unit or not t['flux'].unit.is_equivalent(u.Unit('ct / s')):
-            logger.error('The input flux unit must be `ct/s`')
+        if not flux.unit or not flux.unit.is_equivalent(u.Unit('ct / s')):
+            logger.debug(f"Flux unit conversion skipped: Expected `ct/s` but found `{flux.unit}` (widget: {spec_1d.title})")
             return
 
-        # convert fluxes to physical units
-        flat = t['flat'].to('1e19 AA cm2 ct / erg')
+        flat = spec_1d.get_plot_data("flat")
+        if flat is None:
+            return
 
+        flat = flat.to('1e19 AA cm2 ct / erg')
         with np.errstate(divide='ignore'):
             scale = 1 / flat
         scale[scale == np.inf] = np.nan
 
-        y_unit = (t['flux'] * scale).unit
+        y_unit = (flux * scale).unit
         spec_1d._axes.y.unit = y_unit
 
-        for label in ('flux', 'err', 'model'):
-            plot_data_item = spec_1d.plot_data_items.get(label)
-            if plot_data_item is None:
-                continue
-
+        for label, plot_data_item in spec_1d.plot_data_items.items():
             x_data, _ = plot_data_item.getData()
 
             y_data = spec_1d.get_plot_data(spec_1d.cfg.plots[label].y)
             y_data *= scale
             y_data = spec_1d.apply_ydata_transform(y_data)
 
-            t[label] = y_data * y_unit  # replace the original data
+            spec_1d.data[label] = y_data * y_unit  # replace the original data
             plot_data_item.setData(x=x_data, y=y_data)
