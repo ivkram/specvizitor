@@ -44,10 +44,10 @@ class NewFile(QtWidgets.QDialog):
         width = 135
         self._browsers = {
             'output': FileBrowser(filename_extensions='CSV Files (*.csv)',
-                                  mode=FileBrowser.SaveFile, default_path=pathlib.Path().resolve() / 'Untitled.csv',
-                                  title='Output File:', title_width=width, parent=self),
-            'data': data_browser(self.cfg.data.dir, title='Data Source:', title_width=width, parent=self),
-            'cat': cat_browser(self.cfg.catalogue.filename, title='Catalogue:', title_width=width, parent=self)
+                                  mode=FileBrowser.SaveFile, default_path=pathlib.Path().resolve() / "Untitled.csv",
+                                  title="Output File", title_width=width, parent=self),
+            'data': data_browser(self.cfg.data.dir, title="Data Source", title_width=width, parent=self),
+            'cat': cat_browser(self.cfg.catalogue.filename, title="Catalogue", title_width=width, parent=self)
         }
 
         # add radio buttons for choosing between creating a new catalogue and loading an existing one
@@ -128,7 +128,7 @@ class NewFile(QtWidgets.QDialog):
     @qlog
     def validate(self) -> bool:
         for b in self._browsers.values():
-            if not b.isHidden() and (not b.is_filled(verbose=True) or not b.exists(verbose=True)):
+            if not b.validate(verbose=True, missing_ok=b.isHidden()):
                 return False
         return True
 

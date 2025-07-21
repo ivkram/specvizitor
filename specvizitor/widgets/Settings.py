@@ -127,7 +127,7 @@ class CatalogueWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._browser = cat_browser(self.cfg.filename, title='Filename:', parent=self)
+        self._browser = cat_browser(self.cfg.filename, title="Filename", parent=self)
 
         self._aliases_section = Section("Column aliases", parent=self)
         self._aliases_table = column_aliases_table_factory(self.cfg.translate if self.cfg.translate else {},
@@ -158,7 +158,7 @@ class CatalogueWidget(SettingsWidget):
             self._catalog_changed = self.cfg.filename is not None
 
         if self._catalog_changed:
-            if not self._browser.exists(verbose=True):
+            if not self._browser.validate(verbose=True, missing_ok=True):
                 return False
 
             if self._new_cat_filename is not None:
@@ -230,7 +230,7 @@ class DataSourceWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._browser = data_browser(self.cfg.dir, title="Directory:", parent=self)
+        self._browser = data_browser(self.cfg.dir, title="Directory", parent=self)
 
         self._images_section = Section("Images", parent=self)
         self._image_table = image_table_factory(self.cfg.images, self)
@@ -252,7 +252,8 @@ class DataSourceWidget(SettingsWidget):
     def collect(self) -> bool:
         self.data_requested.emit()
 
-        if not self._browser.is_filled(verbose=True) or not self._browser.exists(verbose=True):
+        b = self._browser
+        if not b.validate(verbose=True):
             return False
 
         self._new_dir = self._browser.path

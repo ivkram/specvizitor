@@ -37,7 +37,7 @@ class FileBrowser(AbstractWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
-        self._label = QtWidgets.QLabel(self._title, self)
+        self._label = QtWidgets.QLabel(f"{self._title}:", self)
         if self._title_width is None:
             self._label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         else:
@@ -71,24 +71,31 @@ class FileBrowser(AbstractWidget):
     def is_filled(self, verbose=False) -> bool:
         if not self.path:
             if verbose:
-                logger.error('The field `{}` is empty'.format(self._title.rstrip(':')))
+                logger.error(f"Field `{self._title}` is empty")
             return False
         return True
 
-    def exists(self, verbose=False):
+    def validate(self, verbose=False, missing_ok=False):
+        if not missing_ok and not self.is_filled(verbose=verbose):
+            return False
+
+        path_to_check = pathlib.Path(self.path)
+
+        if self._browser_mode == FileBrowser.SaveFile and path_to_check.exists():
+            logger.error(f"File `{path_to_check}` already exists")
+            return False
+
         if self._browser_mode == FileBrowser.SaveFile:
-            path_to_check = pathlib.Path(self.path).parent
-        else:
-            path_to_check = pathlib.Path(self.path)
+            path_to_check = path_to_check.parent
 
         if not path_to_check.exists():
             if verbose:
                 if self._browser_mode == FileBrowser.OpenFile:
-                    msg = 'The file `{}` does not exist'.format(path_to_check)
+                    msg = f"File `{path_to_check}` does not exist"
                 elif self._browser_mode in (FileBrowser.OpenDirectory, FileBrowser.SaveFile):
-                    msg = 'The directory `{}` does not exist'.format(path_to_check)
+                    msg = f"Directory `{path_to_check}` does not exist"
                 else:
-                    msg = 'The path `{}` does not exist'.format(path_to_check)
+                    msg = f"Path `{path_to_check}` does not exist"
                 logger.error(msg)
             return False
 
@@ -98,7 +105,7 @@ class FileBrowser(AbstractWidget):
         path = None
 
         if self._browser_mode == FileBrowser.OpenFile:
-            path = qtpy.compat.getopenfilename(self, caption='Choose File', basedir=self._default_path,
+            path = qtpy.compat.getopenfilename(self, caption="Choose File", basedir=self._default_path,
                                                filters=self._filter)[0]
 
         # elif self._browser_mode == FileBrowser.OpenFiles:
@@ -107,10 +114,10 @@ class FileBrowser(AbstractWidget):
         #                                                                   filters=self._filter)[0])
 
         elif self._browser_mode == FileBrowser.OpenDirectory:
-            path = qtpy.compat.getexistingdirectory(self, caption='Choose Directory', basedir=self._default_path)
+            path = qtpy.compat.getexistingdirectory(self, caption="Choose Directory", basedir=self._default_path)
 
         elif self._browser_mode == FileBrowser.SaveFile:
-            path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=self._default_path,
+            path, extension = qtpy.compat.getsavefilename(self, caption="Save/Save As", basedir=self._default_path,
                                                           filters=self._filter)
 
         if path:
