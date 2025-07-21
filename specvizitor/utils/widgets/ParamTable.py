@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 
-from functools import partial
+from functools import partial, wraps
 import re
 
 from .FileBrowser import FileBrowser
@@ -161,7 +161,7 @@ class ParamTable(QtWidgets.QWidget):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     @property
-    def _new_data(self):
+    def _new_data(self) -> list[list[str]]:
         data = []
         for row in self._table_items:
             data_row = []
@@ -173,6 +173,20 @@ class ParamTable(QtWidgets.QWidget):
     @property
     def _current_row(self):
         return self._table.currentRow()
+
+    @property
+    def _data_changed(self) -> bool:
+        data1, data2 = self._old_data, [d for i, d in enumerate(self._new_data) if not self._is_deleted[i]]
+
+        if len(data1) != len(data2):
+            return True
+
+        for row1, row2 in zip(data1, data2):
+            for value1, value2 in zip(row1, row2):
+                if value1 != value2:
+                    return True
+
+        return False
 
     def _get_item_filter_list(self, include_current_row=False):
         filter_list = [[] for _ in range(len(self._header))]
@@ -204,14 +218,15 @@ class ParamTable(QtWidgets.QWidget):
                 self._table.setItem(i, j, item)
 
     def init_ui(self):
-        self._add_button = QtWidgets.QPushButton('Add...', self)
-        self._delete_button = QtWidgets.QPushButton('Delete', self)
-        self._edit_button = QtWidgets.QPushButton('Edit...', self)
-        self._reset_button = QtWidgets.QPushButton('Reset', self)
+        self._add_button = QtWidgets.QPushButton("Add...", self)
+        self._delete_button = QtWidgets.QPushButton("Delete", self)
+        self._edit_button = QtWidgets.QPushButton("Edit...", self)
+        self._reset_button = QtWidgets.QPushButton("Reset", self)
 
         for w in (self._add_button, self._delete_button, self._edit_button, self._reset_button):
             w.setFixedWidth(90)
-        self._set_buttons_enabled(False)
+        self._set_delete_edit_buttons_enabled(False)
+        self._set_reset_button_enabled(False)
 
         self._table = QtWidgets.QTableWidget(len(self._old_data), len(self._header), self)
         self._table.setTextElideMode(QtCore.Qt.ElideLeft)
@@ -245,13 +260,16 @@ class ParamTable(QtWidgets.QWidget):
 
         self.layout().addWidget(self._table)
 
-    def _set_buttons_enabled(self, a0: bool):
+    def _set_reset_button_enabled(self, a0: bool):
+        self._reset_button.setEnabled(a0)
+
+    def _set_delete_edit_buttons_enabled(self, a0: bool):
         for w in (self._delete_button, self._edit_button):
             w.setEnabled(a0)
 
     @QtCore.Slot()
     def selection_changed_action(self):
-        self._set_buttons_enabled(not self._is_deleted[self._current_row])
+        self._set_delete_edit_buttons_enabled(not self._is_deleted[self._current_row])
 
     def _set_strikeout_font(self, row, a0):
         for item in self._table_items[row]:
@@ -279,6 +297,7 @@ class ParamTable(QtWidgets.QWidget):
             self._table.setItem(len(self._table_items) - 1, j, item)
 
         self._is_deleted += [False]
+        self._set_reset_button_enabled(self._data_changed)
 
     @QtCore.Slot()
     def _delete_row(self):
@@ -295,12 +314,14 @@ class ParamTable(QtWidgets.QWidget):
             self._set_strikeout_font(current_row, True)
 
         self._table.selectionModel().clearSelection()
-        self._set_buttons_enabled(False)
+        self._set_delete_edit_buttons_enabled(False)
 
         if current_row + 1 < len(self._table_items):
             current_row += 1
             self._table.setCurrentCell(current_row, 0)
             self._table_items[current_row][0].tableWidget().setFocus()
+
+        self._set_reset_button_enabled(self._data_changed)
 
     @QtCore.Slot()
     def _edit_row_dialog(self):
@@ -314,6 +335,7 @@ class ParamTable(QtWidgets.QWidget):
     def _edit_row(self, row_index: int, row_data: list[str]):
         for j, item in enumerate(self._table_items[row_index]):
             item.setText(row_data[j])
+        self._set_reset_button_enabled(self._data_changed)
 
     @QtCore.Slot()
     def _reset(self):
@@ -321,7 +343,8 @@ class ParamTable(QtWidgets.QWidget):
         self._set_table_items()
 
         self._table.selectionModel().clearSelection()
-        self._set_buttons_enabled(False)
+        self._set_delete_edit_buttons_enabled(False)
+        self._set_reset_button_enabled(False)
         self.setFocus()
 
     @QtCore.Slot()
