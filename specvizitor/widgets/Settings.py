@@ -177,18 +177,14 @@ class CatalogueWidget(SettingsWidget):
 
         return True
 
-    @QtCore.Slot(list)
-    def save_aliases(self, table_data: list[tuple[str, str]]):
+    @QtCore.Slot(list, list, bool)
+    def save_aliases(self, table_data: list[tuple[str, str]], _, aliases_changed: bool):
         translate = {}
         for alias in table_data:
             translate[alias[0]] = alias[1].split(',')
 
-        if self.cfg.translate.keys() == translate.keys() and list(self.cfg.translate.values()) == list(translate.values()):
-            self._aliases_changed = False
-        else:
-            self._aliases_changed = True
-
         self._new_translate = translate
+        self._aliases_changed = aliases_changed
 
     def accept(self):
         self.cfg.translate = self._new_translate
@@ -223,7 +219,7 @@ class DataSourceWidget(SettingsWidget):
         self._image_table: ParamTable | None = None
 
         self._new_dir: str | None = None
-        self._new_images: dict[config.Image] | None = None
+        self._new_images: dict[str, config.Image] | None = None
 
         self._images_changed: bool = False
 
@@ -259,16 +255,14 @@ class DataSourceWidget(SettingsWidget):
         self._new_dir = self._browser.path
         return True
 
-    @QtCore.Slot(list)
-    def save_images(self, table_data: list[tuple[str, str, str]]):
+    @QtCore.Slot(list, list, bool)
+    def save_images(self, table_data: list[tuple[str, str, str]], _, images_changed: bool):
         images = {}
         for img in table_data:
             images[img[0]] = config.Image(filename=img[1], wcs_source=img[2] if img[2] else None)
 
-        old_data = [[label, img.filename, img.wcs_source] for label, img in self.cfg.images.items()] if self.cfg.images else []
-        self._images_changed = True if old_data != table_data else False
-
         self._new_images = images
+        self._images_changed = images_changed
 
     def accept(self):
         self.cfg.dir = self._new_dir
@@ -292,12 +286,19 @@ class DataViewerWidget(SettingsWidget):
     data_requested = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
 
-    def __init__(self, cfg: SpectralLineData, parent=None):
+    def __init__(self, cfg: config.DataViewer, spectral_lines: SpectralLineData, parent=None):
         self.cfg = cfg
+        self.spectral_lines = spectral_lines
+
+        self._redshift_step_labels: list[QtWidgets.QLabel] = []
+        self._redshift_step_editors: list[QtWidgets.QLineEdit] = []
+
+        self._spacer: QtWidgets.QWidget | None = None
 
         self._lines_section: Section | None = None
         self._lines_table: ParamTable | None = None
 
+        self._new_redshift_steps: list[float] = []
         self._new_wavelengths: dict[str, float] | None = None
 
         self._wavelengths_changed: bool = False
@@ -305,8 +306,25 @@ class DataViewerWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
+        labels = ("Redshift step:", "Redshift step (fine tuning):")
+        tooltips = (
+            "Decrease (increase) in redshift when pressing Q (W)",
+            "Decrease (increase) in redshift when pressing Shift+Q (Shift+W)"
+        )
+        redshift_steps = (self.cfg.redshift_step, self.cfg.redshift_small_step)
+        for i in range(2):
+            label = QtWidgets.QLabel(labels[i], self)
+            label.setToolTip(tooltips[i])
+            self._redshift_step_labels.append(label)
+            redshift_step_editor = QtWidgets.QLineEdit(str(redshift_steps[i]), self)
+            redshift_step_editor.setFixedWidth(100)
+            self._redshift_step_editors.append(redshift_step_editor)
+
+        self._spacer = QtWidgets.QWidget(self)
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+
         self._lines_section = Section("Spectral lines", parent=self)
-        self._lines_table = spectral_lines_table_factory(self.cfg.wavelengths, self)
+        self._lines_table = spectral_lines_table_factory(self.spectral_lines.wavelengths, self)
 
         self.data_requested.connect(self._lines_table.collect)
         self._lines_table.data_collected.connect(self.save_lines)
@@ -315,6 +333,13 @@ class DataViewerWidget(SettingsWidget):
         self.setLayout(QtWidgets.QVBoxLayout())
 
     def populate(self):
+        sub_layout = QtWidgets.QHBoxLayout()
+        for i in range(2):
+            sub_layout.addWidget(self._redshift_step_labels[i])
+            sub_layout.addWidget(self._redshift_step_editors[i])
+            sub_layout.addWidget(self._spacer)
+        self.layout().addLayout(sub_layout)
+
         sub_layout = QtWidgets.QVBoxLayout()
         sub_layout.addWidget(self._lines_table)
         self._lines_section.set_layout(sub_layout)
@@ -322,25 +347,36 @@ class DataViewerWidget(SettingsWidget):
 
     def collect(self) -> bool:
         self.data_requested.emit()
+
+        new_redshift_steps = []
+        for i in range(2):
+            redshift_step = self._redshift_step_editors[i].text()
+            try:
+                redshift_step = float(redshift_step)
+                if redshift_step <= 0:
+                    raise ValueError(redshift_step)
+            except ValueError:
+                logger.error(f"Invalid redshift step: {redshift_step}")
+                return False
+            else:
+                new_redshift_steps.append(redshift_step)
+        self._new_redshift_steps = new_redshift_steps
+
         return True
 
-    @QtCore.Slot(list)
-    def save_lines(self, table_data: list[tuple[str, str]]):
+    @QtCore.Slot(list, list, bool)
+    def save_lines(self, table_data: list[tuple[str, str]], _, wavelengths_changed: bool):
         wavelengths = {}
         for line in table_data:
             wavelengths[line[0]] = float(line[1])
 
-        self._wavelengths_changed = False
-        if not self.cfg.wavelengths.keys() == wavelengths.keys():
-            self._wavelengths_changed = True
-        elif not np.isclose(np.fromiter(wavelengths.values(), dtype=float),
-                            np.fromiter(self.cfg.wavelengths.values(), dtype=float)).all():
-            self._wavelengths_changed = True
-
         self._new_wavelengths = wavelengths
+        self._wavelengths_changed = wavelengths_changed
 
     def accept(self):
-        self.cfg.wavelengths = self._new_wavelengths
+        self.cfg.redshift_step = self._new_redshift_steps[0]
+        self.cfg.redshift_small_step = self._new_redshift_steps[1]
+        self.spectral_lines.wavelengths = self._new_wavelengths
 
         if self._wavelengths_changed:
             self.spectral_lines_changed.emit()
@@ -375,14 +411,16 @@ class Settings(QtWidgets.QDialog):
         self.populate()
 
     def create_tabs(self):
-        self._tabs = {'Appearance': AppearanceWidget(self._cfg.appearance, self),
-                      'Catalogue': CatalogueWidget(self._old_cat, self._cfg.catalogue, self),
-                      'Data Source': DataSourceWidget(self._cfg.data, self),
-                      'Data Viewer': DataViewerWidget(self._spectral_lines, self)}
-        self._tabs['Appearance'].appearance_changed.connect(self._appearance_changed_action)
-        self._tabs['Catalogue'].catalog_changed.connect(self.catalogue_changed.emit)
-        self._tabs['Data Source'].images_changed.connect(self.data_source_changed.emit)
-        self._tabs['Data Viewer'].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
+        self._tabs = {
+            "Appearance": AppearanceWidget(self._cfg.appearance, self),
+            "Catalogue": CatalogueWidget(self._old_cat, self._cfg.catalogue, self),
+            "Data Source": DataSourceWidget(self._cfg.data, self),
+            "Data Viewer": DataViewerWidget(self._cfg.data_viewer, self._spectral_lines, self)
+        }
+        self._tabs["Appearance"].appearance_changed.connect(self._appearance_changed_action)
+        self._tabs["Catalogue"].catalog_changed.connect(self.catalogue_changed.emit)
+        self._tabs["Data Source"].images_changed.connect(self.data_source_changed.emit)
+        self._tabs["Data Viewer"].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
 
     def add_tabs(self):
         for name, t in self._tabs.items():

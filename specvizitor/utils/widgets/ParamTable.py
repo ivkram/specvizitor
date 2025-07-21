@@ -130,7 +130,7 @@ class TableRowEditor(QtWidgets.QDialog):
 
 
 class ParamTable(QtWidgets.QWidget):
-    data_collected = QtCore.Signal(list, list)
+    data_collected = QtCore.Signal(list, list, bool)
 
     def __init__(self, header: list[str], data: list[list[str]], is_unique: list[bool] | None = None,
                  remember_deleted=True, parent=None, **kwargs):
@@ -349,4 +349,4 @@ class ParamTable(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def collect(self):
-        self.data_collected.emit(self._new_data, self._is_deleted)
+        self.data_collected.emit(self._new_data, self._is_deleted, self._data_changed)
