@@ -127,12 +127,20 @@ class Plugin(PluginCore):
         spec_2d.update_axis_labels()
 
         scale = (1 * u.Unit('micron')).to(wave_unit).value
+        x_data, _ = next(iter(spec_1d.plot_data_items.values())).getData()  # assume 1:1 mapping
 
-        dlam = spec_2d.meta['CD1_1'] * scale
-        crval = spec_2d.meta['CRVAL1'] * scale
-        crpix = spec_2d.meta['CRPIX1']
+        try:
+            dlam = spec_2d.meta["CD1_1"] * scale
+            crval = spec_2d.meta["CRVAL1"] * scale
+            crpix = spec_2d.meta["CRPIX1"]
+        except KeyError as e:
+            logger.error(f"{e} (widget: {spec_2d.title})")
+            dlam, crval, crpix = x_data[1]-x_data[0], x_data[0], 1.0
 
-        spec_2d._qtransform = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
+        qtransform1 = QtGui.QTransform.fromTranslate(0.5, 0.5)
+        qtransform2 = QtGui.QTransform().translate(crval - dlam * crpix, 0).scale(dlam, 1)
+
+        spec_2d._qtransform = qtransform1 * qtransform2
         spec_2d.apply_qtransform(apply_to_default_range=True)
 
     @staticmethod
