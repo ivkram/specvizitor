@@ -8,7 +8,6 @@ from ..utils.widgets import AbstractWidget, MyQTextEdit
 class InspectionResults(AbstractWidget):
     redshift_set = QtCore.Signal(bool)
     data_collected = QtCore.Signal(float, str, dict)
-    edit_button_clicked = QtCore.Signal()
 
     def __init__(self, cfg: config.InspectionResults, parent=None):
 
@@ -22,8 +21,6 @@ class InspectionResults(AbstractWidget):
 
         self._checkbox_widgets: dict[str, QtWidgets.QCheckBox] | None = None
         self._comments_widget: MyQTextEdit | None = None
-
-        self._edit_fields: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
         self.setEnabled(False)
@@ -65,9 +62,6 @@ class InspectionResults(AbstractWidget):
         self._comments_widget.setPlaceholderText('Comment')
         self._comments_widget.setMinimumWidth(90)
 
-        self._edit_fields = QtWidgets.QPushButton("Edit...", self)
-        self._edit_fields.clicked.connect(self.edit_button_clicked.emit)
-
         self._clear_redshift.clicked.connect(self.clear_redshift)
 
     def set_layout(self):
@@ -87,8 +81,6 @@ class InspectionResults(AbstractWidget):
             self.layout().addWidget(widget)
 
         self.layout().addWidget(self._comments_widget)
-
-        self.layout().addWidget(self._edit_fields)
 
     @QtCore.Slot(InspectionData)
     def load_project(self, review: InspectionData):

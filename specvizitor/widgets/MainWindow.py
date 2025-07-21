@@ -213,6 +213,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._delete_redshift.setShortcut(QtGui.QKeySequence('Ctrl+D'))
         self._edit.addAction(self._delete_redshift)
 
+        self._edit.addSeparator()
+
+        self._edit_inspection_fields = QtWidgets.QAction("Inspection Fields...")
+        self._edit_inspection_fields.setEnabled(False)
+        self._edit_inspection_fields.triggered.connect(self._edit_inspection_fields_action)
+        self._edit.addAction(self._edit_inspection_fields)
+
         self._view = self._menu.addMenu("&View")
 
         self._reset_view = QtWidgets.QAction("Reset View")
@@ -318,7 +325,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._commands_bar.settings_button_clicked.connect(self._settings_action)
 
         self._inspection_res.redshift_set.connect(self._delete_redshift.setEnabled)
-        self._inspection_res.edit_button_clicked.connect(self._edit_inspection_file_action)
 
         self._data_viewer.object_loaded.connect(self.finalize_loading)
 
@@ -396,7 +402,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def load_project(self, j: int | None = None):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
-        for w in (self._export, self._save_redshift, self._reset_view, self._reset_dock_layout):
+        for w in (self._export, self._save_redshift, self._edit_inspection_fields, self._reset_view, self._reset_dock_layout):
             w.setEnabled(True)
 
         self.project_loaded.emit(self.rd.review)
@@ -574,7 +580,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._was_maximized:
             self.showMaximized()
 
-    def _edit_inspection_file_action(self):
+    def _edit_inspection_fields_action(self):
         dialog = InspectionFieldEditor(review=self.rd.review, parent=self)
         dialog.inspection_fields_updated.connect(self.update_inspection_fields)
         if dialog.exec():
