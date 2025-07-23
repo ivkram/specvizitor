@@ -167,8 +167,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._subsets_dock = QtWidgets.QDockWidget('Subsets', self)
         self._subsets_dock.setObjectName('Subsets')
         self._subsets_dock.setWidget(self._subsets)
+        self._subsets_dock.hide()
 
         self._init_menu()
+
+        self.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -225,6 +228,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._view = self._menu.addMenu("&View")
 
+        self._dock_menu = QtWidgets.QMenu("Docks")
+        self._view.addMenu(self._dock_menu)
+
+        self._dock_menu.addActions([
+            self._quick_search_dock.toggleViewAction(),
+            self._object_info_dock.toggleViewAction(),
+            self._inspection_res_dock.toggleViewAction(),
+            self._subsets_dock.toggleViewAction()
+        ])
+        self._dock_menu.addSeparator()
+        self._dock_menu.addAction(self._commands_bar.toggleViewAction())
+
+        self._view.addSeparator()
+
         self._reset_view = QtWidgets.QAction("Reset View")
         self._reset_view.setEnabled(False)
         self._reset_view.triggered.connect(self._data_viewer.reset_view)
@@ -238,13 +255,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._view.addSeparator()
 
-        self._zen = QtWidgets.QAction("Enter Zen Mode")
+        self._zen = QtWidgets.QAction("Zen Mode")
         self._zen.triggered.connect(self._zen_mode_action)
         self._zen.setShortcut('H')
         self._auxiliary_docks = ()  # (self._quick_search_dock, self._object_info_dock, self._subsets_dock)
         self._view.addAction(self._zen)
-
-        self._view.addSeparator()
 
         self._fullscreen = QtWidgets.QAction("Fullscreen")
         self._fullscreen.triggered.connect(self._fullscreen_action)
@@ -562,7 +577,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _zen_mode_action(self):
         self._zen_mode_activated = not self._zen_mode_activated
-        self._zen.setText("Exit Zen Mode" if self._zen_mode_activated else "Enter Zen Mode")
         for w in self._auxiliary_docks:
             w.setVisible(not self._zen_mode_activated)
         self.is_zen_mode_activated.emit(self._zen_mode_activated)
