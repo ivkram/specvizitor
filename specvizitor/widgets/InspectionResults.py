@@ -93,9 +93,12 @@ class InspectionResults(AbstractWidget):
     def set_redshift(self, redshift: float):
         if redshift != REDSHIFT_FILL_VALUE:
             self._redshift_widget.setText(f"Redshift: {redshift:.4f}")
+            self._clear_redshift.setEnabled(True)
             self.redshift_set.emit(True)
         else:
             self._redshift_widget.setText(f"Redshift: --")
+            self._clear_redshift.setEnabled(False)
+            self.setFocus()
             self.redshift_set.emit(False)
         self._redshift = redshift
 

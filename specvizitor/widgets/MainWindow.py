@@ -37,7 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
     loading_aborted = QtCore.Signal()
     data_requested = QtCore.Signal()
     save_action_invoked = QtCore.Signal()
-    delete_action_invoked = QtCore.Signal()
+    clear_action_invoked = QtCore.Signal()
     close_action_invoked = QtCore.Signal()
 
     catalogue_changed = QtCore.Signal(object)
@@ -201,21 +201,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._edit = self._menu.addMenu("&Edit")
 
-        self._save_redshift = QtWidgets.QAction("&Save Redshift")
+        self._redshift_menu = QtWidgets.QMenu("&Redshift")
+        self._edit.addMenu(self._redshift_menu)
+
+        self._save_redshift = QtWidgets.QAction("&Save")
         self._save_redshift.setEnabled(False)
         self._save_redshift.triggered.connect(self.save_action_invoked.emit)
         self._save_redshift.setShortcut(QtGui.QKeySequence('Ctrl+S'))
-        self._edit.addAction(self._save_redshift)
+        self._redshift_menu.addAction(self._save_redshift)
 
-        self._delete_redshift = QtWidgets.QAction("&Delete Redshift")
-        self._delete_redshift.setEnabled(False)
-        self._delete_redshift.triggered.connect(self.delete_action_invoked.emit)
-        self._delete_redshift.setShortcut(QtGui.QKeySequence('Ctrl+D'))
-        self._edit.addAction(self._delete_redshift)
+        self._clear_redshift = QtWidgets.QAction("Clear")
+        self._clear_redshift.setEnabled(False)
+        self._clear_redshift.triggered.connect(self.clear_action_invoked.emit)
+        self._clear_redshift.setShortcut(QtGui.QKeySequence('Ctrl+D'))
+        self._redshift_menu.addAction(self._clear_redshift)
 
         self._edit.addSeparator()
 
-        self._edit_inspection_fields = QtWidgets.QAction("Inspection Fields...")
+        self._edit_inspection_fields = QtWidgets.QAction("Inspection &Fields...")
         self._edit_inspection_fields.setEnabled(False)
         self._edit_inspection_fields.triggered.connect(self._edit_inspection_fields_action)
         self._edit.addAction(self._edit_inspection_fields)
@@ -306,7 +309,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.subset_inspection_stopped.connect(self._subsets.stop_subset_inspection)
 
         self.save_action_invoked.connect(self._data_viewer.request_redshift)
-        self.delete_action_invoked.connect(self._inspection_res.clear_redshift)
+        self.clear_action_invoked.connect(self._inspection_res.clear_redshift)
         self.close_action_invoked.connect(self._data_viewer.free_resources)
 
         self.is_zen_mode_activated.connect(self._data_viewer.enter_zen_mode)
@@ -324,7 +327,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._commands_bar.screenshot_button_clicked.connect(self._screenshot_action)
         self._commands_bar.settings_button_clicked.connect(self._settings_action)
 
-        self._inspection_res.redshift_set.connect(self._delete_redshift.setEnabled)
+        self._inspection_res.redshift_set.connect(self._clear_redshift.setEnabled)
 
         self._data_viewer.object_loaded.connect(self.finalize_loading)
 
