@@ -152,16 +152,20 @@ class Plugin(PluginCore):
 
     @staticmethod
     def convert_spec1d_flux_unit_to_physical(spec_1d: Plot1D):
-        flux = spec_1d.get_plot_data("flux")
+        err_msg = "Flux unit conversion skipped: "
+
+        flux = spec_1d.get_plot_data("flux", ignore_missing=True)
         if flux is None:
+            logger.debug(f"{err_msg}Column not found: `flux`")
             return
 
         if not flux.unit or not flux.unit.is_equivalent(u.Unit('ct / s')):
-            logger.debug(f"Flux unit conversion skipped: Expected `ct/s` but found `{flux.unit}` (widget: {spec_1d.title})")
+            logger.debug(f"{err_msg}Expected `ct/s` but found `{flux.unit}` (widget: {spec_1d.title})")
             return
 
-        flat = spec_1d.get_plot_data("flat")
+        flat = spec_1d.get_plot_data("flat", ignore_missing=True)
         if flat is None:
+            logger.debug(f"{err_msg}Column not found: `flat`")
             return
 
         flat = flat.to('1e19 AA cm2 ct / erg')

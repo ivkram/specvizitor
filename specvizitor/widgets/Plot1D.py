@@ -27,11 +27,12 @@ class Plot1D(ViewerElement):
 
         super().__init__(cfg=cfg, **kwargs)
 
-    def get_plot_data(self, cname: str) -> Quantity | None:
+    def get_plot_data(self, cname: str, ignore_missing=False) -> Quantity | None:
         try:
             plot_data = self.data[cname].quantity
         except KeyError:
-            logger.warning(f"Column not found: {cname} (widget: {self.title})")
+            if not ignore_missing:
+                logger.warning(f"Column not found: {cname} (widget: {self.title})")
             return None
 
         return Quantity(plot_data)  # return a copy to prevent any modifications to self.data
