@@ -63,10 +63,11 @@ wavelengths:
   HeII-4687: 4687.3
 
   # Oxygen lines
-  OII 1: 3727.092
-  OII 2: 3729.875
-  OIII 1: 4960.30
-  OIII 2: 5008.24
+  OI-8449: 8448.68
+  OII-3727: 3727.092
+  OII-3720: 3729.875
+  OIII-4960: 4960.30
+  OIII-5008: 5008.24
   OIII-4363: 4363.44
 
   # Sulfur lines
