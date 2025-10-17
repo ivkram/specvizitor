@@ -148,7 +148,7 @@ class Catalog:
             if not obj_id:
                 return t  # exit recursion
 
-            if len(indices) != len(obj_id):
+            if len(indices) < len(obj_id):
                 raise KeyError
 
             if isinstance(t, Row):
@@ -159,21 +159,21 @@ class Catalog:
 
             return self._loc_full_base(t.loc[indices[0], obj_id[0]], indices[1:], obj_id[1:])
         else:
-            raise TypeError(f'Unknown object ID type: {type(obj_id)}')
+            raise TypeError(f"Unknown object ID type: {type(obj_id)}")
 
     def _loc_full(self, obj_id: str | int | tuple):
         """ Retrieve rows by (multi)index.
         """
         if self.indices is None:
-            raise ValueError(f'Cannot locate the object: no indices found in the table (ID: {obj_id})')
+            raise ValueError(f"Cannot locate the object: no indices found in the table (ID: {obj_id})")
         return self._loc_full_base(self.table, self.indices, obj_id)
 
     def get_col(self, cname: str):
         if cname not in self.extended_colnames:
             if cname in self.translate:
-                raise KeyError('`{}` column and its aliases ({}) not found'.format(cname, ", ".join(self.translate[cname])))
+                raise KeyError(f"`{cname}` column and its aliases ({', '.join(self.translate[cname])}) not found")
             else:
-                raise KeyError('`{}` column not found'.format(cname))
+                raise KeyError(f"`{cname}` column not found")
 
         if cname in self.colnames:
             return self.table[cname]
@@ -187,14 +187,14 @@ class Catalog:
             cat_entry = self._loc_full(obj_id)
         except KeyError:
             if not ignore_missing:
-                logger.error(f'Object not found in the catalogue (ID: {obj_id})')
+                logger.error(f"Object not found in the catalogue (ID: {obj_id})")
             return None
         except (TypeError, ValueError) as e:
             logger.error(e)
             return None
 
         if isinstance(cat_entry, Table):
-            logger.error(f'Object corresponds to multiple entries in the catalogue (ID: {obj_id})')
+            logger.error(f"Object corresponds to multiple entries in the catalogue (ID: {obj_id})")
             return None
 
         return Catalog(cat_entry, indices=self.indices, translate=self.translate)
