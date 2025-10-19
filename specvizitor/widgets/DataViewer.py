@@ -37,8 +37,8 @@ class DataViewer(AbstractWidget):
     redshift_collected = QtCore.Signal(float)
 
     view_reset = QtCore.Signal(object)
-    visibility_changed = QtCore.Signal(bool)
-    spectral_lines_changed = QtCore.Signal()
+    visibility_updated = QtCore.Signal(bool)
+    spectral_lines_updated = QtCore.Signal()
 
     def __init__(self,
                  global_cfg: config.DataViewer,
@@ -136,7 +136,7 @@ class DataViewer(AbstractWidget):
         self.project_loaded.connect(w0.load_project)
         self.data_loaded.connect(w0.load_object)
         self.view_reset.connect(w0.reset_view)
-        self.spectral_lines_changed.connect(w0.update_spectral_lines)
+        self.spectral_lines_updated.connect(w0.update_spectral_lines)
 
         w0.object_loaded.connect(self._attach_widget)
         w0.object_destroyed.connect(self._detach_widget)
@@ -148,7 +148,7 @@ class DataViewer(AbstractWidget):
         self.project_loaded.disconnect(w0.load_project)
         self.data_loaded.disconnect(w0.load_object)
         self.view_reset.disconnect(w0.reset_view)
-        self.spectral_lines_changed.disconnect(w0.update_spectral_lines)
+        self.spectral_lines_updated.disconnect(w0.update_spectral_lines)
 
         w0.object_loaded.disconnect()
         w0.object_destroyed.disconnect()
@@ -234,7 +234,7 @@ class DataViewer(AbstractWidget):
         layout['float'] = float_layout_cleaned
 
     @QtCore.Slot(dict)
-    def restore_dock_layout(self, layout: dict):
+    def update_dock_layout(self, layout: dict):
         # fix for a pyqtgraph bug where empty layouts throw an error
         self._clean_dock_layout(layout)
 
@@ -376,7 +376,7 @@ class DataViewer(AbstractWidget):
         self.redshift_changed.disconnect()
 
     @QtCore.Slot()
-    def collect(self):
+    def collect_data(self):
         self.data_collected.emit(self.dock_area.saveState())
 
     @QtCore.Slot(str)
@@ -384,7 +384,7 @@ class DataViewer(AbstractWidget):
         self.grab().save(filename)
 
     @QtCore.Slot(bool)
-    def enter_zen_mode(self, is_zen: bool):
+    def activate_zen_mode(self, is_zen: bool):
         self._zen_mode_activated = is_zen
         for wt in self.widgets:
             self._update_visibility(wt)
@@ -398,9 +398,9 @@ class DataViewer(AbstractWidget):
         else:
             dock.showTitleBar()
 
-        self.visibility_changed.connect(w0.update_visibility)
-        self.visibility_changed.emit(self._zen_mode_activated)
-        self.visibility_changed.disconnect(w0.update_visibility)
+        self.visibility_updated.connect(w0.update_visibility)
+        self.visibility_updated.emit(self._zen_mode_activated)
+        self.visibility_updated.disconnect(w0.update_visibility)
 
     @QtCore.Slot()
     def free_resources(self):

@@ -157,6 +157,10 @@ class InspectionData:
     def flag_columns(self) -> list[str]:
         return [cname for cname in self.user_defined_columns if pd.api.types.is_bool_dtype(self.df[cname])]
 
+    @property
+    def n_starred(self) -> int:
+        return self.df["starred"].sum()
+
     def add_flag_column(self, column_name: str):
         self.df[column_name] = False
 

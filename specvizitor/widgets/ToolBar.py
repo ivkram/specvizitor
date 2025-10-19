@@ -38,7 +38,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._settings_button: QtWidgets.QAction | None = None
 
         super().__init__(parent=parent)
-        self.setWindowTitle('Commands Bar')
+        self.setWindowTitle("Commands Bar")
 
     @property
     def _viewer_connected_buttons(self):
@@ -48,7 +48,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
     def _create_navigation_buttons(self) -> dict[str, QtWidgets.QAction]:
         navig_buttons = {}
         for button_name, button_properties in self.NAVIGATION_BUTTON_PARAMS.items():
-            button = QtWidgets.QAction('Go to the {} object'.format(button_name), self)
+            button = QtWidgets.QAction(f"Go to the {button_name} object", self)
 
             if button_properties.get('shortcut'):
                 button.setShortcut(button_properties['shortcut'])
@@ -81,25 +81,19 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._settings_button.setIcon(self._get_icon('gear.svg'))
 
     def init_ui(self):
-        # create buttons for switching to the next or previous object
         self._navigation_buttons = self._create_navigation_buttons()
 
-        # create a `star` button
         self._star_button = QtWidgets.QAction(self)
-        self._star_button.setShortcut('S')
-        self._star_button.setToolTip('Star the object')
+        self._star_button.setToolTip("Star the object")
 
-        # create a `screenshot` button
         self._screenshot_button = QtWidgets.QAction(self)
-        self._screenshot_button.setToolTip('Take a screenshot')
+        self._screenshot_button.setToolTip("Take a screenshot")
 
-        # create a `reset view` button
         self._reset_view_button = QtWidgets.QAction(self)
-        self._reset_view_button.setToolTip('Reset the view')
+        self._reset_view_button.setToolTip("Reset the view")
 
-        # create a `reset layout` button
         self._reset_layout_button = QtWidgets.QAction(self)
-        self._reset_layout_button.setToolTip('Reset the layout')
+        self._reset_layout_button.setToolTip("Reset the layout")
 
         for b in self._viewer_connected_buttons:
             b.setEnabled(False)
@@ -108,11 +102,10 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         self._settings_button = QtWidgets.QAction(self)
-        self._settings_button.setToolTip('GUI and Project Settings')
+        self._settings_button.setToolTip("GUI and Project Settings")
 
         self._set_icons()
 
-        # connect button signals to slots
         for button_name, button in self._navigation_buttons.items():
             button.triggered.connect(lambda s, command=button_name.split(' ')[0], find_starred='starred' in button_name:
                                      self.navigation_button_clicked.emit(command, find_starred))
@@ -146,20 +139,17 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
 
         self.addAction(self._settings_button)
 
-    @QtCore.Slot(InspectionData)
-    def load_project(self, review: InspectionData):
+    @QtCore.Slot()
+    def load_project(self):
         for b in self._viewer_connected_buttons:
             b.setEnabled(True)
 
-        self._navigation_buttons['previous starred'].setEnabled(review.has_data('starred'))
-        self._navigation_buttons['next starred'].setEnabled(review.has_data('starred'))
-
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):
-        self._star_button.setIcon(self._get_icon(self._get_star_icon_name(review.get_value(j, 'starred'))))
+        pass
 
     @QtCore.Slot(bool, bool)
-    def update_star_button_icon(self, starred: bool, has_starred: bool):
+    def star_object(self, starred: bool, has_starred: bool):
         self._star_button.setIcon(self._get_icon(self._get_star_icon_name(starred)))
 
         self._navigation_buttons['previous starred'].setEnabled(has_starred)

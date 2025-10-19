@@ -88,7 +88,7 @@ class Subsets(AbstractWidget):
     def set_subset_info(self, obj_str: str | None = None):
         if obj_str is None:
             obj_str = '--'
-        self._subset_info.setText(f'Subset: {self._subset_name}\nObject: {obj_str}/{len(self._subset_cat)}')
+        self._subset_info.setText(f"Subset: {self._subset_name}\nObject: {obj_str}/{len(self._subset_cat)}")
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):

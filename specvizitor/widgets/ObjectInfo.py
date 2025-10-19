@@ -128,7 +128,7 @@ class ObjectInfo(AbstractWidget):
                 row[1].setText('')
 
     @QtCore.Slot()
-    def collect(self):
+    def collect_data(self):
         self.data_collected.emit(self.visible_columns)
 
     def _display_options_action(self):

@@ -6,12 +6,15 @@ from ..utils.widgets import AbstractWidget, MyQTextEdit
 
 
 class InspectionResults(AbstractWidget):
+    object_starred = QtCore.Signal(bool, bool)
     redshift_set = QtCore.Signal(bool)
-    data_collected = QtCore.Signal(float, str, dict)
+    data_collected = QtCore.Signal(bool, float, str, dict)
 
     def __init__(self, cfg: config.InspectionResults, parent=None):
 
         self.cfg = cfg
+        self._is_starred: bool | None = None
+        self._n_starred: int | None = None
         self._redshift: float | None = None
 
         self._redshift_widget: QtWidgets.QLabel | None = None
@@ -89,10 +92,33 @@ class InspectionResults(AbstractWidget):
         self._create_checkbox_widgets(review=review)
         self.repopulate()
 
+        self._n_starred = review.n_starred
+
+    @QtCore.Slot(int, InspectionData)
+    def load_object(self, j: int, review: InspectionData):
+        self._set_starred_state(review.get_value(j, "starred"))
+        self.set_redshift(review.get_value(j, "z_sviz"))
+        self._comments_widget.setText(review.get_value(j, "comment"))
+        for cname, widget in self._checkbox_widgets.items():
+            widget.setChecked(review.get_value(j, cname))
+
+    @QtCore.Slot()
+    def star_object(self):
+        starred = not self._is_starred
+
+        self._n_starred += 1 if starred else -1
+        self._set_starred_state(starred)
+
+    def _set_starred_state(self, starred: bool):
+        self._is_starred = starred
+        self.object_starred.emit(self._is_starred, self._n_starred > 0)
+
     @QtCore.Slot(float)
     def set_redshift(self, redshift: float):
-        if redshift != REDSHIFT_FILL_VALUE:
-            self._redshift_widget.setText(f"Redshift: {redshift:.4f}")
+        self._redshift = redshift
+
+        if self._redshift != REDSHIFT_FILL_VALUE:
+            self._redshift_widget.setText(f"Redshift: {self._redshift:.4f}")
             self._clear_redshift.setEnabled(True)
             self.redshift_set.emit(True)
         else:
@@ -100,18 +126,10 @@ class InspectionResults(AbstractWidget):
             self._clear_redshift.setEnabled(False)
             self.setFocus()
             self.redshift_set.emit(False)
-        self._redshift = redshift
 
     @QtCore.Slot()
     def clear_redshift(self):
         self.set_redshift(REDSHIFT_FILL_VALUE)
-
-    @QtCore.Slot(int, InspectionData)
-    def load_object(self, j: int, review: InspectionData):
-        self.set_redshift(review.get_value(j, 'z_sviz'))
-        self._comments_widget.setText(review.get_value(j, 'comment'))
-        for cname, widget in self._checkbox_widgets.items():
-            widget.setChecked(review.get_value(j, cname))
 
     @QtCore.Slot(int, InspectionData)
     def update_inspection_fields(self, j: int, review: InspectionData):
@@ -121,9 +139,9 @@ class InspectionResults(AbstractWidget):
         self.load_object(j, review)  # not the "cleanest" solution
 
     @QtCore.Slot()
-    def collect(self):
-        redshift = self._redshift
+    def collect_data(self):
+        starred, redshift = self._is_starred, self._redshift
         comment = self._comments_widget.toPlainText()
         checkboxes = {cname: widget.isChecked() for cname, widget in self._checkbox_widgets.items()}
 
-        self.data_collected.emit(redshift, comment, checkboxes)
+        self.data_collected.emit(starred, redshift, comment, checkboxes)

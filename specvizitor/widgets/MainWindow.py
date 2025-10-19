@@ -32,23 +32,21 @@ logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
     EXIT_CODE_REBOOT = -42
+
     project_loaded = QtCore.Signal(InspectionData)
-    object_selected = QtCore.Signal(int, InspectionData, object)
+    object_loaded = QtCore.Signal(int, InspectionData, object)
     loading_aborted = QtCore.Signal()
     data_requested = QtCore.Signal()
-    save_action_invoked = QtCore.Signal()
-    clear_action_invoked = QtCore.Signal()
-    close_action_invoked = QtCore.Signal()
+    project_closed = QtCore.Signal()
 
-    catalogue_changed = QtCore.Signal(object)
-    inspection_fields_changed = QtCore.Signal(int, InspectionData)
-    data_source_changed = QtCore.Signal()
-    spectral_lines_changed = QtCore.Signal()
+    catalogue_updated = QtCore.Signal(object)
+    inspection_fields_updated = QtCore.Signal(int, InspectionData)
+    data_source_updated = QtCore.Signal()
+    spectral_lines_updated = QtCore.Signal()
     visible_columns_updated = QtCore.Signal(list)
     dock_layout_updated = QtCore.Signal(dict)
     viewer_configuration_updated = QtCore.Signal(DataWidgets)
 
-    starred_state_updated = QtCore.Signal(bool, bool)
     screenshot_path_selected = QtCore.Signal(str)
 
     subset_loaded = QtCore.Signal(str, object)
@@ -127,7 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # load the subset to the memory
         if self._cache.last_subset_file:
-            self.load_subset(reset_index=False)
+            self._load_subset(reset_index=False)
 
         # read cache and try to load the last opened project
         if self._cache.last_inspection_file:
@@ -204,18 +202,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._edit = self._menu.addMenu("&Edit")
 
+        self._star_object = QtWidgets.QAction("Star Object")
+        self._star_object.setEnabled(False)
+        self._star_object.triggered.connect(self._inspection_res.star_object)
+        self._star_object.setShortcut('S')
+        self._edit.addAction(self._star_object)
+
         self._redshift_menu = QtWidgets.QMenu("&Redshift")
+        self._redshift_menu.setEnabled(False)
         self._edit.addMenu(self._redshift_menu)
 
         self._save_redshift = QtWidgets.QAction("&Save")
-        self._save_redshift.setEnabled(False)
-        self._save_redshift.triggered.connect(self.save_action_invoked.emit)
+        self._save_redshift.triggered.connect(self._data_viewer.request_redshift)
         self._save_redshift.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self._redshift_menu.addAction(self._save_redshift)
 
         self._clear_redshift = QtWidgets.QAction("Clear")
         self._clear_redshift.setEnabled(False)
-        self._clear_redshift.triggered.connect(self.clear_action_invoked.emit)
+        self._clear_redshift.triggered.connect(self._inspection_res.clear_redshift)
         self._clear_redshift.setShortcut(QtGui.QKeySequence('Ctrl+D'))
         self._redshift_menu.addAction(self._clear_redshift)
 
@@ -279,17 +283,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self._tools = self._menu.addMenu("&Tools")
 
         self._inspect_subset = QtWidgets.QAction("Inspect Subset...")
-        self._inspect_subset.triggered.connect(self._inspect_subset_action)
+        self._inspect_subset.triggered.connect(self.inspect_subset_action)
         self._tools.addAction(self._inspect_subset)
 
         self._screenshot = QtWidgets.QAction("Take Screenshot...")
-        self._screenshot.triggered.connect(self._screenshot_action)
+        self._screenshot.triggered.connect(self.screenshot_action)
         self._tools.addAction(self._screenshot)
 
         self._tools.addSeparator()
 
         self._settings = QtWidgets.QAction("Se&ttings...")
-        self._settings.triggered.connect(self._settings_action)
+        self._settings.triggered.connect(self.settings_action)
         self._tools.addAction(self._settings)
 
         self._help = self._menu.addMenu("&Help")
@@ -303,45 +307,42 @@ class MainWindow(QtWidgets.QMainWindow):
                   self._subsets):
             self.project_loaded.connect(w.load_project)
 
-        for w in (self._data_viewer, self._object_info, self._inspection_res):
-            self.data_requested.connect(w.collect)
-
         self.loading_aborted.connect(self._data_viewer.abort_loading)
 
-        self.catalogue_changed.connect(self._object_info.update_table_items)
-        self.inspection_fields_changed.connect(self._inspection_res.update_inspection_fields)
-        self.data_source_changed.connect(self._data_viewer.open_images)
-        self.spectral_lines_changed.connect(self._data_viewer.spectral_lines_changed.emit)
+        for w in (self._data_viewer, self._object_info, self._inspection_res):
+            self.data_requested.connect(w.collect_data)
+
+        self.project_closed.connect(self._data_viewer.free_resources)
+
+        self.catalogue_updated.connect(self._object_info.update_table_items)
+        self.inspection_fields_updated.connect(self._inspection_res.update_inspection_fields)
+        self.data_source_updated.connect(self._data_viewer.open_images)
+        self.spectral_lines_updated.connect(self._data_viewer.spectral_lines_updated.emit)
         self.visible_columns_updated.connect(self._object_info.update_visible_columns)
-        self.dock_layout_updated.connect(self._data_viewer.restore_dock_layout)
+        self.dock_layout_updated.connect(self._data_viewer.update_dock_layout)
         self.viewer_configuration_updated.connect(self._data_viewer.update_viewer_configuration)
 
-        self.starred_state_updated.connect(self._commands_bar.update_star_button_icon)
         self.screenshot_path_selected.connect(self._data_viewer.take_screenshot)
 
         self.subset_loaded.connect(self._subsets.load_subset)
         self.is_subset_inspection_paused.connect(self._subsets.pause_subset_inspection)
         self.subset_inspection_stopped.connect(self._subsets.stop_subset_inspection)
 
-        self.save_action_invoked.connect(self._data_viewer.request_redshift)
-        self.clear_action_invoked.connect(self._inspection_res.clear_redshift)
-        self.close_action_invoked.connect(self._data_viewer.free_resources)
-
-        self.is_zen_mode_activated.connect(self._data_viewer.enter_zen_mode)
+        self.is_zen_mode_activated.connect(self._data_viewer.activate_zen_mode)
 
         # connect the child widgets to the main window
         self._quick_search.id_selected.connect(self.load_by_id)
         self._quick_search.index_selected.connect(self.load_by_index)
 
-        self._subsets.inspect_button_clicked.connect(self._inspect_subset_action)
-        self._subsets.pause_inspecting_button_clicked.connect(self._pause_subset_inspection_action)
-        self._subsets.stop_inspecting_button_clicked.connect(self._stop_subset_inspection_action)
+        self._subsets.inspect_button_clicked.connect(self.inspect_subset_action)
+        self._subsets.pause_inspecting_button_clicked.connect(self.pause_subset_inspection)
+        self._subsets.stop_inspecting_button_clicked.connect(self.stop_subset_inspection)
 
         self._commands_bar.navigation_button_clicked.connect(self.switch_object)
-        self._commands_bar.star_button_clicked.connect(self.update_starred_state)
-        self._commands_bar.screenshot_button_clicked.connect(self._screenshot_action)
-        self._commands_bar.settings_button_clicked.connect(self._settings_action)
+        self._commands_bar.screenshot_button_clicked.connect(self.screenshot_action)
+        self._commands_bar.settings_button_clicked.connect(self.settings_action)
 
+        self._inspection_res.object_starred.connect(self.star_object)
         self._inspection_res.redshift_set.connect(self._clear_redshift.setEnabled)
 
         self._data_viewer.object_loaded.connect(self.finalize_loading)
@@ -352,8 +353,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # connect the child widgets between each other
         self._data_viewer.redshift_collected.connect(self._inspection_res.set_redshift)
+        self._commands_bar.star_button_clicked.connect(self._inspection_res.star_object)
         self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.reset_view)
         self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.reset_dock_layout)
+        self._inspection_res.object_starred.connect(self._commands_bar.star_object)
 
     def populate(self):
         self.setCentralWidget(self._data_viewer)
@@ -420,7 +423,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def load_project(self, j: int | None = None):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
-        for w in (self._export, self._save_redshift, self._edit_inspection_fields, self._reset_view, self._reset_dock_layout):
+        for w in (self._export, self._redshift_menu, self._star_object, self._edit_inspection_fields, self._reset_view,
+                  self._reset_dock_layout):
             w.setEnabled(True)
 
         self.project_loaded.emit(self.rd.review)
@@ -458,10 +462,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _load_object(self, *widgets):
         for w in widgets:
-            self.object_selected.connect(w.load_object)
-        self.object_selected.emit(self.rd.j, self.rd.review, self._get_cat_entry())
+            self.object_loaded.connect(w.load_object)
+        self.object_loaded.emit(self.rd.j, self.rd.review, self._get_cat_entry())
         for w in widgets:
-            self.object_selected.disconnect(w.load_object)
+            self.object_loaded.disconnect(w.load_object)
 
     @QtCore.Slot()
     def finalize_loading(self):
@@ -476,11 +480,11 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot(str, bool)
     def switch_object(self, command: str, switch_to_starred: bool):
         if command not in ('next', 'previous'):
-            logger.error(f'Unknown command: {command}')
+            logger.error(f"Unknown command: {command}")
             return
 
-        if switch_to_starred and not self.rd.review.has_data('starred'):
-            logger.error('No starred objects found')
+        if switch_to_starred and not self.rd.review.has_data("starred"):
+            logger.error("No starred objects found")
             return
 
         j_upd = self._update_index(self.rd.j, command)
@@ -493,7 +497,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 j_upd = self._update_index(j_upd, command)
                 if j_upd == self.rd.j:  # in case no other ID from the subset is found
-                    logger.warning('No other IDs found in the subset')
+                    logger.warning("No other IDs found in the subset")
                     break
 
         elif switch_to_starred:
@@ -549,6 +553,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if path:
             self.rd.review.write(path, 'fits')
 
+    @QtCore.Slot(bool)
+    def star_object(self, starred: bool):
+        self._star_object.setText("Unstar object" if starred else "Star object")
+
     def _restore_viewer_config_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Viewer Configuration',
                                            filters='YAML Files (*.yml)')[0]
@@ -601,16 +609,17 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = InspectionFieldEditor(review=self.rd.review, parent=self)
         dialog.inspection_fields_updated.connect(self.update_inspection_fields)
         if dialog.exec():
-            self.inspection_fields_changed.emit(self.rd.j, self.rd.review)
+            self.inspection_fields_updated.emit(self.rd.j, self.rd.review)
 
-    def _inspect_subset_action(self):
+    @QtCore.Slot()
+    def inspect_subset_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Subset')[0]
         if path:
             self._cache.last_subset_file = path
             self._cache.save()
-            self.load_subset()
+            self._load_subset()
 
-    def load_subset(self, reset_index=True):
+    def _load_subset(self, reset_index=True):
         subset_path = self._cache.last_subset_file
         subset = Catalog.read(subset_path, translate=self._config.catalogue.translate)
         if subset:
@@ -625,11 +634,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self._cache.last_subset_file = None
             self._cache.save()
 
-    def _pause_subset_inspection_action(self):
+    @QtCore.Slot()
+    def pause_subset_inspection(self):
         self._subset_inspection_paused = not self._subset_inspection_paused
         self.is_subset_inspection_paused.emit(self._subset_inspection_paused)
 
-    def _stop_subset_inspection_action(self):
+    @QtCore.Slot()
+    def stop_subset_inspection(self):
         self._subset_cat = None
         self._subset_inspection_paused = False
 
@@ -638,7 +649,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.subset_inspection_stopped.emit()
 
-    def _screenshot_action(self):
+    @QtCore.Slot()
+    def screenshot_action(self):
         default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.review.get_id(self.rd.j)}.png'
         path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
                                                       basedir=str(pathlib.Path().resolve() / default_filename),
@@ -646,15 +658,16 @@ class MainWindow(QtWidgets.QMainWindow):
         if path:
             self.screenshot_path_selected.emit(path)
 
-    def _settings_action(self):
+    @QtCore.Slot()
+    def settings_action(self):
         self._restart_requested = False
 
         dialog = Settings(self.rd.cat, self._config, self._spectral_lines, parent=self)
 
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
-        dialog.spectral_lines_changed.connect(self.spectral_lines_changed.emit)
-        dialog.data_source_changed.connect(self.data_source_changed.emit)
+        dialog.spectral_lines_changed.connect(self.spectral_lines_updated.emit)
+        dialog.data_source_changed.connect(self.data_source_updated.emit)
 
         dialog.restart_requested.connect(self.restart)
 
@@ -672,7 +685,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rd.cat = Catalog.create(self.rd.review.ids_full)
         else:
             self.rd.cat = cat
-        self.catalogue_changed.emit(self.rd.cat)
+        self.catalogue_updated.emit(self.rd.cat)
 
     @QtCore.Slot(pathlib.Path)
     def update_output_path(self, path: pathlib.Path | None):
@@ -718,7 +731,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.j is not None:
             self.data_requested.emit()
 
-        self.close_action_invoked.emit()
+        self.project_closed.emit()
 
         # save the state and geometry of the main window
         if self._zen_mode_activated:
@@ -728,13 +741,6 @@ class MainWindow(QtWidgets.QMainWindow):
         settings.setValue('windowState', self.saveState())
 
         super().closeEvent(a0)
-
-    @QtCore.Slot()
-    def update_starred_state(self):
-        starred = not self.rd.review.get_value(self.rd.j, 'starred')
-        self.rd.review.update_value(self.rd.j, 'starred', starred)
-
-        self.starred_state_updated.emit(starred, self.rd.review.has_data('starred'))
 
     @QtCore.Slot(dict)
     def save_viewer_data(self, layout: dict):
@@ -746,10 +752,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._cache.visible_columns = visible_columns
         self._cache.save()
 
-    @QtCore.Slot(float, str, dict)
-    def save_review_data(self, redshift: float, comments: str, checkboxes: dict[str, bool]):
-        self.rd.review.update_value(self.rd.j, 'z_sviz', redshift)
-        self.rd.review.update_value(self.rd.j, 'comment', comments)
+    @QtCore.Slot(bool, float, str, dict)
+    def save_review_data(self, starred: bool, redshift: float, comments: str, checkboxes: dict[str, bool]):
+        self.rd.review.update_value(self.rd.j, "starred", starred)
+        self.rd.review.update_value(self.rd.j, "z_sviz", redshift)
+        self.rd.review.update_value(self.rd.j, "comment", comments)
         for cname, is_checked in checkboxes.items():
             self.rd.review.update_value(self.rd.j, cname, is_checked)
         self.rd.save()
