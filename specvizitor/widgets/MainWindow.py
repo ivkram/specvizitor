@@ -123,13 +123,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.cat and self._cache.visible_columns is not None:
             self.visible_columns_updated.emit(self._cache.visible_columns)
 
-        # load the subset to the memory
-        if self._cache.last_subset_file:
-            self._load_subset(reset_index=False)
-
         # read cache and try to load the last opened project
         if self._cache.last_inspection_file:
             self.open_file(self._cache.last_inspection_file, self._cache.last_object_index)
+
+        # load the subset to the memory
+        if self._cache.last_subset_file:
+            self._load_subset(self._cache.last_subset_file, reset_index=False)
 
     def init_ui(self):
         # create a central widget
@@ -283,6 +283,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._tools = self._menu.addMenu("&Tools")
 
         self._inspect_subset = QtWidgets.QAction("Inspect Subset...")
+        self._inspect_subset.setEnabled(False)
         self._inspect_subset.triggered.connect(self.inspect_subset_action)
         self._tools.addAction(self._inspect_subset)
 
@@ -424,7 +425,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Update the state of the main window and activate the central widget after loading inspection data.
         """
         for w in (self._export, self._redshift_menu, self._star_object, self._edit_inspection_fields, self._reset_view,
-                  self._reset_dock_layout):
+                  self._reset_dock_layout, self._inspect_subset):
             w.setEnabled(True)
 
         self.project_loaded.emit(self.rd.review)
@@ -615,24 +616,28 @@ class MainWindow(QtWidgets.QMainWindow):
     def inspect_subset_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Subset')[0]
         if path:
-            self._cache.last_subset_file = path
-            self._cache.save()
-            self._load_subset()
+            self._load_subset(path)
 
-    def _load_subset(self, reset_index=True):
-        subset_path = self._cache.last_subset_file
-        subset = Catalog.read(subset_path, translate=self._config.catalogue.translate)
-        if subset:
-            subset.add_column(np.arange(len(subset)), name='__index__', index=0)
+    def _load_subset(self, path: str, reset_index=True):
+        if self.rd.review is None:
+            self._clear_last_subset_file()
+            return
 
-            self._subset_cat = subset
-            self.subset_loaded.emit(subset_path, subset)
+        subset = Catalog.read(path, translate=self._config.catalogue.translate)
 
-            if reset_index:
-                self.load_by_id(self._subset_cat.get_col('id')[0])
-        else:
-            self._cache.last_subset_file = None
-            self._cache.save()
+        if subset is None:
+            self._clear_last_subset_file()
+            return
+
+        subset.add_column(np.arange(len(subset)), name='__index__', index=0)
+
+        self._subset_cat = subset
+        self._cache.last_subset_file = path
+        self._cache.save()
+        self.subset_loaded.emit(path, subset)
+
+        if reset_index:
+            self.load_by_id(self._subset_cat.get_col('id')[0])
 
     @QtCore.Slot()
     def pause_subset_inspection(self):
@@ -644,10 +649,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._subset_cat = None
         self._subset_inspection_paused = False
 
-        self._cache.last_subset_file = None
-        self._cache.save()
+        self._clear_last_subset_file()
 
         self.subset_inspection_stopped.emit()
+
+    def _clear_last_subset_file(self):
+        self._cache.last_subset_file = None
+        self._cache.save()
 
     @QtCore.Slot()
     def screenshot_action(self):
