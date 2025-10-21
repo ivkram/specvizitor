@@ -6,7 +6,8 @@ from ..utils.widgets import AbstractWidget, MyQTextEdit
 
 
 class InspectionResults(AbstractWidget):
-    object_starred = QtCore.Signal(bool, bool)
+    object_starred = QtCore.Signal(bool)
+    first_object_starred = QtCore.Signal(bool)
     redshift_set = QtCore.Signal(bool)
     data_collected = QtCore.Signal(bool, float, str, dict)
 
@@ -105,13 +106,17 @@ class InspectionResults(AbstractWidget):
     @QtCore.Slot()
     def star_object(self):
         starred = not self._is_starred
-
-        self._n_starred += 1 if starred else -1
         self._set_starred_state(starred)
+
+        if self._n_starred == 0 and starred:
+            self.first_object_starred.emit(True)
+        elif self._n_starred == 1 and not starred:
+            self.first_object_starred.emit(False)
+        self._n_starred += 1 if starred else -1
 
     def _set_starred_state(self, starred: bool):
         self._is_starred = starred
-        self.object_starred.emit(self._is_starred, self._n_starred > 0)
+        self.object_starred.emit(self._is_starred)
 
     @QtCore.Slot(float)
     def set_redshift(self, redshift: float):

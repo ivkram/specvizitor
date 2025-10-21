@@ -3,6 +3,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
 
 from dataclasses import asdict
+from functools import partial
 from importlib import metadata
 import logging
 import pathlib
@@ -18,6 +19,7 @@ from ..plugins.plugin_core import PluginCore
 from ..utils.params import save_yaml
 
 from .DataViewer import DataViewer
+from .NavigationAction import Direction, NavigationAction
 from .NewFile import NewFile
 from .ObjectInfo import ObjectInfo
 from .QuickSearch import QuickSearch
@@ -82,6 +84,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self._subset_cat: Catalog | None = None
         self._subset_inspection_paused: bool = False
 
+        self._navigation_cfg: tuple[NavigationAction, ...]
+        self._create_navigation_cfg()
+
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self._update_window_title()  # set the title of the main window
@@ -110,7 +115,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.restore_window_state()
 
-        # restore the dock state (= the layout of the data viewer) from cache
+        # restore the dock state (=layout of the data viewer) from cache
         if self._cache.dock_layout:
             self.dock_layout_updated.emit(self._cache.dock_layout)
 
@@ -123,7 +128,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.rd.cat and self._cache.visible_columns is not None:
             self.visible_columns_updated.emit(self._cache.visible_columns)
 
-        # read cache and try to load the last opened project
+        # read cache and load the last opened project
         if self._cache.last_inspection_file:
             self.open_file(self._cache.last_inspection_file, self._cache.last_object_index)
 
@@ -131,36 +136,39 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._cache.last_subset_file:
             self._load_subset(self._cache.last_subset_file, reset_index=False)
 
+    def _create_navigation_cfg(self):
+        self._navigation_cfg = (
+            NavigationAction(Direction.NEXT, shortcut=QtGui.QKeySequence.MoveToNextChar),
+            NavigationAction(Direction.PREVIOUS, shortcut=QtGui.QKeySequence.MoveToPreviousChar),
+            NavigationAction(Direction.NEXT, starred_only=True),
+            NavigationAction(Direction.PREVIOUS, starred_only=True)
+        )
+
     def init_ui(self):
-        # create a central widget
         self._data_viewer = DataViewer(self._config.data_viewer, self._config.data, self._widget_cfg,
                                        self._config.appearance, spectral_lines=self._spectral_lines,
                                        plugins=self._plugins, parent=self)
-
-        # create a toolbar
-        self._commands_bar = ToolBar(self._config.appearance, parent=self)
+        
+        self._commands_bar = ToolBar(tuple(self._navigation_cfg[i] for i in [3, 1, 0, 2]),
+                                     self._config.appearance, parent=self)
         self._commands_bar.setObjectName('Toolbar')
         self._commands_bar.setEnabled(True)
 
-        # create a quick search widget
         self._quick_search = QuickSearch(parent=self)
         self._quick_search_dock = QtWidgets.QDockWidget('Quick Search', self)
         self._quick_search_dock.setObjectName('Quick Search')
         self._quick_search_dock.setWidget(self._quick_search)
 
-        # create a widget displaying information about the object
         self._object_info = ObjectInfo(parent=self)
         self._object_info_dock = QtWidgets.QDockWidget('Object Information', self)
         self._object_info_dock.setObjectName('Object Information')
         self._object_info_dock.setWidget(self._object_info)
 
-        # create a widget for writing comments
         self._inspection_res = InspectionResults(cfg=self._config.inspection_results, parent=self)
         self._inspection_res_dock = QtWidgets.QDockWidget('Inspection Results', self)
         self._inspection_res_dock.setObjectName('Inspection Results')
         self._inspection_res_dock.setWidget(self._inspection_res)
 
-        # create a widget for inspecting a subset of objects
         self._subsets = Subsets(parent=self)
         self._subsets_dock = QtWidgets.QDockWidget('Subsets', self)
         self._subsets_dock.setObjectName('Subsets')
@@ -270,6 +278,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self._fullscreen.setShortcut('F')
         self._view.addAction(self._fullscreen)
 
+        self._navigate = self._menu.addMenu("&Navigate")
+        self._navigation_actions: tuple[QtWidgets.QAction, ...] | None = None
+        self._add_navigation_actions()
+
         self._widgets = self._menu.addMenu("&Widgets")
 
         self._backup_viewer_config = QtWidgets.QAction("Backup...")
@@ -301,6 +313,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self._about = QtWidgets.QAction("&About...")
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
+
+    def _add_navigation_actions(self):
+        navigation_actions = []
+
+        for i, action_cfg in enumerate(self._navigation_cfg):
+            action = QtWidgets.QAction(action_cfg.name)
+            action.triggered.connect(partial(self.switch_object, action_cfg))
+            if action_cfg.shortcut is not None:
+                action.setShortcut(action_cfg.shortcut)
+
+            navigation_actions.append(action)
+            self._navigate.addAction(action)
+
+            if i % 2 == 1 and i != len(self._navigation_cfg) - 1:
+                self._navigate.addSeparator()
+
+        self._navigation_actions = tuple(navigation_actions)
 
     def connect(self):
         # connect the main window to the child widgets
@@ -339,11 +368,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._subsets.pause_inspecting_button_clicked.connect(self.pause_subset_inspection)
         self._subsets.stop_inspecting_button_clicked.connect(self.stop_subset_inspection)
 
-        self._commands_bar.navigation_button_clicked.connect(self.switch_object)
-        self._commands_bar.screenshot_button_clicked.connect(self.screenshot_action)
-        self._commands_bar.settings_button_clicked.connect(self.settings_action)
+        self._commands_bar.navigation_action_triggered.connect(self.switch_object)
+        self._commands_bar.screenshot_action_triggered.connect(self.screenshot_action)
+        self._commands_bar.settings_action_triggered.connect(self.settings_action)
 
         self._inspection_res.object_starred.connect(self.star_object)
+        self._inspection_res.first_object_starred.connect(self.update_navigation_actions)
         self._inspection_res.redshift_set.connect(self._clear_redshift.setEnabled)
 
         self._data_viewer.object_loaded.connect(self.finalize_loading)
@@ -354,10 +384,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # connect the child widgets between each other
         self._data_viewer.redshift_collected.connect(self._inspection_res.set_redshift)
-        self._commands_bar.star_button_clicked.connect(self._inspection_res.star_object)
-        self._commands_bar.reset_view_button_clicked.connect(self._data_viewer.reset_view)
-        self._commands_bar.reset_layout_button_clicked.connect(self._data_viewer.reset_dock_layout)
+        self._commands_bar.star_action_triggered.connect(self._inspection_res.star_object)
+        self._commands_bar.reset_view_action_triggered.connect(self._data_viewer.reset_view)
+        self._commands_bar.reset_layout_action_triggered.connect(self._data_viewer.reset_dock_layout)
         self._inspection_res.object_starred.connect(self._commands_bar.star_object)
+        self._inspection_res.first_object_starred.connect(self._commands_bar.update_navigation_actions)
 
     def populate(self):
         self.setCentralWidget(self._data_viewer)
@@ -427,6 +458,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._export, self._redshift_menu, self._star_object, self._edit_inspection_fields, self._reset_view,
                   self._reset_dock_layout, self._inspect_subset):
             w.setEnabled(True)
+        self.update_navigation_actions(self.rd.review.has_data("starred"))
 
         self.project_loaded.emit(self.rd.review)
 
@@ -478,17 +510,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         logger.info(f"Object loaded (ID: {self.rd.review.get_id(self.rd.j)}, loading time: {time.perf_counter()-self._t_load_object_start:.3f} s)")
 
-    @QtCore.Slot(str, bool)
-    def switch_object(self, command: str, switch_to_starred: bool):
-        if command not in ('next', 'previous'):
-            logger.error(f"Unknown command: {command}")
-            return
-
-        if switch_to_starred and not self.rd.review.has_data("starred"):
+    @QtCore.Slot(NavigationAction)
+    def switch_object(self, action: NavigationAction):
+        if action.starred_only and not self.rd.review.has_data("starred"):
             logger.error("No starred objects found")
             return
 
-        j_upd = self._update_index(self.rd.j, command)
+        j_upd = self._update_index(self.rd.j, action.direction)
         if self._subset_cat and not self._subset_inspection_paused:
             while True:
                 subset_entry = self._subset_cat.get_cat_entry(self.rd.review.get_id(j_upd, full=True),
@@ -496,23 +524,23 @@ class MainWindow(QtWidgets.QMainWindow):
                 if subset_entry is not None:
                     break
 
-                j_upd = self._update_index(j_upd, command)
+                j_upd = self._update_index(j_upd, action.direction)
                 if j_upd == self.rd.j:  # in case no other ID from the subset is found
                     logger.warning("No other IDs found in the subset")
                     break
 
-        elif switch_to_starred:
+        elif action.starred_only:
             while not self.rd.review.get_value(j_upd, 'starred'):
-                j_upd = self._update_index(j_upd, command)
+                j_upd = self._update_index(j_upd, action.direction)
 
         self.load_object(j_upd)
 
-    def _update_index(self, obj_index: int, command: str) -> int:
+    def _update_index(self, obj_index: int, command: Direction) -> int:
         j_upd = obj_index
 
-        if command == 'next':
+        if command is Direction.NEXT:
             j_upd += 1
-        elif command == 'previous':
+        elif command is Direction.PREVIOUS:
             j_upd -= 1
 
         j_upd = j_upd % self.rd.review.n_objects
@@ -557,6 +585,12 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot(bool)
     def star_object(self, starred: bool):
         self._star_object.setText("Unstar object" if starred else "Star object")
+
+    @QtCore.Slot(bool)
+    def update_navigation_actions(self, has_starred: bool):
+        for action_cfg, action in zip(self._navigation_cfg, self._navigation_actions):
+            if action_cfg.starred_only:
+                action.setEnabled(has_starred)
 
     def _restore_viewer_config_action(self):
         path = qtpy.compat.getopenfilename(self, caption='Open Viewer Configuration',
