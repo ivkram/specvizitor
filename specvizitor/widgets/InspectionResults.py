@@ -97,11 +97,11 @@ class InspectionResults(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):
-        self._set_starred_state(review.get_value(j, "starred"))
+        self._set_starred_state(bool(review.get_value(j, "starred")))
         self.set_redshift(review.get_value(j, "z_sviz"))
         self._comments_widget.setText(review.get_value(j, "comment"))
         for cname, widget in self._checkbox_widgets.items():
-            widget.setChecked(review.get_value(j, cname))
+            widget.setChecked(bool(review.get_value(j, cname)))
 
     @QtCore.Slot()
     def star_object(self):
