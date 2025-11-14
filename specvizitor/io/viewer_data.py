@@ -145,11 +145,15 @@ class GenericFITSLoader(BaseLoader):
 
 class PILLoader(BaseLoader):
     name = 'pil'
+    extensions = ('.png', '.jpg', '.jpeg')
 
     def _open(self, filename: pathlib.Path, **kwargs):
         image = Image.open(filename, **kwargs)
         image = ImageOps.flip(image)
         self._dataset, self._meta = np.array(image), image.info
+
+    def close(self):
+        pass
 
 
 class RasterIOLoader(BaseLoader):
