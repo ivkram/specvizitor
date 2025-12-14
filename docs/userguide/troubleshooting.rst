@@ -14,10 +14,7 @@ This means that you are using an older version of Python than the version requir
 Widget(s) disappeared from the GUI
 ++++++++++++++++++++++++++++++++++
 
-If a sidebar widget (e.g., :guilabel:`Object Information`) has disappeared from the GUI and you want to bring it back, right click on the empty area in :guilabel:`Toolbar` or :guilabel:`Menu` and click on that widget from the dropdown menu:
-
-.. figure:: ../screenshots/restoring_sidebar_widgets.png
-    :width: 10 cm
+If a sidebar widget (e.g., :guilabel:`Object Information`) has disappeared from the GUI and you want to bring it back, navigate to :menuselection:`View --> Docks` and click on the widget's name.
 
 What to do if none of the above helped
 ++++++++++++++++++++++++++++++++++++++

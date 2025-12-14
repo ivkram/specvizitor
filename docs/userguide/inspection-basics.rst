@@ -62,7 +62,7 @@ Once you have gone through these steps, click :guilabel:`OK`. If there are no er
 Adding inspection fields
 ++++++++++++++++++++++++
 
-In specvizitor, you can create custom inspection fields for carrying out some additional classification besides just assigning a redshift, for example assigning *a confidence level* to redshifts or marking objects with some unusual properties. To create a new inspection field, navigate to :guilabel:`Inspection Results` ‣ :guilabel:`Edit...` ‣ :guilabel:`Add...` and enter the name of a new field:
+In specvizitor, you can create custom inspection fields for carrying out some additional classification besides just assigning a redshift, for example assigning *a confidence level* to redshifts or marking objects with some unusual properties. To create a new inspection field, navigate to :menuselection:`Edit --> Inspection Fields...` ‣ :guilabel:`Add...` and enter the name of a new field:
 
 .. figure:: ../screenshots/edit_inspection_fields.png
     :width: 10 cm
