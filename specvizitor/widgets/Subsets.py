@@ -33,13 +33,12 @@ class Subsets(AbstractWidget):
         self._set_pause_shortcut()
 
     def init_ui(self):
-        self._inspect_subset = QtWidgets.QPushButton('Inspect Subset...', parent=self)
-        self._pause_inspecting = QtWidgets.QPushButton('Pause', parent=self)
-        self._stop_inspecting = QtWidgets.QPushButton('Stop', parent=self)
+        self._inspect_subset = QtWidgets.QPushButton("Open...", parent=self)
+        self._pause_inspecting = QtWidgets.QPushButton("Pause", parent=self)
+        self._stop_inspecting = QtWidgets.QPushButton("Stop", parent=self)
 
-        self._inspect_subset.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
-        for w in (self._pause_inspecting, self._stop_inspecting):
-            w.setFixedWidth(90)
+        for w in (self._inspect_subset, self._pause_inspecting, self._stop_inspecting):
+            w.setFixedWidth(85)
 
         self._pause_inspecting.setEnabled(False)
         self._stop_inspecting.setEnabled(False)
@@ -58,9 +57,6 @@ class Subsets(AbstractWidget):
     def populate(self):
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.addWidget(self._inspect_subset)
-        self.layout().addLayout(sub_layout)
-
-        sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.addWidget(self._pause_inspecting)
         sub_layout.addWidget(self._stop_inspecting)
         self.layout().addLayout(sub_layout)
@@ -89,6 +85,7 @@ class Subsets(AbstractWidget):
         if obj_str is None:
             obj_str = '--'
         self._subset_info.setText(f"Subset: {self._subset_name}\nObject: {obj_str}/{len(self._subset_cat)}")
+        self._subset_info.setToolTip(self._subset_name)
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, review: InspectionData):
