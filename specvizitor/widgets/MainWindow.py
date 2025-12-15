@@ -771,7 +771,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         msg = []
         msg.append(f"{package_name.capitalize()} v{metadata.version(package_name)}")
-        msg.append(f"Copyright (c) 2025, Ivan Kramarenko, Josephine Kerutt")
+        msg.append("Copyright (c) 2025, Ivan Kramarenko, Josephine Kerutt")
         msg.append(f"\nProject's homepage: {metadata.metadata(package_name).get('Home-page')}")
 
         QtWidgets.QMessageBox.about(self, f"About {package_name.capitalize()}", '\n'.join(msg))

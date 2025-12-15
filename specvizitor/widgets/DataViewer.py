@@ -227,9 +227,9 @@ class DataViewer(AbstractWidget):
     @staticmethod
     def _clean_dock_layout(layout: dict):
         float_layout_cleaned = []
-        for l in layout['float']:
-            if l[0]['main'] is not None:
-                float_layout_cleaned.append(l)
+        for sublayout in layout['float']:
+            if sublayout[0]['main'] is not None:
+                float_layout_cleaned.append(sublayout)
 
         layout['float'] = float_layout_cleaned
 

@@ -127,7 +127,7 @@ class InspectionResults(AbstractWidget):
             self._clear_redshift.setEnabled(True)
             self.redshift_set.emit(True)
         else:
-            self._redshift_widget.setText(f"Redshift: --")
+            self._redshift_widget.setText("Redshift: --")
             self._clear_redshift.setEnabled(False)
             self.setFocus()
             self.redshift_set.emit(False)

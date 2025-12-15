@@ -41,6 +41,9 @@ dev = [
 [tool.uv]
 default-groups = "all"
 
+[tool.ruff]
+extend-exclude = ["specvizitor/config/appearance"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -1,4 +1,3 @@
-import numpy as np
 from qtpy import QtWidgets, QtCore
 
 from abc import abstractmethod
@@ -491,7 +490,7 @@ class Settings(QtWidgets.QDialog):
         restart_requested = False
         if self._restart_required:
             msg_box = QtWidgets.QMessageBox(self)
-            ans = msg_box.question(self, '', f"Restart required to apply changes. Restart now?",
+            ans = msg_box.question(self, '', "Restart required to apply changes. Restart now?",
                                    msg_box.Yes | msg_box.No)
             if ans == msg_box.Yes:
                 restart_requested = True

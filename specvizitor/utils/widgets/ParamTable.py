@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 
-from functools import partial, wraps
+from functools import partial
 import re
 
 from .FileBrowser import FileBrowser
