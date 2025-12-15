@@ -31,17 +31,15 @@ Repository = "https://github.com/ivkram/specvizitor"
 specvizitor = "specvizitor.main:main"
 
 [dependency-groups]
-test = ["pytest"]
-docs = [
-    "sphinx",
-    "sphinx-book-theme",
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.14.9",
+    "sphinx>=8.1.3",
+    "sphinx-book-theme>=1.1.4",
 ]
 
 [tool.uv]
-default-groups = [
-    "test",
-    "docs",
-]
+default-groups = "all"
 
 [build-system]
 requires = ["hatchling"]
