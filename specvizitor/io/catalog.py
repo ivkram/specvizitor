@@ -68,7 +68,7 @@ class Catalog:
         """
         try:
             table = Table.read(filename)  # load the catalogue
-        except (OSError, ValueError) as e:
+        except Exception as e:
             logger.error(f"Failed to load the catalogue: {e}")
             return None
 
