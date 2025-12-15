@@ -701,9 +701,9 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot()
     def screenshot_action(self):
         default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.review.get_id(self.rd.j)}.png'
-        path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As',
-                                                      basedir=str(pathlib.Path().resolve() / default_filename),
-                                                      filters='Images (*.png)')
+        screenshot_location = self._config.data_viewer.default_screenshot_location
+        basedir = str(pathlib.Path(screenshot_location if screenshot_location is not None else "").resolve() / default_filename)
+        path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=basedir, filters='Images (*.png)')
         if path:
             self.screenshot_path_selected.emit(path)
 

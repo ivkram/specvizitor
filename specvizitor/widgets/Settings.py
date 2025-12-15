@@ -252,7 +252,7 @@ class DataSourceWidget(SettingsWidget):
         if not b.validate(verbose=True):
             return False
 
-        self._new_dir = self._browser.path
+        self._new_dir = b.path
         return True
 
     @QtCore.Slot(list, list, bool)
@@ -290,6 +290,8 @@ class DataViewerWidget(SettingsWidget):
         self.cfg = cfg
         self.spectral_lines = spectral_lines
 
+        self._screenshot_location_browser: FileBrowser | None = None
+
         self._redshift_step_labels: list[QtWidgets.QLabel] = []
         self._redshift_step_editors: list[QtWidgets.QLineEdit] = []
 
@@ -299,6 +301,7 @@ class DataViewerWidget(SettingsWidget):
         self._lines_table: ParamTable | None = None
 
         self._new_redshift_steps: list[float] = []
+        self._new_screenshot_location: str | None = None
         self._new_wavelengths: dict[str, float] | None = None
 
         self._wavelengths_changed: bool = False
@@ -306,6 +309,8 @@ class DataViewerWidget(SettingsWidget):
         super().__init__(parent=parent)
 
     def init_ui(self):
+        self._screenshot_location_browser = data_browser(self.cfg.default_screenshot_location, title="Default screenshot location", parent=self)
+
         labels = ("Redshift step:", "Redshift step (fine tuning):")
         tooltips = (
             "Decrease (increase) in redshift when pressing Q (W)",
@@ -340,6 +345,8 @@ class DataViewerWidget(SettingsWidget):
             sub_layout.addWidget(self._spacer)
         self.layout().addLayout(sub_layout)
 
+        self.layout().addWidget(self._screenshot_location_browser)
+
         sub_layout = QtWidgets.QVBoxLayout()
         sub_layout.addWidget(self._lines_table)
         self._lines_section.set_layout(sub_layout)
@@ -362,6 +369,11 @@ class DataViewerWidget(SettingsWidget):
                 new_redshift_steps.append(redshift_step)
         self._new_redshift_steps = new_redshift_steps
 
+        b = self._screenshot_location_browser
+        if not b.validate(verbose=True, missing_ok=True):
+            return False
+
+        self._new_screenshot_location = b.path if b.is_filled() else None
         return True
 
     @QtCore.Slot(list, list, bool)
@@ -376,6 +388,7 @@ class DataViewerWidget(SettingsWidget):
     def accept(self):
         self.cfg.redshift_step = self._new_redshift_steps[0]
         self.cfg.redshift_small_step = self._new_redshift_steps[1]
+        self.cfg.default_screenshot_location = self._new_screenshot_location
         self.spectral_lines.wavelengths = self._new_wavelengths
 
         if self._wavelengths_changed:
