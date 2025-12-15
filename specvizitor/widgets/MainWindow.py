@@ -517,21 +517,28 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         j_upd = self._update_index(self.rd.j, action.direction)
-        if self._subset_cat and not self._subset_inspection_paused:
-            while True:
+        subset_only = self._subset_cat and not self._subset_inspection_paused
+
+        while True:
+            update_index = False
+
+            if action.starred_only and not self.rd.review.get_value(j_upd, 'starred'):
+                update_index = True
+
+            if subset_only:
                 subset_entry = self._subset_cat.get_cat_entry(self.rd.review.get_id(j_upd, full=True),
                                                               ignore_missing=True)
-                if subset_entry is not None:
-                    break
+                if subset_entry is None:
+                    update_index = True
 
-                j_upd = self._update_index(j_upd, action.direction)
-                if j_upd == self.rd.j:  # in case no other ID from the subset is found
-                    logger.warning("No other IDs found in the subset")
-                    break
+            if not update_index:
+                break
 
-        elif action.starred_only:
-            while not self.rd.review.get_value(j_upd, 'starred'):
-                j_upd = self._update_index(j_upd, action.direction)
+            j_upd = self._update_index(j_upd, action.direction)
+            if j_upd == self.rd.j:  # did the full cycle
+                logger.warning(f"No (other) objects with requested properties found (starred: {action.starred_only}, "
+                               f"included in the subset: {subset_only})")
+                break
 
         self.load_object(j_upd)
 
