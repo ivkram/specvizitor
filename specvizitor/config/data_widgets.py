@@ -104,6 +104,7 @@ class Image(ViewerElement):
     color_bar: ColorBar = field(default_factory=ColorBar)
     central_axes: ImageCentralAxes = field(default_factory=ImageCentralAxes)
     central_crosshair: bool = False
+    show_sources: bool = False
 
 
 @dataclass

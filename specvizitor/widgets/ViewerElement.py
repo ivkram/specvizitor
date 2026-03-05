@@ -113,10 +113,10 @@ class UnitTransform(PlotTransformBase):
 
 # TODO: create Enum dynamically from SliderItem
 class LinkableItem(Enum):
-    XAXIS = auto()
-    YAXIS = auto()
+    X_AXIS = auto()
+    Y_AXIS = auto()
     COLORBAR = auto()
-    S_SLIDER = auto()
+    S_SMOOTHING = auto()
     S_REDSHIFT = auto()
 
 
@@ -128,6 +128,7 @@ class SliderItem(Enum):
 class ViewerElement(AbstractWidget):
     object_loaded = QtCore.Signal(str)
     object_destroyed = QtCore.Signal(str)
+    id_selected = QtCore.Signal(str)
 
     allowed_data_types: tuple[type] | None = None
 
@@ -285,14 +286,14 @@ class ViewerElement(AbstractWidget):
                                 showValues=(self.cfg.y_axis.visible, False, False, self.cfg.x_axis.visible))
 
     def update_axis_labels(self):
-        show_xaxis = self.container.getAxis('bottom').isVisible()
-        show_yaxis = self.container.getAxis('left').isVisible()
+        show_x_axis = self.container.getAxis('bottom').isVisible()
+        show_y_axis = self.container.getAxis('left').isVisible()
 
         self.container.setLabel(axis='bottom', text=self._axes.x.label_ext)
         self.container.setLabel(axis='left', text=self._axes.y.label_ext)
 
         # pyqtgraph changes axis visibility after adding labels
-        self.container.showAxes((show_yaxis, False, False, show_xaxis))
+        self.container.showAxes((show_y_axis, False, False, show_x_axis))
 
     def setEnabled(self, a0: bool = True):
         super().setEnabled(a0)
@@ -317,15 +318,15 @@ class ViewerElement(AbstractWidget):
         if self.data is None:
             self.meta, self.data_path = None, None
 
-    @QtCore.Slot(int, InspectionData, object)
-    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+    @QtCore.Slot(int, InspectionData, object, object)
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, cat: Catalog | None):
         if self._object_loaded:
             self._destroy_object()
 
         if self.data is None:
             return
 
-        self.add_content()
+        self.add_content(cat)
         self.setup_view(cat_entry)
         self.setup_slider_view(j, review, cat_entry)
         self.setEnabled(True)
@@ -343,10 +344,10 @@ class ViewerElement(AbstractWidget):
         self.object_destroyed.emit(self.title)
 
     @abc.abstractmethod
-    def add_content(self):
+    def add_content(self, cat: Catalog | None):
         pass
 
-    def register_item(self, item: pg.GraphicsItem, **kwargs):
+    def register_item(self, item: pg.GraphicsItem | QtWidgets.QGraphicsItem, **kwargs):
         item.setTransform(self._qtransform)
         self.container.addItem(item, **kwargs)
         self._registered_items.append(item)
@@ -453,7 +454,7 @@ class ViewerElement(AbstractWidget):
         if widget_links is None:
             widget_links = dict()
 
-        self.reset_range(widget_links.get(LinkableItem.XAXIS), widget_links.get(LinkableItem.YAXIS))
+        self.reset_range(widget_links.get(LinkableItem.X_AXIS), widget_links.get(LinkableItem.Y_AXIS))
         if self.title not in widget_links.get(LinkableItem.S_REDSHIFT, dict()):
             self.redshift_slider.reset()  # reset only the redshift slider
 

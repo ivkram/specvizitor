@@ -37,35 +37,30 @@ class Plot1D(ViewerElement):
 
         return Quantity(plot_data)  # return a copy to prevent any modifications to self.data
 
-    def add_content(self):
+    def add_content(self, cat: Catalog | None):
         default_pen = pg.getConfigOption('foreground')
         for label, line_plot in self.cfg.plots.items():
             x_data, y_data = self.get_plot_data(line_plot.x), self.get_plot_data(line_plot.y)
             if x_data is None or y_data is None:
                 continue
 
-            # if axis labels are not set, adopt the plot labels
             if not self._axes.x.label:
                 self._axes.x.label = line_plot.x
             if not self._axes.y.label:
                 self._axes.y.label = line_plot.y
 
-            # if axis units are not set, adopt the units of the data
             if not self._axes.x.unit:
                 self._axes.x.unit = x_data.unit
             if not self._axes.y.unit:
                 self._axes.y.unit = y_data.unit
 
-            # apply scaling and unit conversion
             x_data, y_data = self.apply_xdata_transform(x_data), self.apply_ydata_transform(y_data)
 
-            # add a legend to the plot
             pen = default_pen if line_plot.color is None else line_plot.color
             name = label if not line_plot.hide_label else None
             if name and self.container.legend is None:
                 self.container.addLegend(verSpacing=-10, pen=default_pen)
 
-            # create and register a plot data item
             plot_data_item = pg.PlotDataItem(x=x_data, y=y_data, pen=pen, name=name)
             self.plot_data_items[label] = plot_data_item
             self.register_item(plot_data_item)

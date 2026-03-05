@@ -21,7 +21,7 @@ class AppData:
         """ Initialize the inspection data object.
         """
         if self.cat is None:
-            logger.error("Failed to initialize inspection data: the catalogue not loaded to the memory")
+            logger.error("Failed to initialize inspection data: Catalogue not loaded")
             return
 
         self.review = InspectionData.create(*[list(self.cat.get_col(ind)) for ind in self.cat.indices], **kwargs)
@@ -31,7 +31,7 @@ class AppData:
         """ Read the inspection file.
         """
         if self.output_path is None:
-            logger.error("Failed to read the inspection file: the file path not specified")
+            logger.error("Failed to read the inspection file: File path not specified")
             return
 
         self.review = InspectionData.read(self.output_path)
@@ -41,7 +41,7 @@ class AppData:
         """ Save inspection data to the output file.
         """
         if self.output_path is None:
-            logger.error("Failed to save the inspection data: the output path not specified")
+            logger.error("Failed to save the inspection data: Output path not specified")
             return
 
         self.review.write(self.output_path)

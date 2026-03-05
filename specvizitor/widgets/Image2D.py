@@ -1,4 +1,5 @@
 from astropy.convolution import convolve_fft, Gaussian2DKernel
+from astropy.coordinates import SkyCoord
 from astropy.visualization import ZScaleInterval
 from astropy.wcs import WCS, FITSFixedWarning
 import numpy as np
@@ -6,11 +7,13 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtGui
 
 from dataclasses import dataclass
+from enum import Enum, auto
 import logging
 import warnings
 
 from ..config import data_widgets
 from ..io.catalog import Catalog
+from ..io.viewer_data import get_wcs
 from ..utils.qt_tools import get_qtransform_from_wcs
 from ..utils.widgets import ColorBar
 
@@ -28,6 +31,11 @@ logger = logging.getLogger(__name__)
 class Image2DLevels:
     min: float = 0
     max: float = 1
+
+
+class CentralAxis(Enum):
+    X = auto()
+    Y = auto()
 
 
 class Image2D(ViewerElement):
@@ -48,15 +56,12 @@ class Image2D(ViewerElement):
     def init_ui(self):
         super().init_ui()
 
-        # lock the aspect ratio of the container
         self.container.setAspectLocked(True)
 
-        # create an image item
         self.image_item = pg.ImageItem()
         self.image_item.setLookupTable(self._cmap.getLookupTable())
         self.image_item.setBorder('k')  # add a border to the image
 
-        # create a color bar
         self.cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
         self.cbar.setVisible(self.cfg.color_bar.visible)
         self.cbar.axisItem.setVisible(False)
@@ -64,35 +69,78 @@ class Image2D(ViewerElement):
     def populate(self):
         super().populate()
 
-        # add the color bar to the layout
         self.graphics_layout.addItem(self.cbar, 0, 1)
 
     def init_view(self):
         super().init_view()
         self._default_levels = Image2DLevels()
 
-    def add_content(self):
+    def _add_central_axes(self, axis=None):
+        pen = pg.mkPen('w', width=1)
+        nx, ny = self.data.shape[1], self.data.shape[0]
+
+        if axis is CentralAxis.X:
+            self.register_item((pg.PlotCurveItem([0, nx], [ny / 2, ny / 2], pen=pen)))
+        elif axis is CentralAxis.Y:
+            self.register_item((pg.PlotCurveItem([nx / 2, nx / 2], [0, ny], pen=pen)))
+
+    def _add_central_crosshair(self):
+        pen = pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
+        x0, y0 = self.data.shape[1] // 2, self.data.shape[0] // 2
+        dx, dy = 0.15 * x0, 0.15 * y0
+
+        self.register_item(pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen))
+        self.register_item(pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen))
+
+    def _add_sources(self, cat: Catalog):
+        try:
+            ra = cat.get_col("ra")
+            dec = cat.get_col("dec")
+        except KeyError as e:
+            logger.error(e)
+            return
+
+        try:
+            wcs = get_wcs(self.meta)
+        except Exception as e:
+            logger.error(f"Failed to create the WCS object: {e} (widget: {self.title})")
+            return
+
+        try:
+            coord = SkyCoord(ra=ra, dec=dec, unit="deg")
+            x, y = wcs.world_to_pixel(coord)
+        except Exception as e:
+            logger.error(f"Failed to calculate pixel coordinates of the sources: {e}")
+            return
+
+        nx, ny = self.data.shape[1], self.data.shape[0]
+        mask = (x >= 0) & (x < nx) & (y >= 0) & (y < ny)
+        x, y = x[mask], y[mask]
+        source_ids = cat.get_col("id")[mask]
+
+        color = 'w'
+        pen = pg.mkPen(color, width=2)
+        for sid, xi, yi in zip(source_ids, x, y):
+            self.register_item(pg.CircleROI([xi, yi], [5, 5], pen=pen))
+            text_item = pg.TextItem(text=str(sid), color=color)
+            self.register_item(text_item)
+            text_item.setPos(xi, yi)
+
+
+    def add_content(self, cat: Catalog | None):
         self.image_item.setImage(self.data, autoLevels=False)
         self.register_item(self.image_item)
 
-        # add axes of symmetry to the image
-        if self.cfg.central_axes.x or self.cfg.central_axes.y:
-            pen = 'w'
-            x, y = self.data.shape[1], self.data.shape[0]
+        if self.cfg.central_axes.x:
+            self._add_central_axes(CentralAxis.X)
+        if self.cfg.central_axes.y:
+            self._add_central_axes(CentralAxis.Y)
 
-            if self.cfg.central_axes.x:
-                self.register_item((pg.PlotCurveItem([0, x], [y / 2, y / 2], pen=pen)))
-            if self.cfg.central_axes.y:
-                self.register_item((pg.PlotCurveItem([x / 2, x / 2], [0, y], pen=pen)))
-
-        # add a crosshair to the image
         if self.cfg.central_crosshair:
-            pen = pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
-            x0, y0 = self.data.shape[1] // 2, self.data.shape[0] // 2
-            dx, dy = 0.15 * x0, 0.15 * y0
+            self._add_central_crosshair()
 
-            self.register_item(pg.PlotCurveItem([0, x0 - dx], [y0, y0], pen=pen))
-            self.register_item(pg.PlotCurveItem([x0, x0], [0, y0 - dy], pen=pen))
+        if self.cfg.show_sources and cat is not None:
+            self._add_sources(cat)
 
     @property
     def has_defined_levels(self) -> bool:
@@ -125,7 +173,6 @@ class Image2D(ViewerElement):
     def set_qtransform(self, cat_entry: Catalog | None):
         qtransform = QtGui.QTransform()
 
-        # create a transformation matrix from metadata
         if self.cfg.wcs_transform and self.meta is not None:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', FITSFixedWarning)
@@ -133,7 +180,6 @@ class Image2D(ViewerElement):
 
             qtransform *= get_qtransform_from_wcs(w)
 
-        # rotate the image
         rotation_angle = self.cfg.rotate
         if self.cfg.rotate == "auto":
             try:
@@ -160,7 +206,6 @@ class Image2D(ViewerElement):
 
     def smooth_data(self, sigma: float):
         if sigma > 0:
-            # create a smoothing kernel
             gauss_kernel = Gaussian2DKernel(sigma)
 
             # FFT algorithm is faster for large arrays (n > 500), which is a typical case for astronomy images

@@ -1,8 +1,10 @@
 from astropy.table import Table, Row, MaskedColumn
+from astropy.utils.exceptions import AstropyWarning
 import numpy as np
 
 from dataclasses import dataclass, field
 import logging
+import warnings
 
 from .data_dir import get_ids_from_dir
 from ..utils.widgets import FileBrowser
@@ -157,7 +159,10 @@ class Catalog:
                 else:
                     raise KeyError
 
-            return self._loc_full_base(t.loc[indices[0], obj_id[0]], indices[1:], obj_id[1:])
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', AstropyWarning)
+                item = self._loc_full_base(t.loc[indices[0], obj_id[0]], indices[1:], obj_id[1:])
+            return item
         else:
             raise TypeError(f"Unknown object ID type: {type(obj_id)}")
 

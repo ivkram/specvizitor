@@ -27,10 +27,12 @@ logger = logging.getLogger(__name__)
 
 class DataViewer(AbstractWidget):
     project_loaded = QtCore.Signal()
-    data_loaded = QtCore.Signal(int, InspectionData, object)
+    data_loaded = QtCore.Signal(int, InspectionData, object, object)
     object_loaded = QtCore.Signal()
     loading_aborted = QtCore.Signal()
     data_collected = QtCore.Signal(dict)
+
+    id_selected = QtCore.Signal(str)
 
     redshift_requested = QtCore.Signal()
     redshift_changed = QtCore.Signal(float)
@@ -64,6 +66,8 @@ class DataViewer(AbstractWidget):
         self._widget_links: dict[LinkableItem, dict] = {item: dict() for item in LinkableItem}
         self._widget_linkers: dict[LinkableItem, ItemLinker] = dict()
         self._create_widget_linkers()
+
+        self._cat: Catalog | None = None
 
         self._worker: ViewerDataLoader | None = None
         self._lock: bool = False
@@ -140,6 +144,7 @@ class DataViewer(AbstractWidget):
 
         w0.object_loaded.connect(self._attach_widget)
         w0.object_destroyed.connect(self._detach_widget)
+        w0.id_selected.connect(self.id_selected.emit)
         w0.redshift_slider.save_button_clicked.connect(self.redshift_collected.emit)
 
     def _disconnect_widget(self, wt: str):
@@ -152,14 +157,15 @@ class DataViewer(AbstractWidget):
 
         w0.object_loaded.disconnect()
         w0.object_destroyed.disconnect()
+        w0.id_selected.disconnect()
         w0.redshift_slider.save_button_clicked.disconnect()
 
     def _create_widget_linkers(self):
         self._widget_linkers = {
-            LinkableItem.XAXIS: XAxisLinker(),
-            LinkableItem.YAXIS: YAxisLinker(),
+            LinkableItem.X_AXIS: XAxisLinker(),
+            LinkableItem.Y_AXIS: YAxisLinker(),
             LinkableItem.COLORBAR: ColorBarLinker(),
-            LinkableItem.S_SLIDER: SliderLinker(SliderItem.SMOOTHING),
+            LinkableItem.S_SMOOTHING: SliderLinker(SliderItem.SMOOTHING),
             LinkableItem.S_REDSHIFT: SliderLinker(SliderItem.REDSHIFT)
         }
 
@@ -316,7 +322,7 @@ class DataViewer(AbstractWidget):
     def finalize_loading(self):
         j, review, cat_entry = self._worker.j, self._worker.review, self._worker.cat_entry
 
-        self.data_loaded.emit(j, review, cat_entry)
+        self.data_loaded.emit(j, review, cat_entry, self._cat)
 
         for plugin in self._plugins:
             plugin.update_active_widgets(self.active_widgets, cat_entry=cat_entry)
@@ -340,6 +346,10 @@ class DataViewer(AbstractWidget):
         self._unlink_widget(wt)
         self.docks[wt].setTitle(w0.title)
         logger.debug(f"`{wt}` detached from the viewer")
+
+    @QtCore.Slot(object)
+    def receive_catalog(self, cat: Catalog | None):
+        self._cat = cat
 
     def _get_active_redshift_slider(self) -> SmartSlider | None:
         for w in self.active_widgets.values():

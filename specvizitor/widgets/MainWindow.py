@@ -345,6 +345,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.project_closed.connect(self._data_viewer.free_resources)
 
         self.catalogue_updated.connect(self._object_info.update_table_items)
+        self.catalogue_updated.connect(self._data_viewer.receive_catalog)
         self.inspection_fields_updated.connect(self._inspection_res.update_inspection_fields)
         self.data_source_updated.connect(self._data_viewer.open_images)
         self.spectral_lines_updated.connect(self._data_viewer.spectral_lines_updated.emit)
@@ -486,17 +487,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self._load_object(self._data_viewer)
         self._update_window_title()
 
-    def _get_cat_entry(self) -> Catalog | None:
-        if self.rd.j is None:
-            return None
-
-        obj_id = self.rd.review.get_id(self.rd.j, full=True)
-        return self.rd.cat.get_cat_entry(obj_id)
-
     def _load_object(self, *widgets):
         for w in widgets:
             self.object_loaded.connect(w.load_object)
-        self.object_loaded.emit(self.rd.j, self.rd.review, self._get_cat_entry())
+
+        obj_id = self.rd.review.get_id(self.rd.j, full=True)
+        cat_entry = self.rd.cat.get_cat_entry(obj_id)
+
+        self.object_loaded.emit(self.rd.j, self.rd.review, cat_entry)
         for w in widgets:
             self.object_loaded.disconnect(w.load_object)
 

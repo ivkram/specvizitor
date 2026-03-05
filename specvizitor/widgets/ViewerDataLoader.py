@@ -1,3 +1,4 @@
+from astropy.coordinates import SkyCoord
 from qtpy import QtCore
 
 import logging
@@ -7,7 +8,7 @@ import time
 from ..config import config
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import ViewerData, LocalPath
+from ..io.viewer_data import ViewerData, get_wcs, LocalPath
 
 from .ViewerElement import ViewerElement
 
@@ -112,14 +113,14 @@ class ViewerDataLoader(QtCore.QThread):
         if not w0.cfg.data.source:
             if not w0.cfg.data.filename:
                 logger.error(f"Filename not specified (widget: {w0.title})")
-                return
+                return None
             return LocalPath(str(pathlib.Path(self.data_sources.dir) / w0.cfg.data.filename))
 
         # for now assume that a non-empty data source == image
         image = self.data_sources.images.get(w0.cfg.data.source)
         if not image:
             logger.error(f"Shared image not found (label: {w0.cfg.data.source}, widget: {w0.title})")
-            return
+            return None
 
         return LocalPath(image.filename)
 
@@ -151,21 +152,29 @@ class ViewerDataLoader(QtCore.QThread):
         params = dict(create_cutout=True)
 
         try:
-            ra = self.cat_entry.get_col('ra')
-            dec = self.cat_entry.get_col('dec')
+            ra = self.cat_entry.get_col("ra")
+            dec = self.cat_entry.get_col("dec")
         except KeyError as e:
             logger.error(e)
             return None
 
         _, meta = self.viewer_data.load(wcs_source, lazy=True, create_wcs=True)
         if meta is None:
-            return
+            return None
 
         try:
-            x0, y0 = meta.wcs.all_world2pix(ra, dec, 0)
+            wcs = get_wcs(meta)
         except Exception as e:
-            logger.error(f"Calculation of pixel coordinates failed: {e} (image: {wcs_source})")
+            logger.error(f"Failed to create the WCS object: {e} (image: {wcs_source})")
             return None
+
+        try:
+            coord = SkyCoord(ra=ra, dec=dec, unit="deg")
+            x0, y0 = wcs.world_to_pixel(coord)
+        except Exception as e:
+            logger.error(f"Failed to calculate pixel coordinates of the cutout's center: {e} (image: {wcs_source})")
+            return None
+
         params.update(x0=x0, y0=y0)
 
         return params

@@ -111,21 +111,21 @@ class ObjectInfo(AbstractWidget):
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, object)
-    def load_object(self, _, __, cat_entry: Catalog | None):
+    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
 
         if cat_entry is None:
             for row in self._table_items.values():
-                row[1].setText('')
+                row[1].setText("")
             return
 
         for cname, row in self._table_items.items():
             try:
                 value = cat_entry.get_col(cname)
-                value = f'{value:.8f}' if isinstance(value, float) else str(value)
+                value = f"{value:.8f}" if isinstance(value, float) else str(value)
                 row[1].setText(value)
             except KeyError as e:
                 logger.warning(e)
-                row[1].setText('')
+                row[1].setText("")
 
     @QtCore.Slot()
     def collect_data(self):

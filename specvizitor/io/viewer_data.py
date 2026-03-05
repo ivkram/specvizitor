@@ -24,6 +24,7 @@ __all__ = [
     "DataPath",
     "LocalPath",
     "URLPath",
+    "get_wcs",
     "add_unit_aliases",
     "data_browser"
 ]
@@ -92,8 +93,7 @@ class GenericFITSLoader(BaseLoader):
     def _open(self, filename: str, **kwargs):
         self._dataset = fits.open(filename, **kwargs)
 
-    def _load(self, extname: str = None, extver: str = None, extver_index: int = None, create_cutout=False,
-              create_wcs=False, **kwargs):
+    def _load(self, extname: str = None, extver: str = None, extver_index: int = None, create_cutout=False, **kwargs):
         hdul = self._dataset
 
         if extname is not None and extver is not None:
@@ -126,21 +126,11 @@ class GenericFITSLoader(BaseLoader):
             coords, _ = self.get_cutout_params(data.shape, **kwargs)
             data = self._create_cutout(data, *coords)
 
-        if create_wcs:
-            meta.wcs = self._create_wcs(meta)
-
         return data, meta
 
     @staticmethod
     def _create_cutout(data, x1, x2, y1, y2):
         return data[y1:y2, x1:x2]
-
-    @staticmethod
-    def _create_wcs(meta):
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', AstropyWarning)
-            wcs = WCS(meta)
-        return wcs
 
 
 class PILLoader(BaseLoader):
@@ -326,6 +316,13 @@ class LocalPath(DataPath):
 
 class URLPath(DataPath):
     pass
+
+
+def get_wcs(meta):
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', AstropyWarning)
+        wcs = WCS(meta)
+    return wcs
 
 
 def add_unit_aliases(unit_aliases: dict[str, list[str]]):
