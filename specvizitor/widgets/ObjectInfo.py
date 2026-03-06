@@ -29,7 +29,7 @@ class ObjectInfo(AbstractWidget):
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
 
-        QtWidgets.QShortcut("/", self, self._search_lineedit.setFocus)
+        QtWidgets.QShortcut("/", self, self._set_focus)
 
     def _create_table_items(self):
         if self.all_columns is None:
@@ -63,7 +63,7 @@ class ObjectInfo(AbstractWidget):
     @QtCore.Slot()
     def update_view(self):
         for i, cname in enumerate(self._table_items.keys()):
-            if cname in self.visible_columns and self._search_lineedit.text() in cname:
+            if cname in self.visible_columns and self._search_lineedit.text().upper() in cname.upper():
                 self._table.showRow(i)
             else:
                 self._table.hideRow(i)
@@ -138,3 +138,8 @@ class ObjectInfo(AbstractWidget):
         dialog.visible_columns_updated.connect(self.update_visible_columns)
         if dialog.exec():
             pass
+
+    @QtCore.Slot()
+    def _set_focus(self):
+        self._search_lineedit.clear()
+        self._search_lineedit.setFocus()
