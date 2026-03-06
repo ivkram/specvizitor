@@ -4,7 +4,7 @@ import logging
 
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..utils.widgets import AbstractWidget
+from ..utils.widgets import AbstractWidget, MyQLineEdit
 
 from .TableColumns import TableColumns
 
@@ -22,12 +22,14 @@ class ObjectInfo(AbstractWidget):
         self._table_items: dict[str, list[tuple[QtWidgets.QTableWidgetItem, QtWidgets.QTableWidgetItem]]] | None = None
 
         self._search_label: QtWidgets.QLabel | None = None
-        self._search_lineedit: QtWidgets.QLineEdit | None = None
+        self._search_lineedit: MyQLineEdit | None = None
         self._display_options: QtWidgets.QPushButton | None = None
 
         super().__init__(parent=parent)
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
+
+        QtWidgets.QShortcut("/", self, self._search_lineedit.setFocus)
 
     def _create_table_items(self):
         if self.all_columns is None:
@@ -84,7 +86,7 @@ class ObjectInfo(AbstractWidget):
 
         self._search_label = QtWidgets.QLabel("Search:", self)
         self._search_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
-        self._search_lineedit = QtWidgets.QLineEdit(self)
+        self._search_lineedit = MyQLineEdit(self)
         self._search_lineedit.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Maximum)
         self._search_lineedit.setMinimumWidth(50)
         self._display_options = QtWidgets.QPushButton("Columns...", self)

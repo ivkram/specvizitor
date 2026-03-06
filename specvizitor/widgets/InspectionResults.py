@@ -30,7 +30,6 @@ class InspectionResults(AbstractWidget):
         self.setEnabled(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
 
-        # add shortcuts
         QtWidgets.QShortcut("E", self, self._comments_widget.setFocus)
 
     def _create_checkbox_widgets(self, review: InspectionData | None = None):
