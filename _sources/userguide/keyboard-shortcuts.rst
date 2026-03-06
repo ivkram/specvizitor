@@ -21,9 +21,11 @@ Keyboard Shortcuts
     * - :kbd:`S`
       - Star the object
     * - :kbd:`E`
-      - Set focus on :guilabel:`Comments`
+      - Set focus on the Comments field in :guilabel:`Inspection Results`
+    * - :kbd:`/`
+      - Set focus on the Search field in :guilabel:`Object Information`
     * - :kbd:`Esc`
-      - Remove focus from :guilabel:`Comments`
+      - Remove focus
     * - :kbd:`R`
       - Reset the view
     * - :kbd:`H`
