@@ -4,10 +4,11 @@ from astropy.visualization import ZScaleInterval
 from astropy.wcs import WCS, FITSFixedWarning
 import numpy as np
 import pyqtgraph as pg
-from qtpy import QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 
 from dataclasses import dataclass
 from enum import Enum, auto
+from functools import partial
 import logging
 import warnings
 
@@ -15,7 +16,7 @@ from ..config import data_widgets
 from ..io.catalog import Catalog
 from ..io.viewer_data import get_wcs
 from ..utils.qt_tools import get_qtransform_from_wcs
-from ..utils.widgets import ColorBar
+from ..utils.widgets import ColorBar, MyTextItem
 
 from .ViewerElement import ViewerElement, LinkableItem
 
@@ -118,14 +119,21 @@ class Image2D(ViewerElement):
         x, y = x[mask], y[mask]
         source_ids = cat.get_col("id")[mask]
 
-        color = 'w'
-        pen = pg.mkPen(color, width=2)
+        s = 5
         for sid, xi, yi in zip(source_ids, x, y):
-            self.register_item(pg.CircleROI([xi, yi], [5, 5], pen=pen))
-            text_item = pg.TextItem(text=str(sid), color=color)
+            reg_item = QtWidgets.QGraphicsEllipseItem(xi-s/2+0.5, yi-s/2+0.5, s, s)
+            self.register_item(reg_item)
+
+            text_item = MyTextItem(text=str(sid))
             self.register_item(text_item)
             text_item.setPos(xi, yi)
+            text_item.clicked.connect(partial(self.id_selected.emit, str(sid)))
+            text_item.color_changed.connect(partial(self._set_reg_color, reg_item))
+            text_item.setColor("w")
 
+    @QtCore.Slot(object)
+    def _set_reg_color(self, reg_item: QtWidgets.QGraphicsItem, color):
+        reg_item.setPen(pg.mkPen(color, width=2))
 
     def add_content(self, cat: Catalog | None):
         self.image_item.setImage(self.data, autoLevels=False)

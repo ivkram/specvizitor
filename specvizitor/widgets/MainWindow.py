@@ -378,6 +378,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._inspection_res.redshift_set.connect(self._clear_redshift.setEnabled)
 
         self._data_viewer.object_loaded.connect(self.finalize_loading)
+        self._data_viewer.id_selected.connect(self.load_by_id)
 
         self._data_viewer.data_collected.connect(self.save_viewer_data)
         self._object_info.data_collected.connect(self.save_obj_info_data)
