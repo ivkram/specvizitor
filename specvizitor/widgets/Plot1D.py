@@ -93,6 +93,10 @@ class Plot1D(ViewerElement):
         for label, plot_data_item in self.plot_data_items.items():
             x_data, _ = plot_data_item.getData()
             y_data = self.get_plot_data(self.cfg.plots[label].y)
+
+            if y_data is None:
+                continue
+
             y_data = self.apply_ydata_transform(y_data)
 
             y_data_smoothed = gaussian_filter1d(y_data, sigma) if sigma > 0 else y_data
