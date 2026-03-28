@@ -154,7 +154,7 @@ class Catalog:
                 raise KeyError
 
             if isinstance(t, Row):
-                if t[indices[0]] == obj_id[0]:
+                if all(t[indices[i]] == obj_id[i] for i in range(len(obj_id))):
                     return t
                 else:
                     raise KeyError
