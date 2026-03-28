@@ -206,8 +206,6 @@ class DataViewer(AbstractWidget):
 
     def _add_dock(self, dt: str):
         dock, w0 = self.docks[dt], self.widgets[dt]
-        if not w0.cfg.visible:
-            return
 
         position = w0.cfg.position if w0.cfg.position is not None else 'bottom'
         relative_to = w0.cfg.relative_to if w0.cfg.relative_to in self._added_docks else None
@@ -400,8 +398,7 @@ class DataViewer(AbstractWidget):
             self._update_visibility(wt)
 
     def _update_visibility(self, wt: str):
-        w0 = self.widgets[wt]
-        dock = self.docks[wt]
+        w0, dock = self.widgets[wt], self.docks[wt]
 
         if self._zen_mode_activated:
             dock.hideTitleBar()
@@ -411,6 +408,8 @@ class DataViewer(AbstractWidget):
         self.visibility_updated.connect(w0.update_visibility)
         self.visibility_updated.emit(self._zen_mode_activated)
         self.visibility_updated.disconnect(w0.update_visibility)
+
+        dock.setVisible(w0.cfg.visible)
 
     @QtCore.Slot()
     def free_resources(self):
