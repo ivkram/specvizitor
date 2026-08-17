@@ -8,9 +8,11 @@ Installation
 
       Python **>=3.10** is required to run specvizitor. If you have an older version of Python installed in your system, you can use `conda <https://docs.conda.io/en/latest/>`_ to create a virtual environment with Python version 3.10+ (if you are looking for a minimal conda installer, check out `miniforge <https://github.com/conda-forge/miniforge>`_).
 
-Install the latest version of specvizitor using :pypi:`pip`::
+Install the latest version of specvizitor using :pypi:`pip`:
 
-      >> pip install specvizitor
+.. code-block:: sh
+
+      pip install specvizitor
 
 If you wish to install specvizitor from source, refer to the :doc:`development/installing-from-source` section.
 
@@ -19,22 +21,26 @@ Basic usage
 
 .. important::
 
-    This tutorial shows how to do inspections of `Grizli <https://github.com/gbrammer/grizli>`_ data products. Instructions on how to inspect other kinds of spectroscopic datasets in specvizitor can be found in the :doc:`userguide/index`.
+    This tutorial shows how to inspect `Grizli <https://github.com/gbrammer/grizli>`_ data products. Instructions on how to inspect other kinds of spectroscopic datasets in specvizitor can be found in the :doc:`userguide/index`.
 
-In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https://www.stsci.edu/jwst/phase2-public/3516.pdf>`_", reduced using the `Grizli <https://github.com/gbrammer/grizli>`_ tool.
+In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https://ui.adsabs.harvard.edu/abs/2024arXiv241001874N/abstract>`_", reduced using the `Grizli <https://github.com/gbrammer/grizli>`_ tool.
 
 #. Download the data as a ZIP file from `here <https://seafile.ist.ac.at/d/1409d984220043f5bcc7/>`_ (total size: 25.5 MB).
 
-#. Unzip the archive and navigate to the directory where the files have been extracted to::
+#. Unzip the archive and navigate to the directory to which the files have been extracted:
 
-      >> unzip specvizitor_demo.zip
-      >> cd specvizitor_demo
+   .. code-block:: sh
 
-#. Start specvizitor::
+      unzip specvizitor_demo.zip
+      cd specvizitor_demo
 
-      >> specvizitor
+#. Start specvizitor:
 
-#. Navigate to :menuselection:`File --> New...`. Optionally give a name to the project (we use ``demo.csv`` for this tutorial) and specify the path to the catalog (the ``catalog.fits`` file in the ``specvizitor_demo`` directory):
+   .. code-block:: sh
+
+      specvizitor
+
+#. Navigate to :menuselection:`File --> New...`. Optionally give a name to the project (``demo.csv`` in this tutorial) and specify the path to the catalog - the ``catalog.fits`` file in the ``specvizitor_demo`` directory:
 
    .. figure:: screenshots/demo1.png
 
@@ -42,11 +48,11 @@ In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https:/
 
    .. figure:: screenshots/demo2.png
 
-   Below is the description of what is shown in the data viewer.
+   Here is the description of what is shown in the data viewer:
 
-   - **Top row, left to right:** an image cutout in the F356W filter (the filter used in the NIRCam/grism observations), a series of emission line maps, and a redshift probability distribution function (z-PDF);
-   - **Middle row:** a 2D spectrum stack of all exposures;
-   - **Bottom row:** a 1D spectrum.
+   - **Top row, left to right:** an image cutout in the F356W filter (i.e., the filter used in the NIRCam/grism observations), a series of emission line maps, and a redshift probability distribution function (z-PDF);
+   - **Middle row:** a 2D grism spectrum;
+   - **Bottom row:** a 1D grism spectrum.
 
 #. This galaxy was correctly identified by Grizli as an OIII-emitter at z ≈ 5.76 (you can see this on the right under :guilabel:`Object Information`). Save the redshift by pressing :kbd:`Ctrl+S` or by clicking :guilabel:`Save!` next to the redshift slider. The saved value will appear in :guilabel:`Inspection Results`:
 
@@ -56,7 +62,7 @@ In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https:/
 
    .. figure:: screenshots/demo4.png
 
-#. This object has an unphysical redshift value of ``-1.0`` stored in the catalog (which means that spectrum fitting failed). Find the redshift that best describes the data by interacting with the slider at the bottom of the window:
+#. This object has an unphysical redshift value of ``-1.0`` stored in the catalog, which means that spectrum fitting failed. Find the redshift that best describes the data by interacting with the slider at the bottom of the window:
 
    .. figure:: screenshots/demo5.gif
 
@@ -68,29 +74,32 @@ In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https:/
 
    .. figure:: screenshots/demo6.png
 
-   The 2D spectrum shows only a single emission line which prevents us from unambiguously identifying the redshift of this object. However, we can see that Grizli suggests that this is an Halpha-emitter at z ≈ 4.31, which seems plausible considering the compact morphology of the source.
+   The 2D spectrum shows just one emission line which prevents us from unambiguously identifying the redshift of this object. However, we can see that Grizli suggests that this is an Halpha-emitter at z ≈ 4.31, which seems plausible considering the compactness of the source.
 
 #. Save the redshift of the last object and close the window.
 
-#. Finally, check the contents of the output file (also known as the *inspection file*) created by specvizitor::
+#. Finally, check the contents of the output file (also known as the *inspection file*):
 
-    >> cat demo.csv
-    id,starred,z_sviz,comment
-    16605,False,5.760862,
-    26932,False,2.677225,
-    34927,False,4.307806,
+   .. csv-table:: demo.csv
 
-   Here, ``id`` is the ID of the object, and ``z_sviz`` is the redshift saved in :guilabel:`Inspection Results`.
+      id,starred,z_sviz,comment
+      16605,False,5.760862,
+      26932,False,2.677225,
+      34927,False,4.307806,
+
+   As you can see, the redshifts were saved to the ``z_sviz`` column.
 
 
-Congratulations on completing the tutorial! If you want to learn more about specvizitor, navigate to the :doc:`userguide/index` section.
+Congratulations on completing this tutorial! If you want to learn more about specvizitor, navigate to the :doc:`userguide/index` section.
 
 Updating specvizitor
 ++++++++++++++++++++
 
-To update specvizitor to the latest version, run the following command::
+To update specvizitor to the latest version, run the following command:
 
-        >> pip install specvizitor -U
+.. code-block:: sh
+
+   pip install specvizitor -U
 
 
 .. tip::

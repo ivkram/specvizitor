@@ -25,7 +25,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 extlinks = {
     'pypi': ('https://pypi.org/project/%s', '%s')
 }
-extensions += ['sphinx.ext.extlinks']
+extensions += [
+    'sphinx.ext.extlinks',
+    'sphinx_copybutton',
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

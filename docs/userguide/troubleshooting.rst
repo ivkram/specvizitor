@@ -4,10 +4,12 @@ Troubleshooting
 Specvizitor won't launch
 ++++++++++++++++++++++++
 
-If you run specvizitor for the first time, you might encounter the following error::
+If you run specvizitor for the first time, you might encounter the following error:
 
-        ...
-        TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+.. code-block:: sh
+
+   ...
+   TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
 
 This means that you are using an older version of Python than the version required to run specvizitor (3.10 and higher). You can install Python 3.10+ using `conda <https://docs.conda.io/en/latest/>`_, for example.
 
@@ -21,11 +23,13 @@ What to do if none of the above helped
 
 1. Check the console output - error messages can help you to pinpoint the exact source of the problem.
 
-2. `Update specvizitor <../getting-started.html#updating-specvizitor>`__ - some bugs might have been fixed in the latest version.
+2. `Update specvizitor <../getting-started.html#updating-specvizitor>`__ - some bugs might be fixed in the latest version.
 
-3. Reset specvizitor to its initial state::
+3. Reset specvizitor to its initial state:
 
-        >> specvizitor --purge
+   .. code-block:: sh
+
+      specvizitor --purge
 
 .. warning::
 
