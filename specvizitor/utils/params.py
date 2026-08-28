@@ -1,14 +1,22 @@
 import dacite
 from dacite.exceptions import WrongTypeError, MissingValueError
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from functools import wraps
+from importlib.metadata import version as _package_version
+from typing import Callable, ClassVar
 import logging
 import pathlib
 import shutil
 import yaml
 
 logger = logging.getLogger(__name__)
+
+CURRENT_VERSION = _package_version(__package__.split('.')[0])
+
+
+def _parse_version(v: str) -> tuple[int, ...]:
+    return tuple(int(p) for p in v.split('.'))
 
 
 @dataclass
@@ -62,6 +70,16 @@ class LocalFile:
 
 @dataclass
 class Params:
+    config_version: str = field(default_factory=lambda: CURRENT_VERSION)
+
+    # Maps the config_version a migration upgrades *from* to a function that
+    # patches the raw dict (pre-dacite) to match the current schema. Only
+    # needed for breaking changes -- new fields with defaults, or fields
+    # dropped from the schema, are already handled without an entry here.
+    # Subclasses override this with their own table, e.g.:
+    #   MIGRATIONS = {"1.0.0": lambda d: {**d, "bar": d.pop("foo", None)}}
+    MIGRATIONS: ClassVar[dict[str, Callable[[dict], dict]]] = {}
+
     def __post_init__(self):
         self._user_file: LocalFile | None = None
 
@@ -73,6 +91,15 @@ class Params:
     @classmethod
     def read_default_params(cls, filename: str):
         return cls._read(pathlib.Path(__file__).parent.parent / 'data' / 'config' / filename)
+
+    @classmethod
+    def _migrate(cls, data: dict) -> dict:
+        stored_version = _parse_version(data.get('config_version', '0'))
+        for from_version, migrate in sorted(cls.MIGRATIONS.items(), key=lambda item: _parse_version(item[0])):
+            if stored_version <= _parse_version(from_version):
+                data = migrate(data)
+        data['config_version'] = CURRENT_VERSION
+        return data
 
     @classmethod
     def read_user_params(cls, file: LocalFile, default: str | None = None):
@@ -90,8 +117,8 @@ class Params:
         except yaml.YAMLError:
             logger.error(f'Failed to parse `{file.path}`. The file will be overwritten.')
         else:
+            user_params = cls._migrate(user_params)
             try:
-                # TODO: patch the user config file using dictdiffer
                 user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
             except (WrongTypeError, MissingValueError):
                 user_params = None
