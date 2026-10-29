@@ -125,7 +125,9 @@ class ViewerDataLoader(QtCore.QThread):
         return LocalPath(image.filename)
 
     def _get_loader_params(self, w0: ViewerElement) -> dict | None:
-        params = w0.cfg.data.loader_params
+        # a copy: the cutout parameters below are recomputed per object and must not leak into
+        # the widget configuration, which is persisted and shared
+        params = dict(w0.cfg.data.loader_params)
 
         if not w0.cfg.data.source:
             return params
@@ -175,6 +177,6 @@ class ViewerDataLoader(QtCore.QThread):
             logger.error(f"Failed to calculate pixel coordinates of the cutout's center: {e} (image: {wcs_source})")
             return None
 
-        params.update(x0=x0, y0=y0)
+        params.update(x0=float(x0), y0=float(y0))
 
         return params
