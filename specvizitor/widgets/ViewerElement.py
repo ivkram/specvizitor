@@ -10,6 +10,7 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
 from functools import partial
 import logging
+from typing import Callable, Iterable
 
 from ..config import config, data_widgets
 from ..config import SpectralLineData
@@ -154,6 +155,7 @@ class ViewerElement(AbstractWidget):
         # graphics items
         self.container: pg.PlotItem | None = None
         self._registered_items: list[pg.GraphicsItem] = []
+        self._registered_connections: list[QtCore.QMetaObject.Connection] = []
 
         self._spectral_lines = spectral_lines
         self._spectral_line_artists: dict[str, tuple[pg.InfiniteLine, pg.TextItem]] = {}
@@ -347,10 +349,17 @@ class ViewerElement(AbstractWidget):
     def add_content(self, cat: Catalog | None):
         pass
 
-    def register_item(self, item: pg.GraphicsItem | QtWidgets.QGraphicsItem, **kwargs):
+    def register_item(self, item: pg.GraphicsItem | QtWidgets.QGraphicsItem,
+                      connections: Iterable[tuple[QtCore.Signal, Callable]] = (), **kwargs):
+        """ Add an item for the current object only. The item is removed, and the (signal, slot) `connections`
+        made for it are dropped, once another object is loaded.
+        """
         item.setTransform(self._qtransform)
         self.container.addItem(item, **kwargs)
         self._registered_items.append(item)
+
+        for signal, slot in connections:
+            self._registered_connections.append(signal.connect(slot))
 
     def setup_view(self, cat_entry: Catalog | None):
         xlim = (self.cfg.x_axis.limits.min, self.cfg.x_axis.limits.max)
@@ -464,6 +473,10 @@ class ViewerElement(AbstractWidget):
             s.update_from_slider()
 
     def remove_registered_items(self):
+        # through the connection handles, which stay safe to use once a sender has been deleted
+        while self._registered_connections:
+            QtCore.QObject.disconnect(self._registered_connections.pop())
+
         while self._registered_items:
             item = self._registered_items.pop()
             self.container.removeItem(item)

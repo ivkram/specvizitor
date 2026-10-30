@@ -146,8 +146,7 @@ class Plugin(PluginCore):
     @staticmethod
     def add_current_redshift_to_z_pdf(spec_1d: Plot1D, z_pdf: Plot1D):
         line = pg.InfiniteLine(spec_1d.redshift_slider.value, pen='m')
-        spec_1d.redshift_slider.value_changed[float].connect(lambda z: line.setPos(z))
-        z_pdf.register_item(line)
+        z_pdf.register_item(line, connections=[(spec_1d.redshift_slider.value_changed[float], line.setPos)])
 
     @staticmethod
     def convert_spec1d_flux_unit_to_physical(spec_1d: Plot1D):
