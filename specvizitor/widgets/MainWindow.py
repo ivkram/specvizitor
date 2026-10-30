@@ -34,8 +34,9 @@ from .InspectionFieldEditor import InspectionFieldEditor
 from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
-from .WorkspaceDialogs import (CloneWorkspaceDialog, ExportWorkspaceDialog, ImportWorkspaceDialog,
-                               NewWorkspaceDialog, RenameWorkspaceDialog, ResolvePathsDialog)
+from .WorkspaceDialogs import (CloneWorkspaceDialog, ExportWorkspaceDialog, ForgetWorkspaceDialog,
+                               ImportWorkspaceDialog, NewWorkspaceDialog, RenameWorkspaceDialog,
+                               ResolvePathsDialog)
 
 logger = logging.getLogger(__name__)
 
@@ -404,19 +405,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.restart()
 
     def _forget_unavailable_workspace(self, path: str):
-        name = Workspace.name_at(path)
-
-        box = QtWidgets.QMessageBox(
-            QtWidgets.QMessageBox.Warning, "Workspace Unavailable",
-            f"`{name}` is not there any more:\n\n{path}\n\n"
-            f"Forget this workspace? Keep it if it lives on storage that is only temporarily "
-            f"unavailable.",
-            QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel, self)
-        # the default label of the Discard button doesn't describe the action
-        box.button(QtWidgets.QMessageBox.Discard).setText("Forget Workspace")
-        box.setDefaultButton(QtWidgets.QMessageBox.Cancel)
-
-        if box.exec() == QtWidgets.QMessageBox.Discard:
+        if ForgetWorkspaceDialog(path, parent=self).exec():
             self._registry.forget(path)
             self._registry.save()
             logger.info(f"Workspace removed from the list (path: {path})")

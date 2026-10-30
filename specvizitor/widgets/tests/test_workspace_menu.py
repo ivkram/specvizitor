@@ -35,7 +35,8 @@ RECENT_MENU_TITLE = 'Recent Wor&kspaces'
 # NewFile is in here because the sweep below triggers every File entry, and it now shares the
 # menu with the workspace commands
 DIALOG_NAMES = ('NewWorkspaceDialog', 'ImportWorkspaceDialog', 'ExportWorkspaceDialog',
-                'ResolvePathsDialog', 'CloneWorkspaceDialog', 'RenameWorkspaceDialog', 'NewFile')
+                'ResolvePathsDialog', 'CloneWorkspaceDialog', 'RenameWorkspaceDialog', 'ForgetWorkspaceDialog',
+                'NewFile')
 
 
 class _StubSignal:
@@ -87,8 +88,6 @@ def gui(tmp_path_factory):
     patch.setattr(qtpy.compat, 'getexistingdirectory', lambda *a, **kw: '')
     patch.setattr(qtpy.compat, 'getopenfilename', lambda *a, **kw: ('', ''))
     patch.setattr(qtpy.compat, 'getsavefilename', lambda *a, **kw: ('', ''))
-    # a modal question would block the trigger tests forever
-    patch.setattr(QtWidgets.QMessageBox, 'exec', lambda self: QtWidgets.QMessageBox.Cancel)
 
     restarts = []
     patch.setattr(MainWindow, 'restart', lambda self: restarts.append(True))
@@ -463,7 +462,8 @@ def test_an_unavailable_workspace_is_listed_by_its_directory_name(gui, tmp_path)
 
 def test_discarding_an_unavailable_workspace_drops_it_from_the_list(gui, slot_errors, tmp_path,
                                                                    monkeypatch):
-    monkeypatch.setattr(QtWidgets.QMessageBox, 'exec', lambda self: QtWidgets.QMessageBox.Discard)
+    monkeypatch.setattr(main_window_module, 'ForgetWorkspaceDialog',
+                        type('_Forget', (_StubDialog,), {'opened': [], 'exec': lambda self: 1}))
 
     gone = _unavailable_workspace(gui['registry'], gui['win'], tmp_path)
 
@@ -473,27 +473,6 @@ def test_discarding_an_unavailable_workspace_drops_it_from_the_list(gui, slot_er
     assert str(gone.path) not in gui['registry'].known
     assert 'Gone' not in [a.text() for a in _recent_entries(gui['win'])]
     assert not gui['restarts'], "removing an entry from the list is not a switch"
-
-
-def test_the_removal_prompt_says_what_its_button_does(gui, tmp_path, monkeypatch):
-    """Qt labels the Discard role "Discard" or "Close Without Saving", depending on the platform.
-    """
-    seen = {}
-
-    def fake_exec(box):
-        seen['discard'] = box.button(QtWidgets.QMessageBox.Discard).text()
-        return QtWidgets.QMessageBox.Cancel
-
-    monkeypatch.setattr(QtWidgets.QMessageBox, 'exec', fake_exec)
-
-    gone = _unavailable_workspace(gui['registry'], gui['win'], tmp_path)
-    try:
-        _recent_entry(gui['win'], 'Gone  (unavailable)').trigger()
-
-        assert seen['discard'] == 'Forget Workspace'
-    finally:
-        gui['registry'].forget(gone.path)
-        gui['win']._populate_workspace_list()
 
 
 def test_keeping_an_unavailable_workspace_leaves_it_listed(gui, slot_errors, tmp_path):
@@ -617,3 +596,12 @@ def test_the_resolve_dialog_offers_only_the_unset_paths(gui, tmp_path):
 
     assert 'Data directory' not in titles
     assert 'Catalogue' in titles
+
+
+def test_the_forget_dialog_defaults_to_keeping_the_workspace(gui, tmp_path):
+    from specvizitor.widgets.WorkspaceDialogs import ForgetWorkspaceDialog
+
+    dialog = ForgetWorkspaceDialog(str(tmp_path / 'gone'))
+
+    assert dialog._button_box.button(QtWidgets.QDialogButtonBox.Cancel).isDefault()
+    assert dialog._button_box.button(QtWidgets.QDialogButtonBox.Ok).text() == 'Forget Workspace'

@@ -19,6 +19,7 @@ __all__ = [
     "NewWorkspaceDialog",
     "CloneWorkspaceDialog",
     "RenameWorkspaceDialog",
+    "ForgetWorkspaceDialog",
     "ImportWorkspaceDialog",
     "ExportWorkspaceDialog",
     "ResolvePathsDialog"
@@ -169,6 +170,39 @@ class RenameWorkspaceDialog(QtWidgets.QDialog):
 
         self.workspace_name = self._name_edit.text().strip()
         super().accept()
+
+
+# not a QMessageBox, which on Wayland is first shown in the corner of the screen
+class ForgetWorkspaceDialog(QtWidgets.QDialog):
+    def __init__(self, path: str, parent=None):
+        self._path = path
+
+        self._info_label: QtWidgets.QLabel | None = None
+        self._button_box: QtWidgets.QDialogButtonBox | None = None
+
+        super().__init__(parent)
+        self.setWindowTitle("Workspace Unavailable")
+
+        self.init_ui()
+        self.set_layout()
+        self.populate()
+
+    def init_ui(self):
+        self._info_label = QtWidgets.QLabel(
+            f"`{Workspace.name_at(self._path)}` is not there any more:\n\n{self._path}\n\n"
+            f"Forget this workspace? Keep it if it lives on storage that is only temporarily unavailable.", self)
+        self._info_label.setWordWrap(True)
+
+        self._button_box = _button_box(self)
+        self._button_box.button(QtWidgets.QDialogButtonBox.Ok).setText("Forget Workspace")
+        self._button_box.button(QtWidgets.QDialogButtonBox.Cancel).setDefault(True)
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QVBoxLayout())
+
+    def populate(self):
+        self.layout().addWidget(self._info_label)
+        self.layout().addWidget(self._button_box)
 
 
 class ImportWorkspaceDialog(NewWorkspaceDialog):
