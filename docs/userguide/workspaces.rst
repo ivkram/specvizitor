@@ -11,9 +11,8 @@ Switching workspaces
 ++++++++++++++++++++
 
 :menuselection:`File --> Recent Workspaces` lists the known workspaces, most recently used first.
-Select one to switch to it, or press :kbd:`Ctrl+1` ... :kbd:`Ctrl+9` for the first nine entries.
-The active workspace is checked in the list and shown in the window title. Switching restarts the
-application.
+Select one to switch to it. The active workspace is checked in the list and shown in the window
+title. Switching restarts the application.
 
 A workspace that cannot be found is marked ``(unavailable)``. Click it to remove it from the list
 or to keep it, for example while a network share is offline.

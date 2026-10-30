@@ -37,6 +37,8 @@ Keyboard Shortcuts
     * - :kbd:`Ctrl+N`
       - Create a new inspection file
     * - :kbd:`Ctrl+O`
-      - Open an existing inspection file
+      - Open an existing inspection file, workspace or workspace archive
+    * - :kbd:`Ctrl+1`, :kbd:`Ctrl+2`, ..., :kbd:`Ctrl+9`
+      - Switch to the first, second, ..., ninth workspace in :menuselection:`File --> Recent Workspaces`
     * - :kbd:`Ctrl+Q`
       - Quit the application
