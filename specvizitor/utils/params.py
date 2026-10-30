@@ -7,6 +7,7 @@ from importlib.metadata import version as _package_version
 from typing import Callable, ClassVar
 import logging
 import pathlib
+import re
 import shutil
 import yaml
 
@@ -17,8 +18,11 @@ logger = logging.getLogger(__name__)
 CURRENT_VERSION = _package_version(__package__.split('.')[0])
 
 
-def _parse_version(v: str) -> tuple[int, ...]:
-    return tuple(int(p) for p in v.split('.'))
+def _parse_version(v) -> tuple[int, ...]:
+    # only the release segment counts: a pre-release or a dev build (1.0.0rc1, 0.7.1.dev3) sorts with its
+    # release, and anything unparsable is treated as the oldest version
+    match = re.match(r'\d+(?:\.\d+)*', str(v))
+    return tuple(int(p) for p in match.group().split('.')) if match else (0,)
 
 
 @dataclass

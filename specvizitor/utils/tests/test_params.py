@@ -103,3 +103,26 @@ def test_dacite_failure_after_migration_falls_back_to_defaults(tmp_path):
     assert params.tags == []
     assert params.config_version == params_mod.CURRENT_VERSION
     assert (tmp_path / "dummy.yml.bak").exists()  # the broken file was backed up, not silently dropped
+
+
+def test_pre_release_config_version_is_read_back(monkeypatch, tmp_path):
+    monkeypatch.setattr(params_mod, "CURRENT_VERSION", "1.0.0rc1")
+
+    class MigratingParams(DummyParams):
+        MIGRATIONS: ClassVar[dict] = {
+            "0.7.0": lambda d: {**d, "name": d["name"] + "-migrated"},
+        }
+
+    f = _make_file(tmp_path, {"config_version": "0.7.0", "name": "start"})
+    MigratingParams.read_user_params(f)  # first read: migrates and re-saves as 1.0.0rc1
+    params = MigratingParams.read_user_params(f)  # second read: must parse the pre-release version
+
+    assert params.name == "start-migrated"
+    assert params.config_version == "1.0.0rc1"
+
+
+def test_parse_version_handles_pre_releases_and_junk():
+    assert params_mod._parse_version("1.0.0rc1") == (1, 0, 0)
+    assert params_mod._parse_version("0.7.1.dev3") == (0, 7, 1)
+    assert params_mod._parse_version(1.0) == (1, 0)  # an unquoted version in YAML is read as a float
+    assert params_mod._parse_version("garbage") == (0,)
