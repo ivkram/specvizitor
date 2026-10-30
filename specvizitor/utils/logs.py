@@ -3,14 +3,14 @@ import logging
 
 from qtpy import QtCore, QtWidgets
 
+from .errors import error_message
+
 
 class QLogHandler(logging.Handler):
     def emit(self, record):
         msg = record.msg
         if isinstance(msg, Exception):
-            msg = str(msg)
-            if msg.startswith("'") and msg.endswith("'"):
-                msg = msg[1:-1]
+            msg = error_message(msg)
 
         level = record.levelno
         if level <= logging.INFO:

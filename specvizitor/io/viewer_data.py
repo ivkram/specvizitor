@@ -16,6 +16,7 @@ from typing import Any
 import warnings
 
 from .catalog import Catalog
+from ..utils.errors import error_message
 from ..utils.paths import absolute_path
 from ..utils.widgets import FileBrowser
 
@@ -101,10 +102,13 @@ class GenericFITSLoader(BaseLoader):
             index = (extname, extver)
         elif extname is not None and extver_index is not None:
             extname_match_indices = [i for i, hdu in enumerate(hdul) if hdu.header.get('EXTNAME') == extname]
+            if not extname_match_indices:
+                raise KeyError(f"Extension `{extname}` not found")
             try:
                 index = extname_match_indices[extver_index]
             except IndexError:
-                IndexError(f"EXTVER `{extver_index}` out of range")
+                raise IndexError(f"EXTVER index `{extver_index}` out of range for extension `{extname}` "
+                                 f"({len(extname_match_indices)} found)") from None
         elif extname is not None:
             index = extname
         elif len(hdul) > 1:
@@ -115,7 +119,7 @@ class GenericFITSLoader(BaseLoader):
         try:
             hdu = hdul[index]
         except KeyError:
-            KeyError(f"Extension `{index}` not found")
+            raise KeyError(f"Extension `{index}` not found") from None
 
         meta = hdu.header
         if meta.get('XTENSION') and meta['XTENSION'] in ('TABLE', 'BINTABLE'):
@@ -204,7 +208,7 @@ class ViewerData:
         try:
             loader.open(filename, **loader_params)
         except Exception as e:
-            logger.error(f"{type(loader).__name__}: {e} (filename: {filename})")
+            logger.error(f"{type(loader).__name__}: {error_message(e)} (filename: {filename})")
             return None
 
         self._loaders[filename] = loader
@@ -238,7 +242,7 @@ class ViewerData:
             data, meta = loader.load(**kwargs)
         except Exception as e:
             if not silent:
-                logger.error(f"{type(loader).__name__}: {e} (filename: {filename})")
+                logger.error(f"{type(loader).__name__}: {error_message(e)} (filename: {filename})")
             return None, None
 
         if allowed_dtypes and not self._validate_dtype(data, allowed_dtypes):
