@@ -8,7 +8,6 @@ from ..utils.paths import absolute_path
 
 from .config import Catalogue, DataSources, InspectionResults
 from .data_widgets import DataWidgets
-from .spectral_lines import SpectralLineData
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,6 @@ __all__ = [
     "WORKSPACE_LAYOUT_FILENAME",
     "WORKSPACE_STATE_FILENAME",
     "WORKSPACE_WIDGETS_FILENAME",
-    "WORKSPACE_LINES_FILENAME",
 ]
 
 # a directory is a workspace if it contains this file
@@ -30,7 +28,6 @@ WORKSPACE_CONFIG_FILENAME = 'workspace.yml'
 WORKSPACE_LAYOUT_FILENAME = 'layout.yml'
 WORKSPACE_STATE_FILENAME = 'state.yml'
 WORKSPACE_WIDGETS_FILENAME = 'data_widgets.yml'
-WORKSPACE_LINES_FILENAME = 'spectral_lines.yml'
 
 
 @dataclass
@@ -119,7 +116,6 @@ class Workspace:
     path: pathlib.Path
     config: WorkspaceConfig = field(default_factory=WorkspaceConfig)
     widgets: DataWidgets = field(default_factory=DataWidgets)
-    spectral_lines: SpectralLineData = field(default_factory=SpectralLineData)
     layout: WorkspaceLayout = field(default_factory=WorkspaceLayout)
     state: WorkspaceState = field(default_factory=WorkspaceState)
 
@@ -159,9 +155,6 @@ class Workspace:
                 widgets=DataWidgets.read_user_params(
                     LocalFile(directory, WORKSPACE_WIDGETS_FILENAME, 'Data viewer configuration'),
                     default=WORKSPACE_WIDGETS_FILENAME),
-                spectral_lines=SpectralLineData.read_user_params(
-                    LocalFile(directory, WORKSPACE_LINES_FILENAME, 'List of spectral lines'),
-                    default=WORKSPACE_LINES_FILENAME),
                 layout=WorkspaceLayout.read_user_params(
                     LocalFile(directory, WORKSPACE_LAYOUT_FILENAME, 'Workspace layout', auto_backup=False)),
                 state=WorkspaceState.read_user_params(
@@ -238,5 +231,5 @@ class Workspace:
         return True
 
     def save_all(self) -> None:
-        for params in (self.config, self.widgets, self.spectral_lines, self.layout, self.state):
+        for params in (self.config, self.widgets, self.layout, self.state):
             params.save()

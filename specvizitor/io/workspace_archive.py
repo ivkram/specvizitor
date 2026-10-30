@@ -6,8 +6,8 @@ import shutil
 import yaml
 import zipfile
 
-from ..config.workspace import (WORKSPACE_CONFIG_FILENAME, WORKSPACE_LAYOUT_FILENAME, WORKSPACE_LINES_FILENAME,
-                                WORKSPACE_WIDGETS_FILENAME, Workspace, WorkspaceConfig)
+from ..config.workspace import (WORKSPACE_CONFIG_FILENAME, WORKSPACE_LAYOUT_FILENAME, WORKSPACE_WIDGETS_FILENAME,
+                                Workspace, WorkspaceConfig)
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,12 @@ ARCHIVE_EXTENSION = '.sviz'
 ARCHIVE_FILTER = f'Specvizitor Workspaces (*{ARCHIVE_EXTENSION})'
 
 # the inspection file can be included as well
-ARCHIVED_FILENAMES = (WORKSPACE_CONFIG_FILENAME, WORKSPACE_WIDGETS_FILENAME, WORKSPACE_LINES_FILENAME,
-                      WORKSPACE_LAYOUT_FILENAME)
+ARCHIVED_FILENAMES = (WORKSPACE_CONFIG_FILENAME, WORKSPACE_WIDGETS_FILENAME, WORKSPACE_LAYOUT_FILENAME)
 
 
 @dataclass
 class ExportOptions:
     include_widgets: bool = True
-    include_spectral_lines: bool = True
     include_layout: bool = True
     include_results: bool = False
     include_local_paths: bool = False
@@ -43,8 +41,6 @@ def _selected_filenames(options: ExportOptions) -> list[str]:
     selected = []
     if options.include_widgets:
         selected.append(WORKSPACE_WIDGETS_FILENAME)
-    if options.include_spectral_lines:
-        selected.append(WORKSPACE_LINES_FILENAME)
     if options.include_layout:
         selected.append(WORKSPACE_LAYOUT_FILENAME)
     return selected

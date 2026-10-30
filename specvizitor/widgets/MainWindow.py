@@ -12,7 +12,7 @@ import time
 from .. import APPLICATION
 from ..appdata import AppData
 from ..config.appearance import setup_appearance
-from ..config import Config, DataWidgets, Workspace, WorkspaceRegistry
+from ..config import Config, DataWidgets, SpectralLineData, Workspace, WorkspaceRegistry
 from ..config.workspace import WORKSPACE_CONFIG_FILENAME
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
@@ -75,6 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self,
                  config: Config | None = None,
+                 spectral_lines: SpectralLineData | None = None,
                  workspace: Workspace | None = None,
                  registry: WorkspaceRegistry | None = None,
                  plugins: list[PluginCore] | None = None,
@@ -85,6 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd = AppData()
 
         self._config = config if config else Config()
+        self._spectral_lines = spectral_lines if spectral_lines else SpectralLineData()
         self._registry = registry if registry else WorkspaceRegistry()
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
 
@@ -148,7 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def init_ui(self):
         self._data_viewer = DataViewer(self._config.data_viewer, self._ws.config.data, self._ws.widgets,
-                                       self._config.appearance, spectral_lines=self._ws.spectral_lines,
+                                       self._config.appearance, spectral_lines=self._spectral_lines,
                                        plugins=self._plugins, parent=self)
         
         self._commands_bar = ToolBar(tuple(self._navigation_cfg[i] for i in [3, 1, 0, 2]),
@@ -900,7 +902,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def settings_action(self):
         self._restart_requested = False
 
-        dialog = Settings(self.rd.cat, self._config, self._ws.config, self._ws.spectral_lines, parent=self)
+        dialog = Settings(self.rd.cat, self._config, self._ws.config, self._spectral_lines, parent=self)
 
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)

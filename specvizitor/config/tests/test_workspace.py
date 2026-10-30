@@ -124,11 +124,10 @@ def test_a_copy_inherits_this_machines_paths(workspace, tmp_path):
     assert copied.config.data.images['Cluster'].filename == '/net/cluster.fits'
 
 
-def test_a_copy_inherits_the_widgets_and_the_spectral_lines(workspace, tmp_path):
+def test_a_copy_inherits_the_widgets(workspace, tmp_path):
     copied = workspace.copy(tmp_path / 'variant')
 
     assert copied.widgets.images.keys() == workspace.widgets.images.keys()
-    assert copied.spectral_lines.wavelengths == workspace.spectral_lines.wavelengths
 
 
 def test_a_copy_inherits_the_layout(workspace, tmp_path):
@@ -373,7 +372,7 @@ def test_export_can_deliberately_include_local_paths(workspace, tmp_path):
 def test_export_omits_the_optional_parts_when_asked(workspace, tmp_path):
     archive = tmp_path / 'minimal.sviz'
     export_workspace(workspace, archive,
-                     ExportOptions(include_widgets=False, include_spectral_lines=False, include_layout=False))
+                     ExportOptions(include_widgets=False, include_layout=False))
 
     assert inspect_archive(archive) == [WORKSPACE_CONFIG_FILENAME]
 
@@ -462,6 +461,7 @@ def legacy(tmp_path):
     cache_dir.mkdir()
     save_yaml(config_dir / 'config.yml', LEGACY_CONFIG)
     save_yaml(config_dir / 'data_widgets.yml', {'images': {}, 'plots': {}})
+    save_yaml(config_dir / 'spectral_lines.yml', {'wavelengths': {'Ha': 6564.633}})
     save_yaml(cache_dir / 'specvizitor.yml', LEGACY_CACHE)
     return config_dir, cache_dir
 
@@ -519,6 +519,8 @@ def test_migration_keeps_the_legacy_files_recoverable(legacy):
     assert (config_dir / 'data_widgets.pre-workspace.yml').exists()
     # ...and does not leave the originals where they would silently stop taking effect
     assert not (config_dir / 'data_widgets.yml').exists()
+    # the spectral lines are a user preference and stay where they are
+    assert (config_dir / 'spectral_lines.yml').exists()
 
 
 def test_migration_does_not_run_twice(legacy):

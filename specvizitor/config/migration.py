@@ -54,8 +54,8 @@ def _archive(path: pathlib.Path) -> None:
 
 def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename: str) -> str | None:
     """Return the path to the new workspace, or None if nothing was migrated."""
-    from .workspace import (WORKSPACE_CONFIG_FILENAME, WORKSPACE_LAYOUT_FILENAME, WORKSPACE_LINES_FILENAME,
-                            WORKSPACE_STATE_FILENAME, WORKSPACE_WIDGETS_FILENAME)
+    from .workspace import (WORKSPACE_CONFIG_FILENAME, WORKSPACE_LAYOUT_FILENAME, WORKSPACE_STATE_FILENAME,
+                            WORKSPACE_WIDGETS_FILENAME)
 
     config_dir = pathlib.Path(config_dir)
     workspace_dir = pathlib.Path(workspaces_dir) / DEFAULT_WORKSPACE_NAME
@@ -91,16 +91,15 @@ def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename:
         logger.error(f"Failed to write the default workspace, migration skipped: {e}")
         return None
 
-    # 2. move the project-scoped config files into the workspace
-    for filename in (WORKSPACE_WIDGETS_FILENAME, WORKSPACE_LINES_FILENAME):
-        src = config_dir / filename
-        if src.is_file():
-            try:
-                shutil.copy(src, workspace_dir / filename)
-            except OSError as e:
-                logger.warning(f"Failed to migrate `{filename}`: {e}")
-            else:
-                _archive(src)
+    # 2. move the data viewer configuration into the workspace
+    src = config_dir / WORKSPACE_WIDGETS_FILENAME
+    if src.is_file():
+        try:
+            shutil.copy(src, workspace_dir / WORKSPACE_WIDGETS_FILENAME)
+        except OSError as e:
+            logger.warning(f"Failed to migrate `{WORKSPACE_WIDGETS_FILENAME}`: {e}")
+        else:
+            _archive(src)
 
     # 3. carry the session state and the layout over from the old cache
     legacy_cache = pathlib.Path(cache_dir) / cache_filename

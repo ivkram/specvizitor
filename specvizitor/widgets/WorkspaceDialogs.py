@@ -260,7 +260,6 @@ class ExportWorkspaceDialog(QtWidgets.QDialog):
 
         labels = {
             'include_widgets': "Data viewer configuration",
-            'include_spectral_lines': "Spectral lines",
             'include_layout': "Window layout",
             'include_results': f"Inspection results ({pathlib.Path(results).name})" if has_results
                                else "Inspection results",

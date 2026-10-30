@@ -23,7 +23,8 @@ __all__ = [
     "CACHE_DIR",
     "WORKSPACES_DIR",
     "DEFAULT_WORKSPACE_NAME",
-    "REGISTRY_FILENAME"
+    "REGISTRY_FILENAME",
+    "SPECTRAL_LINES_FILENAME"
 ]
 
 
@@ -38,5 +39,6 @@ WORKSPACES_DIR = str(pathlib.Path(CONFIG_DIR) / 'workspaces')
 DEFAULT_WORKSPACE_NAME = 'Default'
 
 REGISTRY_FILENAME = 'workspaces.yml'
+SPECTRAL_LINES_FILENAME = 'spectral_lines.yml'
 
 del application_lower

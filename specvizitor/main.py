@@ -9,8 +9,9 @@ import sys
 
 from . import ORGANIZATION, APPLICATION
 from .config.appearance import setup_appearance
-from .config import Config, WorkspaceRegistry, Workspace
-from .config import CACHE_DIR, CONFIG_DIR, DEFAULT_WORKSPACE_NAME, WORKSPACES_DIR, REGISTRY_FILENAME
+from .config import Config, SpectralLineData, WorkspaceRegistry, Workspace
+from .config import (CACHE_DIR, CONFIG_DIR, DEFAULT_WORKSPACE_NAME, WORKSPACES_DIR, REGISTRY_FILENAME,
+                     SPECTRAL_LINES_FILENAME)
 from .config.migration import migrate_legacy_config, needs_migration
 from .io.viewer_data import set_unit_aliases
 from .plugins import available_plugins
@@ -63,6 +64,7 @@ def main():
     user_files: dict[str, LocalFile] = {
         'config': LocalFile(CONFIG_DIR, filename='config.yml', full_name='User preferences'),
         'registry': LocalFile(CONFIG_DIR, filename=REGISTRY_FILENAME, full_name='Workspace list'),
+        'lines': LocalFile(CONFIG_DIR, filename=SPECTRAL_LINES_FILENAME, full_name='List of spectral lines'),
         'legacy_cache': LocalFile(CACHE_DIR, filename=LEGACY_CACHE_FILENAME, full_name='Cache',
                                   auto_backup=False),
     }
@@ -86,6 +88,7 @@ def main():
     while exit_code == MainWindow.EXIT_CODE_REBOOT:
         # re-read on every reboot to pick up a workspace switch
         config = Config.read_user_params(user_files['config'], default='config.yml')
+        spectral_lines = SpectralLineData.read_user_params(user_files['lines'], default=SPECTRAL_LINES_FILENAME)
         registry = WorkspaceRegistry.read_user_params(user_files['registry'])
 
         if args.workspace is not None:
@@ -120,7 +123,8 @@ def main():
 
         setup_appearance(cfg=config.appearance)
 
-        window = MainWindow(config=config, workspace=workspace, registry=registry, plugins=plugins)
+        window = MainWindow(config=config, spectral_lines=spectral_lines, workspace=workspace, registry=registry,
+                            plugins=plugins)
         window.show()
 
         exit_code = app.exec_()

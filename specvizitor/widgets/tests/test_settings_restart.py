@@ -14,7 +14,7 @@ pytest.importorskip('qtpy')
 
 from qtpy import QtWidgets
 
-from specvizitor.config import Config
+from specvizitor.config import Config, SpectralLineData
 from specvizitor.config.workspace import Workspace
 from specvizitor.widgets.Settings import Settings
 
@@ -39,7 +39,7 @@ def settings(app, tmp_path, monkeypatch):
     monkeypatch.setattr(QtWidgets.QMessageBox, 'question',
                         staticmethod(lambda *a, **kw: QtWidgets.QMessageBox.No))
 
-    dialog = Settings(None, config, workspace.config, workspace.spectral_lines)
+    dialog = Settings(None, config, workspace.config, SpectralLineData())
     yield dialog, config, workspace
     dialog.deleteLater()
 
