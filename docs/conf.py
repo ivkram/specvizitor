@@ -1,4 +1,6 @@
 from datetime import UTC, datetime
+import pathlib
+import tomllib
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -12,7 +14,9 @@ project = "specvizitor"
 author = "Ivan Kramarenko, Josephine Kerutt"
 copyright = f"2023–{datetime.now(tz=UTC).year}, " + author
 
-release = "0.7.0"
+# defined once, in pyproject.toml
+with open(pathlib.Path(__file__).parent.parent / 'pyproject.toml', 'rb') as f:
+    release = tomllib.load(f)['project']['version']
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
