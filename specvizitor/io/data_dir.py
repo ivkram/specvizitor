@@ -45,11 +45,11 @@ def get_ids_from_dir(directory, id_pattern: str = r'\d+', recursive: bool = Fals
     ids = np.array([i for i in ids if i is not None])
 
     try:
-        ids = ids.astype(np.int64)  # convert IDs to int
+        ids = ids.astype(np.int64)
     except ValueError:
         pass
 
-    ids = np.unique(ids)  # remove duplicates
+    ids = np.unique(ids)
 
     if not ids.size:
         logger.error("No IDs retrieved from the data directory")

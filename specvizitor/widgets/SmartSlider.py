@@ -103,19 +103,15 @@ class SmartSlider(AbstractWidget):
         self._default_value_fallback = self._slider.default_value
 
     def init_ui(self):
-        # create a slider
         orientation = QtCore.Qt.Orientation.Horizontal if self.show_text_editor else QtCore.Qt.Orientation.Vertical
         self._slider = SmartSliderBase(orientation=orientation, parent=self, **self._slider_kwargs)
         self._slider.setToolTip(f'Slide to {self.action}')
 
-        # create a label
         self._label = QtWidgets.QLabel(f'{self.short_name} =', self)
 
-        # create a text editor
         self._editor = QtWidgets.QLineEdit(self)
         self._editor.setMaximumWidth(120)
 
-        # create a save button
         self._save_button = QtWidgets.QPushButton('Save!', self)
 
         self._label.setVisible(self.show_text_editor)

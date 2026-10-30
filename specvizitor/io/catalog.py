@@ -68,7 +68,7 @@ class Catalog:
         @return: the Catalog object
         """
         try:
-            table = Table.read(filename)  # load the catalog
+            table = Table.read(filename)
         except Exception as e:
             logger.error(f"Failed to load the catalog: {e}")
             return None
@@ -143,7 +143,7 @@ class Catalog:
 
     def _loc_full_base(self, t: Table, indices: list, obj_id: str | int | tuple):
         if isinstance(obj_id, str) or isinstance(obj_id, int):
-            return t.loc[obj_id]  # standard .loc method
+            return t.loc[obj_id]
 
         elif isinstance(obj_id, tuple):
             if not obj_id:

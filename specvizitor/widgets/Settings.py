@@ -594,7 +594,6 @@ class Settings(QtWidgets.QDialog):
                                                  | QtCore.Qt.LinksAccessibleByMouse)
         self._info_label.setOpenExternalLinks(True)
 
-        # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 

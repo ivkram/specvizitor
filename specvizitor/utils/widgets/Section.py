@@ -24,7 +24,6 @@ class Section(QtWidgets.QWidget):
         self.headerLine.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.headerLine.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
 
-        # self.contentArea.setLayout(wd.QHBoxLayout())
         self.contentArea.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
 
         # start out collapsed

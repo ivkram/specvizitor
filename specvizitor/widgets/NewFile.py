@@ -51,7 +51,6 @@ class NewFile(QtWidgets.QDialog):
             'cat': cat_browser(self.cfg.catalog.filename, title="Catalog", title_width=width, parent=self)
         }
 
-        # add radio buttons for choosing between creating a new catalog and loading an existing one
         self._cat_factory_group = QtWidgets.QButtonGroup(parent=self)
         self._cat_factory_group.buttonToggled.connect(self.update_cat_factory_state)
 
@@ -61,11 +60,9 @@ class NewFile(QtWidgets.QDialog):
         self._load_cat_radio_button = QtWidgets.QRadioButton('Load an existing catalog', self)
         self._cat_factory_group.addButton(self._load_cat_radio_button)
 
-        # create a horizontal separator
         self._separator = QtWidgets.QFrame(parent=self)
         self._separator.setFrameShape(QtWidgets.QFrame.HLine)
 
-        # add a checkbox for specifying the catalog loader mode
         self._filter_check_box = QtWidgets.QCheckBox(
             'Filter the catalog using a list of IDs extracted from the data directory', self)
 
@@ -84,13 +81,11 @@ class NewFile(QtWidgets.QDialog):
         self._spacer = QtWidgets.QWidget(self)
         self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
                                                       self)
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
 
-        # set the state of radio buttons and checkboxes
         self._filter_check_box.setChecked(False)
         self._load_cat_radio_button.setChecked(True)
 
@@ -100,10 +95,8 @@ class NewFile(QtWidgets.QDialog):
         self.setFixedHeight(450)
 
     def populate(self):
-        # add a file browser for specifying the output file
         self.layout().addWidget(self._browsers['output'])
 
-        # add a file browser for specifying the data directory
         self.layout().addWidget(self._browsers['data'])
 
         sub_layout = QtWidgets.QHBoxLayout()
@@ -113,7 +106,6 @@ class NewFile(QtWidgets.QDialog):
 
         self.layout().addWidget(self._separator)
 
-        # add a file browser for specifying the catalog
         self.layout().addWidget(self._browsers['cat'])
 
         self.layout().addWidget(self._filter_check_box)
@@ -141,14 +133,12 @@ class NewFile(QtWidgets.QDialog):
             recursive=True
         )
 
-        # create a new catalog if necessary
         if self._browsers['cat'].isHidden():
             ids = get_ids_from_dir(data_dir, **kwargs)
             if ids is None:
                 return
             return Catalog.create(ids)
 
-        # otherwise, load an existing catalog
         if not self._filter_check_box.isChecked():
             data_dir = None
         return Catalog.read(self._browsers['cat'].path, translate=self.cfg.catalog.translate, data_dir=data_dir,
@@ -165,7 +155,6 @@ class NewFile(QtWidgets.QDialog):
         self.catalog_changed.emit(cat)
         self.output_path_selected.emit(pathlib.Path(self._browsers['output'].path))
 
-        # update the user configuration file
         self.cfg.data.dir = self._browsers['data'].path
         if not self._browsers['cat'].isHidden():
             self.cfg.catalog.filename = self._browsers['cat'].path

@@ -69,11 +69,9 @@ class LocalFile:
 
     @missing_ok
     def delete(self) -> None:
-        # backup the file
         if self.auto_backup:
             self.backup()
 
-        # delete the file
         self.path.unlink()
         logger.debug(f'{self.full_name} deleted (path: {self.path})')
 
@@ -168,12 +166,6 @@ class Params:
 def read_yaml(filename) -> dict:
     with open(filename, "r") as yaml_file:
         return yaml.safe_load(yaml_file) or {}  # return empty dictionary if the file is empty
-
-
-def filter_none_values(data):
-    if isinstance(data, dict):
-        return {k: filter_none_values(v) for k, v in data.items() if v is not None}
-    return data
 
 
 def save_yaml(filename, data):

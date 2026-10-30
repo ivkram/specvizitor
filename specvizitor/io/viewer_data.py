@@ -24,7 +24,6 @@ __all__ = [
     "ViewerData",
     "DataPath",
     "LocalPath",
-    "URLPath",
     "get_wcs",
     "set_unit_aliases"
 ]
@@ -316,10 +315,6 @@ class LocalPath(DataPath):
     def validate(self):
         if not self._path_obj.exists():
             raise FileNotFoundError
-
-
-class URLPath(DataPath):
-    pass
 
 
 def get_wcs(meta):

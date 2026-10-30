@@ -14,7 +14,6 @@ class FileBrowser(AbstractWidget):
     textChanged = QtCore.Signal(str)
 
     OpenFile = 0
-    # OpenFiles = 1
     OpenDirectory = 2
     SaveFile = 3
 
@@ -108,11 +107,6 @@ class FileBrowser(AbstractWidget):
         if self._browser_mode == FileBrowser.OpenFile:
             path = qtpy.compat.getopenfilename(self, caption="Choose File", basedir=self._default_path,
                                                filters=self._filter)[0]
-
-        # elif self._browser_mode == FileBrowser.OpenFiles:
-        #     self._filepaths.extend(qtpy.compat.getopenfilenames(self, caption='Choose Files',
-        #                                                                   basedir=self._default_path,
-        #                                                                   filters=self._filter)[0])
 
         elif self._browser_mode == FileBrowser.OpenDirectory:
             path = qtpy.compat.getexistingdirectory(self, caption="Choose Directory", basedir=self._default_path)

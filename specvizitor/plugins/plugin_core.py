@@ -28,8 +28,7 @@ class PluginCore(ABC):
         dock_in_stack = None
         max_stack_count = 0
 
-        # find the largest stack
-        for i, d in enumerate(docks.values()):
+        for d in docks.values():
             if hasattr(d.container(), 'stack'):
                 stack = d.container().stack
                 if stack.count() > max_stack_count:

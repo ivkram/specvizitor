@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 class AppData:
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
-    cat: Catalog | None = None               # the catalog
-    inspection_data: InspectionData | None = None     # inspection results
+    cat: Catalog | None = None
+    inspection_data: InspectionData | None = None
 
     j: int = None  # the index of the current object
 

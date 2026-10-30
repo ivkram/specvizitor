@@ -378,7 +378,7 @@ class ViewerElement(AbstractWidget):
 
     def setup_slider_view(self, j: int, inspection_data: InspectionData, cat_entry: Catalog | None):
         for slider_name, s in self.sliders.items():
-            s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
+            s.set_default_value_from_catalog(cat_entry)
             if slider_name is SliderItem.REDSHIFT:  # load redshift from inspection results
                 redshift = inspection_data.get_value(j, 'z_sviz')
                 if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
@@ -465,7 +465,7 @@ class ViewerElement(AbstractWidget):
 
         self.reset_range(widget_links.get(LinkableItem.X_AXIS), widget_links.get(LinkableItem.Y_AXIS))
         if self.title not in widget_links.get(LinkableItem.S_REDSHIFT, dict()):
-            self.redshift_slider.reset()  # reset only the redshift slider
+            self.redshift_slider.reset()
 
         for sname, s in self.sliders.items():
             if sname in self._invoked_sliders:
@@ -510,7 +510,7 @@ class ViewerElement(AbstractWidget):
             return self.data_path.name
 
         if self.cfg.dock_title_fmt == 'short':
-            return title_meta  # str(fits_meta[j - 1])
+            return title_meta
 
         return f"{self.data_path.name} [{title_meta}]"
 

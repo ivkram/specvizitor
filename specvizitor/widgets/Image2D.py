@@ -61,7 +61,7 @@ class Image2D(ViewerElement):
 
         self.image_item = pg.ImageItem()
         self.image_item.setLookupTable(self._cmap.getLookupTable())
-        self.image_item.setBorder('k')  # add a border to the image
+        self.image_item.setBorder('k')
 
         self.cbar = ColorBar(imageItem=self.image_item, showHistogram=True, histHeightPercentile=99.0)
         self.cbar.setVisible(self.cfg.color_bar.visible)

@@ -987,7 +987,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.window_closed.emit()
 
-        # save the state and geometry of the main window
         if self._zen_mode_activated:
             self._zen_mode_action()
         settings = QtCore.QSettings()

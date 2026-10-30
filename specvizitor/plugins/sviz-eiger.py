@@ -71,11 +71,9 @@ class Plugin(PluginCore):
             except KeyError:
                 break
             else:
-                # skip masked elements
                 if np.ma.is_masked(x) or np.ma.is_masked(y):
                     continue
 
-                # convert line coordinates to float
                 try:
                     line_coords = (float(x), float(y))
                 except TypeError as msg:

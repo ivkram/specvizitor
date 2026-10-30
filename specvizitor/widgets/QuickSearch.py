@@ -23,7 +23,6 @@ class QuickSearch(AbstractWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
     def init_ui(self):
-        # create a `Go to ID` button
         self._go_to_id_button = QtWidgets.QPushButton(self)
         self._go_to_id_button.setText('Go to ID')
         self._go_to_id_button.setFixedWidth(90)
@@ -31,7 +30,6 @@ class QuickSearch(AbstractWidget):
         self._id_field = QtWidgets.QLineEdit(self)
         self._id_field.setMinimumWidth(60)
 
-        # create a `Go to index` button
         self._go_to_index_button = QtWidgets.QPushButton(self)
         self._go_to_index_button.setText('Go to #')
         self._go_to_index_button.setFixedWidth(90)

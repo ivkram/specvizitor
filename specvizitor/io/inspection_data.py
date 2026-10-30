@@ -226,9 +226,6 @@ class InspectionData:
             return
         self.df.drop(column_name, axis=1, inplace=True)
 
-    def to_list(self):
-        return self.df.values.tolist()
-
     def has_data(self, column_name: str) -> bool:
         if column_name == 'starred' or column_name in self.user_defined_columns:
             column = self.df[column_name]
@@ -247,7 +244,6 @@ class InspectionData:
             return None
 
         if self.ids_are_int and not isinstance(obj_id, tuple):
-            # convert int64 to int
             obj_id = int(obj_id)
 
         return obj_id
