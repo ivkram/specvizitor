@@ -8,16 +8,30 @@ import pytest
 
 pytest.importorskip('qtpy')
 
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from specvizitor.config import config, data_widgets
 from specvizitor.config.spectral_lines import SpectralLineData
 from specvizitor.widgets.Plot1D import Plot1D
 
 
+@pytest.fixture(scope='module')
+def app():
+    yield QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+
+
+def _delete(widgets: list[QtWidgets.QWidget]):
+    # delete the pyqtgraph widgets for real while the QApplication is alive: garbage-collecting them later
+    # segfaults, and processEvents() does not handle deferred deletions
+    for widget in widgets:
+        widget.deleteLater()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
+    widgets.clear()
+    gc.collect()
+
+
 @pytest.fixture
-def line_position():
-    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+def line_position(app):
     widgets = []
 
     def _line_position(wave_unit: str, wavelength: float, x_unit: str | None, redshift: float = 0) -> float:
@@ -32,12 +46,7 @@ def line_position():
 
     yield _line_position
 
-    # delete the pyqtgraph widgets while the QApplication is alive: garbage-collecting them later segfaults
-    for widget in widgets:
-        widget.deleteLater()
-    app.processEvents()
-    widgets.clear()
-    gc.collect()
+    _delete(widgets)
 
 
 def test_line_wavelengths_are_read_in_their_own_unit(line_position):
@@ -54,13 +63,11 @@ def test_line_wavelengths_stay_in_their_own_unit_without_an_axis_unit(line_posit
 
 @pytest.mark.parametrize('wave_unit, header', [('angstrom', 'Wavelength (Å)'), ('micron', 'Wavelength (µm)'),
                                                ('not-a-unit', 'Wavelength (not-a-unit)')])
-def test_the_settings_table_shows_the_wavelength_unit(wave_unit, header):
+def test_the_settings_table_shows_the_wavelength_unit(app, wave_unit, header):
     from specvizitor.widgets.Settings import spectral_lines_table_factory
 
-    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
     table = spectral_lines_table_factory(SpectralLineData(wave_unit=wave_unit, wavelengths={'Ha': 6564.633}))
 
     assert table._header == ['Line', header]
 
-    table.deleteLater()
-    app.processEvents()
+    _delete([table])
