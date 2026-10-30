@@ -4,6 +4,7 @@ import pandas as pd
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import pathlib
 
@@ -11,6 +12,44 @@ import pathlib
 logger = logging.getLogger(__name__)
 
 REDSHIFT_FILL_VALUE = -1.0
+
+
+class FieldType(Enum):
+    """ The type of a user-defined inspection field. An inspection file carries no schema, so the type is
+    inferred from the column's dtype.
+    """
+    BOOLEAN = 'boolean'
+    INTEGER = 'integer'
+    FLOAT = 'float'
+    TEXT = 'text'
+
+    @classmethod
+    def of(cls, column: pd.Series) -> 'FieldType':
+        if pd.api.types.is_bool_dtype(column):
+            return cls.BOOLEAN
+        if pd.api.types.is_integer_dtype(column):
+            return cls.INTEGER
+        if pd.api.types.is_float_dtype(column):
+            return cls.FLOAT
+        return cls.TEXT
+
+    @property
+    def dtype(self) -> str:
+        # nullable integers, so that a new integer field can start out empty
+        return {FieldType.BOOLEAN: 'bool', FieldType.INTEGER: 'Int64', FieldType.FLOAT: 'float64',
+                FieldType.TEXT: 'object'}[self]
+
+    @property
+    def fill_value(self):
+        return {FieldType.BOOLEAN: False, FieldType.INTEGER: pd.NA, FieldType.FLOAT: np.nan,
+                FieldType.TEXT: ''}[self]
+
+    def has_data(self, column: pd.Series) -> bool:
+        if self is FieldType.BOOLEAN:
+            return bool(column.any())
+        if self is FieldType.TEXT:
+            return bool((column.fillna('').astype(str).str.strip() != '').any())
+        return bool(column.notna().any())
 
 
 class WriterBase(ABC):
@@ -79,7 +118,7 @@ class InspectionData:
 
         if flags is not None:
             for cname in flags:
-                review.add_flag_column(cname)
+                review.add_field(cname, FieldType.BOOLEAN)
 
         return review
 
@@ -154,24 +193,32 @@ class InspectionData:
         return [cname for cname in self.df.columns if cname not in self.default_columns]
 
     @property
+    def fields(self) -> dict[str, FieldType]:
+        """ User-defined inspection fields and their types.
+        """
+        return {cname: FieldType.of(self.df[cname]) for cname in self.user_defined_columns}
+
+    @property
     def flag_columns(self) -> list[str]:
-        return [cname for cname in self.user_defined_columns if pd.api.types.is_bool_dtype(self.df[cname])]
+        return [cname for cname, field_type in self.fields.items() if field_type is FieldType.BOOLEAN]
 
     @property
     def n_starred(self) -> int:
         return self.df["starred"].sum()
 
-    def add_flag_column(self, column_name: str):
-        self.df[column_name] = False
+    def add_field(self, name: str, field_type: FieldType):
+        self.df[name] = pd.Series(field_type.fill_value, index=self.df.index, dtype=field_type.dtype)
 
     def reorder_columns(self):
         self.df = self.df[self.default_columns + self.user_defined_columns]
 
-    def rename_column(self, old_name: str, new_name: str):
-        if old_name not in self.user_defined_columns:
-            logger.error(f"Failed to rename a column: Column not found (column: {old_name})")
-            return
-        self.df.rename(columns={old_name: new_name}, inplace=True)
+    def rename_columns(self, new_names: dict[str, str]):
+        # all at once, so that two columns can swap their names
+        for old_name in new_names:
+            if old_name not in self.user_defined_columns:
+                logger.error(f"Failed to rename a column: Column not found (column: {old_name})")
+                return
+        self.df.rename(columns=new_names, inplace=True)
 
     def delete_column(self, column_name: str):
         if column_name not in self.user_defined_columns:
@@ -183,11 +230,12 @@ class InspectionData:
         return self.df.values.tolist()
 
     def has_data(self, column_name: str) -> bool:
-        if column_name in self.flag_columns or column_name == 'starred':
-            return bool(self.df[column_name].sum() > 0)
-        else:
-            logger.warning(f"Cannot determine if a column has data or not (column: {column_name})")
-            return True
+        if column_name == 'starred' or column_name in self.user_defined_columns:
+            column = self.df[column_name]
+            return FieldType.of(column).has_data(column)
+
+        logger.warning(f"Cannot determine if a column has data or not (column: {column_name})")
+        return True
 
     def get_value(self, j: int, cname: str):
         return self.df.iat[j, self.df.columns.get_loc(cname)]

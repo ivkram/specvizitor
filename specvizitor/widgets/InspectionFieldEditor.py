@@ -1,21 +1,24 @@
 from qtpy import QtCore, QtWidgets
 
-from itertools import repeat
 import logging
+import re
 
 from ..io.inspection_data import InspectionData
 from ..utils.widgets import ParamTable
+
+from .InspectionResults import InspectionResults
 
 logger = logging.getLogger(__name__)
 
 
 def inspection_field_table_factory(review: InspectionData, parent=None) -> ParamTable:
     header = ['Field', 'Type']
-    data = list(zip(review.flag_columns, repeat('boolean')))
-    item_choices = [None, ('boolean',)]
+    data = [[name, field_type.value] for name, field_type in review.fields.items()]
+    # a new field can only be of a type that the inspection results widget can display
+    item_choices = [None, [field_type.value for field_type in InspectionResults.FIELD_TYPES]]
 
     reserved_colnames = list(review.indices) + review.default_columns
-    regex_pattern = [fr"^({'|'.join(reserved_colnames)}|\s*)$", None]
+    regex_pattern = [fr"^({'|'.join(map(re.escape, reserved_colnames))}|\s*)$", None]
 
     is_unique = [True, False]
 
@@ -76,7 +79,7 @@ class InspectionFieldEditor(QtWidgets.QDialog):
         self.data_requested.emit()
 
         warn_columns = []
-        for i, old_name in enumerate(self._review.user_defined_columns):
+        for i, old_name in enumerate(self._review.fields):
             if self._is_deleted[i] and self._review.has_data(old_name):
                 warn_columns.append(old_name)
 

@@ -1,7 +1,7 @@
 from qtpy import QtCore, QtWidgets
 
 from ..config import config
-from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
+from ..io.inspection_data import FieldType, InspectionData, REDSHIFT_FILL_VALUE
 from ..utils.widgets import AbstractWidget, MyQTextEdit
 
 
@@ -10,6 +10,9 @@ class InspectionResults(AbstractWidget):
     first_object_starred = QtCore.Signal(bool)
     redshift_set = QtCore.Signal(bool)
     data_collected = QtCore.Signal(bool, float, str, dict)
+
+    # the field types that can be displayed and edited here
+    FIELD_TYPES: tuple[FieldType, ...] = (FieldType.BOOLEAN,)
 
     def __init__(self, cfg: config.InspectionResults, parent=None):
 

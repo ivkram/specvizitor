@@ -68,6 +68,11 @@ class TableRowEditor(QtWidgets.QDialog):
             label.setFixedWidth(120)
             if self._is_browser[i]:
                 item_editor = FileBrowser(default_path=item_value if item_value else None, line_edit_width=0, parent=self)
+            elif item_choices and item_value and item_value not in item_choices:
+                # a value that is not one of the choices is kept as it is
+                item_editor = QtWidgets.QComboBox(self)
+                item_editor.addItem(item_value)
+                item_editor.setEnabled(False)
             elif item_choices:
                 item_editor = QtWidgets.QComboBox(self)
                 item_editor.addItems(item_choices)

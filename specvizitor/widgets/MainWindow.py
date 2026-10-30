@@ -15,7 +15,7 @@ from ..config.appearance import setup_appearance
 from ..config import Config, DataWidgets, SpectralLineData, Workspace, WorkspaceRegistry
 from ..config.workspace import WORKSPACE_CONFIG_FILENAME
 from ..io.catalog import Catalog
-from ..io.inspection_data import InspectionData
+from ..io.inspection_data import FieldType, InspectionData
 from ..io.viewer_data import set_unit_aliases
 from ..io.workspace_archive import (ARCHIVE_EXTENSION, export_workspace, import_workspace, inspect_archive,
                                    unset_paths)
@@ -945,18 +945,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(list, list, bool)
     def update_inspection_fields(self, fields: list[tuple[str, str]], is_deleted: list[bool], set_as_default: bool):
-        old_columns = self.rd.review.user_defined_columns
+        # the editor lists every field, in this order, followed by the new ones
+        old_columns = list(self.rd.review.fields)
+        new_names = {}
         for i, old_name in enumerate(old_columns):
             new_name = fields[i][0]
             if is_deleted[i]:
                 self.rd.review.delete_column(column_name=old_name)
             elif old_name != new_name:
-                self.rd.review.rename_column(old_name=old_name, new_name=new_name)
+                new_names[old_name] = new_name
+        self.rd.review.rename_columns(new_names)
 
-        for field in fields[len(old_columns):]:
-            new_name, new_type = field[0], field[1]
-            if new_type == 'boolean':
-                self.rd.review.add_flag_column(column_name=new_name)
+        for new_name, new_type in fields[len(old_columns):]:
+            self.rd.review.add_field(new_name, FieldType(new_type))
 
         if set_as_default:
             default_flags = self.rd.review.flag_columns
