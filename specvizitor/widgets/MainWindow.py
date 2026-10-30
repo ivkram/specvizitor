@@ -252,7 +252,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._zen = QtWidgets.QAction("Zen Mode")
         self._zen.triggered.connect(self._zen_mode_action)
         self._zen.setShortcut('H')
-        self._auxiliary_docks = ()  # (self._quick_search_dock, self._object_info_dock, self._subsets_dock)
         self._view.addAction(self._zen)
 
         self._fullscreen = QtWidgets.QAction("Fullscreen")
@@ -819,8 +818,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _zen_mode_action(self):
         self._zen_mode_activated = not self._zen_mode_activated
-        for w in self._auxiliary_docks:
-            w.setVisible(not self._zen_mode_activated)
         self.is_zen_mode_activated.emit(self._zen_mode_activated)
 
     @QtCore.Slot()
