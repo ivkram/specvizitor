@@ -33,11 +33,13 @@ What to do if none of the above helped
 
 .. warning::
 
-        Running specvizitor with the ``--purge`` option will reset all application settings.
+    Running specvizitor with the ``--purge`` option will reset your preferences and the list of known
+    workspaces.
 
 .. note::
 
-        Running specvizitor with the ``--purge`` option will NOT affect any inspection files (``*.csv``).
+    Running specvizitor with the ``--purge`` option will NOT affect the workspaces themselves or any
+    inspection files (``*.csv``).
 
 4. `Open issue on GitHub <https://github.com/ivkram/specvizitor/issues/new>`_.
 
