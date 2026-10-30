@@ -52,47 +52,54 @@ def fits_file(tmp_path):
     return str(path)
 
 
-def _loader(path):
+@pytest.fixture
+def fits_loader(fits_file):
     from specvizitor.io.viewer_data import GenericFITSLoader
 
     loader = GenericFITSLoader()
-    loader.open(path)
-    return loader
+    loader.open(fits_file)
+    yield loader
+    loader.close()
 
 
-def test_fits_extension_is_selected_by_extver_index(fits_file):
-    data, _ = _loader(fits_file).load(extname='LINE', extver_index=-1)
+@pytest.fixture
+def viewer_data():
+    from specvizitor.io.viewer_data import ViewerData
+
+    viewer_data = ViewerData()
+    yield viewer_data
+    viewer_data.close_all()
+
+
+def test_fits_extension_is_selected_by_extver_index(fits_loader):
+    data, _ = fits_loader.load(extname='LINE', extver_index=-1)
     assert data[0, 0] == 1
 
 
-def test_missing_fits_extension_is_reported_by_name(fits_file):
+def test_missing_fits_extension_is_reported_by_name(fits_loader):
     with pytest.raises(KeyError, match='Extension `SCI` not found'):
-        _loader(fits_file).load(extname='SCI')
+        fits_loader.load(extname='SCI')
 
 
-def test_missing_fits_extension_with_extver_index_is_reported_by_name(fits_file):
+def test_missing_fits_extension_with_extver_index_is_reported_by_name(fits_loader):
     with pytest.raises(KeyError, match='Extension `SCI` not found'):
-        _loader(fits_file).load(extname='SCI', extver_index=0)
+        fits_loader.load(extname='SCI', extver_index=0)
 
 
-def test_out_of_range_extver_index_is_reported(fits_file):
+def test_out_of_range_extver_index_is_reported(fits_loader):
     with pytest.raises(IndexError, match='out of range'):
-        _loader(fits_file).load(extname='LINE', extver_index=5)
+        fits_loader.load(extname='LINE', extver_index=5)
 
 
-def test_a_missing_extension_is_logged_without_quotes(fits_file, caplog):
-    from specvizitor.io.viewer_data import ViewerData
-
-    data, _ = ViewerData().load(fits_file, extname='SCI')
+def test_a_missing_extension_is_logged_without_quotes(fits_file, viewer_data, caplog):
+    data, _ = viewer_data.load(fits_file, extname='SCI')
 
     assert data is None
     assert "GenericFITSLoader: Extension `SCI` not found (filename:" in caplog.text
 
 
-def test_an_unknown_loader_is_reported_without_raising(fits_file, caplog):
-    from specvizitor.io.viewer_data import ViewerData
-
-    data, meta = ViewerData().load(fits_file, loader='fitz')
+def test_an_unknown_loader_is_reported_without_raising(fits_file, viewer_data, caplog):
+    data, meta = viewer_data.load(fits_file, loader='fitz')
 
     assert (data, meta) == (None, None)
     assert "Unknown loader type: `fitz`" in caplog.text
