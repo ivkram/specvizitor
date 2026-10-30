@@ -278,8 +278,16 @@ class DataViewer(AbstractWidget):
             return
 
         for img_label, img_cfg in self._data_cfg.images.items():
+            if not img_cfg.filename:
+                logger.error(f"Image path not set for this workspace (image: {img_label})")
+                continue
             self._data.open_image(filename=img_cfg.filename, loader=img_cfg.loader, wcs_source=img_cfg.wcs_source,
                                   **img_cfg.loader_params)
+
+    @QtCore.Slot()
+    def update_appearance(self):
+        for w in self.widgets.values():
+            w.set_geometry(spacing=self._appearance.viewer_spacing, margins=self._appearance.viewer_margins)
 
     @QtCore.Slot()
     def load_project(self):

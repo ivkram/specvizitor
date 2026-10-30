@@ -2,11 +2,14 @@ from qtpy import QtWidgets, QtCore
 
 from abc import abstractmethod
 import logging
+import pathlib
 
 from ..config import config, CONFIG_DIR
+from ..config.workspace import WorkspaceConfig
 from ..config.spectral_lines import SpectralLineData
 from ..io.catalog import Catalog, cat_browser
 from ..io.viewer_data import data_browser
+from ..plugins import available_plugins
 from ..utils.logs import qlog
 from ..utils.widgets import AbstractWidget, FileBrowser, Section, ParamTable
 
@@ -14,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class SettingsWidget(AbstractWidget):
+    restart_required = QtCore.Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.layout().setAlignment(QtCore.Qt.AlignTop)
@@ -29,7 +34,7 @@ class SettingsWidget(AbstractWidget):
 
 
 class AppearanceWidget(SettingsWidget):
-    appearance_changed = QtCore.Signal(bool)
+    appearance_changed = QtCore.Signal()
 
     THEMES = ('light', 'dark')
 
@@ -39,11 +44,16 @@ class AppearanceWidget(SettingsWidget):
         self._theme_label: QtWidgets.QLabel | None = None
         self._theme_combobox: QtWidgets.QComboBox | None = None
         self._antialiasing_checkbox: QtWidgets.QCheckBox | None = None
+        self._spacing_label: QtWidgets.QLabel | None = None
+        self._spacing_spinbox: QtWidgets.QSpinBox | None = None
+        self._margins_label: QtWidgets.QLabel | None = None
+        self._margins_spinbox: QtWidgets.QSpinBox | None = None
 
         self._new_theme: str | None = None
         self._new_antialiasing: bool | None = None
+        self._new_spacing: int | None = None
+        self._new_margins: int | None = None
 
-        self._theme_changed: bool = False
         self._appearance_changed: bool = False
 
         super().__init__(parent=parent)
@@ -60,6 +70,22 @@ class AppearanceWidget(SettingsWidget):
         self._antialiasing_checkbox = QtWidgets.QCheckBox("Antialiasing", self)
         self._antialiasing_checkbox.setChecked(self.cfg.antialiasing)
 
+        self._spacing_label = QtWidgets.QLabel("Widget spacing:", self)
+        self._spacing_label.setToolTip("Space between the widgets of the data viewer, in pixels")
+        self._spacing_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._spacing_spinbox = QtWidgets.QSpinBox(self)
+        self._spacing_spinbox.setRange(0, 100)
+        self._spacing_spinbox.setValue(self.cfg.viewer_spacing)
+        self._spacing_spinbox.setFixedWidth(100)
+
+        self._margins_label = QtWidgets.QLabel("Widget margins:", self)
+        self._margins_label.setToolTip("Space around the contents of each data viewer widget, in pixels")
+        self._margins_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._margins_spinbox = QtWidgets.QSpinBox(self)
+        self._margins_spinbox.setRange(0, 100)
+        self._margins_spinbox.setValue(self.cfg.viewer_margins)
+        self._margins_spinbox.setFixedWidth(100)
+
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
         self.layout().setSpacing(20)
@@ -74,24 +100,39 @@ class AppearanceWidget(SettingsWidget):
 
         self.layout().addWidget(self._antialiasing_checkbox)
 
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.setAlignment(QtCore.Qt.AlignLeft)
+        for label, spinbox in ((self._spacing_label, self._spacing_spinbox),
+                               (self._margins_label, self._margins_spinbox)):
+            sub_layout.addWidget(label)
+            sub_layout.addWidget(spinbox)
+        self.layout().addLayout(sub_layout)
+
     def collect(self) -> bool:
         self._new_theme = self._theme_combobox.currentText()
         self._new_antialiasing = self._antialiasing_checkbox.isChecked()
+        self._new_spacing = self._spacing_spinbox.value()
+        self._new_margins = self._margins_spinbox.value()
 
-        self._theme_changed = self._new_theme != self.cfg.theme
-        if self._theme_changed or self._new_antialiasing != self.cfg.antialiasing:
-            self._appearance_changed = True
-        else:
-            self._appearance_changed = False
+        self._appearance_changed = (self._new_theme != self.cfg.theme
+                                    or self._new_antialiasing != self.cfg.antialiasing
+                                    or self._new_spacing != self.cfg.viewer_spacing
+                                    or self._new_margins != self.cfg.viewer_margins)
 
         return True
 
     def accept(self):
+        # the theme is applied at start-up
+        if self._new_theme != self.cfg.theme:
+            self.restart_required.emit()
+
         self.cfg.theme = self._new_theme
         self.cfg.antialiasing = self._new_antialiasing
+        self.cfg.viewer_spacing = self._new_spacing
+        self.cfg.viewer_margins = self._new_margins
 
         if self._appearance_changed:
-            self.appearance_changed.emit(self._theme_changed)
+            self.appearance_changed.emit()
 
 
 def column_aliases_table_factory(translate: dict[str, list[str]], parent=None) -> ParamTable:
@@ -203,24 +244,41 @@ def image_table_factory(images: dict[str, config.Image], parent=None) -> ParamTa
     is_browser = [False, True, True]
 
     return ParamTable(header=header, data=data, name='Image', regex_pattern=regex_pattern,
-                      is_unique=is_unique, remember_deleted=False, is_browser=is_browser, parent=parent)
+                      is_unique=is_unique, remember_deleted=False, is_browser=is_browser,
+                      parent=parent)
+
+
+def unit_aliases_table_factory(aliases: dict[str, list[str]], parent=None) -> ParamTable:
+    header = ['Unit', 'Aliases']
+    data = [[unit, ','.join(unit_aliases)] for unit, unit_aliases in aliases.items()]
+    regex_pattern = [r'^\s*$', r'^\s*$']
+    is_unique = [True, False]
+
+    return ParamTable(header=header, data=data, name='Unit Alias', regex_pattern=regex_pattern,
+                      is_unique=is_unique, remember_deleted=False, parent=parent)
 
 
 class DataSourceWidget(SettingsWidget):
     data_requested = QtCore.Signal()
     images_changed = QtCore.Signal()
+    unit_aliases_changed = QtCore.Signal()
 
-    def __init__(self, cfg: config.DataSources, parent=None):
-        self.cfg = cfg
+    def __init__(self, cfg: WorkspaceConfig, parent=None):
+        self.ws_cfg = cfg
+        self.cfg = cfg.data
 
         self._browser: FileBrowser | None = None
         self._images_section: Section | None = None
         self._image_table: ParamTable | None = None
+        self._unit_aliases_section: Section | None = None
+        self._unit_aliases_table: ParamTable | None = None
 
         self._new_dir: str | None = None
         self._new_images: dict[str, config.Image] | None = None
+        self._new_unit_aliases: dict[str, list[str]] | None = None
 
         self._images_changed: bool = False
+        self._unit_aliases_changed: bool = False
 
         super().__init__(parent=parent)
 
@@ -230,8 +288,15 @@ class DataSourceWidget(SettingsWidget):
         self._images_section = Section("Images", parent=self)
         self._image_table = image_table_factory(self.cfg.images, self)
 
+        self._unit_aliases_section = Section("Unit aliases", parent=self)
+        self._unit_aliases_table = unit_aliases_table_factory(
+            self.cfg.enabled_unit_aliases if self.cfg.enabled_unit_aliases else {}, parent=self)
+
         self.data_requested.connect(self._image_table.collect)
         self._image_table.data_collected.connect(self.save_images)
+
+        self.data_requested.connect(self._unit_aliases_table.collect)
+        self._unit_aliases_table.data_collected.connect(self.save_unit_aliases)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -244,31 +309,54 @@ class DataSourceWidget(SettingsWidget):
         self._images_section.set_layout(sub_layout)
         self.layout().addWidget(self._images_section)
 
+        sub_layout = QtWidgets.QVBoxLayout()
+        sub_layout.addWidget(self._unit_aliases_table)
+        self._unit_aliases_section.set_layout(sub_layout)
+        self.layout().addWidget(self._unit_aliases_section)
+
     def collect(self) -> bool:
         self.data_requested.emit()
 
         b = self._browser
-        if not b.validate(verbose=True):
-            return False
+        # an empty data directory is allowed
+        if b.is_filled():
+            if not b.validate(verbose=True):
+                return False
+            self._new_dir = b.path
+        else:
+            self._new_dir = None
 
-        self._new_dir = b.path
         return True
 
     @QtCore.Slot(list, list, bool)
     def save_images(self, table_data: list[tuple[str, str, str]], _, images_changed: bool):
         images = {}
         for img in table_data:
-            images[img[0]] = config.Image(filename=img[1], wcs_source=img[2] if img[2] else None)
+            images[img[0]] = config.Image(filename=img[1] if img[1] else None,
+                                          wcs_source=img[2] if img[2] else None)
 
         self._new_images = images
         self._images_changed = images_changed
 
+    @QtCore.Slot(list, list, bool)
+    def save_unit_aliases(self, table_data: list[tuple[str, str]], _, aliases_changed: bool):
+        aliases = {}
+        for row in table_data:
+            aliases[row[0]] = row[1].split(',')
+
+        self._new_unit_aliases = aliases
+        self._unit_aliases_changed = aliases_changed
+
     def accept(self):
         self.cfg.dir = self._new_dir
         self.cfg.images = self._new_images
+        self.cfg.enabled_unit_aliases = self._new_unit_aliases
 
         if self._images_changed:
             self.images_changed.emit()
+
+        if self._unit_aliases_changed:
+            self.unit_aliases_changed.emit()
 
 
 def spectral_lines_table_factory(wavelengths: dict[str, float], parent=None) -> ParamTable:
@@ -394,17 +482,61 @@ class DataViewerWidget(SettingsWidget):
             self.spectral_lines_changed.emit()
 
 
+class PluginsWidget(SettingsWidget):
+    def __init__(self, cfg: WorkspaceConfig, parent=None):
+        self.cfg = cfg
+
+        self._checkboxes: dict[str, QtWidgets.QCheckBox] = {}
+
+        self._new_plugins: list[str] = []
+        self._plugins_changed: bool = False
+
+        super().__init__(parent=parent)
+
+    def init_ui(self):
+        for name in available_plugins():
+            checkbox = QtWidgets.QCheckBox(name, self)
+            checkbox.setChecked(name in self.cfg.plugins)
+            self._checkboxes[name] = checkbox
+
+    def set_layout(self):
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().setSpacing(15)
+
+    def populate(self):
+        for checkbox in self._checkboxes.values():
+            self.layout().addWidget(checkbox)
+        if not self._checkboxes:
+            self.layout().addWidget(QtWidgets.QLabel("No plugins available.", self))
+
+    def collect(self) -> bool:
+        self._new_plugins = [name for name, box in self._checkboxes.items() if box.isChecked()]
+        # the order of plugins doesn't matter
+        self._plugins_changed = set(self._new_plugins) != set(self.cfg.plugins)
+        return True
+
+    def accept(self):
+        self.cfg.plugins = self._new_plugins
+
+        # plugins are imported at start-up
+        if self._plugins_changed:
+            self.restart_required.emit()
+
+
 class Settings(QtWidgets.QDialog):
     appearance_changed = QtCore.Signal()
     catalogue_changed = QtCore.Signal(object)
     data_source_changed = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
+    unit_aliases_changed = QtCore.Signal()
 
     restart_requested = QtCore.Signal()
 
-    def __init__(self, cat: Catalog, cfg: config.Config, spectral_lines: SpectralLineData, parent=None):
+    def __init__(self, cat: Catalog, cfg: config.Config, ws_cfg: WorkspaceConfig,
+                 spectral_lines: SpectralLineData, parent=None):
         self._old_cat = cat
         self._cfg = cfg
+        self._ws_cfg = ws_cfg
         self._spectral_lines = spectral_lines
 
         self._restart_required: bool = False
@@ -425,14 +557,18 @@ class Settings(QtWidgets.QDialog):
     def create_tabs(self):
         self._tabs = {
             "Appearance": AppearanceWidget(self._cfg.appearance, self),
-            "Catalogue": CatalogueWidget(self._old_cat, self._cfg.catalogue, self),
-            "Data Source": DataSourceWidget(self._cfg.data, self),
-            "Data Viewer": DataViewerWidget(self._cfg.data_viewer, self._spectral_lines, self)
+            "Catalogue": CatalogueWidget(self._old_cat, self._ws_cfg.catalogue, self),
+            "Data Source": DataSourceWidget(self._ws_cfg, self),
+            "Data Viewer": DataViewerWidget(self._cfg.data_viewer, self._spectral_lines, self),
+            "Plugins": PluginsWidget(self._ws_cfg, self)
         }
-        self._tabs["Appearance"].appearance_changed.connect(self._appearance_changed_action)
+        self._tabs["Appearance"].appearance_changed.connect(self.appearance_changed.emit)
         self._tabs["Catalogue"].catalog_changed.connect(self.catalogue_changed.emit)
         self._tabs["Data Source"].images_changed.connect(self.data_source_changed.emit)
+        self._tabs["Data Source"].unit_aliases_changed.connect(self.unit_aliases_changed.emit)
         self._tabs["Data Viewer"].spectral_lines_changed.connect(self.spectral_lines_changed.emit)
+        for t in self._tabs.values():
+            t.restart_required.connect(self._require_restart)
 
     def add_tabs(self):
         for name, t in self._tabs.items():
@@ -444,8 +580,13 @@ class Settings(QtWidgets.QDialog):
         self.create_tabs()
         self.add_tabs()
 
-        self._info_label = QtWidgets.QLabel(f"Advanced settings: {CONFIG_DIR}", self)
-        self._info_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        workspace_filename = self._ws_cfg.get_user_params_filename()
+        advanced_dir = pathlib.Path(workspace_filename).parent if workspace_filename else pathlib.Path(CONFIG_DIR)
+        self._info_label = QtWidgets.QLabel(
+            f'Advanced settings: <a href="{advanced_dir.as_uri()}">{advanced_dir}</a>', self)
+        self._info_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse
+                                                 | QtCore.Qt.LinksAccessibleByMouse)
+        self._info_label.setOpenExternalLinks(True)
 
         # add OK/Cancel buttons
         self._button_box = QtWidgets.QDialogButtonBox(
@@ -463,10 +604,9 @@ class Settings(QtWidgets.QDialog):
         self.layout().addWidget(self._info_label)
         self.layout().addWidget(self._button_box)
 
-    @QtCore.Slot(bool)
-    def _appearance_changed_action(self, theme_changed: bool):
-        self._restart_required = self._restart_required or theme_changed
-        self.appearance_changed.emit()
+    @QtCore.Slot()
+    def _require_restart(self):
+        self._restart_required = True
 
     @qlog
     def collect(self) -> bool:
@@ -485,17 +625,13 @@ class Settings(QtWidgets.QDialog):
             t.accept()
 
         self._cfg.save()
+        self._ws_cfg.save()
         self._spectral_lines.save()
 
-        restart_requested = False
-        if self._restart_required:
-            msg_box = QtWidgets.QMessageBox(self)
-            ans = msg_box.question(self, '', "Restart required to apply changes. Restart now?",
-                                   msg_box.Yes | msg_box.No)
-            if ans == msg_box.Yes:
-                restart_requested = True
+        restart = self._restart_required and QtWidgets.QMessageBox.question(
+            self, '', "Restart required to apply changes. Restart now?") == QtWidgets.QMessageBox.Yes
 
         super().accept()
 
-        if restart_requested:
+        if restart:
             self.restart_requested.emit()

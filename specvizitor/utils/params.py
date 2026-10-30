@@ -10,6 +10,8 @@ import pathlib
 import shutil
 import yaml
 
+from .paths import absolute_path
+
 logger = logging.getLogger(__name__)
 
 CURRENT_VERSION = _package_version(__package__.split('.')[0])
@@ -40,14 +42,18 @@ class LocalFile:
         return wrapper
 
     def save(self, data: dict) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-
         if self.path.exists():
             msg = f"{self.full_name} updated (path: {self.path})"
         else:
             msg = f"{self.full_name} created (path: {self.path})"
 
-        save_yaml(self.path, data)
+        # the file may be on read-only or unreachable storage: report it instead of crashing
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            save_yaml(self.path, data)
+        except OSError as e:
+            logger.error(f"Failed to write the {self.full_name.lower()}: {e} (path: {self.path})")
+            return
 
         logger.debug(msg)
 
@@ -81,7 +87,7 @@ class Params:
     MIGRATIONS: ClassVar[dict[str, Callable[[dict], dict]]] = {}
 
     def __post_init__(self):
-        self._user_file: LocalFile | None = None
+        self._file: LocalFile | None = None
 
     @classmethod
     def _read(cls, filename: pathlib.Path):
@@ -129,7 +135,7 @@ class Params:
         else:
             params = user_params
 
-        params._user_file = file
+        params._file = file
         params.save()
 
         return params
@@ -141,22 +147,18 @@ class Params:
             logger.error(str(e))
             return None
 
-        params._user_file = self._user_file
+        params._file = self._file
         return params
 
-    def save(self, file: LocalFile | None = None):
-        if file is not None:
-            output_file = file
-        elif self._user_file is not None:
-            output_file = self._user_file
-        else:
+    def save(self):
+        if self._file is None:
             logger.error('No output file specified')
             return
 
-        output_file.save(data=asdict(self))
+        self._file.save(data=asdict(self))
 
     def get_user_params_filename(self) -> str | None:
-        return str(self._user_file.path.resolve()) if self._user_file is not None else None
+        return str(absolute_path(self._file.path)) if self._file is not None else None
 
 
 def read_yaml(filename) -> dict:

@@ -12,11 +12,15 @@ import time
 from .. import APPLICATION
 from ..appdata import AppData
 from ..config.appearance import setup_appearance
-from ..config import Config, Cache, DataWidgets, SpectralLineData
+from ..config import Config, DataWidgets, Workspace, WorkspaceRegistry
+from ..config.workspace import WORKSPACE_CONFIG_FILENAME
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
+from ..io.viewer_data import set_unit_aliases
 from ..plugins.plugin_core import PluginCore
+from ..utils.logs import qlog
 from ..utils.params import save_yaml
+from ..utils.paths import absolute_path
 
 from .DataViewer import DataViewer
 from .NavigationAction import Direction, NavigationAction
@@ -28,12 +32,20 @@ from .InspectionFieldEditor import InspectionFieldEditor
 from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
+from .WorkspaceDialogs import CloneWorkspaceDialog, NewWorkspaceDialog, RenameWorkspaceDialog
 
 logger = logging.getLogger(__name__)
 
 
 class MainWindow(QtWidgets.QMainWindow):
     EXIT_CODE_REBOOT = -42
+
+    # what `File -> Open...` accepts
+    OPEN_FILTERS = ';;'.join((
+        f'All Supported Files (*.csv {WORKSPACE_CONFIG_FILENAME})',
+        'Inspection Files (*.csv)',
+        f'Workspaces ({WORKSPACE_CONFIG_FILENAME})',
+    ))
 
     project_loaded = QtCore.Signal(InspectionData)
     object_loaded = QtCore.Signal(int, InspectionData, object)
@@ -59,9 +71,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self,
                  config: Config | None = None,
-                 cache: Cache | None = None,
-                 widget_cfg: DataWidgets | None = None,
-                 spectral_lines: SpectralLineData | None = None,
+                 workspace: Workspace | None = None,
+                 registry: WorkspaceRegistry | None = None,
                  plugins: list[PluginCore] | None = None,
                  parent=None):
 
@@ -70,10 +81,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rd = AppData()
 
         self._config = config if config else Config()
-        self._cache = cache if cache else Cache()
-        self._widget_cfg = widget_cfg if widget_cfg else DataWidgets()
-        self._spectral_lines = spectral_lines if spectral_lines else SpectralLineData()
+        self._registry = registry if registry else WorkspaceRegistry()
         self._plugins: list[PluginCore] = plugins if plugins is not None else []
+
+        self._ws = workspace if workspace is not None else Workspace(pathlib.Path())
 
         self._object_loaded: bool = False
         self._t_load_object_start = None
@@ -89,11 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        self._update_window_title()  # set the title of the main window
-        # self.setWindowIcon(QtGui.QIcon('logo2_2.png'))
-
-        # add a status bar
-        # self.statusBar().showMessage("Message in the statusbar")
+        self._update_window_title()
 
         QtWidgets.QShortcut('Esc', self, lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
@@ -115,26 +122,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.restore_window_state()
 
-        # restore the dock state (=layout of the data viewer) from cache
-        if self._cache.dock_layout:
-            self.dock_layout_updated.emit(self._cache.dock_layout)
+        if self._ws.layout.dock_layout:
+            self.dock_layout_updated.emit(self._ws.layout.dock_layout)
 
-        # load the catalogue to the memory
-        if self._config.catalogue.filename:
+        if self._ws.config.catalogue.filename:
             self.load_catalogue()
 
-        # update the list of catalogue columns visible in the object info widget
-        # write "is not None" explicitly in case visible_columns == []
-        if self.rd.cat and self._cache.visible_columns is not None:
-            self.visible_columns_updated.emit(self._cache.visible_columns)
+        # an empty list hides every column
+        if self.rd.cat and self._ws.layout.visible_columns is not None:
+            self.visible_columns_updated.emit(self._ws.layout.visible_columns)
 
-        # read cache and load the last opened project
-        if self._cache.last_inspection_file:
-            self.open_file(self._cache.last_inspection_file, self._cache.last_object_index)
+        if self._ws.state.last_inspection_file:
+            self.open_file(self._ws.state.last_inspection_file, self._ws.state.last_object_index)
 
-        # load the subset to the memory
-        if self._cache.last_subset_file:
-            self._load_subset(self._cache.last_subset_file, reset_index=False)
+        if self._ws.state.last_subset_file:
+            self._load_subset(self._ws.state.last_subset_file, reset_index=False)
 
     def _create_navigation_cfg(self):
         self._navigation_cfg = (
@@ -145,8 +147,8 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
     def init_ui(self):
-        self._data_viewer = DataViewer(self._config.data_viewer, self._config.data, self._widget_cfg,
-                                       self._config.appearance, spectral_lines=self._spectral_lines,
+        self._data_viewer = DataViewer(self._config.data_viewer, self._ws.config.data, self._ws.widgets,
+                                       self._config.appearance, spectral_lines=self._ws.spectral_lines,
                                        plugins=self._plugins, parent=self)
         
         self._commands_bar = ToolBar(tuple(self._navigation_cfg[i] for i in [3, 1, 0, 2]),
@@ -164,7 +166,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._object_info_dock.setObjectName('Object Information')
         self._object_info_dock.setWidget(self._object_info)
 
-        self._inspection_res = InspectionResults(cfg=self._config.inspection_results, parent=self)
+        self._inspection_res = InspectionResults(cfg=self._ws.config.inspection_results, parent=self)
         self._inspection_res_dock = QtWidgets.QDockWidget('Inspection Results', self)
         self._inspection_res_dock.setObjectName('Inspection Results')
         self._inspection_res_dock.setWidget(self._inspection_res)
@@ -183,30 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._menu = self.menuBar()
 
         self._file = self._menu.addMenu("&File")
-
-        self._new_file = QtWidgets.QAction("&New...")
-        self._new_file.triggered.connect(self._new_file_action)
-        self._new_file.setShortcut(QtGui.QKeySequence('Ctrl+N'))
-        self._file.addAction(self._new_file)
-
-        self._open_file = QtWidgets.QAction("&Open...")
-        self._open_file.triggered.connect(self._open_file_action)
-        self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
-        self._file.addAction(self._open_file)
-
-        self._file.addSeparator()
-
-        self._export = QtWidgets.QAction("&Export FITS Table...")
-        self._export.triggered.connect(self._export_action)
-        self._export.setEnabled(False)
-        self._file.addAction(self._export)
-
-        self._file.addSeparator()
-
-        self._quit = QtWidgets.QAction("&Quit")
-        self._quit.triggered.connect(self.close)
-        self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
-        self._file.addAction(self._quit)
+        self._init_file_menu()
 
         self._edit = self._menu.addMenu("&Edit")
 
@@ -314,6 +293,178 @@ class MainWindow(QtWidgets.QMainWindow):
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
+    def _init_file_menu(self):
+        self._new_file = QtWidgets.QAction("&New...")
+        self._new_file.triggered.connect(self._new_file_action)
+        self._new_file.setShortcut(QtGui.QKeySequence('Ctrl+N'))
+        self._file.addAction(self._new_file)
+
+        self._new_workspace = QtWidgets.QAction("New &Workspace...")
+        self._new_workspace.triggered.connect(self._new_workspace_action)
+        self._file.addAction(self._new_workspace)
+
+        self._open_file = QtWidgets.QAction("&Open...")
+        self._open_file.triggered.connect(self._open_file_action)
+        self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
+        self._file.addAction(self._open_file)
+
+        # a child of the File menu, or Wayland refuses it as a popup of that menu
+        self._recent_workspaces = self._file.addMenu("Recent Wor&kspaces")
+
+        # created once, since the entries are rebuilt whenever the registry changes
+        self._workspace_actions = QtWidgets.QActionGroup(self)
+        self._workspace_actions.setExclusive(True)
+        self._workspace_list_actions: list[QtWidgets.QAction] = []
+
+        self._file.addSeparator()
+
+        # actions on the current workspace
+        self._clone_workspace = QtWidgets.QAction("&Clone Workspace...")
+        self._clone_workspace.triggered.connect(self._clone_workspace_action)
+        self._file.addAction(self._clone_workspace)
+
+        self._rename_workspace = QtWidgets.QAction("&Rename Workspace...")
+        self._rename_workspace.triggered.connect(self._rename_workspace_action)
+        self._file.addAction(self._rename_workspace)
+
+        self._file.addSeparator()
+
+        self._export = QtWidgets.QAction("&Export FITS Table...")
+        self._export.triggered.connect(self._export_action)
+        self._export.setEnabled(False)
+        self._file.addAction(self._export)
+
+        self._file.addSeparator()
+
+        self._quit = QtWidgets.QAction("&Quit")
+        self._quit.triggered.connect(self.close)
+        self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
+        self._file.addAction(self._quit)
+
+        self._populate_workspace_list()
+
+    def _populate_workspace_list(self):
+        # delete the previous entries, otherwise their shortcuts stay active
+        for action in self._workspace_list_actions:
+            self._recent_workspaces.removeAction(action)
+            self._workspace_actions.removeAction(action)
+            action.setParent(None)
+            action.deleteLater()
+        self._workspace_list_actions = []
+
+        known = self._registry.known
+        if not known:
+            placeholder = QtWidgets.QAction("(none)", self)
+            placeholder.setEnabled(False)
+            self._recent_workspaces.addAction(placeholder)
+            self._workspace_list_actions.append(placeholder)
+            return
+
+        active = str(self._ws.path)
+        for i, path in enumerate(known):
+            name = Workspace.name_at(path)
+            action = QtWidgets.QAction(f"{name}", self)
+            action.setCheckable(True)
+            action.setChecked(path == active)
+            action.setToolTip(path)
+
+            if not Workspace.is_workspace(path):
+                # kept in the list (a network share may only be offline) and clickable, which offers
+                # to remove them; no shortcut, so that it can't be triggered by accident
+                action.setText(f"{name}  (unavailable)")
+            elif i < 9:
+                action.setShortcut(QtGui.QKeySequence(f'Ctrl+{i + 1}'))
+
+            action.triggered.connect(partial(self.switch_workspace, path))
+            self._workspace_actions.addAction(action)
+            self._recent_workspaces.addAction(action)
+            self._workspace_list_actions.append(action)
+
+    @QtCore.Slot(str)
+    def switch_workspace(self, path: str):
+        if absolute_path(path) == self._ws.path:
+            return
+
+        if not Workspace.is_workspace(path):
+            self._forget_unavailable_workspace(path)
+            return
+
+        self._registry.set_active(path)
+        self._registry.save()
+
+        logger.info(f"Switching workspace (path: {path})")
+        self.restart()
+
+    def _forget_unavailable_workspace(self, path: str):
+        name = Workspace.name_at(path)
+
+        box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning, "Workspace Unavailable",
+            f"`{name}` is not there any more:\n\n{path}\n\n"
+            f"Forget this workspace? Keep it if it lives on storage that is only temporarily "
+            f"unavailable.",
+            QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel, self)
+        # the default label of the Discard button doesn't describe the action
+        box.button(QtWidgets.QMessageBox.Discard).setText("Forget Workspace")
+        box.setDefaultButton(QtWidgets.QMessageBox.Cancel)
+
+        if box.exec() == QtWidgets.QMessageBox.Discard:
+            self._registry.forget(path)
+            self._registry.save()
+            logger.info(f"Workspace removed from the list (path: {path})")
+
+        self._populate_workspace_list()
+
+    @QtCore.Slot()
+    @qlog
+    def _new_workspace_action(self):
+        dialog = NewWorkspaceDialog(self._registry, parent=self)
+        if not dialog.exec():
+            return
+
+        workspace = Workspace.create(dialog.workspace_path, name=dialog.workspace_name)
+        if workspace is None:
+            return
+
+        self.switch_workspace(str(workspace.path))
+
+    def _open_workspace(self, path: str):
+        if not Workspace.is_workspace(path):
+            logger.error(f"Not a workspace: no {WORKSPACE_CONFIG_FILENAME} found (path: {path})")
+            return
+
+        if not self._registry.validate_name(Workspace.name_at(path), path=path):
+            return
+
+        self.switch_workspace(path)
+
+    @QtCore.Slot()
+    @qlog
+    def _rename_workspace_action(self):
+        dialog = RenameWorkspaceDialog(self._registry, self._ws, parent=self)
+        if not dialog.exec():
+            return
+
+        if dialog.workspace_name == self._ws.name:
+            return
+
+        self._ws.rename(dialog.workspace_name)
+        self._update_window_title()
+        self._populate_workspace_list()
+
+    @QtCore.Slot()
+    @qlog
+    def _clone_workspace_action(self):
+        dialog = CloneWorkspaceDialog(self._registry, self._ws, parent=self)
+        if not dialog.exec():
+            return
+
+        copied = self._ws.copy(dialog.workspace_path, name=dialog.workspace_name)
+        if copied is None:
+            return
+
+        self.switch_workspace(str(copied.path))
+
     def _add_navigation_actions(self):
         navigation_actions = []
 
@@ -402,10 +553,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._subsets_dock)
 
     def load_catalogue(self):
-        cat = Catalog.read(self._config.catalogue.filename, translate=self._config.catalogue.translate)
+        cat = Catalog.read(self._ws.config.catalogue.filename, translate=self._ws.config.catalogue.translate)
         if cat is None:
-            self._config.catalogue.filename = None
-            self._config.save()
+            self._ws.config.catalogue.filename = None
+            self._ws.config.save()
 
         self.update_catalogue(cat)
 
@@ -421,23 +572,38 @@ class MainWindow(QtWidgets.QMainWindow):
     def _new_file_action(self):
         """ Create a new inspection file via the NewFile dialog.
         """
-        dialog = NewFile(cfg=self._config, parent=self)
+        dialog = NewFile(cfg=self._ws.config, parent=self)
         dialog.catalogue_changed.connect(self.update_catalogue)
         dialog.output_path_selected.connect(self.update_output_path)
         if dialog.exec():
-            self.rd.create(flags=self._config.inspection_results.default_flags)
+            self.rd.create(flags=self._ws.config.inspection_results.default_flags)
             if self.rd.review is not None:
                 self.load_project()
             else:
                 self.update_catalogue(None)
                 self.update_output_path(None)
 
+    @QtCore.Slot()
+    @qlog
     def _open_file_action(self):
-        """ Open an existing inspection file via QFileDialog.
+        """ Open an inspection file or a workspace via QFileDialog.
         """
-        path = qtpy.compat.getopenfilename(self, caption='Open Inspection File', filters='CSV Files (*.csv)')[0]
+        path = qtpy.compat.getopenfilename(self, caption='Open Inspection File or Workspace', filters=self.OPEN_FILTERS)[0]
         if path:
-            self.open_file(path)
+            self.open_path(path)
+
+    @QtCore.Slot(str)
+    def open_path(self, path: str):
+        """ Open an inspection file or a workspace (its directory or workspace.yml).
+        """
+        path = pathlib.Path(path)
+
+        if path.name == WORKSPACE_CONFIG_FILENAME:
+            self._open_workspace(str(path.parent))
+        elif Workspace.is_workspace(path):
+            self._open_workspace(str(path))
+        else:
+            self.open_file(str(path))
 
     def open_file(self, path: str, cached_index: int | None = None):
         """ Load inspection data from an existing inspection file.
@@ -504,8 +670,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._load_object(self._commands_bar, self._inspection_res,self._subsets, self._object_info)
         self._object_loaded = True
 
-        self._cache.last_object_index = self.rd.j
-        self._cache.save()
+        self._ws.state.last_object_index = self.rd.j
+        self._ws.state.save()
 
         logger.info(f"Object loaded (ID: {self.rd.review.get_id(self.rd.j)}, loading time: {time.perf_counter()-self._t_load_object_start:.3f} s)")
 
@@ -578,6 +744,8 @@ class MainWindow(QtWidgets.QMainWindow):
             id_str = ', '.join(map(str, obj_id))
             title += f"ID {id_str} [#{self.rd.j + 1}/{self.rd.review.n_objects}] – "
         title += APPLICATION
+        if self._ws is not None and self._ws.name:
+            title += f' [{self._ws.name}]'
         self.setWindowTitle(title)
 
     def _export_action(self):
@@ -602,14 +770,14 @@ class MainWindow(QtWidgets.QMainWindow):
         path = qtpy.compat.getopenfilename(self, caption='Open Viewer Configuration',
                                            filters='YAML Files (*.yml)')[0]
         if path:
-            new_viewer_cfg = self._widget_cfg.replace_params(pathlib.Path(path))
+            new_viewer_cfg = self._ws.widgets.replace_params(pathlib.Path(path))
             if new_viewer_cfg is None:
                 logger.error('Failed to restore the viewer configuration')
             else:
-                self._widget_cfg = new_viewer_cfg
-                self._widget_cfg.save()
+                self._ws.widgets = new_viewer_cfg
+                self._ws.widgets.save()
 
-                self.viewer_configuration_updated.emit(self._widget_cfg)
+                self.viewer_configuration_updated.emit(self._ws.widgets)
 
                 self._reload()
 
@@ -621,7 +789,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='YAML Files (*.yml)')[0]
 
         if path:
-            save_yaml(path, asdict(self._widget_cfg))
+            save_yaml(path, asdict(self._ws.widgets))
             logger.info('Viewer configuration saved')
 
     def _zen_mode_action(self):
@@ -663,7 +831,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._clear_last_subset_file()
             return
 
-        subset = Catalog.read(path, translate=self._config.catalogue.translate)
+        subset = Catalog.read(path, translate=self._ws.config.catalogue.translate)
 
         if subset is None:
             self._clear_last_subset_file()
@@ -672,8 +840,8 @@ class MainWindow(QtWidgets.QMainWindow):
         subset.add_column(np.arange(len(subset)), name='__index__', index=0)
 
         self._subset_cat = subset
-        self._cache.last_subset_file = path
-        self._cache.save()
+        self._ws.state.last_subset_file = path
+        self._ws.state.save()
         self.subset_loaded.emit(path, subset)
 
         if reset_index:
@@ -694,14 +862,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.subset_inspection_stopped.emit()
 
     def _clear_last_subset_file(self):
-        self._cache.last_subset_file = None
-        self._cache.save()
+        self._ws.state.last_subset_file = None
+        self._ws.state.save()
 
     @QtCore.Slot()
     def screenshot_action(self):
         default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{self.rd.review.get_id(self.rd.j)}.png'
         screenshot_location = self._config.data_viewer.default_screenshot_location
-        basedir = str(pathlib.Path(screenshot_location if screenshot_location is not None else "").resolve() / default_filename)
+        basedir = str(absolute_path(screenshot_location if screenshot_location is not None else "") / default_filename)
         path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=basedir, filters='Images (*.png)')
         if path:
             self.screenshot_path_selected.emit(path)
@@ -710,12 +878,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def settings_action(self):
         self._restart_requested = False
 
-        dialog = Settings(self.rd.cat, self._config, self._spectral_lines, parent=self)
+        dialog = Settings(self.rd.cat, self._config, self._ws.config, self._ws.spectral_lines, parent=self)
 
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalogue_changed.connect(self.update_catalogue)
         dialog.spectral_lines_changed.connect(self.spectral_lines_updated.emit)
         dialog.data_source_changed.connect(self.data_source_updated.emit)
+        dialog.unit_aliases_changed.connect(self.update_unit_aliases)
 
         dialog.restart_requested.connect(self.restart)
 
@@ -724,8 +893,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._reload()
 
     @QtCore.Slot()
+    def update_unit_aliases(self):
+        set_unit_aliases(self._ws.config.data.enabled_unit_aliases)
+
+    @QtCore.Slot()
     def update_appearance(self):
         setup_appearance(self._config.appearance, update_theme=False)
+        self._data_viewer.update_appearance()
 
     @QtCore.Slot(object)
     def update_catalogue(self, cat: Catalog | None):
@@ -741,8 +915,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.data_requested.emit()
 
         self.rd.output_path = path
-        self._cache.last_inspection_file = None if path is None else str(path)
-        self._cache.save()
+        self._ws.state.last_inspection_file = None if path is None else str(path)
+        self._ws.state.save()
         self._update_window_title()
 
     @QtCore.Slot(list, list, bool)
@@ -762,8 +936,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if set_as_default:
             default_flags = self.rd.review.flag_columns
-            self._config.inspection_results.default_flags = default_flags
-            self._config.save()
+            self._ws.config.inspection_results.default_flags = default_flags
+            self._ws.config.save()
 
     def _about_action(self):
         package_name: str = __package__.split('.')[0]
@@ -792,13 +966,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(dict)
     def save_viewer_data(self, layout: dict):
-        self._cache.dock_layout = layout
-        self._cache.save()
+        self._ws.layout.dock_layout = layout
+        self._ws.layout.save()
 
     @QtCore.Slot(list)
     def save_obj_info_data(self, visible_columns: list[str]):
-        self._cache.visible_columns = visible_columns
-        self._cache.save()
+        self._ws.layout.visible_columns = visible_columns
+        self._ws.layout.save()
 
     @QtCore.Slot(bool, float, str, dict)
     def save_review_data(self, starred: bool, redshift: float, comments: str, checkboxes: dict[str, bool]):

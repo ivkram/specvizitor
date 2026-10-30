@@ -114,12 +114,20 @@ class ViewerDataLoader(QtCore.QThread):
             if not w0.cfg.data.filename:
                 logger.error(f"Filename not specified (widget: {w0.title})")
                 return None
+            if not self.data_sources.dir:
+                logger.error(f"Data directory not set for this workspace (widget: {w0.title})")
+                return None
             return LocalPath(str(pathlib.Path(self.data_sources.dir) / w0.cfg.data.filename))
 
         # for now assume that a non-empty data source == image
         image = self.data_sources.images.get(w0.cfg.data.source)
         if not image:
             logger.error(f"Shared image not found (label: {w0.cfg.data.source}, widget: {w0.title})")
+            return None
+
+        if not image.filename:
+            logger.error(f"Image path not set for this workspace "
+                         f"(image: {w0.cfg.data.source}, widget: {w0.title})")
             return None
 
         return LocalPath(image.filename)
@@ -142,6 +150,11 @@ class ViewerDataLoader(QtCore.QThread):
             return None
 
         wcs_source = image.wcs_source if image.wcs_source else image.filename
+        if not wcs_source:
+            logger.error(f"Image path not set for this workspace "
+                         f"(image: {w0.cfg.data.source}, widget: {w0.title})")
+            return None
+
         cutout_params = self._get_cutout_params(wcs_source)
         if cutout_params is None:
             return None

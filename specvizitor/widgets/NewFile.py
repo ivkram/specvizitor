@@ -3,11 +3,12 @@ from qtpy import QtWidgets, QtCore
 import logging
 import pathlib
 
-from ..config import config
+from ..config.workspace import WorkspaceConfig
 from ..io.catalog import Catalog, cat_browser
 from ..io.data_dir import get_ids_from_dir
 from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
+from ..utils.paths import absolute_path
 from ..utils.widgets import FileBrowser
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ class NewFile(QtWidgets.QDialog):
     output_path_selected = QtCore.Signal(pathlib.Path)
     catalogue_changed = QtCore.Signal(object)
 
-    def __init__(self, cfg: config.Config, parent=None):
+    def __init__(self, cfg: WorkspaceConfig, parent=None):
         self.cfg = cfg
 
         self._browsers: dict[str, FileBrowser] | None = None
@@ -32,7 +33,7 @@ class NewFile(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setWindowTitle("Create a New Inspection File")
+        self.setWindowTitle("New Inspection File")
 
         self.init_ui()
         self.set_layout()
@@ -44,7 +45,7 @@ class NewFile(QtWidgets.QDialog):
         width = 135
         self._browsers = {
             'output': FileBrowser(filename_extensions='CSV Files (*.csv)',
-                                  mode=FileBrowser.SaveFile, default_path=pathlib.Path().resolve() / "Untitled.csv",
+                                  mode=FileBrowser.SaveFile, default_path=absolute_path("Untitled.csv"),
                                   title="Output File", title_width=width, parent=self),
             'data': data_browser(self.cfg.data.dir, title="Data Source", title_width=width, parent=self),
             'cat': cat_browser(self.cfg.catalogue.filename, title="Catalogue", title_width=width, parent=self)

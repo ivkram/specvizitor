@@ -4,6 +4,7 @@ from qtpy import QtCore, QtWidgets
 import logging
 import pathlib
 
+from ..paths import absolute_path
 from .AbstractWidget import AbstractWidget
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ class FileBrowser(AbstractWidget):
 
         self._browser_mode = mode
         self._filter = filename_extensions  # example: 'Images (*.png *.xpm *.jpg);;Text files (*.txt)'
-        self._default_path = None if default_path is None else str(pathlib.Path(default_path).resolve())
+        self._default_path = None if default_path is None else str(absolute_path(default_path))
 
         self._title = title
         self._title_width = title_width

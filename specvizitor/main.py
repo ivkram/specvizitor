@@ -4,28 +4,54 @@ from qtpy import QtCore, QtWidgets
 import argparse
 import importlib
 import logging
+import pathlib
 import sys
 
 from . import ORGANIZATION, APPLICATION
 from .config.appearance import setup_appearance
-from .config import Cache, Config, DataWidgets, SpectralLineData
-from .config import CACHE_DIR, CONFIG_DIR
-from .io.viewer_data import add_unit_aliases
+from .config import Config, WorkspaceRegistry, Workspace
+from .config import CACHE_DIR, CONFIG_DIR, WORKSPACES_DIR, REGISTRY_FILENAME
+from .config.migration import migrate_legacy_config, needs_migration
+from .io.viewer_data import set_unit_aliases
+from .plugins import available_plugins
 from .utils.params import LocalFile
 
 from .widgets.MainWindow import MainWindow
 
 logger = logging.getLogger(__name__)
 
+LEGACY_CACHE_FILENAME = f"{APPLICATION.lower()}.yml"
+
+DEFAULT_WORKSPACE_NAME = 'Default'
+
+
+def resolve_workspace(registry: WorkspaceRegistry) -> Workspace | None:
+    active = registry.resolve_active()
+
+    if active is not None:
+        workspace = Workspace.open(active)
+        if workspace is not None:
+            return workspace
+        logger.error(f"Failed to open the active workspace (path: {active})")
+
+    default_path = pathlib.Path(WORKSPACES_DIR) / DEFAULT_WORKSPACE_NAME
+    if Workspace.is_workspace(default_path):
+        return Workspace.open(default_path)
+
+    logger.info("No workspace found, creating a default one")
+    return Workspace.create(default_path, name=DEFAULT_WORKSPACE_NAME)
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbosity', action='count', default=0)
-    parser.add_argument('--purge', action='store_true')
+    parser.add_argument('--purge', action='store_true',
+                        help="reset user preferences and the workspace list (workspaces themselves are kept)")
+    parser.add_argument('--workspace', metavar='PATH', default=None,
+                        help="open the workspace at PATH instead of the active one")
 
     args = parser.parse_args()
 
-    # configure logging parameters
     if args.verbosity == 0:
         level = logging.WARNING
     elif args.verbosity == 1:
@@ -34,60 +60,69 @@ def main():
         level = logging.DEBUG
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=level)
 
-    # configure pyqtgraph options
     pg.setConfigOption('imageAxisOrder', 'row-major')
 
-    # read local config files
-    local_files: dict[str, LocalFile] = {
-        'config': LocalFile(CONFIG_DIR, filename='config.yml', full_name='General GUI settings'),
-        'cache': LocalFile(CACHE_DIR, full_name='Cache', auto_backup=False),
-        'widgets': LocalFile(CONFIG_DIR, filename='data_widgets.yml', full_name='Data viewer configuration'),
-        'lines': LocalFile(CONFIG_DIR, filename='spectral_lines.yml', full_name='List of spectral lines'),
+    user_files: dict[str, LocalFile] = {
+        'config': LocalFile(CONFIG_DIR, filename='config.yml', full_name='User preferences'),
+        'registry': LocalFile(CONFIG_DIR, filename=REGISTRY_FILENAME, full_name='Workspace list'),
+        'legacy_cache': LocalFile(CACHE_DIR, filename=LEGACY_CACHE_FILENAME, full_name='Cache',
+                                  auto_backup=False),
     }
 
     if args.purge:
         settings = QtCore.QSettings(ORGANIZATION, APPLICATION)
         settings.clear()
         settings.sync()
-        for f in local_files.values():
-            f.delete()  # safe delete
+        for f in user_files.values():
+            f.delete()
+        logger.warning(f"User preferences reset. Workspaces were left untouched (location: {WORKSPACES_DIR})")
 
-    config = Config.read_user_params(local_files['config'], default='config.yml')
-
-    # register unit aliases
-    add_unit_aliases(config.data.enabled_unit_aliases)
-
-    # "discover" and "register" plugins
-    plugins = []
-    undiscovered_plugins = []
-    for plugin_name in config.plugins:
-        try:
-            plugins.append(importlib.import_module("specvizitor.plugins." + plugin_name).Plugin())
-        except ModuleNotFoundError:
-            logger.warning(f'Plugin not found: {plugin_name}')
-            undiscovered_plugins.append(plugin_name)
-
-    config.plugins = [plugin_name for plugin_name in config.plugins if plugin_name not in undiscovered_plugins]
-    config.save()
+    if needs_migration(CONFIG_DIR, REGISTRY_FILENAME):
+        migrated = migrate_legacy_config(CONFIG_DIR, CACHE_DIR, WORKSPACES_DIR, LEGACY_CACHE_FILENAME)
+        if migrated is not None:
+            registry = WorkspaceRegistry.read_user_params(user_files['registry'])
+            registry.set_active(migrated)
+            registry.save()
 
     exit_code = MainWindow.EXIT_CODE_REBOOT
     while exit_code == MainWindow.EXIT_CODE_REBOOT:
-        # start the application
+        # re-read on every reboot to pick up a workspace switch
+        config = Config.read_user_params(user_files['config'], default='config.yml')
+        registry = WorkspaceRegistry.read_user_params(user_files['registry'])
+
+        if args.workspace is not None:
+            if Workspace.is_workspace(args.workspace):
+                registry.set_active(args.workspace)
+                registry.save()
+            else:
+                logger.error(f"Not a workspace, falling back to the active one (path: {args.workspace})")
+            args.workspace = None  # only on the first start
+
+        workspace = resolve_workspace(registry)
+        if workspace is None:
+            logger.critical("Failed to open or create a workspace")
+            sys.exit(1)
+
+        registry.set_active(workspace.path)
+        registry.save()
+
+        set_unit_aliases(workspace.config.data.enabled_unit_aliases)
+
+        missing = [p for p in workspace.config.plugins if p not in available_plugins()]
+        if missing:
+            logger.warning(f"Plugins not found: {', '.join(missing)}")
+            workspace.config.plugins = [p for p in workspace.config.plugins if p not in missing]
+            workspace.config.save()
+        plugins = [importlib.import_module("specvizitor.plugins." + p).Plugin() for p in workspace.config.plugins]
+
         app = QtWidgets.QApplication(sys.argv)
         app.setOrganizationName(ORGANIZATION)
         app.setApplicationName(APPLICATION)
         logger.info("Application started")
 
-        # set up the GUI appearance
         setup_appearance(cfg=config.appearance)
 
-        # create the main window
-        window = MainWindow(config=config,
-                            cache=Cache.read_user_params(local_files['cache']),
-                            widget_cfg=DataWidgets.read_user_params(local_files['widgets'], default='data_widgets.yml'),
-                            spectral_lines=SpectralLineData.read_user_params(local_files['lines'],
-                                                                             default='spectral_lines.yml'),
-                            plugins=plugins)
+        window = MainWindow(config=config, workspace=workspace, registry=registry, plugins=plugins)
         window.show()
 
         exit_code = app.exec_()

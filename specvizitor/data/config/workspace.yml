@@ -1,0 +1,17 @@
+catalogue:
+  translate:
+    id: [Id, ID, NUMBER]
+    id2: [ID_EMLINE]
+    id3: [ID_SOLUTION]
+    ra: [Ra, RA, RA_1, ra_1, ALPHA_J2000_DET]
+    dec: [Dec, DEC, DEC_1, dec_1, DELTA_J2000_DET]
+    redshift: [z, Z, Redshift, REDSHIFT, z_vac, z_map, Z_SPEC, z_phot_eazy]
+
+data:
+  id_pattern: '(?<![0-9Ff])\d+(?![0-9Dd])'
+  enabled_unit_aliases:
+    AA: [ANGSTROMS]
+
+plugins:
+  - sviz-grizli
+  - sviz-eiger

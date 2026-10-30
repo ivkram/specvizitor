@@ -16,6 +16,7 @@ from typing import Any
 import warnings
 
 from .catalog import Catalog
+from ..utils.paths import absolute_path
 from ..utils.widgets import FileBrowser
 
 
@@ -25,7 +26,7 @@ __all__ = [
     "LocalPath",
     "URLPath",
     "get_wcs",
-    "add_unit_aliases",
+    "set_unit_aliases",
     "data_browser"
 ]
 
@@ -176,7 +177,7 @@ class RasterIOLoader(BaseLoader):
 class ViewerData:
     def __init__(self):
         self._loaders: dict[str, BaseLoader] = {}
-        self._loader_constructors: OrderedDict[str, type(BaseLoader)] = OrderedDict(
+        self._loader_constructors: OrderedDict[str, type[BaseLoader]] = OrderedDict(
             [(loader.name, loader) for loader in (GenericFITSLoader, RasterIOLoader, PILLoader)]
         )
 
@@ -307,7 +308,7 @@ class LocalPath(DataPath):
 
     def resolve(self, obj_id: str | int, cat_entry: Catalog | None):
         super().resolve(obj_id, cat_entry)
-        self._path = str(self._path_obj.resolve())
+        self._path = str(absolute_path(self._path))
 
     def validate(self):
         if not self._path_obj.exists():
@@ -325,9 +326,19 @@ def get_wcs(meta):
     return wcs
 
 
-def add_unit_aliases(unit_aliases: dict[str, list[str]]):
-    for unit, aliases in unit_aliases.items():
-        u.add_enabled_aliases({alias: u.Unit(unit) for alias in aliases})
+def set_unit_aliases(unit_aliases: dict[str, list[str]]):
+    # replaces any aliases registered before
+    aliases = {}
+    for unit, unit_aliases_ in unit_aliases.items():
+        try:
+            parsed = u.Unit(unit)
+        except ValueError as e:
+            logger.error(f"Invalid unit: {e} (unit: {unit})")
+            continue
+        for alias in unit_aliases_:
+            aliases[alias] = parsed
+
+    u.set_enabled_aliases(aliases)
 
 
 def data_browser(default_path, **kwargs) -> FileBrowser:
