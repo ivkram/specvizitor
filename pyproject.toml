@@ -62,6 +62,9 @@ extend-exclude = ["specvizitor/config/appearance"]
 [tool.hatch.build.targets.wheel]
 exclude = ["**/tests"]
 
+[tool.hatch.build.targets.sdist]
+include = ["specvizitor", "README.md", "LICENSE.txt"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
