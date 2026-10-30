@@ -40,7 +40,7 @@ In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https:/
 
       specvizitor
 
-#. Navigate to :menuselection:`File --> New...`. Optionally give a name to the project (``demo.csv`` in this tutorial) and specify the path to the catalog - the ``catalog.fits`` file in the ``specvizitor_demo`` directory:
+#. Navigate to :menuselection:`File --> New...`. Optionally give a name to the inspection file (``demo.csv`` in this tutorial) and specify the path to the catalog - the ``catalog.fits`` file in the ``specvizitor_demo`` directory:
 
    .. figure:: screenshots/demo1.png
 

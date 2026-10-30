@@ -48,6 +48,6 @@ class DataViewer:
 
 @dataclass
 class Config(Params):
-    # user preferences, shared by all workspaces (project settings are in WorkspaceConfig)
+    # user preferences, shared by all workspaces (workspace settings are in WorkspaceConfig)
     appearance: Appearance = field(default_factory=Appearance)
     data_viewer: DataViewer = field(default_factory=DataViewer)

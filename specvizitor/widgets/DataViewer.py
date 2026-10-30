@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataViewer(AbstractWidget):
-    project_loaded = QtCore.Signal()
+    inspection_data_loaded = QtCore.Signal()
     data_loaded = QtCore.Signal(int, InspectionData, object, object)
     object_loaded = QtCore.Signal()
     loading_aborted = QtCore.Signal()
@@ -138,7 +138,7 @@ class DataViewer(AbstractWidget):
     def _connect_widget(self, wt: str):
         w0 = self.widgets[wt]
 
-        self.project_loaded.connect(w0.load_project)
+        self.inspection_data_loaded.connect(w0.load_inspection_data)
         self.data_loaded.connect(w0.load_object)
         self.view_reset.connect(w0.reset_view)
         self.spectral_lines_updated.connect(w0.update_spectral_lines)
@@ -151,7 +151,7 @@ class DataViewer(AbstractWidget):
     def _disconnect_widget(self, wt: str):
         w0 = self.widgets[wt]
 
-        self.project_loaded.disconnect(w0.load_project)
+        self.inspection_data_loaded.disconnect(w0.load_inspection_data)
         self.data_loaded.disconnect(w0.load_object)
         self.view_reset.disconnect(w0.reset_view)
         self.spectral_lines_updated.disconnect(w0.update_spectral_lines)
@@ -291,13 +291,13 @@ class DataViewer(AbstractWidget):
             w.set_geometry(spacing=self._appearance.viewer_spacing, margins=self._appearance.viewer_margins)
 
     @QtCore.Slot()
-    def load_project(self):
+    def load_inspection_data(self):
         self._lock = True
         self.setEnabled(True)
-        self.project_loaded.emit()
+        self.inspection_data_loaded.emit()
 
     @QtCore.Slot(int, InspectionData, object)
-    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+    def load_object(self, j: int, inspection_data: InspectionData, cat_entry: Catalog | None):
         if self._worker and self._worker.isRunning():
             self._worker.wait()
 
@@ -305,7 +305,8 @@ class DataViewer(AbstractWidget):
         t_grace = self._get_t_grace()
         self._t_old_worker_start = self._t_worker_start
 
-        self._worker = ViewerDataLoader(self.widgets, j, review, self._data, self._data_cfg, cat_entry, t_grace=t_grace)
+        self._worker = ViewerDataLoader(self.widgets, j, inspection_data, self._data, self._data_cfg, cat_entry,
+                                        t_grace=t_grace)
         self.loading_aborted.connect(self._worker.abort)
         self._worker.finished.connect(self.finalize_loading)
         self._worker.start()
@@ -327,9 +328,9 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def finalize_loading(self):
-        j, review, cat_entry = self._worker.j, self._worker.review, self._worker.cat_entry
+        j, inspection_data, cat_entry = self._worker.j, self._worker.inspection_data, self._worker.cat_entry
 
-        self.data_loaded.emit(j, review, cat_entry, self._cat)
+        self.data_loaded.emit(j, inspection_data, cat_entry, self._cat)
 
         for plugin in self._plugins:
             plugin.update_active_widgets(self.active_widgets, cat_entry=cat_entry)

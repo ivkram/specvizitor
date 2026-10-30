@@ -13,7 +13,7 @@ class AppData:
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
     cat: Catalog | None = None               # the catalog
-    review: InspectionData | None = None     # inspection results
+    inspection_data: InspectionData | None = None     # inspection results
 
     j: int = None  # the index of the current object
 
@@ -24,8 +24,9 @@ class AppData:
             logger.error("Failed to initialize inspection data: Catalog not loaded")
             return
 
-        self.review = InspectionData.create(*[list(self.cat.get_col(ind)) for ind in self.cat.indices], **kwargs)
-        logger.info(f"Project created (path: {self.output_path})")
+        ids = [list(self.cat.get_col(ind)) for ind in self.cat.indices]
+        self.inspection_data = InspectionData.create(*ids, **kwargs)
+        logger.info(f"Inspection file created (path: {self.output_path})")
 
     def read(self):
         """ Read the inspection file.
@@ -34,8 +35,8 @@ class AppData:
             logger.error("Failed to read the inspection file: File path not specified")
             return
 
-        self.review = InspectionData.read(self.output_path)
-        logger.info(f"Project loaded (path: {self.output_path})")
+        self.inspection_data = InspectionData.read(self.output_path)
+        logger.info(f"Inspection file loaded (path: {self.output_path})")
 
     def save(self):
         """ Save inspection data to the output file.
@@ -44,5 +45,5 @@ class AppData:
             logger.error("Failed to save the inspection data: Output path not specified")
             return
 
-        self.review.write(self.output_path)
-        logger.info(f"Project saved (path: {self.output_path})")
+        self.inspection_data.write(self.output_path)
+        logger.info(f"Inspection file saved (path: {self.output_path})")

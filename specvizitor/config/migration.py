@@ -15,9 +15,9 @@ __all__ = [
     "migrate_legacy_config"
 ]
 
-# keys of the legacy config.yml that describe a project rather than a user preference (`catalogue` has since
-# been renamed to `catalog`)
-PROJECT_KEYS = ('catalogue', 'data', 'inspection_results', 'plugins')
+# keys of the legacy config.yml that belong to a workspace rather than to the user (`catalogue` has since been
+# renamed to `catalog`)
+WORKSPACE_KEYS = ('catalogue', 'data', 'inspection_results', 'plugins')
 USER_KEYS = ('appearance', 'data_viewer')
 
 LEGACY_SUFFIX = '.pre-workspace'
@@ -39,7 +39,7 @@ def needs_migration(config_dir, registry_filename: str) -> bool:
     except Exception:
         return False
 
-    return any(key in data for key in PROJECT_KEYS)
+    return any(key in data for key in WORKSPACE_KEYS)
 
 
 def _archive(path: pathlib.Path) -> None:
@@ -73,8 +73,8 @@ def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename:
         logger.error(f"Failed to create the default workspace, migration skipped: {e}")
         return None
 
-    # 1. split the legacy configuration into a project half and a user half
-    workspace_data = {key: legacy[key] for key in PROJECT_KEYS if key in legacy}
+    # 1. split the legacy configuration into a workspace half and a user half
+    workspace_data = {key: legacy[key] for key in WORKSPACE_KEYS if key in legacy}
     workspace_data['name'] = DEFAULT_WORKSPACE_NAME
 
     for section, key in (('data', 'dir'), ('catalogue', 'filename')):

@@ -1,7 +1,7 @@
 Workspaces
 ==========
 
-A **workspace** is a directory that holds the settings of one project: the data and catalog
+A **workspace** is a directory that holds the settings of one data set: the data and catalog
 paths, the data viewer configuration, the active plugins, and more. Your own preferences (e.g.,
 the list of spectral lines) are not part of a workspace and apply to all of them.
 
@@ -115,6 +115,6 @@ field blank to set it later in :menuselection:`Tools --> Settings`.
 Upgrading from an earlier version
 +++++++++++++++++++++++++++++++++
 
-On the first launch of this version, the project settings are moved into a workspace named
-"Default", along with the widget configuration, the layout and the last open object. The original
-files are kept with a ``.pre-workspace`` suffix (for example ``config.pre-workspace.yml``).
+On the first launch of this version, the settings that describe your data are moved into a
+workspace named "Default", along with the widget configuration, the layout and the last open object.
+The original files are kept with a ``.pre-workspace`` suffix (for example ``config.pre-workspace.yml``).

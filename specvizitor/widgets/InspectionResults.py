@@ -35,12 +35,12 @@ class InspectionResults(AbstractWidget):
 
         QtWidgets.QShortcut("E", self, self._comments_widget.setFocus)
 
-    def _create_checkbox_widgets(self, review: InspectionData | None = None):
+    def _create_checkbox_widgets(self, inspection_data: InspectionData | None = None):
         if self._checkbox_widgets is not None:
             for w in self._checkbox_widgets.values():
                 w.deleteLater()
 
-        flags = self.cfg.default_flags if review is None else review.flag_columns
+        flags = self.cfg.default_flags if inspection_data is None else inspection_data.flag_columns
 
         checkbox_widgets = {}
         for i, flag_name in enumerate(flags):
@@ -89,21 +89,21 @@ class InspectionResults(AbstractWidget):
         self.layout().addWidget(self._comments_widget)
 
     @QtCore.Slot(InspectionData)
-    def load_project(self, review: InspectionData):
+    def load_inspection_data(self, inspection_data: InspectionData):
         self.setEnabled(True)
 
-        self._create_checkbox_widgets(review=review)
+        self._create_checkbox_widgets(inspection_data=inspection_data)
         self.repopulate()
 
-        self._n_starred = review.n_starred
+        self._n_starred = inspection_data.n_starred
 
     @QtCore.Slot(int, InspectionData)
-    def load_object(self, j: int, review: InspectionData):
-        self._set_starred_state(bool(review.get_value(j, "starred")))
-        self.set_redshift(review.get_value(j, "z_sviz"))
-        self._comments_widget.setText(review.get_value(j, "comment"))
+    def load_object(self, j: int, inspection_data: InspectionData):
+        self._set_starred_state(bool(inspection_data.get_value(j, "starred")))
+        self.set_redshift(inspection_data.get_value(j, "z_sviz"))
+        self._comments_widget.setText(inspection_data.get_value(j, "comment"))
         for cname, widget in self._checkbox_widgets.items():
-            widget.setChecked(bool(review.get_value(j, cname)))
+            widget.setChecked(bool(inspection_data.get_value(j, cname)))
 
     @QtCore.Slot()
     def star_object(self):
@@ -139,11 +139,11 @@ class InspectionResults(AbstractWidget):
         self.set_redshift(REDSHIFT_FILL_VALUE)
 
     @QtCore.Slot(int, InspectionData)
-    def update_inspection_fields(self, j: int, review: InspectionData):
-        self._create_checkbox_widgets(review=review)
+    def update_inspection_fields(self, j: int, inspection_data: InspectionData):
+        self._create_checkbox_widgets(inspection_data=inspection_data)
         self.repopulate()
 
-        self.load_object(j, review)  # not the "cleanest" solution
+        self.load_object(j, inspection_data)  # not the "cleanest" solution
 
     @QtCore.Slot()
     def collect_data(self):

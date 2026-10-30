@@ -114,13 +114,13 @@ class InspectionData:
         df = pd.DataFrame(index=index)
         df = cls._add_default_columns(df)
 
-        review = cls(df=df)
+        inspection_data = cls(df=df)
 
         if flags is not None:
             for cname in flags:
-                review.add_field(cname, FieldType.BOOLEAN)
+                inspection_data.add_field(cname, FieldType.BOOLEAN)
 
-        return review
+        return inspection_data
 
     @classmethod
     def read(cls, filename: str | pathlib.Path):
@@ -139,10 +139,10 @@ class InspectionData:
 
         df = cls._add_default_columns(df)
 
-        review = cls(df=df)
-        review.reorder_columns()
+        inspection_data = cls(df=df)
+        inspection_data.reorder_columns()
 
-        return review
+        return inspection_data
 
     def write(self, filename: pathlib.Path, fmt: str = 'csv'):
         """ Write inspection data to the output file.

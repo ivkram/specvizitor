@@ -59,7 +59,7 @@ def loader():
         dir='/data',
         images={'Mosaic': config_module.Image(filename='mosaic.fits')},
     )
-    return ViewerDataLoader(widgets={}, j=0, review=None, viewer_data=_StubViewerData(_wcs_header()),
+    return ViewerDataLoader(widgets={}, j=0, inspection_data=None, viewer_data=_StubViewerData(_wcs_header()),
                             data_sources=data_sources, cat_entry=_StubCatalogEntry(3.5, -30.4))
 
 

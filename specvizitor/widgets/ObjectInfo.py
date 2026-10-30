@@ -90,11 +90,11 @@ class ObjectInfo(AbstractWidget):
         self.layout().addLayout(sub_layout)
 
     @QtCore.Slot()
-    def load_project(self):
+    def load_inspection_data(self):
         self.setEnabled(True)
 
     @QtCore.Slot(int, InspectionData, object)
-    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+    def load_object(self, j: int, inspection_data: InspectionData, cat_entry: Catalog | None):
 
         if cat_entry is None:
             for row in self._table_items.values():

@@ -67,7 +67,7 @@ class Subsets(AbstractWidget):
         self._pause_inspecting.setShortcut('P')
 
     @QtCore.Slot()
-    def load_project(self):
+    def load_inspection_data(self):
         self.setEnabled(True)
 
     @QtCore.Slot(str, object)
@@ -88,9 +88,9 @@ class Subsets(AbstractWidget):
         self._subset_info.setToolTip(self._subset_name)
 
     @QtCore.Slot(int, InspectionData)
-    def load_object(self, j: int, review: InspectionData):
+    def load_object(self, j: int, inspection_data: InspectionData):
         if self._subset_cat:
-            subset_entry = self._subset_cat.get_cat_entry(review.get_id(j, full=True), ignore_missing=True)
+            subset_entry = self._subset_cat.get_cat_entry(inspection_data.get_id(j, full=True), ignore_missing=True)
             if subset_entry is None:
                 self.set_subset_info()
             else:

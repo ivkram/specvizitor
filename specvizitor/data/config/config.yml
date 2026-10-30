@@ -1,7 +1,3 @@
-# User-scoped preferences, shared by every workspace.
-# Anything describing a project (data location, catalog, widgets, flags, plugins)
-# belongs to the workspace configuration instead -- see workspace.yml.
-
 appearance:
   theme: dark
   antialiasing: false

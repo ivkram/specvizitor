@@ -23,14 +23,14 @@ logger = logging.getLogger(__name__)
 class ViewerDataLoader(QtCore.QThread):
     data_loaded = QtCore.Signal(object, object, object)
 
-    def __init__(self, widgets: dict[str, ViewerElement], j: int, review: InspectionData, viewer_data: ViewerData,
-                 data_sources: config.DataSources, cat_entry: Catalog | None, t_grace=0.1):
+    def __init__(self, widgets: dict[str, ViewerElement], j: int, inspection_data: InspectionData,
+                 viewer_data: ViewerData, data_sources: config.DataSources, cat_entry: Catalog | None, t_grace=0.1):
         super().__init__(parent=None)
 
         self.widgets: dict[str, ViewerElement] = widgets
         
         self.j: int = j
-        self.review: InspectionData = review
+        self.inspection_data: InspectionData = inspection_data
         self.data_sources: config.DataSources = data_sources
         self.cat_entry: Catalog | None = cat_entry
         self.viewer_data = viewer_data
@@ -77,7 +77,7 @@ class ViewerDataLoader(QtCore.QThread):
             return None
 
         try:
-            data_path.resolve(self.review.get_id(self.j), self.cat_entry)
+            data_path.resolve(self.inspection_data.get_id(self.j), self.cat_entry)
         except Exception as e:
             logger.error(f"Failed to resolve the filename: {e} (widget: {w0.title})")
             return None

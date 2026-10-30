@@ -11,13 +11,13 @@ from .InspectionResults import InspectionResults
 logger = logging.getLogger(__name__)
 
 
-def inspection_field_table_factory(review: InspectionData, parent=None) -> ParamTable:
+def inspection_field_table_factory(inspection_data: InspectionData, parent=None) -> ParamTable:
     header = ['Field', 'Type']
-    data = [[name, field_type.value] for name, field_type in review.fields.items()]
+    data = [[name, field_type.value] for name, field_type in inspection_data.fields.items()]
     # a new field can only be of a type that the inspection results widget can display
     item_choices = [None, [field_type.value for field_type in InspectionResults.FIELD_TYPES]]
 
-    reserved_colnames = list(review.indices) + review.default_columns
+    reserved_colnames = list(inspection_data.indices) + inspection_data.default_columns
     regex_pattern = [fr"^({'|'.join(map(re.escape, reserved_colnames))}|\s*)$", None]
 
     is_unique = [True, False]
@@ -30,8 +30,8 @@ class InspectionFieldEditor(QtWidgets.QDialog):
     data_requested = QtCore.Signal()
     inspection_fields_updated = QtCore.Signal(list, list, bool)
 
-    def __init__(self, review: InspectionData, parent=None):
-        self._review = review
+    def __init__(self, inspection_data: InspectionData, parent=None):
+        self._inspection_data = inspection_data
         self._field_table: ParamTable | None = None
         self._set_as_default_checkbox: QtWidgets.QCheckBox | None = None
         self._button_box: QtWidgets.QDialogButtonBox | None = None
@@ -48,7 +48,7 @@ class InspectionFieldEditor(QtWidgets.QDialog):
         self.populate()
 
     def init_ui(self):
-        self._field_table = inspection_field_table_factory(self._review, self)
+        self._field_table = inspection_field_table_factory(self._inspection_data, self)
         self._set_as_default_checkbox = QtWidgets.QCheckBox('Set as default for new inspection files', self)
 
         self._button_box = QtWidgets.QDialogButtonBox(
@@ -79,8 +79,8 @@ class InspectionFieldEditor(QtWidgets.QDialog):
         self.data_requested.emit()
 
         warn_columns = []
-        for i, old_name in enumerate(self._review.fields):
-            if self._is_deleted[i] and self._review.has_data(old_name):
+        for i, old_name in enumerate(self._inspection_data.fields):
+            if self._is_deleted[i] and self._inspection_data.has_data(old_name):
                 warn_columns.append(old_name)
 
         accept = True

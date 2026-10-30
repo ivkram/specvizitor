@@ -488,7 +488,7 @@ def test_migration_splits_the_legacy_configuration(legacy):
     config_dir, _ = legacy
     workspace = Workspace.open(_migrate(legacy))
 
-    # project-scoped settings moved into the workspace
+    # workspace-scoped settings moved into the workspace
     assert workspace.name == 'Default'
     assert workspace.config.inspection_results.default_flags == ['broad_line']
     assert workspace.config.plugins == ['sviz-grizli']

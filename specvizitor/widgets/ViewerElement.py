@@ -306,7 +306,7 @@ class ViewerElement(AbstractWidget):
             s.setEnabled(a0)
 
     @QtCore.Slot()
-    def load_project(self):
+    def load_inspection_data(self):
         if self._object_loaded:
             self._destroy_object()
 
@@ -321,7 +321,7 @@ class ViewerElement(AbstractWidget):
             self.meta, self.data_path = None, None
 
     @QtCore.Slot(int, InspectionData, object, object)
-    def load_object(self, j: int, review: InspectionData, cat_entry: Catalog | None, cat: Catalog | None):
+    def load_object(self, j: int, inspection_data: InspectionData, cat_entry: Catalog | None, cat: Catalog | None):
         if self._object_loaded:
             self._destroy_object()
 
@@ -330,7 +330,7 @@ class ViewerElement(AbstractWidget):
 
         self.add_content(cat)
         self.setup_view(cat_entry)
-        self.setup_slider_view(j, review, cat_entry)
+        self.setup_slider_view(j, inspection_data, cat_entry)
         self.setEnabled(True)
 
         self._object_loaded = True
@@ -376,11 +376,11 @@ class ViewerElement(AbstractWidget):
         self.update_axis_labels()
         self.apply_qtransform()
 
-    def setup_slider_view(self, j: int, review: InspectionData, cat_entry: Catalog | None):
+    def setup_slider_view(self, j: int, inspection_data: InspectionData, cat_entry: Catalog | None):
         for slider_name, s in self.sliders.items():
             s.set_default_value_from_catalog(cat_entry)  # load the catalog value to the slider
             if slider_name is SliderItem.REDSHIFT:  # load redshift from inspection results
-                redshift = review.get_value(j, 'z_sviz')
+                redshift = inspection_data.get_value(j, 'z_sviz')
                 if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
                     s.set_default_value(redshift)
 

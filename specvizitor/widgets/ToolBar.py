@@ -93,7 +93,7 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         self._settings_action = QtWidgets.QAction(self)
-        self._settings_action.setToolTip("GUI and Project Settings")
+        self._settings_action.setToolTip("Settings")
 
         self._set_icons()
 
@@ -128,13 +128,13 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self.addAction(self._settings_action)
 
     @QtCore.Slot(InspectionData)
-    def load_project(self, review: InspectionData):
+    def load_inspection_data(self, inspection_data: InspectionData):
         for a in self._viewer_connected_actions:
             a.setEnabled(True)
-        self.update_navigation_actions(review.has_data("starred"))
+        self.update_navigation_actions(inspection_data.has_data("starred"))
 
     @QtCore.Slot(int, InspectionData)
-    def load_object(self, j: int, review: InspectionData):
+    def load_object(self, j: int, inspection_data: InspectionData):
         pass
 
     @QtCore.Slot(bool)
