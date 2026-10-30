@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "astropy>=6.1.0",
-    "dacite==1.8.1",
+    "dacite>=1.8.1",
     "darkdetect>=0.8.0",
     "pandas>=2.2.0",
     "pgcolorbar==1.1.3",
