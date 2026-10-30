@@ -53,6 +53,7 @@ class NewWorkspaceDialog(QtWidgets.QDialog):
         self.workspace_name: str | None = None
 
         super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("New Workspace")
 
         self.init_ui()
@@ -140,6 +141,7 @@ class RenameWorkspaceDialog(QtWidgets.QDialog):
         self.workspace_name: str | None = None
 
         super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("Rename Workspace")
 
         self.init_ui()
@@ -181,6 +183,7 @@ class ForgetWorkspaceDialog(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("Workspace Unavailable")
 
         self.init_ui()
@@ -244,6 +247,7 @@ class ExportWorkspaceDialog(QtWidgets.QDialog):
         self.destination: pathlib.Path | None = None
 
         super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("Export Workspace")
 
         self.init_ui()
@@ -317,6 +321,7 @@ class ResolvePathsDialog(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("Locate Workspace Data")
 
         self.init_ui()

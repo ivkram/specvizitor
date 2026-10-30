@@ -37,6 +37,7 @@ class InspectionFieldEditor(QtWidgets.QDialog):
         self._is_deleted: list[bool] | None = None
 
         super().__init__(parent=parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("Edit Inspection Fields")
 
         self.init_ui()
@@ -81,10 +82,10 @@ class InspectionFieldEditor(QtWidgets.QDialog):
 
         accept = True
         if warn_columns:
-            msg_box = QtWidgets.QMessageBox(self)
-            ans = msg_box.question(self, '', f"Data in the following column(s) will be deleted: {', '.join(warn_columns)}. "
-                                             "Are you sure you want to proceed?", msg_box.Yes | msg_box.No)
-            if ans == msg_box.No:
+            ans = QtWidgets.QMessageBox.question(
+                self, '', f"Data in the following column(s) will be deleted: {', '.join(warn_columns)}. "
+                          "Are you sure you want to proceed?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if ans == QtWidgets.QMessageBox.No:
                 accept = False
 
         if accept:

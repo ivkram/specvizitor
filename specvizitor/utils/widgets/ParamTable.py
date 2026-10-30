@@ -32,6 +32,7 @@ class TableRowEditor(QtWidgets.QDialog):
         self._row_items: list[tuple[QtWidgets.QLabel, QtWidgets.QLineEdit | QtWidgets.QComboBox | FileBrowser]] | None = None
 
         super().__init__(parent=parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         if name is None:
             name = 'Row'
         self.setWindowTitle(f"{action} {name}")

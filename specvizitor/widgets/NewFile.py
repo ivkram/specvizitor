@@ -33,6 +33,7 @@ class NewFile(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle("New Inspection File")
 
         self.init_ui()
