@@ -17,6 +17,8 @@ from ..config.workspace import WORKSPACE_CONFIG_FILENAME
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..io.viewer_data import set_unit_aliases
+from ..io.workspace_archive import (ARCHIVE_EXTENSION, export_workspace, import_workspace, inspect_archive,
+                                   unset_paths)
 from ..plugins.plugin_core import PluginCore
 from ..utils.logs import qlog
 from ..utils.params import save_yaml
@@ -32,7 +34,8 @@ from .InspectionFieldEditor import InspectionFieldEditor
 from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
-from .WorkspaceDialogs import CloneWorkspaceDialog, NewWorkspaceDialog, RenameWorkspaceDialog
+from .WorkspaceDialogs import (CloneWorkspaceDialog, ExportWorkspaceDialog, ImportWorkspaceDialog,
+                               NewWorkspaceDialog, RenameWorkspaceDialog, ResolvePathsDialog)
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +45,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # what `File -> Open...` accepts
     OPEN_FILTERS = ';;'.join((
-        f'All Supported Files (*.csv {WORKSPACE_CONFIG_FILENAME})',
+        f'All Supported Files (*.csv {WORKSPACE_CONFIG_FILENAME} *{ARCHIVE_EXTENSION})',
         'Inspection Files (*.csv)',
         f'Workspaces ({WORKSPACE_CONFIG_FILENAME})',
+        f'Workspace Archives (*{ARCHIVE_EXTENSION})',
     ))
 
     project_loaded = QtCore.Signal(InspectionData)
@@ -327,6 +331,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self._rename_workspace.triggered.connect(self._rename_workspace_action)
         self._file.addAction(self._rename_workspace)
 
+        self._export_workspace = QtWidgets.QAction("Ex&port Workspace...")
+        self._export_workspace.triggered.connect(self._export_workspace_action)
+        self._file.addAction(self._export_workspace)
+
         self._file.addSeparator()
 
         self._export = QtWidgets.QAction("&Export FITS Table...")
@@ -438,6 +446,23 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.switch_workspace(path)
 
+    def _import_workspace(self, archive: str):
+        if inspect_archive(archive) is None:
+            return
+
+        dialog = ImportWorkspaceDialog(self._registry, archive, parent=self)
+        if not dialog.exec():
+            return
+
+        imported = import_workspace(archive, dialog.workspace_path)
+        if imported is None:
+            return
+
+        imported.rename(dialog.workspace_name)
+        if unset_paths(imported.config):
+            ResolvePathsDialog(imported, parent=self).exec()
+        self.switch_workspace(str(imported.path))
+
     @QtCore.Slot()
     @qlog
     def _rename_workspace_action(self):
@@ -464,6 +489,19 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         self.switch_workspace(str(copied.path))
+
+    @QtCore.Slot()
+    @qlog
+    def _export_workspace_action(self):
+        dialog = ExportWorkspaceDialog(self._ws, parent=self)
+        if not dialog.exec():
+            return
+
+        # the inspection results may be exported
+        if self._object_loaded:
+            self.data_requested.emit()
+
+        export_workspace(self._ws, dialog.destination, dialog.options)
 
     def _add_navigation_actions(self):
         navigation_actions = []
@@ -586,7 +624,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot()
     @qlog
     def _open_file_action(self):
-        """ Open an inspection file or a workspace via QFileDialog.
+        """ Open an inspection file, a workspace or a workspace archive via QFileDialog.
         """
         path = qtpy.compat.getopenfilename(self, caption='Open Inspection File or Workspace', filters=self.OPEN_FILTERS)[0]
         if path:
@@ -594,11 +632,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(str)
     def open_path(self, path: str):
-        """ Open an inspection file or a workspace (its directory or workspace.yml).
+        """ Open an inspection file, a workspace (its directory or workspace.yml) or a workspace archive.
         """
         path = pathlib.Path(path)
 
-        if path.name == WORKSPACE_CONFIG_FILENAME:
+        if path.suffix == ARCHIVE_EXTENSION:
+            self._import_workspace(str(path))
+        elif path.name == WORKSPACE_CONFIG_FILENAME:
             self._open_workspace(str(path.parent))
         elif Workspace.is_workspace(path):
             self._open_workspace(str(path))

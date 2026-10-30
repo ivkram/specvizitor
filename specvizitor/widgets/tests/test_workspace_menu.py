@@ -34,7 +34,8 @@ FILE_MENU_TITLE = '&File'
 RECENT_MENU_TITLE = 'Recent Wor&kspaces'
 # NewFile is in here because the sweep below triggers every File entry, and it now shares the
 # menu with the workspace commands
-DIALOG_NAMES = ('NewWorkspaceDialog', 'CloneWorkspaceDialog', 'RenameWorkspaceDialog', 'NewFile')
+DIALOG_NAMES = ('NewWorkspaceDialog', 'ImportWorkspaceDialog', 'ExportWorkspaceDialog',
+                'ResolvePathsDialog', 'CloneWorkspaceDialog', 'RenameWorkspaceDialog', 'NewFile')
 
 
 class _StubSignal:
@@ -159,7 +160,7 @@ def _recent_entry(win, label):
 def test_the_menu_exposes_the_expected_commands(gui):
     labels = [a.text() for a in _menu_entries(gui['win'])]
     assert labels == ['&New...', 'New &Workspace...', '&Open...', RECENT_MENU_TITLE,
-                      '&Clone Workspace...', '&Rename Workspace...',
+                      '&Clone Workspace...', '&Rename Workspace...', 'Ex&port Workspace...',
                       '&Export FITS Table...', '&Quit']
 
 
@@ -198,6 +199,7 @@ def test_every_menu_entry_can_be_triggered(gui, slot_errors):
 @pytest.mark.parametrize('label,dialog_name', [
     ('New &Workspace...', 'NewWorkspaceDialog'),
     ('&Clone Workspace...', 'CloneWorkspaceDialog'),
+    ('Ex&port Workspace...', 'ExportWorkspaceDialog'),
 ])
 def test_triggering_an_action_reaches_its_dialog(gui, slot_errors, label, dialog_name):
     _entry(gui['win'], label).trigger()
@@ -337,10 +339,33 @@ def test_the_clone_dialog_suffixes_again_when_the_obvious_clone_name_is_taken(gu
         gui['registry'].forget(taken.path)
 
 
-def test_open_accepts_both_kinds_of_target(gui):
-    # the filter list is what the user sees; keep both supported kinds in it
+def test_open_accepts_all_three_kinds_of_target(gui):
+    # the filter list is what the user sees; keep the three supported kinds in it
     assert 'workspace.yml' in MainWindow.OPEN_FILTERS
+    assert '*.sviz' in MainWindow.OPEN_FILTERS
     assert '*.csv' in MainWindow.OPEN_FILTERS
+
+
+def test_open_dispatches_an_archive_to_the_import_dialog(gui, slot_errors, tmp_path):
+    from specvizitor.io.workspace_archive import export_workspace
+
+    archive = tmp_path / 'shared.sviz'
+    assert export_workspace(gui['other'], archive)
+
+    gui['win'].open_path(str(archive))
+
+    assert slot_errors == []
+    assert main_window_module.ImportWorkspaceDialog.opened
+
+
+def test_an_invalid_archive_does_not_reach_the_import_dialog(gui, slot_errors, tmp_path):
+    archive = tmp_path / 'broken.sviz'
+    archive.write_bytes(b'')
+
+    gui['win'].open_path(str(archive))
+
+    assert slot_errors == []
+    assert not main_window_module.ImportWorkspaceDialog.opened
 
 
 def test_open_dispatches_a_workspace_config_to_a_switch(gui, slot_errors):
@@ -378,6 +403,23 @@ def test_open_dispatches_anything_else_to_the_inspection_file_reader(gui, slot_e
     assert slot_errors == []
     assert opened == ['/nowhere/results.csv']
     assert not gui['restarts']
+
+
+def test_the_import_dialog_describes_a_preselected_archive(gui, tmp_path):
+    """`File -> Open...` picks the archive, so the dialog must open already describing it.
+
+    The dispatch tests above see a stubbed dialog, which is exactly what let an ordering bug in
+    the real one (contents described before the label existed) through.
+    """
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
+    from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
+
+    archive = tmp_path / 'shared.sviz'
+    assert export_workspace(gui['other'], str(archive), ExportOptions())
+
+    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+
+    assert 'workspace.yml' in dialog._contents_label.text()
 
 
 def _unavailable_workspace(registry, win, tmp_path, dirname='Gone'):
@@ -465,3 +507,113 @@ def test_keeping_an_unavailable_workspace_leaves_it_listed(gui, slot_errors, tmp
     finally:
         gui['registry'].forget(gone.path)
         gui['win']._populate_workspace_list()
+
+
+def test_exporting_onto_an_existing_archive_is_refused(gui, tmp_path):
+    from specvizitor.widgets.WorkspaceDialogs import ExportWorkspaceDialog
+
+    (tmp_path / 'taken.sviz').write_bytes(b'')
+
+    dialog = ExportWorkspaceDialog(gui['win']._ws)
+    dialog._destination._line_edit.setText(str(tmp_path / 'taken.sviz'))
+    dialog.accept()
+
+    assert dialog.destination is None
+
+
+def test_exporting_is_refused_even_when_the_extension_is_left_off(gui, tmp_path):
+    """The extension is appended on export, so the check has to look at the resulting filename.
+    """
+    from specvizitor.widgets.WorkspaceDialogs import ExportWorkspaceDialog
+
+    (tmp_path / 'taken.sviz').write_bytes(b'')
+
+    dialog = ExportWorkspaceDialog(gui['win']._ws)
+    dialog._destination._line_edit.setText(str(tmp_path / 'taken'))
+    dialog.accept()
+
+    assert dialog.destination is None
+
+
+def test_exporting_to_a_free_path_is_accepted(gui, tmp_path):
+    from specvizitor.widgets.WorkspaceDialogs import ExportWorkspaceDialog
+
+    dialog = ExportWorkspaceDialog(gui['win']._ws)
+    dialog._destination._line_edit.setText(str(tmp_path / 'fresh'))
+    dialog.accept()
+
+    assert dialog.destination == tmp_path / 'fresh.sviz'
+
+
+def test_the_import_dialog_names_the_archive_but_does_not_offer_to_change_it(gui, tmp_path):
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
+    from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
+
+    archive = tmp_path / 'shared.sviz'
+    assert export_workspace(gui['other'], str(archive), ExportOptions())
+
+    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+
+    # the archive was chosen in `File -> Open...`, so it is stated rather than browsed for
+    assert dialog._archive_label.text() == 'shared.sviz'
+    assert dialog._archive_label.toolTip() == str(archive)
+    # the name is the author's, made unique for this machine: `Other` is the workspace in the
+    # fixture, so its own name is already taken here
+    assert dialog._name_edit.text() == 'Other (2)'
+    assert dialog._name_edit.isEnabled()
+
+
+def test_the_import_dialog_derives_the_directory_from_the_name(gui, tmp_path):
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
+    from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
+
+    archive = tmp_path / 'shared.sviz'
+    assert export_workspace(gui['other'], str(archive), ExportOptions())
+
+    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+    dialog._name_edit.setText('JADES DR3')
+    dialog._location._line_edit.setText(str(tmp_path))
+    dialog.accept()
+
+    assert dialog.workspace_name == 'JADES DR3'
+    assert dialog.workspace_path == tmp_path / 'JADES_DR3'
+
+
+def test_the_import_dialog_refuses_a_name_already_taken(gui, tmp_path):
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
+    from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
+
+    archive = tmp_path / 'shared.sviz'
+    assert export_workspace(gui['other'], str(archive), ExportOptions())
+
+    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+    dialog._name_edit.setText('Active')
+    dialog._location._line_edit.setText(str(tmp_path))
+    dialog.accept()
+
+    assert dialog.workspace_path is None
+
+
+def test_the_resolve_dialog_sets_the_filled_paths_only(gui, tmp_path):
+    from specvizitor.widgets.WorkspaceDialogs import ResolvePathsDialog
+
+    workspace = Workspace.create(tmp_path / 'imported')
+    dialog = ResolvePathsDialog(workspace)
+    data_dir = dialog._rows[0][3]
+    data_dir._line_edit.setText(str(tmp_path))
+    dialog.accept()
+
+    reopened = Workspace.open(workspace.path)
+    assert reopened.config.data.dir == str(tmp_path)
+    assert reopened.config.catalogue.filename is None
+
+
+def test_the_resolve_dialog_offers_only_the_unset_paths(gui, tmp_path):
+    from specvizitor.widgets.WorkspaceDialogs import ResolvePathsDialog
+
+    workspace = Workspace.create(tmp_path / 'imported')
+    workspace.config.data.dir = str(tmp_path)
+    titles = [row[0] for row in ResolvePathsDialog(workspace)._rows]
+
+    assert 'Data directory' not in titles
+    assert 'Catalogue' in titles

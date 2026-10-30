@@ -1,9 +1,12 @@
+import zipfile
 
 import pytest
 
 from specvizitor.config.migration import migrate_legacy_config, needs_migration
 from specvizitor.config.config import Image
 from specvizitor.config.workspace import WORKSPACE_CONFIG_FILENAME, Workspace, WorkspaceRegistry
+from specvizitor.io.workspace_archive import (ExportOptions, export_workspace, import_workspace,
+                                              inspect_archive, unset_paths)
 from specvizitor.utils.params import read_yaml, save_yaml
 
 
@@ -281,6 +284,155 @@ def test_resolve_active_returns_none_when_nothing_is_usable(tmp_path):
     registry.set_active(tmp_path / 'never-existed')
 
     assert registry.resolve_active() is None
+
+
+# ---------------------------------------------------------------- archives
+
+def test_export_and_import_round_trip(workspace, tmp_path):
+    workspace.config.data.dir = '/home/alice/fresco/data'
+    workspace.config.save()
+
+    archive = tmp_path / 'fresco.sviz'
+    assert export_workspace(workspace, archive)
+
+    imported = import_workspace(archive, tmp_path / 'received')
+
+    # the name travels inside the archive, independently of where it is installed
+    assert imported.name == 'FRESCO'
+    assert imported.config.plugins == workspace.config.plugins
+    assert imported.widgets.images.keys() == workspace.widgets.images.keys()
+    # the author's paths did not travel with the archive
+    assert imported.config.data.dir is None
+
+
+def _archived_config(archive) -> str:
+    with zipfile.ZipFile(archive) as z:
+        return z.read(WORKSPACE_CONFIG_FILENAME).decode()
+
+
+@pytest.fixture
+def with_paths(workspace):
+    workspace.config.data.dir = '/home/alice/fresco/data'
+    workspace.config.catalogue.filename = '/home/alice/fresco/cat.fits'
+    workspace.config.data.images = {
+        'Cluster': Image(filename='/net/mosaics/cluster.fits', wcs_source='/net/mosaics/cluster_wcs.fits'),
+        'Deep': Image(filename='/home/alice/deep.fits'),
+    }
+    workspace.config.save()
+    return workspace
+
+
+def test_export_leaves_the_paths_out(with_paths, tmp_path):
+    archive = tmp_path / 'fresco.sviz'
+    export_workspace(with_paths, archive)
+    archived = _archived_config(archive)
+
+    assert '/home/alice' not in archived
+    assert '/net/mosaics' not in archived
+    # the image labels are referenced by the widget configuration, so they are kept
+    assert 'Cluster' in archived and 'Deep' in archived
+
+
+def test_export_does_not_change_the_workspace_itself(with_paths, tmp_path):
+    export_workspace(with_paths, tmp_path / 'fresco.sviz')
+
+    assert Workspace.open(with_paths.path).config.data.dir == '/home/alice/fresco/data'
+
+
+def test_an_imported_workspace_has_every_path_unset(with_paths, tmp_path):
+    archive = tmp_path / 'fresco.sviz'
+    export_workspace(with_paths, archive)
+    imported = import_workspace(archive, tmp_path / 'received')
+
+    assert len(unset_paths(imported.config)) == 6
+
+
+def test_a_wcs_source_is_asked_for_only_along_with_its_image(workspace):
+    workspace.config.data.images = {
+        'Cluster': Image(filename='/net/mosaics/cluster.fits'),
+        'Deep': Image(),
+    }
+
+    titles = [title for title, _, _ in unset_paths(workspace.config)]
+
+    assert 'WCS source (Cluster)' not in titles
+    assert 'Image (Deep)' in titles and 'WCS source (Deep)' in titles
+
+
+def test_export_can_deliberately_include_local_paths(workspace, tmp_path):
+    workspace.config.data.dir = '/net/shared/fresco'
+    workspace.config.save()
+
+    archive = tmp_path / 'fresco.sviz'
+    export_workspace(workspace, archive, ExportOptions(include_local_paths=True))
+    imported = import_workspace(archive, tmp_path / 'received')
+
+    assert imported.config.data.dir == '/net/shared/fresco'
+
+
+def test_export_omits_the_optional_parts_when_asked(workspace, tmp_path):
+    archive = tmp_path / 'minimal.sviz'
+    export_workspace(workspace, archive,
+                     ExportOptions(include_widgets=False, include_spectral_lines=False, include_layout=False))
+
+    assert inspect_archive(archive) == [WORKSPACE_CONFIG_FILENAME]
+
+
+def test_export_includes_the_inspection_results_on_request(workspace, tmp_path):
+    results = tmp_path / 'inspection.csv'
+    results.write_text('id,starred\n1,False\n')
+    workspace.state.last_inspection_file = str(results)
+    workspace.state.save()
+
+    archive = tmp_path / 'fresco.sviz'
+    export_workspace(workspace, archive, ExportOptions(include_results=True))
+
+    assert 'inspection.csv' in inspect_archive(archive)
+
+
+def test_imported_inspection_results_are_opened(workspace, tmp_path):
+    results = tmp_path / 'inspection.csv'
+    results.write_text('id,starred\n1,False\n')
+    workspace.state.last_inspection_file = str(results)
+    workspace.state.save()
+
+    archive = tmp_path / 'fresco.sviz'
+    export_workspace(workspace, archive, ExportOptions(include_results=True))
+    imported = import_workspace(archive, tmp_path / 'received')
+
+    assert imported.state.last_inspection_file == str(imported.path / 'inspection.csv')
+    assert Workspace.open(imported.path).state.last_inspection_file == str(imported.path / 'inspection.csv')
+
+
+def test_import_refuses_to_clobber_an_existing_workspace(workspace, tmp_path):
+    archive = tmp_path / 'fresco.sviz'
+    export_workspace(workspace, archive)
+    import_workspace(archive, tmp_path / 'received')
+
+    assert import_workspace(archive, tmp_path / 'received') is None
+
+
+def test_an_archive_without_a_workspace_configuration_is_rejected(tmp_path):
+    archive = tmp_path / 'random.zip'
+    with zipfile.ZipFile(archive, 'w') as z:
+        z.writestr('notes.txt', 'hello')
+
+    assert inspect_archive(archive) is None
+    assert import_workspace(archive, tmp_path / 'received') is None
+
+
+def test_import_cannot_write_outside_the_destination(tmp_path):
+    archive = tmp_path / 'evil.sviz'
+    with zipfile.ZipFile(archive, 'w') as z:
+        z.writestr(WORKSPACE_CONFIG_FILENAME, 'name: evil\n')
+        z.writestr('../escaped.yml', 'nope')
+        z.writestr('nested/deep.yml', 'nope')
+
+    imported = import_workspace(archive, tmp_path / 'received')
+
+    assert imported.name == 'evil'
+    assert not (imported.path / 'nested').exists()
+    assert not (tmp_path / 'escaped.yml').exists()
 
 
 # ---------------------------------------------------------------- migration
