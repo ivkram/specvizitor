@@ -14,8 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
+
+      # the ruff version from uv.lock
       - name: Run ruff
-        uses: astral-sh/ruff-action@v4.1.0
+        run: uv run --locked --only-group dev ruff check
 
   test:
     runs-on: ${{ matrix.os }}
