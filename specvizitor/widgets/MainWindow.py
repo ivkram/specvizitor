@@ -62,7 +62,6 @@ class MainWindow(QtWidgets.QMainWindow):
     inspection_fields_updated = QtCore.Signal(int, InspectionData)
     data_source_updated = QtCore.Signal()
     spectral_lines_updated = QtCore.Signal()
-    visible_columns_updated = QtCore.Signal(list)
     dock_layout_updated = QtCore.Signal(dict)
     viewer_configuration_updated = QtCore.Signal(DataWidgets)
 
@@ -132,10 +131,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if self._ws.config.catalogue.filename:
             self.load_catalogue()
-
-        # an empty list hides every column
-        if self.rd.cat and self._ws.layout.visible_columns is not None:
-            self.visible_columns_updated.emit(self._ws.layout.visible_columns)
 
         if self._ws.state.last_inspection_file:
             self.open_file(self._ws.state.last_inspection_file, self._ws.state.last_object_index)
@@ -517,7 +512,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.loading_aborted.connect(self._data_viewer.abort_loading)
 
-        for w in (self._data_viewer, self._object_info, self._inspection_res):
+        for w in (self._data_viewer, self._inspection_res):
             self.data_requested.connect(w.collect_data)
 
         self.project_closed.connect(self._data_viewer.free_resources)
@@ -527,7 +522,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.inspection_fields_updated.connect(self._inspection_res.update_inspection_fields)
         self.data_source_updated.connect(self._data_viewer.open_images)
         self.spectral_lines_updated.connect(self._data_viewer.spectral_lines_updated.emit)
-        self.visible_columns_updated.connect(self._object_info.update_visible_columns)
         self.dock_layout_updated.connect(self._data_viewer.update_dock_layout)
         self.viewer_configuration_updated.connect(self._data_viewer.update_viewer_configuration)
 
@@ -559,7 +553,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._data_viewer.id_selected.connect(self.load_by_id)
 
         self._data_viewer.data_collected.connect(self.save_viewer_data)
-        self._object_info.data_collected.connect(self.save_obj_info_data)
         self._inspection_res.data_collected.connect(self.save_review_data)
 
         # connect the child widgets between each other
@@ -996,11 +989,6 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot(dict)
     def save_viewer_data(self, layout: dict):
         self._ws.layout.dock_layout = layout
-        self._ws.layout.save()
-
-    @QtCore.Slot(list)
-    def save_obj_info_data(self, visible_columns: list[str]):
-        self._ws.layout.visible_columns = visible_columns
         self._ws.layout.save()
 
     @QtCore.Slot(bool, float, str, dict)

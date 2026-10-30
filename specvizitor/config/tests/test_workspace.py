@@ -132,12 +132,12 @@ def test_a_copy_inherits_the_widgets_and_the_spectral_lines(workspace, tmp_path)
 
 
 def test_a_copy_inherits_the_layout(workspace, tmp_path):
-    workspace.layout.visible_columns = ['id', 'ra', 'dec']
+    workspace.layout.dock_layout = {'main': None, 'float': []}
     workspace.layout.save()
 
     copied = workspace.copy(tmp_path / 'variant')
 
-    assert copied.layout.visible_columns == ['id', 'ra', 'dec']
+    assert copied.layout.dock_layout == {'main': None, 'float': []}
 
 
 def test_a_copy_inherits_the_open_inspection_file_and_position(workspace, tmp_path):
@@ -450,7 +450,7 @@ LEGACY_CONFIG = {
 LEGACY_CACHE = {
     'last_inspection_file': '/srv/fresco/inspection.csv',
     'last_object_index': 42,
-    'visible_columns': ['id', 'ra', 'dec'],
+    'dock_layout': {'main': None, 'float': []},
 }
 
 
@@ -508,7 +508,7 @@ def test_migration_carries_the_session_state_over(legacy):
 
     assert workspace.state.last_inspection_file == '/srv/fresco/inspection.csv'
     assert workspace.state.last_object_index == 42
-    assert workspace.layout.visible_columns == ['id', 'ra', 'dec']
+    assert workspace.layout.dock_layout == {'main': None, 'float': []}
 
 
 def test_migration_keeps_the_legacy_files_recoverable(legacy):

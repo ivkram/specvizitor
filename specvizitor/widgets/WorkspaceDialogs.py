@@ -257,7 +257,7 @@ class ExportWorkspaceDialog(QtWidgets.QDialog):
         labels = {
             'include_widgets': "Data viewer configuration",
             'include_spectral_lines': "Spectral lines",
-            'include_layout': "Window layout and visible columns",
+            'include_layout': "Window layout",
             'include_results': f"Inspection results ({pathlib.Path(results).name})" if has_results
                                else "Inspection results",
             'include_local_paths': "This machine's data paths (only for a shared filesystem)",

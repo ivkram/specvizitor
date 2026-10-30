@@ -112,8 +112,7 @@ def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename:
         else:
             state = {key: cache[key] for key in ('last_inspection_file', 'last_object_index', 'last_subset_file')
                      if cache.get(key) is not None}
-            layout = {key: cache[key] for key in ('dock_layout', 'visible_columns')
-                      if cache.get(key) is not None}
+            layout = {key: cache[key] for key in ('dock_layout',) if cache.get(key) is not None}
             try:
                 if state:
                     save_yaml(workspace_dir / WORKSPACE_STATE_FILENAME, state)

@@ -45,7 +45,6 @@ class WorkspaceConfig(Params):
 @dataclass
 class WorkspaceLayout(Params):
     dock_layout: dict | None = None
-    visible_columns: list[str] | None = None
 
 
 @dataclass
