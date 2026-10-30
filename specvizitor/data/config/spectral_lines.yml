@@ -1,5 +1,4 @@
 wave_unit: angstrom
-repr: vacuum
 wavelengths:
   # Lyman series [1]
   LyA: 1215.6709

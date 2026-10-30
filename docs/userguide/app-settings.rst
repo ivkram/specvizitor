@@ -55,7 +55,7 @@ are applied once while the application starts, and specvizitor will offer to res
 Adding spectral lines
 ^^^^^^^^^^^^^^^^^^^^^
 
-Open :guilabel:`Settings` ‣ :guilabel:`Data Viewer`. Click :guilabel:`Add...` and enter the line's name and wavelength:
+Open :guilabel:`Settings` ‣ :guilabel:`Data Viewer`. Click :guilabel:`Add...` and enter the line's name and its vacuum wavelength (in Å by default):
 
 .. figure:: ../screenshots/add_spectral_line.png
 
