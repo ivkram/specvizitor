@@ -102,6 +102,7 @@ class DataViewer(AbstractWidget):
             constructor = Plot1D
         if constructor is None:
             logger.error(f"Unknown widget configuration type: {type(cfg)}")
+            return
 
         kwargs = dict(
             appearance=self._appearance,

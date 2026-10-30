@@ -87,3 +87,12 @@ def test_a_missing_extension_is_logged_without_quotes(fits_file, caplog):
 
     assert data is None
     assert "GenericFITSLoader: Extension `SCI` not found (filename:" in caplog.text
+
+
+def test_an_unknown_loader_is_reported_without_raising(fits_file, caplog):
+    from specvizitor.io.viewer_data import ViewerData
+
+    data, meta = ViewerData().load(fits_file, loader='fitz')
+
+    assert (data, meta) == (None, None)
+    assert "Unknown loader type: `fitz`" in caplog.text

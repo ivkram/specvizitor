@@ -81,7 +81,7 @@ class ScaleTransform(PlotTransformBase):
 
         if scale not in self.ALLOWED_PLOT_SCALES:
             logger.error(f'Unknown scaling type: `{scale}` (widget: {self.widget_title})')
-            self.scale = None
+            scale = self.ALLOWED_PLOT_SCALES[0]
 
         self.scale = scale
 

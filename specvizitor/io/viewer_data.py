@@ -201,6 +201,7 @@ class ViewerData:
             loader = 'auto'
         if loader not in self.loader_names:
             logger.error(f"Unknown loader type: `{loader}`. Available loaders: {', '.join(self.loader_names)}")
+            return None
         if loader == 'auto':
             loader = self._get_loader(filename)
 
