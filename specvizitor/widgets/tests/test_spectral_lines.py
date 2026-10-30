@@ -50,3 +50,17 @@ def test_line_wavelengths_in_angstrom_are_unchanged(line_position):
 
 def test_line_wavelengths_stay_in_their_own_unit_without_an_axis_unit(line_position):
     assert line_position('micron', 0.6564633, x_unit=None) == pytest.approx(0.6564633)
+
+
+@pytest.mark.parametrize('wave_unit, header', [('angstrom', 'Wavelength (Å)'), ('micron', 'Wavelength (µm)'),
+                                               ('not-a-unit', 'Wavelength (not-a-unit)')])
+def test_the_settings_table_shows_the_wavelength_unit(wave_unit, header):
+    from specvizitor.widgets.Settings import spectral_lines_table_factory
+
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    table = spectral_lines_table_factory(SpectralLineData(wave_unit=wave_unit, wavelengths={'Ha': 6564.633}))
+
+    assert table._header == ['Line', header]
+
+    table.deleteLater()
+    app.processEvents()

@@ -1,3 +1,4 @@
+import astropy.units as u
 from qtpy import QtWidgets, QtCore
 
 from abc import abstractmethod
@@ -359,9 +360,14 @@ class DataSourceWidget(SettingsWidget):
             self.unit_aliases_changed.emit()
 
 
-def spectral_lines_table_factory(wavelengths: dict[str, float], parent=None) -> ParamTable:
-    header = ['Line', 'Wavelength']
-    data = [[line, str(wave)] for line, wave in wavelengths.items()]
+def spectral_lines_table_factory(spectral_lines: SpectralLineData, parent=None) -> ParamTable:
+    try:
+        unit = u.Unit(spectral_lines.wave_unit).to_string('unicode')
+    except ValueError:
+        unit = spectral_lines.wave_unit
+
+    header = ['Line', f'Wavelength ({unit})']
+    data = [[line, str(wave)] for line, wave in spectral_lines.wavelengths.items()]
     regex_pattern = [r'^\s*$', r'(?!([0-9]+([.][0-9]*)?|[.][0-9]+)$)']
     is_unique = [True, False]
 
@@ -416,7 +422,7 @@ class DataViewerWidget(SettingsWidget):
         self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
 
         self._lines_section = Section("Spectral lines", parent=self)
-        self._lines_table = spectral_lines_table_factory(self.spectral_lines.wavelengths, self)
+        self._lines_table = spectral_lines_table_factory(self.spectral_lines, self)
 
         self.data_requested.connect(self._lines_table.collect)
         self._lines_table.data_collected.connect(self.save_lines)
