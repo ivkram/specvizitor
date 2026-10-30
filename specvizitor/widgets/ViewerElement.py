@@ -428,7 +428,7 @@ class ViewerElement(AbstractWidget):
 
         line_waves = np.array([self._spectral_lines.wavelengths[line_name]
                                for line_name in self._spectral_line_artists.keys()]) * scale0
-        line_waves = self.apply_xdata_transform(line_waves * u.Unit('AA'))
+        line_waves = self.apply_xdata_transform(line_waves * line_unit)
         if isinstance(line_waves, Quantity):
             line_waves = line_waves.value
 
