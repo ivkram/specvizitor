@@ -3,6 +3,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
 
 from dataclasses import asdict
+from datetime import date
 from functools import partial
 from importlib import metadata
 import logging
@@ -967,12 +968,17 @@ class MainWindow(QtWidgets.QMainWindow):
     def _about_action(self):
         package_name: str = __package__.split('.')[0]
 
+        # `Project-URL` entries read "<label>, <url>"
+        urls = dict(entry.split(', ', 1) for entry in metadata.metadata(package_name).get_all('Project-URL', []))
+        homepage = urls.get('Homepage')
+
         msg = []
         msg.append(f"{package_name.capitalize()} v{metadata.version(package_name)}")
-        msg.append("Copyright (c) 2025, Ivan Kramarenko, Josephine Kerutt")
-        msg.append(f"\nProject's homepage: {metadata.metadata(package_name).get('Home-page')}")
+        msg.append(f"Copyright (c) 2023–{date.today().year}, Ivan Kramarenko, Josephine Kerutt")
+        msg.append(f"<br>Project's homepage: <a href=\"{homepage}\">{homepage}</a>")
 
-        QtWidgets.QMessageBox.about(self, f"About {package_name.capitalize()}", '\n'.join(msg))
+        # rich text, so that the link opens in a browser
+        QtWidgets.QMessageBox.about(self, f"About {package_name.capitalize()}", f"<p>{'<br>'.join(msg)}</p>")
 
     def closeEvent(self, a0):
         if self.rd.j is not None:

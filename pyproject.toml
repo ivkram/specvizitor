@@ -39,6 +39,7 @@ dependencies = [
 ]
 
 [project.urls]
+Homepage = "https://specvizitor.ivkram.space"
 Repository = "https://github.com/ivkram/specvizitor"
 
 [project.scripts]
