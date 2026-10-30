@@ -2,6 +2,7 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtWidgets
 
 import argparse
+import gc
 import importlib
 import logging
 import pathlib
@@ -39,6 +40,22 @@ def resolve_workspace(registry: WorkspaceRegistry) -> Workspace | None:
 
     logger.info("No workspace found, creating a default one")
     return Workspace.create(default_path, name=DEFAULT_WORKSPACE_NAME)
+
+
+def run_window(app: QtWidgets.QApplication, **window_kwargs) -> int:
+    window = MainWindow(**window_kwargs)
+    window.show()
+
+    exit_code = app.exec_()
+
+    # delete the window and every pyqtgraph item in it before the next one is created: left to the garbage
+    # collector, they are destroyed at a random point later on, which segfaults
+    window.deleteLater()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
+    del window
+    gc.collect()
+
+    return exit_code
 
 
 def main():
@@ -84,6 +101,12 @@ def main():
             registry.set_active(migrated)
             registry.save()
 
+    # one QApplication for the whole session: a restart only replaces the main window
+    app = QtWidgets.QApplication(sys.argv)
+    app.setOrganizationName(ORGANIZATION)
+    app.setApplicationName(APPLICATION)
+    logger.info("Application started")
+
     exit_code = MainWindow.EXIT_CODE_REBOOT
     while exit_code == MainWindow.EXIT_CODE_REBOOT:
         # re-read on every reboot to pick up a workspace switch
@@ -116,20 +139,12 @@ def main():
             workspace.config.save()
         plugins = [importlib.import_module("specvizitor.plugins." + p).Plugin() for p in workspace.config.plugins]
 
-        app = QtWidgets.QApplication(sys.argv)
-        app.setOrganizationName(ORGANIZATION)
-        app.setApplicationName(APPLICATION)
-        logger.info("Application started")
-
         setup_appearance(cfg=config.appearance)
 
-        window = MainWindow(config=config, spectral_lines=spectral_lines, workspace=workspace, registry=registry,
-                            plugins=plugins)
-        window.show()
+        exit_code = run_window(app, config=config, spectral_lines=spectral_lines, workspace=workspace,
+                               registry=registry, plugins=plugins)
 
-        exit_code = app.exec_()
-        app = None
-        logger.info("Application closed")
+    logger.info("Application closed")
 
     sys.exit(exit_code)
 
