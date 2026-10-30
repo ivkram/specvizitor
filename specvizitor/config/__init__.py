@@ -22,6 +22,7 @@ __all__ = [
     "CONFIG_DIR",
     "CACHE_DIR",
     "WORKSPACES_DIR",
+    "DEFAULT_WORKSPACE_NAME",
     "REGISTRY_FILENAME"
 ]
 
@@ -33,6 +34,8 @@ CACHE_DIR = user_cache_dir(application_lower)
 
 # the default location for new workspaces
 WORKSPACES_DIR = str(pathlib.Path(CONFIG_DIR) / 'workspaces')
+
+DEFAULT_WORKSPACE_NAME = 'Default'
 
 REGISTRY_FILENAME = 'workspaces.yml'
 

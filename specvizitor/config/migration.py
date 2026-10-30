@@ -4,6 +4,7 @@ import logging
 import pathlib
 import shutil
 
+from . import DEFAULT_WORKSPACE_NAME
 from ..utils.params import read_yaml, save_yaml
 from ..utils.paths import absolute_path
 
@@ -57,7 +58,7 @@ def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename:
                             WORKSPACE_STATE_FILENAME, WORKSPACE_WIDGETS_FILENAME)
 
     config_dir = pathlib.Path(config_dir)
-    workspace_dir = pathlib.Path(workspaces_dir) / 'Default'
+    workspace_dir = pathlib.Path(workspaces_dir) / DEFAULT_WORKSPACE_NAME
 
     try:
         legacy = read_yaml(config_dir / 'config.yml')
@@ -73,7 +74,7 @@ def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename:
 
     # 1. split the legacy configuration into a project half and a user half
     workspace_data = {key: legacy[key] for key in PROJECT_KEYS if key in legacy}
-    workspace_data['name'] = 'Default'
+    workspace_data['name'] = DEFAULT_WORKSPACE_NAME
 
     for section, key in (('data', 'dir'), ('catalogue', 'filename')):
         values = workspace_data.get(section) or {}

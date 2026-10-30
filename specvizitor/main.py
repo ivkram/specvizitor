@@ -10,7 +10,7 @@ import sys
 from . import ORGANIZATION, APPLICATION
 from .config.appearance import setup_appearance
 from .config import Config, WorkspaceRegistry, Workspace
-from .config import CACHE_DIR, CONFIG_DIR, WORKSPACES_DIR, REGISTRY_FILENAME
+from .config import CACHE_DIR, CONFIG_DIR, DEFAULT_WORKSPACE_NAME, WORKSPACES_DIR, REGISTRY_FILENAME
 from .config.migration import migrate_legacy_config, needs_migration
 from .io.viewer_data import set_unit_aliases
 from .plugins import available_plugins
@@ -21,8 +21,6 @@ from .widgets.MainWindow import MainWindow
 logger = logging.getLogger(__name__)
 
 LEGACY_CACHE_FILENAME = f"{APPLICATION.lower()}.yml"
-
-DEFAULT_WORKSPACE_NAME = 'Default'
 
 
 def resolve_workspace(registry: WorkspaceRegistry) -> Workspace | None:
