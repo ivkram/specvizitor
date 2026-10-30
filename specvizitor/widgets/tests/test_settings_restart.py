@@ -109,7 +109,7 @@ def test_enabling_a_plugin_requires_a_restart(settings):
 
 def test_the_image_table_has_no_shared_or_local_column(settings):
     dialog, _, _ = settings
-    # image paths are machine-local, exactly like the data directory and the catalogue
+    # image paths are machine-local, exactly like the data directory and the catalog
     assert dialog._tabs['Data Source']._image_table._header == ['Label', 'Path', 'WCS Source']
 
 

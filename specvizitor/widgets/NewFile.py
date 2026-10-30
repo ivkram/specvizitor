@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class NewFile(QtWidgets.QDialog):
     output_path_selected = QtCore.Signal(pathlib.Path)
-    catalogue_changed = QtCore.Signal(object)
+    catalog_changed = QtCore.Signal(object)
 
     def __init__(self, cfg: WorkspaceConfig, parent=None):
         self.cfg = cfg
@@ -48,26 +48,26 @@ class NewFile(QtWidgets.QDialog):
                                   mode=FileBrowser.SaveFile, default_path=absolute_path("Untitled.csv"),
                                   title="Output File", title_width=width, parent=self),
             'data': data_browser(self.cfg.data.dir, title="Data Source", title_width=width, parent=self),
-            'cat': cat_browser(self.cfg.catalogue.filename, title="Catalogue", title_width=width, parent=self)
+            'cat': cat_browser(self.cfg.catalog.filename, title="Catalog", title_width=width, parent=self)
         }
 
-        # add radio buttons for choosing between creating a new catalogue and loading an existing one
+        # add radio buttons for choosing between creating a new catalog and loading an existing one
         self._cat_factory_group = QtWidgets.QButtonGroup(parent=self)
         self._cat_factory_group.buttonToggled.connect(self.update_cat_factory_state)
 
-        self._create_cat_radio_button = QtWidgets.QRadioButton('Create a new catalogue', self)
+        self._create_cat_radio_button = QtWidgets.QRadioButton('Create a new catalog', self)
         self._cat_factory_group.addButton(self._create_cat_radio_button)
 
-        self._load_cat_radio_button = QtWidgets.QRadioButton('Load an existing catalogue', self)
+        self._load_cat_radio_button = QtWidgets.QRadioButton('Load an existing catalog', self)
         self._cat_factory_group.addButton(self._load_cat_radio_button)
 
         # create a horizontal separator
         self._separator = QtWidgets.QFrame(parent=self)
         self._separator.setFrameShape(QtWidgets.QFrame.HLine)
 
-        # add a checkbox for specifying the catalogue loader mode
+        # add a checkbox for specifying the catalog loader mode
         self._filter_check_box = QtWidgets.QCheckBox(
-            'Filter the catalogue using a list of IDs extracted from the data directory', self)
+            'Filter the catalog using a list of IDs extracted from the data directory', self)
 
         self._filter_check_box.stateChanged.connect(self.update_id_pattern_widget_state)
 
@@ -113,7 +113,7 @@ class NewFile(QtWidgets.QDialog):
 
         self.layout().addWidget(self._separator)
 
-        # add a file browser for specifying the catalogue
+        # add a file browser for specifying the catalog
         self.layout().addWidget(self._browsers['cat'])
 
         self.layout().addWidget(self._filter_check_box)
@@ -134,43 +134,43 @@ class NewFile(QtWidgets.QDialog):
         return True
 
     @qlog
-    def get_catalogue(self):
+    def get_catalog(self):
         data_dir = self._browsers['data'].path
         kwargs = dict(
             id_pattern=self._id_pattern.text(),
             recursive=True
         )
 
-        # create a new catalogue if necessary
+        # create a new catalog if necessary
         if self._browsers['cat'].isHidden():
             ids = get_ids_from_dir(data_dir, **kwargs)
             if ids is None:
                 return
             return Catalog.create(ids)
 
-        # otherwise, load an existing catalogue
+        # otherwise, load an existing catalog
         if not self._filter_check_box.isChecked():
             data_dir = None
-        return Catalog.read(self._browsers['cat'].path, translate=self.cfg.catalogue.translate, data_dir=data_dir,
+        return Catalog.read(self._browsers['cat'].path, translate=self.cfg.catalog.translate, data_dir=data_dir,
                             **kwargs)
 
     def accept(self):
         if not self.validate():
             return
 
-        cat = self.get_catalogue()
+        cat = self.get_catalog()
         if cat is None:
             return
 
-        self.catalogue_changed.emit(cat)
+        self.catalog_changed.emit(cat)
         self.output_path_selected.emit(pathlib.Path(self._browsers['output'].path))
 
         # update the user configuration file
         self.cfg.data.dir = self._browsers['data'].path
         if not self._browsers['cat'].isHidden():
-            self.cfg.catalogue.filename = self._browsers['cat'].path
+            self.cfg.catalog.filename = self._browsers['cat'].path
         else:
-            self.cfg.catalogue.filename = None
+            self.cfg.catalog.filename = None
         if not self._id_pattern.isHidden():
             self.cfg.data.id_pattern = self._id_pattern.text()
         self.cfg.save()

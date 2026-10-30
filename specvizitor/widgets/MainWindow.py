@@ -59,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
     data_requested = QtCore.Signal()
     project_closed = QtCore.Signal()
 
-    catalogue_updated = QtCore.Signal(object)
+    catalog_updated = QtCore.Signal(object)
     inspection_fields_updated = QtCore.Signal(int, InspectionData)
     data_source_updated = QtCore.Signal()
     spectral_lines_updated = QtCore.Signal()
@@ -132,8 +132,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._ws.layout.dock_layout:
             self.dock_layout_updated.emit(self._ws.layout.dock_layout)
 
-        if self._ws.config.catalogue.filename:
-            self.load_catalogue()
+        if self._ws.config.catalog.filename:
+            self.load_catalog()
 
         if self._ws.state.last_inspection_file:
             self.open_file(self._ws.state.last_inspection_file, self._ws.state.last_object_index)
@@ -520,8 +520,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.project_closed.connect(self._data_viewer.free_resources)
 
-        self.catalogue_updated.connect(self._object_info.update_table_items)
-        self.catalogue_updated.connect(self._data_viewer.receive_catalog)
+        self.catalog_updated.connect(self._object_info.update_table_items)
+        self.catalog_updated.connect(self._data_viewer.receive_catalog)
         self.inspection_fields_updated.connect(self._inspection_res.update_inspection_fields)
         self.data_source_updated.connect(self._data_viewer.open_images)
         self.spectral_lines_updated.connect(self._data_viewer.spectral_lines_updated.emit)
@@ -575,13 +575,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._inspection_res_dock)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._subsets_dock)
 
-    def load_catalogue(self):
-        cat = Catalog.read(self._ws.config.catalogue.filename, translate=self._ws.config.catalogue.translate)
+    def load_catalog(self):
+        cat = Catalog.read(self._ws.config.catalog.filename, translate=self._ws.config.catalog.translate)
         if cat is None:
-            self._ws.config.catalogue.filename = None
+            self._ws.config.catalog.filename = None
             self._ws.config.save()
 
-        self.update_catalogue(cat)
+        self.update_catalog(cat)
 
     def restore_window_state(self):
         settings = QtCore.QSettings()
@@ -596,14 +596,14 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Create a new inspection file via the NewFile dialog.
         """
         dialog = NewFile(cfg=self._ws.config, parent=self)
-        dialog.catalogue_changed.connect(self.update_catalogue)
+        dialog.catalog_changed.connect(self.update_catalog)
         dialog.output_path_selected.connect(self.update_output_path)
         if dialog.exec():
             self.rd.create(flags=self._ws.config.inspection_results.default_flags)
             if self.rd.review is not None:
                 self.load_project()
             else:
-                self.update_catalogue(None)
+                self.update_catalog(None)
                 self.update_output_path(None)
 
     @QtCore.Slot()
@@ -640,7 +640,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.update_output_path(path)
             self.rd.read()
             if self.rd.cat is None:
-                self.update_catalogue(None)  # in case the catalogue hasn't been initialized before
+                self.update_catalog(None)  # in case the catalog hasn't been initialized before
             self.load_project(cached_index)
         else:
             logger.warning('Inspection file not found (path: {})'.format(path))
@@ -856,7 +856,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._clear_last_subset_file()
             return
 
-        subset = Catalog.read(path, translate=self._ws.config.catalogue.translate)
+        subset = Catalog.read(path, translate=self._ws.config.catalog.translate)
 
         if subset is None:
             self._clear_last_subset_file()
@@ -906,7 +906,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = Settings(self.rd.cat, self._config, self._ws.config, self._spectral_lines, parent=self)
 
         dialog.appearance_changed.connect(self.update_appearance)
-        dialog.catalogue_changed.connect(self.update_catalogue)
+        dialog.catalog_changed.connect(self.update_catalog)
         dialog.spectral_lines_changed.connect(self.spectral_lines_updated.emit)
         dialog.data_source_changed.connect(self.data_source_updated.emit)
         dialog.unit_aliases_changed.connect(self.update_unit_aliases)
@@ -927,12 +927,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._data_viewer.update_appearance()
 
     @QtCore.Slot(object)
-    def update_catalogue(self, cat: Catalog | None):
+    def update_catalog(self, cat: Catalog | None):
         if cat is None and self.rd.review is not None:
             self.rd.cat = Catalog.create(self.rd.review.ids_full)
         else:
             self.rd.cat = cat
-        self.catalogue_updated.emit(self.rd.cat)
+        self.catalog_updated.emit(self.rd.cat)
 
     @QtCore.Slot(pathlib.Path)
     def update_output_path(self, path: pathlib.Path | None):

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class AppData:
 
     output_path: pathlib.Path | None = None  # the path to the output (a.k.a. inspection) file
-    cat: Catalog | None = None               # the catalogue
+    cat: Catalog | None = None               # the catalog
     review: InspectionData | None = None     # inspection results
 
     j: int = None  # the index of the current object
@@ -21,7 +21,7 @@ class AppData:
         """ Initialize the inspection data object.
         """
         if self.cat is None:
-            logger.error("Failed to initialize inspection data: Catalogue not loaded")
+            logger.error("Failed to initialize inspection data: Catalog not loaded")
             return
 
         self.review = InspectionData.create(*[list(self.cat.get_col(ind)) for ind in self.cat.indices], **kwargs)

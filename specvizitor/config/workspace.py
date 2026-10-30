@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import ClassVar
 import logging
 import pathlib
 import shutil
@@ -6,7 +7,7 @@ import shutil
 from ..utils.params import LocalFile, Params, read_yaml
 from ..utils.paths import absolute_path
 
-from .config import Catalogue, DataSources, InspectionResults
+from .config import Catalog, DataSources, InspectionResults
 from .data_widgets import DataWidgets
 
 logger = logging.getLogger(__name__)
@@ -30,10 +31,19 @@ WORKSPACE_STATE_FILENAME = 'state.yml'
 WORKSPACE_WIDGETS_FILENAME = 'data_widgets.yml'
 
 
+def _rename_catalogue(data: dict) -> dict:
+    # spelled `catalogue` up to 0.7.0
+    if 'catalogue' in data:
+        data['catalog'] = data.pop('catalogue')
+    return data
+
+
 @dataclass
 class WorkspaceConfig(Params):
+    MIGRATIONS: ClassVar[dict] = {"0.7.0": _rename_catalogue}
+
     name: str | None = None
-    catalogue: Catalogue = field(default_factory=Catalogue)
+    catalog: Catalog = field(default_factory=Catalog)
     data: DataSources = field(default_factory=DataSources)
     inspection_results: InspectionResults = field(default_factory=InspectionResults)
     plugins: list[str] = field(default_factory=list)

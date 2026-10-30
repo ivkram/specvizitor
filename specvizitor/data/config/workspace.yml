@@ -1,4 +1,4 @@
-catalogue:
+catalog:
   translate:
     id: [Id, ID, NUMBER]
     id2: [ID_EMLINE]

@@ -36,7 +36,7 @@ class Catalog:
         return cls(table=table, indices=colnames)
 
     def _add_indices(self) -> bool:
-        # check that the ID column is present in the catalogue
+        # check that the ID column is present in the catalog
         try:
             id_col = self.get_col('id')
         except KeyError as e:
@@ -61,16 +61,16 @@ class Catalog:
 
     @classmethod
     def read(cls, filename: str, translate: dict[str, list[str]] | None = None, data_dir=None, **kwargs):
-        """Read the catalogue from a file.
-        @param filename: the catalogue filename
+        """Read the catalog from a file.
+        @param filename: the catalog filename
         @param translate:
         @param data_dir:
         @return: the Catalog object
         """
         try:
-            table = Table.read(filename)  # load the catalogue
+            table = Table.read(filename)  # load the catalog
         except Exception as e:
-            logger.error(f"Failed to load the catalogue: {e}")
+            logger.error(f"Failed to load the catalog: {e}")
             return None
 
         cat = cls(table=table, translate=translate)
@@ -86,7 +86,7 @@ class Catalog:
             cat.table = cat.table[np.isin(cat.get_col('id'), ids, assume_unique=False)]
 
         if len(cat.table) == 0:
-            logger.error("The processed catalogue is empty")
+            logger.error("The processed catalog is empty")
             return None
 
         logger.info(f"Catalog loaded (path: {filename})")
@@ -191,14 +191,14 @@ class Catalog:
             cat_entry = self._loc_full(obj_id)
         except KeyError:
             if not ignore_missing:
-                logger.error(f"Object not found in the catalogue (ID: {obj_id})")
+                logger.error(f"Object not found in the catalog (ID: {obj_id})")
             return None
         except (TypeError, ValueError) as e:
             logger.error(e)
             return None
 
         if isinstance(cat_entry, Table):
-            logger.error(f"Object corresponds to multiple entries in the catalogue (ID: {obj_id})")
+            logger.error(f"Object corresponds to multiple entries in the catalog (ID: {obj_id})")
             return None
 
         return Catalog(cat_entry, indices=self.indices, translate=self.translate)

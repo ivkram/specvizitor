@@ -145,11 +145,11 @@ def column_aliases_table_factory(translate: dict[str, list[str]], parent=None) -
                       is_unique=is_unique, remember_deleted=False, parent=parent)
 
 
-class CatalogueWidget(SettingsWidget):
+class CatalogWidget(SettingsWidget):
     data_requested = QtCore.Signal()
     catalog_changed = QtCore.Signal(object)
 
-    def __init__(self, cat: Catalog, cfg: config.Catalogue, parent=None):
+    def __init__(self, cat: Catalog, cfg: config.Catalog, parent=None):
         self._old_cat = cat
         self.cfg = cfg
 
@@ -530,7 +530,7 @@ class PluginsWidget(SettingsWidget):
 
 class Settings(QtWidgets.QDialog):
     appearance_changed = QtCore.Signal()
-    catalogue_changed = QtCore.Signal(object)
+    catalog_changed = QtCore.Signal(object)
     data_source_changed = QtCore.Signal()
     spectral_lines_changed = QtCore.Signal()
     unit_aliases_changed = QtCore.Signal()
@@ -563,13 +563,13 @@ class Settings(QtWidgets.QDialog):
     def create_tabs(self):
         self._tabs = {
             "Appearance": AppearanceWidget(self._cfg.appearance, self),
-            "Catalogue": CatalogueWidget(self._old_cat, self._ws_cfg.catalogue, self),
+            "Catalog": CatalogWidget(self._old_cat, self._ws_cfg.catalog, self),
             "Data Source": DataSourceWidget(self._ws_cfg, self),
             "Data Viewer": DataViewerWidget(self._cfg.data_viewer, self._spectral_lines, self),
             "Plugins": PluginsWidget(self._ws_cfg, self)
         }
         self._tabs["Appearance"].appearance_changed.connect(self.appearance_changed.emit)
-        self._tabs["Catalogue"].catalog_changed.connect(self.catalogue_changed.emit)
+        self._tabs["Catalog"].catalog_changed.connect(self.catalog_changed.emit)
         self._tabs["Data Source"].images_changed.connect(self.data_source_changed.emit)
         self._tabs["Data Source"].unit_aliases_changed.connect(self.unit_aliases_changed.emit)
         self._tabs["Data Viewer"].spectral_lines_changed.connect(self.spectral_lines_changed.emit)

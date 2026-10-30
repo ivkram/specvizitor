@@ -15,7 +15,8 @@ __all__ = [
     "migrate_legacy_config"
 ]
 
-# keys of the legacy config.yml that describe a project rather than a user preference
+# keys of the legacy config.yml that describe a project rather than a user preference (`catalogue` has since
+# been renamed to `catalog`)
 PROJECT_KEYS = ('catalogue', 'data', 'inspection_results', 'plugins')
 USER_KEYS = ('appearance', 'data_viewer')
 
@@ -82,6 +83,9 @@ def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename:
         # '.' was the old default
         if value and value != '.':
             values[key] = str(absolute_path(value))
+
+    if 'catalogue' in workspace_data:
+        workspace_data['catalog'] = workspace_data.pop('catalogue')
 
     user_data = {key: legacy[key] for key in USER_KEYS if key in legacy}
 

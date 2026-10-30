@@ -48,7 +48,7 @@ def _selected_filenames(options: ExportOptions) -> list[str]:
 
 def _path_fields(cfg: WorkspaceConfig) -> list[tuple[str, object, str]]:
     # the machine-specific paths, as (title, parent, attribute)
-    fields = [("Data directory", cfg.data, 'dir'), ("Catalogue", cfg.catalogue, 'filename')]
+    fields = [("Data directory", cfg.data, 'dir'), ("Catalog", cfg.catalog, 'filename')]
     for label, image in cfg.data.images.items():
         fields += [(f"Image ({label})", image, 'filename'), (f"WCS source ({label})", image, 'wcs_source')]
     return fields

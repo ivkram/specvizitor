@@ -335,7 +335,7 @@ class ResolvePathsDialog(QtWidgets.QDialog):
         for title, obj, attr in unset_paths(cfg):
             if obj is cfg.data:
                 browser = data_browser(None, parent=self)
-            elif obj is cfg.catalogue:
+            elif obj is cfg.catalog:
                 browser = cat_browser(None, parent=self)
             else:
                 browser = FileBrowser(parent=self)

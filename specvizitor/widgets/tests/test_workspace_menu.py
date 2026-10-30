@@ -584,7 +584,7 @@ def test_the_resolve_dialog_sets_the_filled_paths_only(gui, tmp_path):
 
     reopened = Workspace.open(workspace.path)
     assert reopened.config.data.dir == str(tmp_path)
-    assert reopened.config.catalogue.filename is None
+    assert reopened.config.catalog.filename is None
 
 
 def test_the_resolve_dialog_offers_only_the_unset_paths(gui, tmp_path):
@@ -595,7 +595,7 @@ def test_the_resolve_dialog_offers_only_the_unset_paths(gui, tmp_path):
     titles = [row[0] for row in ResolvePathsDialog(workspace)._rows]
 
     assert 'Data directory' not in titles
-    assert 'Catalogue' in titles
+    assert 'Catalog' in titles
 
 
 def test_the_forget_dialog_defaults_to_keeping_the_workspace(gui, tmp_path):

@@ -37,14 +37,14 @@ def test_create_refuses_to_overwrite_an_existing_workspace(workspace):
 
 def test_paths_are_restored_when_the_workspace_is_reopened(workspace):
     workspace.config.data.dir = '/home/alice/fresco/data'
-    workspace.config.catalogue.filename = '/home/alice/fresco/cat.fits'
+    workspace.config.catalog.filename = '/home/alice/fresco/cat.fits'
     workspace.config.data.images = {'Cluster': Image(filename='/net/cluster.fits', wcs_source='/net/wcs.fits')}
     workspace.config.save()
 
     reopened = Workspace.open(workspace.path)
 
     assert reopened.config.data.dir == '/home/alice/fresco/data'
-    assert reopened.config.catalogue.filename == '/home/alice/fresco/cat.fits'
+    assert reopened.config.catalog.filename == '/home/alice/fresco/cat.fits'
     assert reopened.config.data.images['Cluster'].filename == '/net/cluster.fits'
     assert reopened.config.data.images['Cluster'].wcs_source == '/net/wcs.fits'
 
@@ -312,7 +312,7 @@ def _archived_config(archive) -> str:
 @pytest.fixture
 def with_paths(workspace):
     workspace.config.data.dir = '/home/alice/fresco/data'
-    workspace.config.catalogue.filename = '/home/alice/fresco/cat.fits'
+    workspace.config.catalog.filename = '/home/alice/fresco/cat.fits'
     workspace.config.data.images = {
         'Cluster': Image(filename='/net/mosaics/cluster.fits', wcs_source='/net/mosaics/cluster_wcs.fits'),
         'Deep': Image(filename='/home/alice/deep.fits'),
@@ -492,10 +492,10 @@ def test_migration_splits_the_legacy_configuration(legacy):
     assert workspace.name == 'Default'
     assert workspace.config.inspection_results.default_flags == ['broad_line']
     assert workspace.config.plugins == ['sviz-grizli']
-    assert workspace.config.catalogue.translate == {'id': ['ID']}
+    assert workspace.config.catalog.translate == {'id': ['ID']}
 
     assert workspace.config.data.dir == '/srv/fresco/data'
-    assert workspace.config.catalogue.filename == '/srv/fresco/cat.fits'
+    assert workspace.config.catalog.filename == '/srv/fresco/cat.fits'
 
     # user-scoped preferences stayed behind
     user_config = read_yaml(config_dir / 'config.yml')
@@ -541,3 +541,18 @@ def test_a_default_data_dir_is_not_carried_over(tmp_path):
 
     # '.' was the old default and means nothing on a new machine
     assert workspace.config.data.dir is None
+
+
+def test_a_workspace_with_a_catalogue_section_is_read_as_catalog(tmp_path):
+    # `catalog` was spelled `catalogue` up to 0.7.0
+    Workspace.create(tmp_path / 'ws', name='Old')
+    save_yaml(tmp_path / 'ws' / 'workspace.yml',
+              {'config_version': '0.7.0', 'name': 'Old',
+               'catalogue': {'filename': '/srv/fresco/cat.fits', 'translate': {'id': ['ID']}}})
+
+    workspace = Workspace.open(tmp_path / 'ws')
+
+    assert workspace.config.catalog.filename == '/srv/fresco/cat.fits'
+    assert workspace.config.catalog.translate == {'id': ['ID']}
+    saved = read_yaml(tmp_path / 'ws' / 'workspace.yml')
+    assert 'catalogue' not in saved and saved['catalog']['filename'] == '/srv/fresco/cat.fits'

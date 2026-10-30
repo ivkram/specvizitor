@@ -5,7 +5,7 @@ from ..utils.params import Params
 
 
 @dataclass
-class Catalogue:
+class Catalog:
     filename: str | None = None
     translate: dict[str, list[str]] = field(default_factory=dict)
 
