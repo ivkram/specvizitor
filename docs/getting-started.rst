@@ -104,4 +104,4 @@ To update specvizitor to the latest version, run the following command:
 
 .. tip::
 
-        If you see error messages after installing the update, try to run specvizitor with the ``--purge`` option: ``specvizitor --purge``. Note that this action will erase application settings, including any custom widget configurations. If the issue still persists, refer to the :doc:`userguide/troubleshooting` section.
+        If you see error messages after installing the update, try to run specvizitor with the ``--purge`` option: ``specvizitor --purge``. Note that this action will reset your preferences and the list of known workspaces. The workspaces themselves are left untouched. If the issue still persists, refer to the :doc:`userguide/troubleshooting` section.
