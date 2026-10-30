@@ -69,3 +69,24 @@ def test_an_integer_field_with_gaps_survives_a_round_trip_through_csv(inspection
     inspection_data.update_value(0, 'integer', 3)
 
     assert _round_trip(inspection_data, tmp_path).fields['integer'] is FieldType.INTEGER
+
+
+@pytest.mark.parametrize('comments, expected', [(['', ''], ['', '']), (['2', ''], ['2', '']),
+                                                (['1.5', 'broad Ha'], ['1.5', 'broad Ha'])])
+def test_comments_are_read_as_text(tmp_path, comments, expected):
+    # a column with no comments, or only numbers in it, would otherwise be read as numbers
+    path = tmp_path / 'inspection.csv'
+    rows = '\n'.join(f'{i},False,-1.0,{c}' for i, c in enumerate(comments, start=1))
+    path.write_text(f'id,starred,z_sviz,comment\n{rows}\n')
+
+    assert list(InspectionData.read(path).df['comment']) == expected
+
+
+def test_a_file_with_secondary_ids_is_read_with_a_multi_index(tmp_path):
+    path = tmp_path / 'inspection.csv'
+    path.write_text('id,id2,starred,z_sviz,comment\n1,10,False,-1.0,\n1,11,True,-1.0,\n')
+
+    inspection_data = InspectionData.read(path)
+
+    assert inspection_data.indices == ['id', 'id2']
+    assert inspection_data.get_id(1, full=True) == (1, 11)

@@ -130,11 +130,12 @@ class InspectionData:
         """
 
         # TODO: validate the input
-        df = pd.read_csv(filename, index_col='id')
+        # comments are text even when they look like numbers, or when there are none yet
+        df = pd.read_csv(filename, index_col='id', dtype={'comment': str})
 
         i = 1
         while f'id{i + 1}' in df.columns:
-            df.set_index(f'id{i + 1}', append=True, inplace=True)
+            df = df.set_index(f'id{i + 1}', append=True)
             i += 1
 
         df = cls._add_default_columns(df)
@@ -218,13 +219,13 @@ class InspectionData:
             if old_name not in self.user_defined_columns:
                 logger.error(f"Failed to rename a column: Column not found (column: {old_name})")
                 return
-        self.df.rename(columns=new_names, inplace=True)
+        self.df = self.df.rename(columns=new_names)
 
     def delete_column(self, column_name: str):
         if column_name not in self.user_defined_columns:
             logger.error(f"Failed to delete a column: Column not found (column: {column_name})")
             return
-        self.df.drop(column_name, axis=1, inplace=True)
+        self.df = self.df.drop(columns=column_name)
 
     def has_data(self, column_name: str) -> bool:
         if column_name == 'starred' or column_name in self.user_defined_columns:
