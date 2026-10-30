@@ -5,13 +5,11 @@ import pathlib
 
 from ..config import WORKSPACES_DIR
 from ..config.workspace import Workspace, WorkspaceRegistry
-from ..io.catalog import cat_browser
-from ..io.viewer_data import data_browser
 from ..io.workspace_archive import (ARCHIVE_EXTENSION, ARCHIVE_FILTER, ExportOptions, archive_workspace_name,
                                     inspect_archive, unset_paths)
 from ..utils.logs import qlog
 from ..utils.paths import absolute_path
-from ..utils.widgets import FileBrowser
+from ..utils.widgets import FileBrowser, cat_browser, data_browser
 
 logger = logging.getLogger(__name__)
 

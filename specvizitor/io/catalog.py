@@ -7,7 +7,6 @@ import logging
 import warnings
 
 from .data_dir import get_ids_from_dir
-from ..utils.widgets import FileBrowser
 
 logger = logging.getLogger(__name__)
 
@@ -203,8 +202,3 @@ class Catalog:
             return None
 
         return Catalog(cat_entry, indices=self.indices, translate=self.translate)
-
-
-def cat_browser(default_path, **kwargs) -> FileBrowser:
-    return FileBrowser(filename_extensions='FITS Files (*.fits)', mode=FileBrowser.OpenFile,
-                       default_path=default_path, **kwargs)

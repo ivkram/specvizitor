@@ -8,11 +8,10 @@ import pathlib
 from ..config import config, CONFIG_DIR
 from ..config.workspace import WorkspaceConfig
 from ..config.spectral_lines import SpectralLineData
-from ..io.catalog import Catalog, cat_browser
-from ..io.viewer_data import data_browser
+from ..io.catalog import Catalog
 from ..plugins import available_plugins
 from ..utils.logs import qlog
-from ..utils.widgets import AbstractWidget, FileBrowser, Section, ParamTable
+from ..utils.widgets import AbstractWidget, FileBrowser, Section, ParamTable, cat_browser, data_browser
 
 logger = logging.getLogger(__name__)
 

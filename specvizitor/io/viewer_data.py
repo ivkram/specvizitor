@@ -18,7 +18,6 @@ import warnings
 from .catalog import Catalog
 from ..utils.errors import error_message
 from ..utils.paths import absolute_path
-from ..utils.widgets import FileBrowser
 
 
 __all__ = [
@@ -27,8 +26,7 @@ __all__ = [
     "LocalPath",
     "URLPath",
     "get_wcs",
-    "set_unit_aliases",
-    "data_browser"
+    "set_unit_aliases"
 ]
 
 Image.MAX_IMAGE_PIXELS = None  # ignore warnings when loading large images
@@ -344,7 +342,3 @@ def set_unit_aliases(unit_aliases: dict[str, list[str]]):
             aliases[alias] = parsed
 
     u.set_enabled_aliases(aliases)
-
-
-def data_browser(default_path, **kwargs) -> FileBrowser:
-    return FileBrowser(mode=FileBrowser.OpenDirectory, default_path=default_path, **kwargs)

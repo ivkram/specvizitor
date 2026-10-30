@@ -4,12 +4,11 @@ import logging
 import pathlib
 
 from ..config.workspace import WorkspaceConfig
-from ..io.catalog import Catalog, cat_browser
+from ..io.catalog import Catalog
 from ..io.data_dir import get_ids_from_dir
-from ..io.viewer_data import data_browser
 from ..utils.logs import qlog
 from ..utils.paths import absolute_path
-from ..utils.widgets import FileBrowser
+from ..utils.widgets import FileBrowser, cat_browser, data_browser
 
 logger = logging.getLogger(__name__)
 

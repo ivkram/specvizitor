@@ -123,3 +123,12 @@ class FileBrowser(AbstractWidget):
 
         if path:
             self._line_edit.setText(path)
+
+
+def cat_browser(default_path, **kwargs) -> FileBrowser:
+    return FileBrowser(filename_extensions='FITS Files (*.fits)', mode=FileBrowser.OpenFile,
+                       default_path=default_path, **kwargs)
+
+
+def data_browser(default_path, **kwargs) -> FileBrowser:
+    return FileBrowser(mode=FileBrowser.OpenDirectory, default_path=default_path, **kwargs)
