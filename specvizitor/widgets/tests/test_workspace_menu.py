@@ -22,7 +22,7 @@ import pytest
 
 pytest.importorskip('qtpy')
 
-from qtpy import QtCore, QtWidgets
+from qtpy import QtWidgets
 import qtpy.compat
 
 import specvizitor.widgets.MainWindow as main_window_module

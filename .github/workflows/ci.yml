@@ -7,6 +7,16 @@ on:
     branches: [ main ]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ruff
+        uses: astral-sh/ruff-action@v4
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:
