@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # keep uv.lock, and so the versions tested in CI, up to date: one pull request a week for all of them
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: lockfile-only
+    groups:
+      dependencies:
+        patterns: ["*"]
