@@ -1,30 +1,32 @@
 # Changelog
 
-## [0.7.2] - Unreleased
+## [0.8.0] - Unreleased
 
 ### Upgrading
 
-- specvizitor now runs on Qt6: PyQt6 replaces PyQt5 as a dependency, and pyqtgraph 0.14 or newer is
-  required. PyQt5 is no longer used and can be uninstalled (`pip uninstall pyqt5`).
-- On Linux with X11, Qt6 needs the `libxcb-cursor0` package (`xcb-util-cursor` on some
-  distributions).
+- specvizitor now runs on Qt6: PyQt6 replaces PyQt5, which can be uninstalled, and pyqtgraph 0.14+
+  is required.
+- On Linux with X11, Qt6 needs `libxcb-cursor0` (`xcb-util-cursor` on some distributions).
 
 ### Added
 
-- Support for PySide6: install it and set `QT_API=pyside6` to run specvizitor on it instead of
-  PyQt6.
+- Support for PySide6 (set `QT_API=pyside6`).
 - Support for Python 3.15.
 
 ### Changed
 
-- On Wayland, specvizitor runs natively instead of through XWayland, except on GNOME, where the
-  title bar that Qt draws for Wayland windows is blurry and lags behind fast navigation. Set
-  `QT_QPA_PLATFORM=wayland` to run it natively on GNOME too.
+- On Wayland, specvizitor runs natively, except on GNOME, where it keeps using XWayland for a
+  sharper title bar (set `QT_QPA_PLATFORM=wayland` to override).
+- Switching objects during a load is more responsive.
+- Star icons are magenta.
+
+### Fixed
+
+- A crash when restoring the viewer configuration during a load.
 
 ### Removed
 
-- Support for Python 3.10: specvizitor now requires Python 3.11 or newer.
-- Support for Qt5 (see *Upgrading*).
+- Support for Python 3.10 and Qt5.
 
 ## [0.7.1] - 2026-10-31
 
