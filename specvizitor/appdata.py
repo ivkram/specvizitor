@@ -45,5 +45,5 @@ class AppData:
             logger.error("Failed to save the inspection data: File path not specified")
             return
 
-        self.inspection_data.write(self.inspection_file)
-        logger.info(f"Inspection file saved (path: {self.inspection_file})")
+        if self.inspection_data.write(self.inspection_file):
+            logger.info(f"Inspection file saved (path: {self.inspection_file})")

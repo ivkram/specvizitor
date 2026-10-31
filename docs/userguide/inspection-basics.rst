@@ -27,7 +27,7 @@ Every round of inspections starts with creating a new *inspection file*. To get 
 
 
 
-The inspection file is stored in the comma-separated values (CSV) format, enabling a quick access to inspection results from any text editor. Optionally, you can export inspection results as a FITS table (see :ref:`export-fits-table`).
+The inspection file is stored in the comma-separated values (CSV) format, enabling a quick access to inspection results from any text editor. Optionally, you can export inspection results as a FITS table or a CSV file (see :ref:`export-inspection-results`).
 
 **Second**, specify the path to the data directory. The files stored in the data directory must respect the filename format defined in the widget configuration (see :doc:`data-viewer`). By default, specvizitor assumes the Grizli filename format (``{root}_{id:05d}.*.fits``).
 
@@ -88,13 +88,13 @@ The inspection results (``*.csv``) are saved *automatically* whenever you:
 
 By design, there is no *manual* way to save inspection results. The :kbd:`Ctrl+S` shortcut updates the redshift in :guilabel:`Inspection Results` only, and for the ``*.csv`` file to be saved you still need to trigger one of the two events listed above.
 
-.. _export-fits-table:
+.. _export-inspection-results:
 
-Exporting a FITS table
-++++++++++++++++++++++
+Exporting inspection results
+++++++++++++++++++++++++++++
 
 
-Sometimes it might be useful to export the inspection results (``*.csv``) as a FITS table (for example, to load them in Astropy). This can be done by navigating to :menuselection:`File --> Export FITS Table...` and specifying the path to the output file:
+Sometimes it might be useful to export the inspection results as a FITS table (for example, to load them in Astropy) or to save a copy of them as a CSV file. This can be done by navigating to :menuselection:`File --> Export Inspection Results...`, choosing the format, and specifying the path to the output file:
 
 .. figure:: ../screenshots/export_fits_table.png
     :width: 10 cm

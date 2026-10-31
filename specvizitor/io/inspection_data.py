@@ -148,11 +148,11 @@ class InspectionData:
 
         return inspection_data
 
-    def write(self, filename: pathlib.Path, fmt: str = 'csv'):
+    def write(self, filename: pathlib.Path, fmt: str = 'csv') -> bool:
         """ Write inspection data to the output file.
         @param filename: the output filename
         @param fmt: the output format
-        @return: None
+        @return: whether the file was written
         """
 
         writers: dict[str, type[WriterBase]] = {
@@ -160,10 +160,17 @@ class InspectionData:
             'fits': FITSWriter
         }
 
-        if writers.get(fmt):
-            writers[fmt]().write(self.df, filename)
-        else:
+        if not writers.get(fmt):
             logger.error(f"Unknown output format: {fmt}")
+            return False
+
+        try:
+            writers[fmt]().write(self.df, filename)
+        except (OSError, TypeError, ValueError) as e:
+            logger.error(f"Failed to write the inspection data: {e} (path: {filename})")
+            return False
+
+        return True
 
     @property
     def n_objects(self) -> int | None:

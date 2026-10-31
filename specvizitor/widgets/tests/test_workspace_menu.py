@@ -160,7 +160,7 @@ def test_the_menu_exposes_the_expected_commands(gui):
     labels = [a.text() for a in _menu_entries(gui['win'])]
     assert labels == ['&New...', 'New &Workspace...', '&Open...', RECENT_MENU_TITLE,
                       '&Clone Workspace...', '&Rename Workspace...', 'Ex&port Workspace...',
-                      '&Export FITS Table...', '&Quit']
+                      '&Export Inspection Results...', '&Quit']
 
 
 def test_every_menu_entry_has_a_distinct_mnemonic(gui):

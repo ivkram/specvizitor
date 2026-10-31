@@ -52,6 +52,12 @@ class MainWindow(QtWidgets.QMainWindow):
         f'Workspace Archives (*{ARCHIVE_EXTENSION})',
     ))
 
+    # what `File -> Export Inspection Results...` writes, as {filter: format}
+    EXPORT_FILTERS = {
+        'FITS Files (*.fits)': 'fits',
+        'CSV Files (*.csv)': 'csv',
+    }
+
     inspection_data_loaded = QtCore.Signal(InspectionData)
     object_loaded = QtCore.Signal(int, InspectionData, object)
     loading_aborted = QtCore.Signal()
@@ -334,7 +340,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._file.addSeparator()
 
-        self._export = QtWidgets.QAction("&Export FITS Table...")
+        self._export = QtWidgets.QAction("&Export Inspection Results...")
         self._export.triggered.connect(self._export_action)
         self._export.setEnabled(False)
         self._file.addAction(self._export)
@@ -772,12 +778,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(title)
 
     def _export_action(self):
-        path = qtpy.compat.getsavefilename(self, caption='Export To FITS',
-                                           basedir=str(self.ad.inspection_file.with_suffix('.fits')),
-                                           filters='FITS Files (*.fits)')[0]
+        path, selected_filter = qtpy.compat.getsavefilename(
+            self, caption='Export Inspection Results', basedir=str(self.ad.inspection_file.with_suffix('.fits')),
+            filters=';;'.join(self.EXPORT_FILTERS))
 
         if path:
-            self.ad.inspection_data.write(path, 'fits')
+            path, fmt = self.export_target(path, selected_filter)
+            if self.ad.inspection_data.write(path, fmt):
+                logger.info(f"Inspection results exported (path: {path})")
+
+    @classmethod
+    def export_target(cls, path, selected_filter: str) -> tuple[pathlib.Path, str]:
+        """ The file and the format to export the inspection results to. A known extension picks the format,
+        otherwise the selected filter does and its extension is appended.
+        """
+        path = pathlib.Path(path)
+        for fmt in cls.EXPORT_FILTERS.values():
+            if path.suffix.lower() == f'.{fmt}':
+                return path, fmt
+
+        fmt = cls.EXPORT_FILTERS.get(selected_filter, 'fits')
+        return path.with_name(f'{path.name}.{fmt}'), fmt
 
     @QtCore.Slot(bool)
     def star_object(self, starred: bool):

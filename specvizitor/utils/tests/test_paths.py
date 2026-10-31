@@ -63,8 +63,7 @@ def test_a_failed_save_keeps_the_inspection_file(tmp_path, monkeypatch):
 
     monkeypatch.setattr(pd.DataFrame, 'to_csv', crash)
     inspection_data.update_value(0, 'starred', True)
-    with pytest.raises(OSError):
-        inspection_data.write(path)
+    assert inspection_data.write(path) is False
 
     assert path.read_text() == before
     assert os.listdir(tmp_path) == ['inspection.csv']
