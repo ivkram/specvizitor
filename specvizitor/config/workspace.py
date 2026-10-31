@@ -32,7 +32,7 @@ WORKSPACE_WIDGETS_FILENAME = 'data_widgets.yml'
 
 
 def _rename_catalogue(data: dict) -> dict:
-    # spelled `catalogue` up to 0.7.0
+    # spelled `catalogue` before schema versions
     if 'catalogue' in data:
         data['catalog'] = data.pop('catalogue')
     return data
@@ -40,7 +40,7 @@ def _rename_catalogue(data: dict) -> dict:
 
 @dataclass
 class WorkspaceConfig(Params):
-    MIGRATIONS: ClassVar[dict] = {"0.7.0": _rename_catalogue}
+    MIGRATIONS: ClassVar[dict] = {1: _rename_catalogue}
 
     name: str | None = None
     catalog: Catalog = field(default_factory=Catalog)

@@ -1,13 +1,10 @@
 import dacite
-from dacite.exceptions import WrongTypeError, MissingValueError
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, fields, is_dataclass
 from functools import wraps
-from importlib.metadata import version as _package_version
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, get_args, get_origin, get_type_hints
 import logging
 import pathlib
-import re
 import shutil
 import yaml
 
@@ -15,14 +12,31 @@ from .paths import absolute_path, atomic_write
 
 logger = logging.getLogger(__name__)
 
-CURRENT_VERSION = _package_version(__package__.split('.')[0])
 
+def _unknown_keys(tp, data, path: str = '') -> list[str]:
+    """ The keys in `data` that match no field of the dataclass `tp`, at any depth, as dotted paths.
+    """
+    if is_dataclass(tp):
+        if not isinstance(data, dict):
+            return []
+        names = {f.name for f in fields(tp)}
+        hints = get_type_hints(tp)
+        unknown = []
+        for key, value in data.items():
+            key_path = f'{path}.{key}' if path else str(key)
+            if key in names:
+                unknown += _unknown_keys(hints[key], value, key_path)
+            else:
+                unknown.append(key_path)
+        return unknown
 
-def _parse_version(v) -> tuple[int, ...]:
-    # only the release segment counts: a pre-release or a dev build (1.0.0rc1, 0.7.1.dev3) sorts with its
-    # release, and anything unparsable is treated as the oldest version
-    match = re.match(r'\d+(?:\.\d+)*', str(v))
-    return tuple(int(p) for p in match.group().split('.')) if match else (0,)
+    origin, args = get_origin(tp), get_args(tp)
+    if origin is dict and isinstance(data, dict):
+        return [k for key, value in data.items() for k in _unknown_keys(args[1], value, f'{path}.{key}')]
+    if origin is list and isinstance(data, list):
+        return [k for i, value in enumerate(data) for k in _unknown_keys(args[0], value, f'{path}[{i}]')]
+    # a union, e.g. `Axis | None`
+    return list(dict.fromkeys(k for arg in args for k in _unknown_keys(arg, data, path)))
 
 
 @dataclass
@@ -42,10 +56,10 @@ class LocalFile:
         def wrapper(self, *args, **kwargs):
             if not self.path.exists():
                 return
-            func(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         return wrapper
 
-    def save(self, data: dict) -> None:
+    def save(self, data: dict) -> bool:
         if self.path.exists():
             msg = f"{self.full_name} updated (path: {self.path})"
         else:
@@ -57,15 +71,17 @@ class LocalFile:
             save_yaml(self.path, data)
         except OSError as e:
             logger.error(f"Failed to write the {self.full_name.lower()}: {e} (path: {self.path})")
-            return
+            return False
 
         logger.debug(msg)
+        return True
 
     @missing_ok
-    def backup(self) -> None:
+    def backup(self) -> pathlib.Path:
         dst = self.path.parent / (self.filename + '.bak')
         shutil.copy(self.path, dst)
         logger.debug(f'{self.full_name} backed up (path: {dst})')
+        return dst
 
     @missing_ok
     def delete(self) -> None:
@@ -78,86 +94,131 @@ class LocalFile:
 
 @dataclass
 class Params:
-    config_version: str = field(default_factory=lambda: CURRENT_VERSION)
-
-    # Maps the config_version a migration upgrades *from* to a function that
-    # patches the raw dict (pre-dacite) to match the current schema. Only
-    # needed for breaking changes -- new fields with defaults, or fields
-    # dropped from the schema, are already handled without an entry here.
-    # Subclasses override this with their own table, e.g.:
-    #   MIGRATIONS = {"1.0.0": lambda d: {**d, "bar": d.pop("foo", None)}}
-    MIGRATIONS: ClassVar[dict[str, Callable[[dict], dict]]] = {}
+    # Schema migrations, as {version: function}. Each function takes the data read from a file one version
+    # older and returns it in the new layout. Files from before schema versions are version 0.
+    #
+    # Only breaking changes need a migration. A new field with a default, or a removed field, works without one.
+    #
+    # Example: renaming `foo` to `bar` in version 2:
+    #   MIGRATIONS = {2: lambda d: {**d, "bar": d.pop("foo", None)}}
+    MIGRATIONS: ClassVar[dict[int, Callable[[dict], dict]]] = {}
 
     def __post_init__(self):
         self._file: LocalFile | None = None
+        # the data last read from or written to the file, so that saving it unchanged can be skipped
+        self._saved: dict | None = None
+        # the file was saved by a newer version, so it must not be overwritten
+        self._read_only: bool = False
 
     @classmethod
-    def _read(cls, filename: pathlib.Path):
-        params_dict = read_yaml(filename)
-        return dacite.from_dict(data_class=cls, data=params_dict, config=dacite.Config(strict=True))
+    def schema_version(cls) -> int:
+        # the version of the newest migration, or 1 if there are none
+        return max(cls.MIGRATIONS, default=1)
+
+    @classmethod
+    def _pop_schema_version(cls, data) -> int:
+        if not isinstance(data, dict):
+            raise ValueError("Expected a mapping of keys to values")
+
+        # before schema versions, files recorded the package version instead
+        data.pop('config_version', None)
+        version = data.pop('schema_version', 0)
+        if not isinstance(version, int) or isinstance(version, bool) or version < 0:
+            raise ValueError(f"Invalid schema_version: {version!r}")
+        return version
+
+    @classmethod
+    def _parse(cls, data: dict, version: int, source) -> "Params":
+        for to_version, migrate in sorted(cls.MIGRATIONS.items()):
+            if version < to_version:
+                data = migrate(data)
+
+        unknown = _unknown_keys(cls, data)
+        if unknown:
+            logger.warning(f"Unknown keys ignored: {', '.join(unknown)} (path: {source})")
+
+        return dacite.from_dict(data_class=cls, data=data)
 
     @classmethod
     def read_default_params(cls, filename: str):
-        return cls._read(pathlib.Path(__file__).parent.parent / 'data' / 'config' / filename)
-
-    @classmethod
-    def _migrate(cls, data: dict) -> dict:
-        stored_version = _parse_version(data.get('config_version', '0'))
-        for from_version, migrate in sorted(cls.MIGRATIONS.items(), key=lambda item: _parse_version(item[0])):
-            if stored_version <= _parse_version(from_version):
-                data = migrate(data)
-        data['config_version'] = CURRENT_VERSION
-        return data
+        path = pathlib.Path(__file__).parent.parent / 'data' / 'config' / filename
+        return dacite.from_dict(data_class=cls, data=read_yaml(path), config=dacite.Config(strict=True))
 
     @classmethod
     def read_user_params(cls, file: LocalFile, default: str | None = None):
-        if default is None:
-            params = dacite.from_dict(data_class=cls, data={})
-        else:
-            params = cls.read_default_params(default)
+        fallback_params = cls.read_default_params(default) if default is not None else cls()
+        fallback_params._file = file
 
-        user_params = None
+        if not file.path.exists():
+            # start from the defaults, so that there is a file to edit
+            fallback_params.save()
+            return fallback_params
 
+        version = None
         try:
-            user_params = read_yaml(file.path)
-        except FileNotFoundError:
-            pass
-        except yaml.YAMLError:
-            logger.error(f'Failed to parse `{file.path}`. The file will be overwritten.')
+            data = read_yaml(file.path)
+            version = cls._pop_schema_version(data)
+            user_params = cls._parse(data, version, file.path)
+        except (yaml.YAMLError, ValueError, dacite.DaciteError) as e:
+            if version is not None and version > cls.schema_version():
+                user_params = fallback_params
+            else:
+                if file.auto_backup:
+                    backup = file.backup()
+                    logger.error(f"Invalid {file.full_name.lower()}, reset to defaults: {e} "
+                                 f"(path: {file.path}, backup: {backup})")
+                else:
+                    logger.debug(f"Invalid {file.full_name.lower()}, reset: {e} (path: {file.path})")
+                fallback_params.save()
+                return fallback_params
+
+        user_params._file = file
+        if version > cls.schema_version():
+            logger.warning(f"{file.full_name} was saved by a newer version of {__package__.split('.')[0]}, "
+                           f"changes to it will not be saved (path: {file.path})")
+            user_params._read_only = True
+        elif version < cls.schema_version():
+            if file.auto_backup:
+                file.backup()
+            if user_params.save():
+                logger.info(f"{file.full_name} upgraded to schema version {cls.schema_version()} "
+                            f"(path: {file.path})")
         else:
-            user_params = cls._migrate(user_params)
-            try:
-                user_params = dacite.from_dict(data_class=cls, data=user_params, config=dacite.Config())
-            except (WrongTypeError, MissingValueError):
-                user_params = None
-                logger.error(f'Failed to create a dataclass from `{file.path}`. The file will be overwritten.')
+            user_params._saved = user_params.to_dict()
 
-        if user_params is None:
-            file.delete()
-        else:
-            params = user_params
-
-        params._file = file
-        params.save()
-
-        return params
+        return user_params
 
     def replace_params(self, filename: pathlib.Path):
         try:
-            params = self._read(filename)
-        except Exception as e:
-            logger.error(str(e))
+            data = read_yaml(filename)
+            version = self._pop_schema_version(data)
+            params = self._parse(data, version, filename)
+        except (OSError, yaml.YAMLError, ValueError, dacite.DaciteError) as e:
+            logger.error(f"Failed to read the file: {e} (path: {filename})")
             return None
 
         params._file = self._file
         return params
 
-    def save(self):
+    def to_dict(self) -> dict:
+        return {'schema_version': self.schema_version(), **asdict(self)}
+
+    def save(self) -> bool:
         if self._file is None:
             logger.error('No output file specified')
-            return
+            return False
+        if self._read_only:
+            logger.debug(f"{self._file.full_name} not saved: it belongs to a newer version (path: {self._file.path})")
+            return False
 
-        self._file.save(data=asdict(self))
+        data = self.to_dict()
+        if data == self._saved:
+            return True
+        if not self._file.save(data=data):
+            return False
+
+        self._saved = data
+        return True
 
     def get_user_params_filename(self) -> str | None:
         return str(absolute_path(self._file.path)) if self._file is not None else None

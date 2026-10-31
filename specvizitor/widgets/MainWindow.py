@@ -2,7 +2,6 @@ import qtpy.compat
 from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
 
-from dataclasses import asdict
 from datetime import date
 from functools import partial
 from importlib import metadata
@@ -813,7 +812,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                            filters='YAML Files (*.yml)')[0]
 
         if path:
-            save_yaml(path, asdict(self._ws.widgets))
+            save_yaml(path, self._ws.widgets.to_dict())
             logger.info('Viewer configuration saved')
 
     def _zen_mode_action(self):

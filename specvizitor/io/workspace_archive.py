@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import copy
 import logging
 import pathlib
@@ -65,7 +65,7 @@ def _shareable_config(cfg: WorkspaceConfig) -> dict:
     cfg = copy.deepcopy(cfg)
     for _, obj, attr in _path_fields(cfg):
         setattr(obj, attr, None)
-    return asdict(cfg)
+    return cfg.to_dict()
 
 
 def export_workspace(workspace: Workspace, dest, options: ExportOptions | None = None) -> bool:

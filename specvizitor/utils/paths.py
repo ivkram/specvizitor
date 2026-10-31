@@ -16,16 +16,13 @@ def atomic_write(path):
     or an error mid-write then leaves the old file untouched instead of half-written.
     """
     path = pathlib.Path(path)
-    # the temporary file keeps the full name at the end, so that writers that pick the format by the extension
-    # still recognize it
     tmp = path.with_name(f'.{secrets.token_hex(4)}.{path.name}')
     try:
         yield tmp
         with open(tmp, 'r+b') as f:
             os.fsync(f.fileno())
-        # the replaced file would otherwise take its permissions with it
         if path.exists():
-            shutil.copymode(path, tmp)
+            shutil.copymode(path, tmp)  # copy permissions
         os.replace(tmp, path)
     finally:
         tmp.unlink(missing_ok=True)
