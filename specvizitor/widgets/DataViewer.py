@@ -19,7 +19,7 @@ from .ViewerElement import ViewerElement, LinkableItem, SliderItem
 from .Image2D import Image2D
 from .Plot1D import Plot1D
 from .SmartSlider import SmartSlider
-from .ViewerDataLoader import ViewerDataLoader
+from .ViewerDataLoader import LoaderState, ViewerDataLoader
 from .ItemLinker import ItemLinker, XAxisLinker, YAxisLinker, SliderLinker, ColorBarLinker
 
 logger = logging.getLogger(__name__)
@@ -70,6 +70,8 @@ class DataViewer(AbstractWidget):
         self._cat: Catalog | None = None
 
         self._worker: ViewerDataLoader | None = None
+        self._stale_workers: list[ViewerDataLoader] = []
+        self._loader_state = LoaderState()
         self._lock: bool = False
         self._t_worker_start = None
         self._t_old_worker_start = None
@@ -298,15 +300,19 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(int, InspectionData, object)
     def load_object(self, j: int, inspection_data: InspectionData, cat_entry: Catalog | None):
+        # a running loader is aborted but not waited for: it finishes in the background (see LoaderState), and stays
+        # referenced until then, since deleting a running QThread crashes
+        self._stale_workers = [w for w in self._stale_workers if w.isRunning()]
         if self._worker and self._worker.isRunning():
-            self._worker.wait()
+            self._worker.abort()
+            self._stale_workers.append(self._worker)
 
         self._t_worker_start = time.perf_counter()
         t_grace = self._get_t_grace()
         self._t_old_worker_start = self._t_worker_start
 
         self._worker = ViewerDataLoader(self.widgets, j, inspection_data, self._data, self._data_cfg, cat_entry,
-                                        t_grace=t_grace)
+                                        t_grace=t_grace, state=self._loader_state)
         self.loading_aborted.connect(self._worker.abort)
         self._worker.finished.connect(self.finalize_loading)
         self._worker.start()
@@ -423,4 +429,12 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def free_resources(self):
+        # no loader may read a file once it is closed
+        for w in self._stale_workers + [self._worker]:
+            if w is not None:
+                w.abort()
+                w.wait()
+        self._stale_workers = []
+        self._loader_state.open_files.clear()
+
         self._data.close_all()

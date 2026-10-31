@@ -3,6 +3,7 @@ from qtpy import QtCore
 
 import logging
 import pathlib
+import threading
 import time
 
 from ..config import config
@@ -14,17 +15,29 @@ from .ViewerElement import ViewerElement
 
 
 __all__ = [
+    "LoaderState",
     "ViewerDataLoader"
 ]
 
 logger = logging.getLogger(__name__)
 
 
+class LoaderState:
+    """ Shared by the loaders of one viewer, which use the same files and widgets. An aborted loader still finishes
+    the widget it is loading: the next one waits for it on the lock, in its own thread rather than the main thread,
+    and learns from `open_files` which file to close, since the widgets may not have received the data yet.
+    """
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.open_files: dict[str, str] = {}  # widget title -> the file its data was last loaded from
+
+
 class ViewerDataLoader(QtCore.QThread):
     data_loaded = QtCore.Signal(object, object, object, object)
 
     def __init__(self, widgets: dict[str, ViewerElement], j: int, inspection_data: InspectionData,
-                 viewer_data: ViewerData, data_sources: config.DataSources, cat_entry: Catalog | None, t_grace=0.1):
+                 viewer_data: ViewerData, data_sources: config.DataSources, cat_entry: Catalog | None, t_grace=0.1,
+                 state: LoaderState | None = None):
         super().__init__(parent=None)
 
         self.widgets: dict[str, ViewerElement] = widgets
@@ -36,7 +49,9 @@ class ViewerDataLoader(QtCore.QThread):
         self.viewer_data = viewer_data
 
         self.t_grace = t_grace
-        
+
+        self._state = state if state is not None else LoaderState()
+
         self._runs = True
 
     def run(self):
@@ -50,27 +65,27 @@ class ViewerDataLoader(QtCore.QThread):
         if i < n:
             return
 
-        widgets = list(self.widgets.values())
+        with self._state.lock:
+            widgets = list(self.widgets.values())
 
-        i = 0
-        n = len(widgets)
-        while self._runs and i < n:
-            w0 = widgets[i]
-            res = self._load_data(w0)
-            if res is None:
-                res = (None, None, None, None)
-            self.data_loaded.connect(w0.set_data)
-            self.data_loaded.emit(*res)
-            self.data_loaded.disconnect(w0.set_data)
-            i += 1
+            i = 0
+            n = len(widgets)
+            while self._runs and i < n:
+                w0 = widgets[i]
+                res = self._load_data(w0)
+                if res is None:
+                    res = (None, None, None, None)
+                self.data_loaded.connect(w0.set_data)
+                self.data_loaded.emit(*res)
+                self.data_loaded.disconnect(w0.set_data)
+                i += 1
 
     @QtCore.Slot()
     def abort(self):
         self._runs = False
     
     def _load_data(self, w0: ViewerElement):
-        if w0.data is not None:
-            self._free_resources(w0)
+        self._free_resources(w0)
         
         data_path = self._get_data_path(w0)
         if data_path is None:
@@ -102,6 +117,7 @@ class ViewerDataLoader(QtCore.QThread):
 
         prepared = None
         if data is not None:
+            self._state.open_files[w0.title] = str(data_path)
             try:
                 prepared = w0.prepare_data(data, meta)
             except Exception as e:
@@ -110,11 +126,15 @@ class ViewerDataLoader(QtCore.QThread):
         return data, meta, data_path, prepared
 
     def _free_resources(self, w0: ViewerElement):
-        if not w0.cfg.data.source:
-            self.viewer_data.close(str(w0.data_path))
+        filename = self._state.open_files.pop(w0.title, None)
+        if filename is None:
             return
 
-        self.viewer_data.reopen(str(w0.data_path))
+        if not w0.cfg.data.source:
+            self.viewer_data.close(filename)
+            return
+
+        self.viewer_data.reopen(filename)
 
     def _get_data_path(self, w0: ViewerElement) -> LocalPath | None:
         if not w0.cfg.data.source:
