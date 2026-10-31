@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from functools import partial
 import logging
+import math
 import warnings
 
 from ..config import data_widgets
@@ -210,7 +211,14 @@ class Image2D(ViewerElement):
 
     def apply_qtransform(self, **kwargs):
         super().apply_qtransform(**kwargs)
-        self.container.setAspectLocked(lock=True, ratio=self._qtransform.m22() / self._qtransform.m11())
+        self.container.setAspectLocked(lock=True, ratio=self._aspect_ratio(self._qtransform))
+
+    @staticmethod
+    def _aspect_ratio(t: QtGui.QTransform) -> float:
+        # the height of a transformed pixel over its width, signed like m22 / m11 (which it equals without a
+        # rotation): m11 is zero for a rotation by 90 degrees
+        ratio = math.hypot(t.m21(), t.m22()) / math.hypot(t.m11(), t.m12())
+        return ratio if t.determinant() >= 0 else -ratio
 
     def smooth_data(self, sigma: float):
         if sigma > 0:
