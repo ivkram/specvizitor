@@ -3,7 +3,9 @@ Data Viewer
 
 .. important::
 
-    This section assumes that the reader is already familiar with :doc:`app-settings`.
+    This section explains how to edit ``data_widgets.yml``, which is stored in the workspace
+    directory (see :ref:`config-files`). Every key it accepts is listed in
+    :ref:`data-widgets-reference`.
 
 Introduction
 ++++++++++++
@@ -189,7 +191,7 @@ In addition, it is often useful to configure the default range of the color bar 
             min: -0.015
             max: 0.015
 
-Here, ``type`` mimics the types of images limits used in `SAOImage DS9 <https://github.com/SAOImageDS9/SAOImageDS9/>`_ and can be either ``user`` (in which case it is necessary to specify ``min`` and ``max``), ``minmax`` (the default value), or ``zscale``.
+Here, ``type`` can be ``user`` (with ``min`` and ``max``), ``minmax`` (the default value), or ``zscale`` (see :ref:`data-widgets-reference`).
 
 Adding a plot
 ^^^^^^^^^^^^^

@@ -2,8 +2,8 @@ Workspaces
 ==========
 
 A **workspace** is a directory that holds the settings of one data set: the data and catalog
-paths, the data viewer configuration, the active plugins, and more. Your own preferences (e.g.,
-the list of spectral lines) are not part of a workspace and apply to all of them.
+paths, the data viewer configuration, the active plugins, and more. Your own preferences are not
+part of a workspace and apply to all of them (see :doc:`app-settings`).
 
 All workspace commands are in the :guilabel:`File` menu.
 
@@ -53,26 +53,7 @@ Delete the workspace directory with your file manager, then click its ``(unavail
 :menuselection:`File --> Recent Workspaces` and choose :guilabel:`Forget Workspace`. Inspection
 files **that are stored outside the workspace directory** are not affected.
 
-What is in a workspace
-++++++++++++++++++++++
-
-.. list-table::
-    :header-rows: 1
-    :widths: auto
-
-    * - File
-      - Contents
-    * - ``workspace.yml``
-      - Data and catalog paths, active plugins, etc.
-    * - ``data_widgets.yml``
-      - Data viewer configuration (see :doc:`data-viewer`)
-    * - ``layout.yml``
-      - Window layout
-    * - ``state.yml``
-      - The inspection file you had open, and your position in it
-
-The path to the workspace directory is shown at the bottom of :guilabel:`Settings`; click it to
-open the directory in your file manager.
+The files a workspace directory contains are described in :ref:`config-files`.
 
 Sharing a workspace
 +++++++++++++++++++
