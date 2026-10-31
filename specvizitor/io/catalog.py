@@ -1,14 +1,19 @@
 from astropy.table import Table, Row, MaskedColumn
-from astropy.utils.exceptions import AstropyWarning
 import numpy as np
 
 from dataclasses import dataclass, field
 import logging
-import warnings
 
 from .data_dir import get_ids_from_dir
 
 logger = logging.getLogger(__name__)
+
+
+def _loc(t: Table, index: str, item):
+    # astropy 7 replaced `loc[index, item]` with `loc.with_index(index)[item]`
+    if hasattr(t.loc, 'with_index'):
+        return t.loc.with_index(index)[item]
+    return t.loc[index, item]
 
 
 @dataclass
@@ -73,7 +78,7 @@ class Catalog:
             logger.error(f"Failed to load the catalog: {e}")
             return None
 
-        cat = cls(table=table, translate=translate)
+        cat = cls(table=table, translate=translate or {})
         if not cat._add_indices():
             return None
 
@@ -95,7 +100,7 @@ class Catalog:
     def update_translate(self, new_translate: dict[str, list[str]] | None):
         cat = Catalog(table=self.table)
 
-        cat.translate = new_translate
+        cat.translate = new_translate or {}
         if not cat._add_indices():
             return None
 
@@ -143,7 +148,9 @@ class Catalog:
 
     def _loc_full_base(self, t: Table, indices: list, obj_id: str | int | tuple):
         if isinstance(obj_id, str) or isinstance(obj_id, int):
-            return t.loc[obj_id]
+            # name the ID column explicitly: `t.loc[obj_id]` would search the table's first index, which is still
+            # the old ID column after `update_translate` has picked a different one
+            return _loc(t, indices[0], obj_id)
 
         elif isinstance(obj_id, tuple):
             if not obj_id:
@@ -158,10 +165,7 @@ class Catalog:
                 else:
                     raise KeyError
 
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore', AstropyWarning)
-                item = self._loc_full_base(t.loc[indices[0], obj_id[0]], indices[1:], obj_id[1:])
-            return item
+            return self._loc_full_base(_loc(t, indices[0], obj_id[0]), indices[1:], obj_id[1:])
         else:
             raise TypeError(f"Unknown object ID type: {type(obj_id)}")
 
