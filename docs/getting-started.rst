@@ -6,7 +6,7 @@ Installation
 
 .. important::
 
-      Python **>=3.10** is required to run specvizitor. If you have an older version of Python installed in your system, you can use `conda <https://docs.conda.io/en/latest/>`_ to create a virtual environment with Python version 3.10+ (if you are looking for a minimal conda installer, check out `miniforge <https://github.com/conda-forge/miniforge>`_).
+      Python **>=3.11** is required to run specvizitor. If you have an older version of Python installed in your system, you can use `conda <https://docs.conda.io/en/latest/>`_ to create a virtual environment with Python version 3.11+ (if you are looking for a minimal conda installer, check out `miniforge <https://github.com/conda-forge/miniforge>`_).
 
 Install the latest version of specvizitor using :pypi:`pip`:
 

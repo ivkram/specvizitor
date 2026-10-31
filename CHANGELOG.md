@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.2] - Unreleased
+
+### Removed
+
+- Support for Python 3.10: specvizitor now requires Python 3.11 or newer.
+
 ## [0.7.1] - 2026-10-31
 
 ### Upgrading
@@ -59,4 +65,5 @@
 
 - The unused `repr` key of `spectral_lines.yml`.
 
+[0.7.2]: https://github.com/ivkram/specvizitor/compare/v0.7.1...HEAD
 [0.7.1]: https://github.com/ivkram/specvizitor/compare/v0.7.0...v0.7.1
