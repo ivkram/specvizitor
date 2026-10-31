@@ -38,9 +38,19 @@ def _rename_catalogue(data: dict) -> dict:
     return data
 
 
+_RENAMED_PLUGINS = {'sviz-grizli': 'sviz_grizli', 'sviz-eiger': 'sviz_allegro'}
+
+
+def _rename_plugins(data: dict) -> dict:
+    # hyphenated up to 0.7.0, and the EIGER plugin is now the ALLEGRO plugin
+    if isinstance(data.get('plugins'), list):
+        data['plugins'] = [_RENAMED_PLUGINS.get(p, p) for p in data['plugins']]
+    return data
+
+
 @dataclass
 class WorkspaceConfig(Params):
-    MIGRATIONS: ClassVar[dict] = {1: _rename_catalogue}
+    MIGRATIONS: ClassVar[dict] = {1: _rename_catalogue, 2: _rename_plugins}
 
     name: str | None = None
     catalog: Catalog = field(default_factory=Catalog)

@@ -13,5 +13,5 @@ data:
     AA: [ANGSTROMS]
 
 plugins:
-  - sviz-grizli
-  - sviz-eiger
+  - sviz_grizli
+  - sviz_allegro

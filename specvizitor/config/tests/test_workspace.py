@@ -4,7 +4,7 @@ import pytest
 
 from specvizitor.config.migration import migrate_legacy_config, needs_migration
 from specvizitor.config.config import Image
-from specvizitor.config.workspace import WORKSPACE_CONFIG_FILENAME, Workspace, WorkspaceRegistry
+from specvizitor.config.workspace import WORKSPACE_CONFIG_FILENAME, Workspace, WorkspaceConfig, WorkspaceRegistry
 from specvizitor.io.workspace_archive import (ExportOptions, export_workspace, import_workspace,
                                               inspect_archive, unset_paths)
 from specvizitor.utils.params import read_yaml, save_yaml
@@ -491,7 +491,7 @@ def test_migration_splits_the_legacy_configuration(legacy):
     # workspace-scoped settings moved into the workspace
     assert workspace.name == 'Default'
     assert workspace.config.inspection_results.default_flags == ['broad_line']
-    assert workspace.config.plugins == ['sviz-grizli']
+    assert workspace.config.plugins == ['sviz_grizli']
     assert workspace.config.catalog.translate == {'id': ['ID']}
 
     assert workspace.config.data.dir == '/srv/fresco/data'
@@ -556,3 +556,19 @@ def test_a_workspace_with_a_catalogue_section_is_read_as_catalog(tmp_path):
     assert workspace.config.catalog.translate == {'id': ['ID']}
     saved = read_yaml(tmp_path / 'ws' / 'workspace.yml')
     assert 'catalogue' not in saved and saved['catalog']['filename'] == '/srv/fresco/cat.fits'
+
+
+def test_a_workspace_with_hyphenated_plugin_names_is_migrated(tmp_path):
+    Workspace.create(tmp_path / 'ws', name='Old')
+    save_yaml(tmp_path / 'ws' / 'workspace.yml',
+              {'schema_version': 1, 'name': 'Old', 'plugins': ['sviz-grizli', 'sviz-eiger', 'my_plugin']})
+
+    workspace = Workspace.open(tmp_path / 'ws')
+
+    assert workspace.config.plugins == ['sviz_grizli', 'sviz_allegro', 'my_plugin']
+    assert read_yaml(tmp_path / 'ws' / 'workspace.yml')['schema_version'] == 2
+
+
+def test_the_default_plugins_exist():
+    from specvizitor.plugins import available_plugins
+    assert set(WorkspaceConfig.read_default_params(WORKSPACE_CONFIG_FILENAME).plugins) <= set(available_plugins())
