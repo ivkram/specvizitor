@@ -5,38 +5,14 @@
    viewBox="0 0 48 48"
    version="1.1"
    id="svg4"
-   sodipodi:docname="arrow-forward-starred.svg"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="arrow-next-starred.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
-     id="defs8">
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient5426"
-       id="linearGradient5428"
-       x1="10.075769"
-       y1="12.421616"
-       x2="1.4262868"
-       y2="-0.16991392"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(-2.7764976,0,0,2.7764976,48.130759,-0.14832096)" />
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient5426">
-      <stop
-         style="stop-color:#ffd42a;stop-opacity:1;"
-         offset="0"
-         id="stop5422" />
-      <stop
-         style="stop-color:#ffd42a;stop-opacity:0;"
-         offset="1"
-         id="stop5424" />
-    </linearGradient>
-  </defs>
+     id="defs8" />
   <sodipodi:namedview
      id="namedview6"
      pagecolor="#ffffff"
@@ -47,16 +23,18 @@
      inkscape:pagecheckerboard="0"
      showgrid="false"
      inkscape:zoom="7.4895833"
-     inkscape:cx="6.2753825"
-     inkscape:cy="30.842837"
-     inkscape:window-width="1834"
-     inkscape:window-height="1002"
+     inkscape:cx="6.2086231"
+     inkscape:cy="30.776078"
+     inkscape:window-width="1920"
+     inkscape:window-height="995"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg4" />
+     inkscape:current-layer="svg4"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1" />
   <path
-     style="display:inline;fill:url(#linearGradient5428);fill-opacity:1;fill-rule:evenodd;stroke:#806600;stroke-width:0.734613;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="display:inline;fill:#ff00ff;fill-opacity:1;fill-rule:evenodd;stroke:#ff00ff;stroke-width:0.734613;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      id="path446"
      d="M 30.499998,0.86445958 25.327703,11.884013 13.7621,13.651082 l 8.368952,8.577522 -1.975639,12.111659 10.344588,-5.718349 10.344592,5.718349 -1.975642,-12.111659 8.36895,-8.577522 -11.565605,-1.767069 z" />
   <path
