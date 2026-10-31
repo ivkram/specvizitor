@@ -1,6 +1,6 @@
 [project]
 name = "specvizitor"
-version = "0.7.0"
+version = "0.7.1"
 description = "Python GUI application for a visual inspection of astronomical spectroscopic data"
 authors = [
     {name = "Ivan Kramarenko", email = "im.kramarenko@gmail.com"},

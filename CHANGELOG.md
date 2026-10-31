@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.7.1] - Unreleased
+## [0.7.1] - 2026-10-31
 
 ### Upgrading
 
@@ -59,4 +59,4 @@
 
 - The unused `repr` key of `spectral_lines.yml`.
 
-[0.7.1]: https://github.com/ivkram/specvizitor/compare/v0.7.0...HEAD
+[0.7.1]: https://github.com/ivkram/specvizitor/compare/v0.7.0...v0.7.1
