@@ -65,7 +65,6 @@ class TableRowEditor(QtWidgets.QDialog):
         self._row_items = []
         for i, (item_label, item_value, item_choices) in enumerate(zip(self._header, self._old_data, self._item_choices)):
             label = QtWidgets.QLabel(f"{item_label}:", self)
-            label.setFixedWidth(120)
             if self._is_browser[i]:
                 item_editor = FileBrowser(default_path=item_value if item_value else None, line_edit_width=0, parent=self)
             elif item_choices and item_value and item_value not in item_choices:
@@ -101,16 +100,14 @@ class TableRowEditor(QtWidgets.QDialog):
         self._button_box.rejected.connect(self.reject)
 
     def set_layout(self):
-        self.setLayout(QtWidgets.QVBoxLayout())
+        # sizes the label column to the widest label, so that the editors line up
+        self.setLayout(QtWidgets.QFormLayout())
 
     def populate(self):
-        for row_item in self._row_items:
-            sub_layout = QtWidgets.QHBoxLayout()
-            sub_layout.addWidget(row_item[0])
-            sub_layout.addWidget(row_item[1])
-            self.layout().addLayout(sub_layout)
+        for label, item_editor in self._row_items:
+            self.layout().addRow(label, item_editor)
 
-        self.layout().addWidget(self._button_box)
+        self.layout().addRow(self._button_box)
 
     @QtCore.Slot()
     def validate_text(self):
