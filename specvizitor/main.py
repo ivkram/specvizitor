@@ -1,3 +1,8 @@
+import os
+
+# qtpy prefers PyQt5 whenever it is installed, e.g. left over from an upgrade: default to the declared binding
+os.environ.setdefault('QT_API', 'pyqt6')
+
 # qtpy first: pyqtgraph picks up the binding that is already loaded, so that both follow QT_API
 from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
@@ -6,7 +11,6 @@ import argparse
 import gc
 import importlib
 import logging
-import os
 import pathlib
 import sys
 
