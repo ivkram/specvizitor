@@ -35,7 +35,7 @@ def widget():
 
     # delete the pyqtgraph widget for real: garbage-collecting it later segfaults
     widget.deleteLater()
-    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
     gc.collect()
 
 
@@ -74,6 +74,6 @@ def test_the_sender_may_be_deleted_first(widget):
     _register_marker(widget, slider)
 
     slider.deleteLater()
-    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
 
     widget.remove_registered_items()

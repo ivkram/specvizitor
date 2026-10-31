@@ -21,7 +21,7 @@ class SettingsWidget(AbstractWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.layout().setAlignment(QtCore.Qt.AlignTop)
+        self.layout().setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         self.setFixedHeight(500)
 
     @abstractmethod
@@ -60,7 +60,7 @@ class AppearanceWidget(SettingsWidget):
 
     def init_ui(self):
         self._theme_label = QtWidgets.QLabel("Theme:", self)
-        self._theme_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._theme_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
 
         self._theme_combobox = QtWidgets.QComboBox(self)
         self._theme_combobox.addItems(self.THEMES)
@@ -72,7 +72,7 @@ class AppearanceWidget(SettingsWidget):
 
         self._spacing_label = QtWidgets.QLabel("Widget spacing:", self)
         self._spacing_label.setToolTip("Space between the widgets of the data viewer, in pixels")
-        self._spacing_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._spacing_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         self._spacing_spinbox = QtWidgets.QSpinBox(self)
         self._spacing_spinbox.setRange(0, 100)
         self._spacing_spinbox.setValue(self.cfg.viewer_spacing)
@@ -80,7 +80,7 @@ class AppearanceWidget(SettingsWidget):
 
         self._margins_label = QtWidgets.QLabel("Widget margins:", self)
         self._margins_label.setToolTip("Space around the contents of each data viewer widget, in pixels")
-        self._margins_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._margins_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         self._margins_spinbox = QtWidgets.QSpinBox(self)
         self._margins_spinbox.setRange(0, 100)
         self._margins_spinbox.setValue(self.cfg.viewer_margins)
@@ -92,7 +92,7 @@ class AppearanceWidget(SettingsWidget):
 
     def populate(self):
         sub_layout = QtWidgets.QHBoxLayout()
-        sub_layout.setAlignment(QtCore.Qt.AlignLeft)
+        sub_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         sub_layout.addWidget(self._theme_label)
         sub_layout.addWidget(self._theme_combobox)
 
@@ -101,7 +101,7 @@ class AppearanceWidget(SettingsWidget):
         self.layout().addWidget(self._antialiasing_checkbox)
 
         sub_layout = QtWidgets.QHBoxLayout()
-        sub_layout.setAlignment(QtCore.Qt.AlignLeft)
+        sub_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         for label, spinbox in ((self._spacing_label, self._spacing_spinbox),
                                (self._margins_label, self._margins_spinbox)):
             sub_layout.addWidget(label)
@@ -418,7 +418,7 @@ class DataViewerWidget(SettingsWidget):
             self._redshift_step_editors.append(redshift_step_editor)
 
         self._spacer = QtWidgets.QWidget(self)
-        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
 
         self._lines_section = Section("Spectral lines", parent=self)
         self._lines_table = spectral_lines_table_factory(self.spectral_lines, self)
@@ -554,7 +554,7 @@ class Settings(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Settings")
 
         self.init_ui()
@@ -591,12 +591,12 @@ class Settings(QtWidgets.QDialog):
         advanced_dir = pathlib.Path(workspace_filename).parent if workspace_filename else pathlib.Path(CONFIG_DIR)
         self._info_label = QtWidgets.QLabel(
             f'Advanced settings: <a href="{advanced_dir.as_uri()}">{advanced_dir}</a>', self)
-        self._info_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse
-                                                 | QtCore.Qt.LinksAccessibleByMouse)
+        self._info_label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+                                                 | QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse)
         self._info_label.setOpenExternalLinks(True)
 
         self._button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
+            QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, self)
 
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
@@ -635,7 +635,7 @@ class Settings(QtWidgets.QDialog):
         self._spectral_lines.save()
 
         restart = self._restart_required and QtWidgets.QMessageBox.question(
-            self, '', "Restart required to apply changes. Restart now?") == QtWidgets.QMessageBox.Yes
+            self, '', "Restart required to apply changes. Restart now?") == QtWidgets.QMessageBox.StandardButton.Yes
 
         super().accept()
 

@@ -87,7 +87,7 @@ class Image2D(ViewerElement):
             self.register_item((pg.PlotCurveItem([nx / 2, nx / 2], [0, ny], pen=pen)))
 
     def _add_central_crosshair(self):
-        pen = pg.mkPen('w', width=1, style=QtCore.Qt.DashLine)
+        pen = pg.mkPen('w', width=1, style=QtCore.Qt.PenStyle.DashLine)
         x0, y0 = self.data.shape[1] // 2, self.data.shape[0] // 2
         dx, dy = 0.15 * x0, 0.15 * y0
 

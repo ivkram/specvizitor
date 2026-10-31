@@ -1,4 +1,4 @@
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 
 import logging
 
@@ -21,9 +21,9 @@ class ObjectInfo(AbstractWidget):
 
         super().__init__(parent=parent)
         self.setEnabled(False)
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Preferred)
 
-        QtWidgets.QShortcut("/", self, self._set_focus)
+        QtGui.QShortcut("/", self, self._set_focus)
 
     def _create_table_items(self):
         if self.all_columns is None:
@@ -61,16 +61,16 @@ class ObjectInfo(AbstractWidget):
     def init_ui(self):
         self._table = QtWidgets.QTableWidget(self)
         self._table.setColumnCount(2)
-        self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self._table.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.setHorizontalHeaderLabels(('Key', 'Value'))
         self._table.verticalHeader().hide()
-        self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
+        self._table.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Fixed)
 
         self._search_label = QtWidgets.QLabel("Search:", self)
-        self._search_label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self._search_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         self._search_lineedit = MyQLineEdit(self)
-        self._search_lineedit.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Maximum)
+        self._search_lineedit.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Maximum)
         self._search_lineedit.setMinimumWidth(50)
 
         self._search_lineedit.textChanged[str].connect(self.update_view)

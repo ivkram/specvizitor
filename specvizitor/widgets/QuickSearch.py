@@ -20,7 +20,7 @@ class QuickSearch(AbstractWidget):
 
         super().__init__(parent=parent)
         self.setEnabled(False)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Maximum)
 
     def init_ui(self):
         self._go_to_id_button = QtWidgets.QPushButton(self)

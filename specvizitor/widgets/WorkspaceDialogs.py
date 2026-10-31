@@ -30,7 +30,8 @@ def _safe_directory_name(name: str) -> str:
 
 
 def _button_box(dialog: QtWidgets.QDialog) -> QtWidgets.QDialogButtonBox:
-    box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, dialog)
+    box = QtWidgets.QDialogButtonBox(
+        QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, dialog)
     box.accepted.connect(dialog.accept)
     box.rejected.connect(dialog.reject)
     return box
@@ -51,7 +52,7 @@ class NewWorkspaceDialog(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("New Workspace")
 
         self.init_ui()
@@ -156,7 +157,7 @@ class RenameWorkspaceDialog(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Rename Workspace")
 
         self.init_ui()
@@ -236,7 +237,7 @@ class ForgetWorkspaceDialog(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Workspace Unavailable")
 
         self.init_ui()
@@ -250,8 +251,8 @@ class ForgetWorkspaceDialog(QtWidgets.QDialog):
         self._info_label.setWordWrap(True)
 
         self._button_box = _button_box(self)
-        self._button_box.button(QtWidgets.QDialogButtonBox.Ok).setText("Forget Workspace")
-        self._button_box.button(QtWidgets.QDialogButtonBox.Cancel).setDefault(True)
+        self._button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText("Forget Workspace")
+        self._button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).setDefault(True)
 
     def set_layout(self):
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -308,7 +309,7 @@ class ExportWorkspaceDialog(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Export Workspace")
 
         self.init_ui()
@@ -384,7 +385,7 @@ class ResolvePathsDialog(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Locate Workspace Data")
 
         self.init_ui()
@@ -408,7 +409,7 @@ class ResolvePathsDialog(QtWidgets.QDialog):
             self._rows.append((title, obj, attr, browser))
 
         self._button_box = _button_box(self)
-        self._button_box.button(QtWidgets.QDialogButtonBox.Cancel).setText("Skip")
+        self._button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).setText("Skip")
 
     def set_layout(self):
         self.setLayout(QtWidgets.QFormLayout())

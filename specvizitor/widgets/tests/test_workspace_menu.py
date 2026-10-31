@@ -59,9 +59,6 @@ class _StubDialog:
     def exec(self):
         return 0
 
-    def exec_(self):
-        return 0
-
     def __getattr__(self, name):
         # callers wire up a dialog's signals before exec()ing it
         return _StubSignal()
@@ -706,8 +703,8 @@ def test_the_forget_dialog_defaults_to_keeping_the_workspace(gui, tmp_path):
 
     dialog = ForgetWorkspaceDialog(str(tmp_path / 'gone'))
 
-    assert dialog._button_box.button(QtWidgets.QDialogButtonBox.Cancel).isDefault()
-    assert dialog._button_box.button(QtWidgets.QDialogButtonBox.Ok).text() == 'Forget Workspace'
+    assert dialog._button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).isDefault()
+    assert dialog._button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).text() == 'Forget Workspace'
 
 
 def test_object_loading_errors_after_open_stay_in_the_console(gui, tmp_path, monkeypatch, caplog):

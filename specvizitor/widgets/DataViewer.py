@@ -1,6 +1,6 @@
 from pyqtgraph.dockarea.Dock import Dock
 from pyqtgraph.dockarea.DockArea import DockArea
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 
 from functools import partial
 import logging
@@ -82,13 +82,13 @@ class DataViewer(AbstractWidget):
 
         super().__init__(parent=parent)
         self.setEnabled(False)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
-        QtWidgets.QShortcut('Q', self, partial(self._change_redshift, -1))
-        QtWidgets.QShortcut('W', self, partial(self._change_redshift, 1))
+        QtGui.QShortcut('Q', self, partial(self._change_redshift, -1))
+        QtGui.QShortcut('W', self, partial(self._change_redshift, 1))
 
-        QtWidgets.QShortcut('Shift+Q', self, partial(self._change_redshift, -1, True))
-        QtWidgets.QShortcut('Shift+W', self, partial(self._change_redshift, 1, True))
+        QtGui.QShortcut('Shift+Q', self, partial(self._change_redshift, -1, True))
+        QtGui.QShortcut('Shift+W', self, partial(self._change_redshift, 1, True))
 
     @property
     def active_widgets(self) -> dict[str, ViewerElement]:

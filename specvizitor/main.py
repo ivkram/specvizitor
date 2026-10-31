@@ -55,12 +55,12 @@ def run_window(app: QtWidgets.QApplication, **window_kwargs) -> int:
     window = MainWindow(**window_kwargs)
     window.show()
 
-    exit_code = app.exec_()
+    exit_code = app.exec()
 
     # delete the window and every pyqtgraph item in it before the next one is created: left to the garbage
     # collector, they are destroyed at a random point later on, which segfaults
     window.deleteLater()
-    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
     del window
     gc.collect()
 

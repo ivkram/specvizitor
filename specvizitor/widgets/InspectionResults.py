@@ -1,4 +1,4 @@
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from ..config import config
 from ..io.inspection_data import FieldType, InspectionData, REDSHIFT_FILL_VALUE
@@ -31,9 +31,9 @@ class InspectionResults(AbstractWidget):
 
         super().__init__(parent=parent)
         self.setEnabled(False)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
 
-        QtWidgets.QShortcut("E", self, self._comments_widget.setFocus)
+        QtGui.QShortcut("E", self, self._comments_widget.setFocus)
 
     def _create_checkbox_widgets(self, inspection_data: InspectionData | None = None):
         if self._checkbox_widgets is not None:
@@ -46,7 +46,7 @@ class InspectionResults(AbstractWidget):
         for i, flag_name in enumerate(flags):
             # TODO: overwrite the keyPressEvent method of QtWidgets.QCheckBox to add shortcuts
             checkbox_widget = QtWidgets.QCheckBox(flag_name, self)
-            checkbox_widget.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Fixed)
+            checkbox_widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Fixed)
             checkbox_widgets[flag_name] = checkbox_widget
 
             if i < 9:
@@ -57,11 +57,11 @@ class InspectionResults(AbstractWidget):
     def init_ui(self):
         self._redshift_widget = QtWidgets.QLabel("Redshift: --", self)
         self._spacer = QtWidgets.QWidget(self)
-        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self._clear_redshift = QtWidgets.QPushButton("Clear", self)
 
         self._separator = QtWidgets.QFrame(self)
-        self._separator.setFrameShape(QtWidgets.QFrame.HLine)
+        self._separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
 
         self._create_checkbox_widgets()
         self._comments_widget = MyQTextEdit(self)

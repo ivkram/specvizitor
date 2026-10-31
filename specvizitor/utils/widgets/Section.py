@@ -14,17 +14,17 @@ class Section(QtWidgets.QWidget):
         self.mainLayout = QtWidgets.QGridLayout(self)
 
         self.toggleButton.setStyleSheet("QToolButton {border: none;}")
-        self.toggleButton.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
-        self.toggleButton.setArrowType(QtCore.Qt.RightArrow)
+        self.toggleButton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.toggleButton.setArrowType(QtCore.Qt.ArrowType.RightArrow)
         self.toggleButton.setText(title)
         self.toggleButton.setCheckable(True)
         self.toggleButton.setChecked(False)
 
-        self.headerLine.setFrameShape(QtWidgets.QFrame.HLine)
-        self.headerLine.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.headerLine.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        self.headerLine.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+        self.headerLine.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        self.headerLine.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Maximum)
 
-        self.contentArea.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        self.contentArea.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
 
         # start out collapsed
         self.contentArea.setMaximumHeight(0)
@@ -39,7 +39,7 @@ class Section(QtWidgets.QWidget):
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
 
         row = 0
-        self.mainLayout.addWidget(self.toggleButton, row, 0, 1, 1, QtCore.Qt.AlignLeft)
+        self.mainLayout.addWidget(self.toggleButton, row, 0, 1, 1, QtCore.Qt.AlignmentFlag.AlignLeft)
         self.mainLayout.addWidget(self.headerLine, row, 2, 1, 1)
         self.mainLayout.addWidget(self.contentArea, row + 1, 0, 1, 3)
         self.setLayout(self.mainLayout)
@@ -64,9 +64,9 @@ class Section(QtWidgets.QWidget):
 
     def toggle(self, collapsed):
         if collapsed:
-            self.toggleButton.setArrowType(QtCore.Qt.DownArrow)
-            self.toggleAnimation.setDirection(QtCore.QAbstractAnimation.Forward)
+            self.toggleButton.setArrowType(QtCore.Qt.ArrowType.DownArrow)
+            self.toggleAnimation.setDirection(QtCore.QAbstractAnimation.Direction.Forward)
         else:
-            self.toggleButton.setArrowType(QtCore.Qt.RightArrow)
-            self.toggleAnimation.setDirection(QtCore.QAbstractAnimation.Backward)
+            self.toggleButton.setArrowType(QtCore.Qt.ArrowType.RightArrow)
+            self.toggleAnimation.setDirection(QtCore.QAbstractAnimation.Direction.Backward)
         self.toggleAnimation.start()

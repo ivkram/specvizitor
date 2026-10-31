@@ -32,7 +32,7 @@ class NewFile(QtWidgets.QDialog):
         self._button_box: QtWidgets.QDialogButtonBox | None = None
 
         super().__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("New Inspection File")
 
         self.init_ui()
@@ -61,7 +61,7 @@ class NewFile(QtWidgets.QDialog):
         self._cat_factory_group.addButton(self._load_cat_radio_button)
 
         self._separator = QtWidgets.QFrame(parent=self)
-        self._separator.setFrameShape(QtWidgets.QFrame.HLine)
+        self._separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
 
         self._filter_check_box = QtWidgets.QCheckBox(
             'Filter the catalog using a list of IDs extracted from the data directory', self)
@@ -73,15 +73,15 @@ class NewFile(QtWidgets.QDialog):
         self._id_pattern_label.setToolTip('A regular expression used to match the object IDs during the scan of '
                                           'the data directory. If more than\none ID is matched to the pattern for a '
                                           'given filename, only the longest match will be returned.')
-        self._id_pattern_label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self._id_pattern_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
 
         self._id_pattern = QtWidgets.QLineEdit(self.cfg.data.id_pattern, self)
 
         self._spacer = QtWidgets.QWidget(self)
-        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
-        self._button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
-                                                      self)
+        self._button_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, self)
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
 

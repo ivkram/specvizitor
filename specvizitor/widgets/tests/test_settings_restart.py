@@ -37,7 +37,7 @@ def settings(app, tmp_path, monkeypatch):
 
     # never actually offer to restart
     monkeypatch.setattr(QtWidgets.QMessageBox, 'question',
-                        staticmethod(lambda *a, **kw: QtWidgets.QMessageBox.No))
+                        staticmethod(lambda *a, **kw: QtWidgets.QMessageBox.StandardButton.No))
 
     dialog = Settings(None, config, workspace.config, SpectralLineData())
     yield dialog, config, workspace
@@ -45,7 +45,7 @@ def settings(app, tmp_path, monkeypatch):
 
 
 def _accept(dialog):
-    dialog._button_box.button(QtWidgets.QDialogButtonBox.Ok).click()
+    dialog._button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).click()
     return dialog._restart_required
 
 

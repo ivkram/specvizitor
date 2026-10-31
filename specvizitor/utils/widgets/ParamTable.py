@@ -32,12 +32,12 @@ class TableRowEditor(QtWidgets.QDialog):
         self._row_items: list[tuple[QtWidgets.QLabel, QtWidgets.QLineEdit | QtWidgets.QComboBox | FileBrowser]] | None = None
 
         super().__init__(parent=parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         if name is None:
             name = 'Row'
         self.setWindowTitle(f"{action} {name}")
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Maximum)
 
         self.init_ui()
         self.set_layout()
@@ -93,7 +93,7 @@ class TableRowEditor(QtWidgets.QDialog):
 
     def init_ui(self):
         self._button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
+            QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, self)
         self._create_row_items()
 
         self._button_box.accepted.connect(self.accept)
@@ -124,7 +124,7 @@ class TableRowEditor(QtWidgets.QDialog):
                 ok_button_enabled = False
                 break
 
-        ok_button = self._button_box.button(QtWidgets.QDialogButtonBox.Ok)
+        ok_button = self._button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
         ok_button.setEnabled(ok_button_enabled)
 
     def accept(self):
@@ -161,7 +161,7 @@ class ParamTable(QtWidgets.QWidget):
         self.set_layout()
         self.populate()
 
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
 
     @property
     def _new_data(self) -> list[list[str]]:
@@ -232,13 +232,13 @@ class ParamTable(QtWidgets.QWidget):
         self._set_reset_button_enabled(False)
 
         self._table = QtWidgets.QTableWidget(len(self._old_data), len(self._header), self)
-        self._table.setTextElideMode(QtCore.Qt.ElideLeft)
+        self._table.setTextElideMode(QtCore.Qt.TextElideMode.ElideLeft)
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.setHorizontalHeaderLabels(self._header)
 
-        self._table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self._table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self._table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self._table.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        self._table.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         self._table.setMinimumHeight(250)
 
         self._create_table_items()
@@ -258,7 +258,7 @@ class ParamTable(QtWidgets.QWidget):
         sub_layout = QtWidgets.QHBoxLayout()
         for w in (self._add_button, self._delete_button, self._edit_button, self._reset_button):
             sub_layout.addWidget(w)
-        sub_layout.setAlignment(QtCore.Qt.AlignLeft)
+        sub_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         self.layout().addLayout(sub_layout)
 
         self.layout().addWidget(self._table)

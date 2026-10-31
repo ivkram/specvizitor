@@ -90,7 +90,7 @@ class Plugin(PluginCore):
         x1, x2 = x0 - zoom_level * dx, x0 + zoom_level * dx
 
         for spec_2d in spec_2d_arr:
-            pen = pg.mkPen(color, width=2, style=QtCore.Qt.DashLine)
+            pen = pg.mkPen(color, width=2, style=QtCore.Qt.PenStyle.DashLine)
 
             spec_2d.register_item(pg.PlotCurveItem([x0 - dx, x0 + dx], [y0, y0], pen=pen))
             spec_2d.register_item(pg.PlotCurveItem([x0, x0], [y0 - dy, y0 + dy], pen=pen))

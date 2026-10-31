@@ -108,11 +108,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._navigation_cfg: tuple[NavigationAction, ...]
         self._create_navigation_cfg()
 
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
 
         self._update_window_title()
 
-        QtWidgets.QShortcut('Esc', self, lambda: self._exit_fullscreen() if self.isFullScreen() else None)
+        QtGui.QShortcut('Esc', self, lambda: self._exit_fullscreen() if self.isFullScreen() else None)
 
         self._data_viewer: DataViewer | None = None
         self._commands_bar: ToolBar | None = None
@@ -146,8 +146,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _create_navigation_cfg(self):
         self._navigation_cfg = (
-            NavigationAction(Direction.NEXT, shortcut=QtGui.QKeySequence.MoveToNextChar),
-            NavigationAction(Direction.PREVIOUS, shortcut=QtGui.QKeySequence.MoveToPreviousChar),
+            NavigationAction(Direction.NEXT, shortcut=QtGui.QKeySequence.StandardKey.MoveToNextChar),
+            NavigationAction(Direction.PREVIOUS, shortcut=QtGui.QKeySequence.StandardKey.MoveToPreviousChar),
             NavigationAction(Direction.NEXT, starred_only=True),
             NavigationAction(Direction.PREVIOUS, starred_only=True)
         )
@@ -185,7 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._init_menu()
 
-        self.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
 
     def _init_menu(self):
         self._menu = self.menuBar()
@@ -195,7 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._edit = self._menu.addMenu("&Edit")
 
-        self._star_object = QtWidgets.QAction("Star Object")
+        self._star_object = QtGui.QAction("Star Object")
         self._star_object.setEnabled(False)
         self._star_object.triggered.connect(self._inspection_res.star_object)
         self._star_object.setShortcut('S')
@@ -205,12 +205,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._redshift_menu.setEnabled(False)
         self._edit.addMenu(self._redshift_menu)
 
-        self._save_redshift = QtWidgets.QAction("&Save")
+        self._save_redshift = QtGui.QAction("&Save")
         self._save_redshift.triggered.connect(self._data_viewer.request_redshift)
         self._save_redshift.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self._redshift_menu.addAction(self._save_redshift)
 
-        self._clear_redshift = QtWidgets.QAction("Clear")
+        self._clear_redshift = QtGui.QAction("Clear")
         self._clear_redshift.setEnabled(False)
         self._clear_redshift.triggered.connect(self._inspection_res.clear_redshift)
         self._clear_redshift.setShortcut(QtGui.QKeySequence('Ctrl+D'))
@@ -218,7 +218,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._edit.addSeparator()
 
-        self._edit_inspection_fields = QtWidgets.QAction("Inspection &Fields...")
+        self._edit_inspection_fields = QtGui.QAction("Inspection &Fields...")
         self._edit_inspection_fields.setEnabled(False)
         self._edit_inspection_fields.triggered.connect(self._edit_inspection_fields_action)
         self._edit.addAction(self._edit_inspection_fields)
@@ -239,76 +239,76 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._view.addSeparator()
 
-        self._reset_view = QtWidgets.QAction("Reset View")
+        self._reset_view = QtGui.QAction("Reset View")
         self._reset_view.setEnabled(False)
         self._reset_view.triggered.connect(self._data_viewer.reset_view)
         self._reset_view.setShortcut('R')
         self._view.addAction(self._reset_view)
 
-        self._reset_dock_layout = QtWidgets.QAction("Reset Layout")
+        self._reset_dock_layout = QtGui.QAction("Reset Layout")
         self._reset_dock_layout.setEnabled(False)
         self._reset_dock_layout.triggered.connect(self._data_viewer.reset_dock_layout)
         self._view.addAction(self._reset_dock_layout)
 
         self._view.addSeparator()
 
-        self._zen = QtWidgets.QAction("Zen Mode")
+        self._zen = QtGui.QAction("Zen Mode")
         self._zen.triggered.connect(self._zen_mode_action)
         self._zen.setShortcut('H')
         self._view.addAction(self._zen)
 
-        self._fullscreen = QtWidgets.QAction("Fullscreen")
+        self._fullscreen = QtGui.QAction("Fullscreen")
         self._fullscreen.triggered.connect(self._fullscreen_action)
         self._fullscreen.setShortcut('F')
         self._view.addAction(self._fullscreen)
 
         self._navigate = self._menu.addMenu("&Navigate")
-        self._navigation_actions: tuple[QtWidgets.QAction, ...] | None = None
+        self._navigation_actions: tuple[QtGui.QAction, ...] | None = None
         self._add_navigation_actions()
 
         self._widgets = self._menu.addMenu("&Widgets")
 
-        self._backup_viewer_config = QtWidgets.QAction("Backup...")
+        self._backup_viewer_config = QtGui.QAction("Backup...")
         self._backup_viewer_config.triggered.connect(self._backup_viewer_config_action)
         self._widgets.addAction(self._backup_viewer_config)
 
-        self._restore_viewer_config = QtWidgets.QAction("Restore...")
+        self._restore_viewer_config = QtGui.QAction("Restore...")
         self._restore_viewer_config.triggered.connect(self._restore_viewer_config_action)
         self._widgets.addAction(self._restore_viewer_config)
 
         self._tools = self._menu.addMenu("&Tools")
 
-        self._inspect_subset = QtWidgets.QAction("Inspect Subset...")
+        self._inspect_subset = QtGui.QAction("Inspect Subset...")
         self._inspect_subset.setEnabled(False)
         self._inspect_subset.triggered.connect(self.inspect_subset_action)
         self._tools.addAction(self._inspect_subset)
 
-        self._screenshot = QtWidgets.QAction("Take Screenshot...")
+        self._screenshot = QtGui.QAction("Take Screenshot...")
         self._screenshot.triggered.connect(self.screenshot_action)
         self._tools.addAction(self._screenshot)
 
         self._tools.addSeparator()
 
-        self._settings = QtWidgets.QAction("Se&ttings...")
+        self._settings = QtGui.QAction("Se&ttings...")
         self._settings.triggered.connect(self.settings_action)
         self._tools.addAction(self._settings)
 
         self._help = self._menu.addMenu("&Help")
-        self._about = QtWidgets.QAction("&About...")
+        self._about = QtGui.QAction("&About...")
         self._about.triggered.connect(self._about_action)
         self._help.addAction(self._about)
 
     def _init_file_menu(self):
-        self._new_file = QtWidgets.QAction("&New...")
+        self._new_file = QtGui.QAction("&New...")
         self._new_file.triggered.connect(self._new_file_action)
         self._new_file.setShortcut(QtGui.QKeySequence('Ctrl+N'))
         self._file.addAction(self._new_file)
 
-        self._new_workspace = QtWidgets.QAction("New &Workspace...")
+        self._new_workspace = QtGui.QAction("New &Workspace...")
         self._new_workspace.triggered.connect(self._new_workspace_action)
         self._file.addAction(self._new_workspace)
 
-        self._open_file = QtWidgets.QAction("&Open...")
+        self._open_file = QtGui.QAction("&Open...")
         self._open_file.triggered.connect(self._open_file_action)
         self._open_file.setShortcut(QtGui.QKeySequence('Ctrl+O'))
         self._file.addAction(self._open_file)
@@ -317,35 +317,35 @@ class MainWindow(QtWidgets.QMainWindow):
         self._recent_workspaces = self._file.addMenu("Recent Wor&kspaces")
 
         # created once, since the entries are rebuilt whenever the registry changes
-        self._workspace_actions = QtWidgets.QActionGroup(self)
+        self._workspace_actions = QtGui.QActionGroup(self)
         self._workspace_actions.setExclusive(True)
-        self._workspace_list_actions: list[QtWidgets.QAction] = []
+        self._workspace_list_actions: list[QtGui.QAction] = []
 
         self._file.addSeparator()
 
         # actions on the current workspace
-        self._clone_workspace = QtWidgets.QAction("&Clone Workspace...")
+        self._clone_workspace = QtGui.QAction("&Clone Workspace...")
         self._clone_workspace.triggered.connect(self._clone_workspace_action)
         self._file.addAction(self._clone_workspace)
 
-        self._rename_workspace = QtWidgets.QAction("&Rename Workspace...")
+        self._rename_workspace = QtGui.QAction("&Rename Workspace...")
         self._rename_workspace.triggered.connect(self._rename_workspace_action)
         self._file.addAction(self._rename_workspace)
 
-        self._export_workspace = QtWidgets.QAction("Ex&port Workspace...")
+        self._export_workspace = QtGui.QAction("Ex&port Workspace...")
         self._export_workspace.triggered.connect(self._export_workspace_action)
         self._file.addAction(self._export_workspace)
 
         self._file.addSeparator()
 
-        self._export = QtWidgets.QAction("&Export Inspection Results...")
+        self._export = QtGui.QAction("&Export Inspection Results...")
         self._export.triggered.connect(self._export_action)
         self._export.setEnabled(False)
         self._file.addAction(self._export)
 
         self._file.addSeparator()
 
-        self._quit = QtWidgets.QAction("&Quit")
+        self._quit = QtGui.QAction("&Quit")
         self._quit.triggered.connect(self.close)
         self._quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         self._file.addAction(self._quit)
@@ -363,7 +363,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         known = self._registry.known
         if not known:
-            placeholder = QtWidgets.QAction("(none)", self)
+            placeholder = QtGui.QAction("(none)", self)
             placeholder.setEnabled(False)
             self._recent_workspaces.addAction(placeholder)
             self._workspace_list_actions.append(placeholder)
@@ -372,7 +372,7 @@ class MainWindow(QtWidgets.QMainWindow):
         active = str(self._ws.path)
         for i, path in enumerate(known):
             name = Workspace.name_at(path)
-            action = QtWidgets.QAction(f"{name}", self)
+            action = QtGui.QAction(f"{name}", self)
             action.setCheckable(True)
             action.setChecked(path == active)
             action.setToolTip(path)
@@ -470,7 +470,7 @@ class MainWindow(QtWidgets.QMainWindow):
         navigation_actions = []
 
         for i, action_cfg in enumerate(self._navigation_cfg):
-            action = QtWidgets.QAction(action_cfg.name)
+            action = QtGui.QAction(action_cfg.name)
             action.triggered.connect(partial(self.switch_object, action_cfg))
             if action_cfg.shortcut is not None:
                 action.setShortcut(action_cfg.shortcut)
@@ -545,11 +545,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def populate(self):
         self.setCentralWidget(self._data_viewer)
 
-        self.addToolBar(QtCore.Qt.TopToolBarArea, self._commands_bar)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._quick_search_dock)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._object_info_dock)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._inspection_res_dock)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self._subsets_dock)
+        self.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self._commands_bar)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self._quick_search_dock)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self._object_info_dock)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self._inspection_res_dock)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self._subsets_dock)
 
     def load_catalog(self):
         cat = Catalog.read(self._ws.config.catalog.filename, translate=self._ws.config.catalog.translate)

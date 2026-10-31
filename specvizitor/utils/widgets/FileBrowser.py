@@ -39,7 +39,7 @@ class FileBrowser(AbstractWidget):
     def init_ui(self):
         self._label = QtWidgets.QLabel(f"{self._title}:", self)
         if self._title_width is None:
-            self._label.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+            self._label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         else:
             self._label.setFixedWidth(self._title_width)
         if not self._title:

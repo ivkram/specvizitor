@@ -40,7 +40,7 @@ class InspectionFieldEditor(QtWidgets.QDialog):
         self._is_deleted: list[bool] | None = None
 
         super().__init__(parent=parent)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Edit Inspection Fields")
 
         self.init_ui()
@@ -52,7 +52,7 @@ class InspectionFieldEditor(QtWidgets.QDialog):
         self._set_as_default_checkbox = QtWidgets.QCheckBox('Set as default for new inspection files', self)
 
         self._button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
+            QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel, self)
 
         self._button_box.accepted.connect(self.accept)
         self._button_box.rejected.connect(self.reject)
@@ -87,8 +87,9 @@ class InspectionFieldEditor(QtWidgets.QDialog):
         if warn_columns:
             ans = QtWidgets.QMessageBox.question(
                 self, '', f"Data in the following column(s) will be deleted: {', '.join(warn_columns)}. "
-                          "Are you sure you want to proceed?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            if ans == QtWidgets.QMessageBox.No:
+                          "Are you sure you want to proceed?",
+                QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+            if ans == QtWidgets.QMessageBox.StandardButton.No:
                 accept = False
 
         if not accept:

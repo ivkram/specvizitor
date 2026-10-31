@@ -25,7 +25,7 @@ def _delete(widgets: list[QtWidgets.QWidget]):
     # segfaults, and processEvents() does not handle deferred deletions
     for widget in widgets:
         widget.deleteLater()
-    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
     widgets.clear()
     gc.collect()
 

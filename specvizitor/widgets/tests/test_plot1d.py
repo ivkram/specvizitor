@@ -45,7 +45,7 @@ def make_plot():
     # delete the pyqtgraph widgets for real: garbage-collecting them later segfaults
     for widget in widgets:
         widget.deleteLater()
-    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.DeferredDelete)
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
     gc.collect()
 
 

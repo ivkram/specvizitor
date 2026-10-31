@@ -3,7 +3,7 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Container import StackedWidget
 from pyqtgraph.dockarea.Dock import Dock
-from qtpy import QtGui, QtWidgets
+from qtpy import QtGui
 
 from functools import partial
 import logging
@@ -87,8 +87,8 @@ class Plugin(PluginCore):
 
 
     def _add_shortcuts(self, lm_docks: dict[str, Dock], parent=None):
-        QtWidgets.QShortcut('Up', parent, partial(self._switch_current_linemap, lm_docks, -1))
-        QtWidgets.QShortcut('Down', parent, partial(self._switch_current_linemap, lm_docks, 1))
+        QtGui.QShortcut('Up', parent, partial(self._switch_current_linemap, lm_docks, -1))
+        QtGui.QShortcut('Down', parent, partial(self._switch_current_linemap, lm_docks, 1))
         self._shortcuts_added = True
 
     def _switch_current_linemap(self, lm_docks: dict[str, Dock], delta_index: int):

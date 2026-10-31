@@ -24,13 +24,13 @@ class ToolBar(QtWidgets.QToolBar):
         self._navigation_cfg = navigation_cfg
         self._appearance = appearance
 
-        self._navigation_actions: tuple[QtWidgets.QAction, ...] | None = None
-        self._star_action: QtWidgets.QAction | None = None
-        self._reset_view_action: QtWidgets.QAction | None = None
-        self._reset_layout_action: QtWidgets.QAction | None = None
-        self._screenshot_action: QtWidgets.QAction | None = None
+        self._navigation_actions: tuple[QtGui.QAction, ...] | None = None
+        self._star_action: QtGui.QAction | None = None
+        self._reset_view_action: QtGui.QAction | None = None
+        self._reset_layout_action: QtGui.QAction | None = None
+        self._screenshot_action: QtGui.QAction | None = None
         self._spacer: QtWidgets.QWidget | None = None
-        self._settings_action: QtWidgets.QAction | None = None
+        self._settings_action: QtGui.QAction | None = None
 
         # not an AbstractWidget: both are QWidgets, and PySide6 refuses to initialize the shared base twice
         super().__init__(parent=parent)
@@ -46,7 +46,7 @@ class ToolBar(QtWidgets.QToolBar):
     def _create_navigation_actions(self):
         navigation_actions = []
         for action_cfg in self._navigation_cfg:
-            navigation_actions.append(QtWidgets.QAction(f"Go to the {action_cfg.name.lower()} object", self))
+            navigation_actions.append(QtGui.QAction(f"Go to the {action_cfg.name.lower()} object", self))
 
         self._navigation_actions = tuple(navigation_actions)
 
@@ -76,25 +76,25 @@ class ToolBar(QtWidgets.QToolBar):
     def init_ui(self):
         self._create_navigation_actions()
 
-        self._star_action = QtWidgets.QAction(self)
+        self._star_action = QtGui.QAction(self)
         self._star_action.setToolTip("Star the object")
 
-        self._screenshot_action = QtWidgets.QAction(self)
+        self._screenshot_action = QtGui.QAction(self)
         self._screenshot_action.setToolTip("Take a screenshot")
 
-        self._reset_view_action = QtWidgets.QAction(self)
+        self._reset_view_action = QtGui.QAction(self)
         self._reset_view_action.setToolTip("Reset the view")
 
-        self._reset_layout_action = QtWidgets.QAction(self)
+        self._reset_layout_action = QtGui.QAction(self)
         self._reset_layout_action.setToolTip("Reset the layout")
 
         for action in self._viewer_connected_actions:
             action.setEnabled(False)
 
         self._spacer = QtWidgets.QWidget(self)
-        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self._spacer.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
-        self._settings_action = QtWidgets.QAction(self)
+        self._settings_action = QtGui.QAction(self)
         self._settings_action.setToolTip("Settings")
 
         self._set_icons()
