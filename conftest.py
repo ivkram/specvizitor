@@ -4,6 +4,12 @@ os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
 import pytest
 
+# load qtpy before any test module imports pyqtgraph, so that both follow QT_API, as in main.py
+try:
+    import qtpy  # noqa: F401
+except ImportError:
+    pass
+
 
 @pytest.fixture(scope='session', autouse=True)
 def qapp():

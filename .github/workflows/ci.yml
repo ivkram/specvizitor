@@ -40,6 +40,22 @@ jobs:
       - name: Run tests
         run: uv run --locked pytest
 
+  # PyQt6 is the declared binding, but qtpy lets the app run on PySide6 as well
+  test-pyside6:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
+
+      - name: Run tests
+        run: uv run --locked --with PySide6 pytest
+        env:
+          QT_API: pyside6
+
   test-lowest:
     runs-on: ubuntu-latest
 
