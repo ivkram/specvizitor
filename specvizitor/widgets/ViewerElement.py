@@ -142,6 +142,7 @@ class ViewerElement(AbstractWidget):
         self.data_path: DataPath | None = None
         self.data = None
         self.meta: dict | Header | None = None
+        self._prepared: dict = {}
 
         self._object_loaded: bool = False
 
@@ -310,15 +311,22 @@ class ViewerElement(AbstractWidget):
         if self._object_loaded:
             self._destroy_object()
 
-    @QtCore.Slot(object, object, object)
-    def set_data(self, data, meta: dict | Header | None, data_path: DataPath | None):
+    def prepare_data(self, data, meta: dict | Header | None) -> dict:
+        """ Precompute what the main thread would otherwise derive from the data. Runs in the loader thread, so no
+        Qt calls here; the result is passed on to set_data.
+        """
+        return {}
+
+    @QtCore.Slot(object, object, object, object)
+    def set_data(self, data, meta: dict | Header | None, data_path: DataPath | None, prepared: dict | None = None):
         if data is not None and data_path is None:
             logger.error(f"Failed to set the widget data: data path not provided (widget: {self.title})")
             return
 
         self.data, self.meta, self.data_path = data, meta, data_path
+        self._prepared = prepared or {}
         if self.data is None:
-            self.meta, self.data_path = None, None
+            self.meta, self.data_path, self._prepared = None, None, {}
 
     @QtCore.Slot(int, InspectionData, object, object)
     def load_object(self, j: int, inspection_data: InspectionData, cat_entry: Catalog | None, cat: Catalog | None):

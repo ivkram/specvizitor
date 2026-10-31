@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class ViewerDataLoader(QtCore.QThread):
-    data_loaded = QtCore.Signal(object, object, object)
+    data_loaded = QtCore.Signal(object, object, object, object)
 
     def __init__(self, widgets: dict[str, ViewerElement], j: int, inspection_data: InspectionData,
                  viewer_data: ViewerData, data_sources: config.DataSources, cat_entry: Catalog | None, t_grace=0.1):
@@ -58,7 +58,7 @@ class ViewerDataLoader(QtCore.QThread):
             w0 = widgets[i]
             res = self._load_data(w0)
             if res is None:
-                res = (None, None, None)
+                res = (None, None, None, None)
             self.data_loaded.connect(w0.set_data)
             self.data_loaded.emit(*res)
             self.data_loaded.disconnect(w0.set_data)
@@ -100,7 +100,14 @@ class ViewerDataLoader(QtCore.QThread):
                                            allowed_dtypes=w0.allowed_data_types,
                                            **loader_params)
 
-        return data, meta, data_path
+        prepared = None
+        if data is not None:
+            try:
+                prepared = w0.prepare_data(data, meta)
+            except Exception as e:
+                logger.error(f"Failed to prepare the data: {e} (widget: {w0.title})")
+
+        return data, meta, data_path, prepared
 
     def _free_resources(self, w0: ViewerElement):
         if not w0.cfg.data.source:

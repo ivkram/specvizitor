@@ -48,6 +48,7 @@ class Image2D(ViewerElement):
         self.cfg = cfg
 
         self.image_item: pg.ImageItem | None = None
+        self._shows_raw_data = False
 
         self._cmap = pg.colormap.get('viridis')
         self.cbar: ColorBar | None = None
@@ -138,6 +139,7 @@ class Image2D(ViewerElement):
 
     def add_content(self, cat: Catalog | None):
         self.image_item.setImage(self.data, autoLevels=False)
+        self._shows_raw_data = True
         self.register_item(self.image_item)
 
         if self.cfg.central_axes.x:
@@ -151,31 +153,39 @@ class Image2D(ViewerElement):
         if self.cfg.show_sources and cat is not None:
             self._add_sources(cat)
 
-    @property
-    def has_defined_levels(self) -> bool:
-        return np.any(np.isfinite(self.data)) and np.any(np.nonzero(self.data))
+    def clear_content(self):
+        super().clear_content()
+        self._shows_raw_data = False
+
+    @classmethod
+    def _compute_default_levels(cls, data: np.ndarray,
+                                limits_cfg: data_widgets.ColorBarLimits) -> tuple[float, float] | None:
+        if not (np.any(np.isfinite(data)) and np.any(np.nonzero(data))):
+            return None
+
+        if limits_cfg.type not in cls.allowed_cbar_lims:
+            logger.error(f'Unknown type of colorbar limits: {limits_cfg}.'
+                         f'Supported types: {cls.allowed_cbar_lims}')
+            return None
+
+        if limits_cfg.type == 'minmax':
+            return np.nanmin(data), np.nanmax(data)
+        if limits_cfg.type == 'zscale':
+            return ZScaleInterval().get_limits(data)
+        return (limits_cfg.min if limits_cfg.min is not None else np.nanmin(data),
+                limits_cfg.max if limits_cfg.max is not None else np.nanmax(data))
+
+    def prepare_data(self, data, meta) -> dict:
+        return {'levels': self._compute_default_levels(data, self.cfg.color_bar.limits)}
 
     def setup_view(self, cat_entry: Catalog | None):
         self.set_qtransform(cat_entry)
         self.set_default_range((0., float(self.data.shape[1])), (0., float(self.data.shape[0])),
                                apply_qtransform=True)
 
-        # compute default image levels
-        if self.has_defined_levels:
-            limits_cfg = self.cfg.color_bar.limits
-            if limits_cfg.type not in self.allowed_cbar_lims:
-                logger.error(f'Unknown type of colorbar limits: {limits_cfg}.'
-                             f'Supported types: {self.allowed_cbar_lims}')
-            else:
-                if limits_cfg.type == 'minmax':
-                    l1, l2 = np.nanmin(self.data), np.nanmax(self.data)
-                elif limits_cfg.type == 'zscale':
-                    l1, l2 = ZScaleInterval().get_limits(self.data)
-                else:
-                    l1 = limits_cfg.min if limits_cfg.min is not None else np.nanmin(self.data)
-                    l2 = limits_cfg.max if limits_cfg.max is not None else np.nanmax(self.data)
-
-                self.set_default_levels((l1, l2))
+        levels = self._prepared.get('levels')
+        if levels is not None:
+            self.set_default_levels(levels)
 
         super().setup_view(cat_entry)
 
@@ -227,10 +237,12 @@ class Image2D(ViewerElement):
             # FFT algorithm is faster for large arrays (n > 500), which is a typical case for astronomy images
             smoothed_data = convolve_fft(self.data, gauss_kernel, preserve_nan=True)
             logger.debug(f"Image smoothing applied (sigma: {sigma:.2f}, widget: {self.title})")
-        else:
-            smoothed_data = self.data
-
-        self.image_item.setImage(smoothed_data, autoLevels=False)
+            self.image_item.setImage(smoothed_data, autoLevels=False)
+            self._shows_raw_data = False
+        elif not self._shows_raw_data:
+            self.image_item.setImage(self.data, autoLevels=False)
+            self._shows_raw_data = True
+        # else: setting the same image again would recompute the histogram of this and every linked colorbar
 
     def reset_levels(self):
         self.set_levels((self._default_levels.min, self._default_levels.max))

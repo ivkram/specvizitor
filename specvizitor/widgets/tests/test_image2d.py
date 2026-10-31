@@ -25,11 +25,14 @@ INSPECTION_DATA = InspectionData.create([1])
 def make_image():
     widgets = []
 
-    def _make_image(data, meta=None, cat_entry=None, cat=None, **cfg) -> Image2D:
+    def _make_image(data, meta=None, cat_entry=None, cat=None, prepared=None, **cfg) -> Image2D:
         widget = Image2D(cfg=data_widgets.Image(**cfg), title='Image', appearance=config.Appearance(),
                          spectral_lines=SpectralLineData())
         widgets.append(widget)
-        widget.set_data(np.asarray(data, dtype=float), meta, LocalPath('image.fits'))
+        data = np.asarray(data, dtype=float)
+        if prepared is None:  # as the loader does, in its thread
+            prepared = widget.prepare_data(data, meta)
+        widget.set_data(data, meta, LocalPath('image.fits'), prepared)
         widget.load_object(0, INSPECTION_DATA, cat_entry, cat)
         return widget
 
@@ -82,6 +85,35 @@ def test_zscale_levels_lie_within_the_data(make_image):
 @pytest.mark.parametrize('data', [np.zeros((5, 5)), np.full((5, 5), np.nan)])
 def test_an_empty_image_keeps_the_default_levels(make_image, data):
     assert _levels(make_image(data)) == (0, 1)
+
+
+def test_the_levels_prepared_by_the_loader_are_used(make_image):
+    # the loader thread computes them, so that the main thread does not have to
+    assert _levels(make_image(_ramp(), prepared={'levels': (3, 7)})) == (3, 7)
+
+
+def test_the_levels_are_not_computed_on_the_main_thread(make_image):
+    # e.g. if preparing the data failed in the loader: computing them again would likely fail again
+    assert _levels(make_image(_ramp(), prepared={})) == (0, 1)
+
+
+def test_resetting_an_unsmoothed_image_does_not_set_it_again(make_image):
+    # setting an image recomputes the histogram of its colorbar and of every colorbar linked to it
+    widget = make_image(_ramp())
+    images_set = []
+    widget.image_item.sigImageChanged.connect(lambda: images_set.append(1))
+    widget.reset_view()
+
+    assert images_set == []
+
+
+def test_the_data_is_shown_again_once_the_smoothing_is_undone(make_image):
+    widget = make_image(_ramp())
+    widget.smooth_data(2.0)
+    assert not np.array_equal(widget.image_item.image, _ramp())
+
+    widget.smooth_data(0)
+    assert np.array_equal(widget.image_item.image, _ramp())
 
 
 def test_reset_view_applies_the_default_levels(make_image):
