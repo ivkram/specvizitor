@@ -11,7 +11,7 @@ import re
 import shutil
 import yaml
 
-from .paths import absolute_path
+from .paths import absolute_path, atomic_write
 
 logger = logging.getLogger(__name__)
 
@@ -169,5 +169,5 @@ def read_yaml(filename) -> dict:
 
 
 def save_yaml(filename, data):
-    with open(filename, 'w') as yaml_file:
+    with atomic_write(filename) as tmp, open(tmp, 'w') as yaml_file:
         yaml.safe_dump(data, yaml_file, sort_keys=False)

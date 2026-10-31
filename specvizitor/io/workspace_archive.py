@@ -8,6 +8,7 @@ import zipfile
 
 from ..config.workspace import (WORKSPACE_CONFIG_FILENAME, WORKSPACE_LAYOUT_FILENAME, WORKSPACE_WIDGETS_FILENAME,
                                 Workspace, WorkspaceConfig)
+from ..utils.paths import atomic_write
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ def export_workspace(workspace: Workspace, dest, options: ExportOptions | None =
     workspace.save_all()
 
     try:
-        with zipfile.ZipFile(dest, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+        with atomic_write(dest) as tmp, zipfile.ZipFile(tmp, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
             if options.include_local_paths:
                 archive.write(workspace.path / WORKSPACE_CONFIG_FILENAME, arcname=WORKSPACE_CONFIG_FILENAME)
             else:

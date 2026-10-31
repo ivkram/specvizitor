@@ -8,6 +8,7 @@ from enum import Enum
 import logging
 import pathlib
 
+from ..utils.paths import atomic_write
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +61,15 @@ class WriterBase(ABC):
 
 class CSVWriter(WriterBase):
     def write(self, df: pd.DataFrame, filename: pathlib.Path):
-        df.to_csv(filename)
+        with atomic_write(filename) as tmp:
+            df.to_csv(tmp)
 
 
 class FITSWriter(WriterBase):
     def write(self, df: pd.DataFrame, filename: pathlib.Path):
         t: Table = Table.from_pandas(df.reset_index())
-        t.write(filename, overwrite=True)
+        with atomic_write(filename) as tmp:
+            t.write(tmp, format='fits')
 
 
 @dataclass
