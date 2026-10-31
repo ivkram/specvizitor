@@ -17,8 +17,7 @@ from ..config.workspace import WORKSPACE_CONFIG_FILENAME
 from ..io.catalog import Catalog
 from ..io.inspection_data import FieldType, InspectionData
 from ..io.viewer_data import set_unit_aliases
-from ..io.workspace_archive import (ARCHIVE_EXTENSION, export_workspace, import_workspace, inspect_archive,
-                                   unset_paths)
+from ..io.workspace_archive import ARCHIVE_EXTENSION, inspect_archive
 from ..plugins.plugin_core import PluginCore
 from ..utils.logs import qlog
 from ..utils.params import save_yaml
@@ -35,8 +34,8 @@ from .Subsets import Subsets
 from .Settings import Settings
 from .ToolBar import ToolBar
 from .WorkspaceDialogs import (CloneWorkspaceDialog, ExportWorkspaceDialog, ForgetWorkspaceDialog,
-                               ImportWorkspaceDialog, NewWorkspaceDialog, RenameWorkspaceDialog,
-                               ResolvePathsDialog)
+                               ImportWorkspaceDialog, NewWorkspaceDialog, OpenWorkspaceDialog,
+                               RenameWorkspaceDialog)
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +99,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._object_loaded: bool = False
         self._t_load_object_start = None
-        self._restart_requested: bool = False
         self._zen_mode_activated: bool = False
         self._was_maximized: bool = False
 
@@ -415,84 +413,58 @@ class MainWindow(QtWidgets.QMainWindow):
         self._populate_workspace_list()
 
     @QtCore.Slot()
-    @qlog
     def _new_workspace_action(self):
         dialog = NewWorkspaceDialog(self._registry, parent=self)
-        if not dialog.exec():
+        dialog.workspace_created.connect(self.switch_workspace)
+        dialog.exec()
+
+    def _open_workspace(self, path: str):
+        taken = self._registry.find_by_name(Workspace.name_at(path))
+        if taken is None or absolute_path(taken) == absolute_path(path):
+            self.switch_workspace(path)
             return
 
-        workspace = Workspace.create(dialog.workspace_path, name=dialog.workspace_name)
+        workspace = qlog(Workspace.open)(path)
         if workspace is None:
             return
 
-        self.switch_workspace(str(workspace.path))
-
-    def _open_workspace(self, path: str):
-        if not Workspace.is_workspace(path):
-            logger.error(f"Not a workspace: no {WORKSPACE_CONFIG_FILENAME} found (path: {path})")
-            return
-
-        if not self._registry.validate_name(Workspace.name_at(path), path=path):
-            return
-
-        self.switch_workspace(path)
+        dialog = OpenWorkspaceDialog(self._registry, workspace, parent=self)
+        dialog.workspace_renamed.connect(lambda _: self.switch_workspace(path))
+        dialog.exec()
 
     def _import_workspace(self, archive: str):
-        if inspect_archive(archive) is None:
+        contents = qlog(inspect_archive)(archive)
+        if contents is None:
             return
 
-        dialog = ImportWorkspaceDialog(self._registry, archive, parent=self)
-        if not dialog.exec():
-            return
-
-        imported = import_workspace(archive, dialog.workspace_path)
-        if imported is None:
-            return
-
-        imported.rename(dialog.workspace_name)
-        if unset_paths(imported.config):
-            ResolvePathsDialog(imported, parent=self).exec()
-        self.switch_workspace(str(imported.path))
+        dialog = ImportWorkspaceDialog(self._registry, archive, contents, parent=self)
+        dialog.workspace_created.connect(self.switch_workspace)
+        dialog.exec()
 
     @QtCore.Slot()
-    @qlog
     def _rename_workspace_action(self):
         dialog = RenameWorkspaceDialog(self._registry, self._ws, parent=self)
-        if not dialog.exec():
-            return
+        dialog.workspace_renamed.connect(self._workspace_renamed)
+        dialog.exec()
 
-        if dialog.workspace_name == self._ws.name:
-            return
-
-        self._ws.rename(dialog.workspace_name)
+    @QtCore.Slot(str)
+    def _workspace_renamed(self, name: str):
         self._update_window_title()
         self._populate_workspace_list()
 
     @QtCore.Slot()
-    @qlog
     def _clone_workspace_action(self):
         dialog = CloneWorkspaceDialog(self._registry, self._ws, parent=self)
-        if not dialog.exec():
-            return
-
-        copied = self._ws.copy(dialog.workspace_path, name=dialog.workspace_name)
-        if copied is None:
-            return
-
-        self.switch_workspace(str(copied.path))
+        dialog.workspace_created.connect(self.switch_workspace)
+        dialog.exec()
 
     @QtCore.Slot()
-    @qlog
     def _export_workspace_action(self):
-        dialog = ExportWorkspaceDialog(self._ws, parent=self)
-        if not dialog.exec():
-            return
-
         # the inspection results may be exported
         if self._object_loaded:
             self.data_requested.emit()
 
-        export_workspace(self._ws, dialog.destination, dialog.options)
+        ExportWorkspaceDialog(self._ws, parent=self).exec()
 
     def _add_navigation_actions(self):
         navigation_actions = []
@@ -611,7 +583,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.update_inspection_file(None)
 
     @QtCore.Slot()
-    @qlog
     def _open_file_action(self):
         """ Open an inspection file, a workspace or a workspace archive via QFileDialog.
         """
@@ -678,7 +649,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._object_loaded = False
         self._t_load_object_start = time.perf_counter()
 
-        self.ad.j = j
+        self.ad.select(j)
 
         self._load_object(self._data_viewer)
         self._update_window_title()
@@ -687,10 +658,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in widgets:
             self.object_loaded.connect(w.load_object)
 
-        obj_id = self.ad.inspection_data.get_id(self.ad.j, full=True)
-        cat_entry = self.ad.cat.get_cat_entry(obj_id)
-
-        self.object_loaded.emit(self.ad.j, self.ad.inspection_data, cat_entry)
+        self.object_loaded.emit(self.ad.j, self.ad.inspection_data, self.ad.cat_entry)
         for w in widgets:
             self.object_loaded.disconnect(w.load_object)
 
@@ -859,8 +827,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _edit_inspection_fields_action(self):
         dialog = InspectionFieldEditor(inspection_data=self.ad.inspection_data, parent=self)
         dialog.inspection_fields_updated.connect(self.update_inspection_fields)
-        if dialog.exec():
-            self.inspection_fields_updated.emit(self.ad.j, self.ad.inspection_data)
+        dialog.exec()
 
     @QtCore.Slot()
     def inspect_subset_action(self):
@@ -919,8 +886,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot()
     def settings_action(self):
-        self._restart_requested = False
-
         dialog = Settings(self.ad.cat, self._config, self._ws.config, self._spectral_lines, parent=self)
 
         dialog.appearance_changed.connect(self.update_appearance)
@@ -929,11 +894,10 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog.data_source_changed.connect(self.data_source_updated.emit)
         dialog.unit_aliases_changed.connect(self.update_unit_aliases)
 
+        dialog.reload_requested.connect(self._reload)
         dialog.restart_requested.connect(self.restart)
 
-        if dialog.exec():
-            if not self._restart_requested:
-                self._reload()
+        dialog.exec()
 
     @QtCore.Slot()
     def update_unit_aliases(self):
@@ -983,6 +947,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self._ws.config.inspection_results.default_flags = default_flags
             self._ws.config.save()
 
+        self.inspection_fields_updated.emit(self.ad.j, self.ad.inspection_data)
+
     def _about_action(self):
         package_name: str = __package__.split('.')[0]
 
@@ -1028,6 +994,5 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot()
     def restart(self):
-        self._restart_requested = True
         self.close()
         QtWidgets.QApplication.exit(MainWindow.EXIT_CODE_REBOOT)

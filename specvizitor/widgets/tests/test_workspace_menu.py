@@ -17,6 +17,7 @@ import os
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
 import sys
+import zipfile
 
 import pytest
 
@@ -35,7 +36,7 @@ RECENT_MENU_TITLE = 'Recent Wor&kspaces'
 # NewFile is in here because the sweep below triggers every File entry, and it now shares the
 # menu with the workspace commands
 DIALOG_NAMES = ('NewWorkspaceDialog', 'ImportWorkspaceDialog', 'ExportWorkspaceDialog',
-                'ResolvePathsDialog', 'CloneWorkspaceDialog', 'RenameWorkspaceDialog', 'ForgetWorkspaceDialog',
+                'CloneWorkspaceDialog', 'RenameWorkspaceDialog', 'OpenWorkspaceDialog', 'ForgetWorkspaceDialog',
                 'NewFile')
 
 
@@ -235,10 +236,43 @@ def test_triggering_the_active_workspace_does_nothing(gui, slot_errors):
 
 
 def _accepting_rename(name):
-    """A stand-in for the rename dialog that reports `name` as accepted.
+    """A stand-in for the rename dialog that renames the workspace to `name`, as accepting it does.
     """
-    return type('_Rename', (_StubDialog,), {'opened': [], 'exec': lambda self: 1,
-                                            'workspace_name': name})
+    class _Rename(_StubDialog):
+        opened: list = []
+
+        def __init__(self, registry, workspace, parent=None):
+            super().__init__()
+            self._workspace = workspace
+            self.workspace_renamed = _Recorder()
+
+        def exec(self):
+            self._workspace.rename(name)
+            self.workspace_renamed.emit(name)
+            return 1
+
+    return _Rename
+
+
+class _Recorder:
+    """Stands in for a signal: calls what is connected to it.
+    """
+
+    def __init__(self):
+        self._slots = []
+
+    def connect(self, slot):
+        self._slots.append(slot)
+
+    def emit(self, *args):
+        for slot in self._slots:
+            slot(*args)
+
+
+def _emitted(signal) -> list:
+    received = []
+    signal.connect(lambda *args: received.append(args[0] if len(args) == 1 else args))
+    return received
 
 
 def test_renaming_the_workspace_updates_the_menu_and_the_title(gui, slot_errors, monkeypatch):
@@ -274,10 +308,11 @@ def test_a_rejected_name_leaves_the_rename_dialog_standing(gui, slot_errors):
     from specvizitor.widgets.WorkspaceDialogs import RenameWorkspaceDialog
 
     dialog = RenameWorkspaceDialog(gui['registry'], gui['win']._ws)
+    renamed = _emitted(dialog.workspace_renamed)
     dialog._name_edit.setText('Other')
     dialog.accept()
 
-    assert dialog.workspace_name is None
+    assert renamed == []
     assert dialog.result() == 0, "the dialog should not have been accepted"
     assert dialog._name_edit.text() == 'Other', "the rejected name should still be there to edit"
     assert gui['win']._ws.name == 'Active'
@@ -287,10 +322,15 @@ def test_the_rename_dialog_accepts_a_free_name(gui):
     from specvizitor.widgets.WorkspaceDialogs import RenameWorkspaceDialog
 
     dialog = RenameWorkspaceDialog(gui['registry'], gui['win']._ws)
+    renamed = _emitted(dialog.workspace_renamed)
     dialog._name_edit.setText('Something Else')
     dialog.accept()
 
-    assert dialog.workspace_name == 'Something Else'
+    try:
+        assert renamed == ['Something Else']
+        assert gui['win']._ws.name == 'Something Else'
+    finally:
+        gui['win']._ws.rename('Active')
 
 
 def test_the_rename_dialog_accepts_the_current_name_unchanged(gui):
@@ -298,9 +338,11 @@ def test_the_rename_dialog_accepts_the_current_name_unchanged(gui):
     from specvizitor.widgets.WorkspaceDialogs import RenameWorkspaceDialog
 
     dialog = RenameWorkspaceDialog(gui['registry'], gui['win']._ws)
+    renamed = _emitted(dialog.workspace_renamed)
     dialog.accept()
 
-    assert dialog.workspace_name == 'Active'
+    assert dialog.result() == 1
+    assert renamed == [], "nothing was renamed"
 
 
 
@@ -319,10 +361,12 @@ def test_the_clone_dialog_refuses_a_name_already_taken(gui, slot_errors):
     from specvizitor.widgets.WorkspaceDialogs import CloneWorkspaceDialog
 
     dialog = CloneWorkspaceDialog(gui['registry'], gui['win']._ws)
+    created = _emitted(dialog.workspace_created)
     dialog._name_edit.setText('Other')
     dialog.accept()
 
-    assert dialog.workspace_path is None
+    assert created == []
+    assert dialog.result() == 0
 
 
 def test_the_clone_dialog_suffixes_again_when_the_obvious_clone_name_is_taken(gui, tmp_path):
@@ -357,16 +401,6 @@ def test_open_dispatches_an_archive_to_the_import_dialog(gui, slot_errors, tmp_p
     assert main_window_module.ImportWorkspaceDialog.opened
 
 
-def test_an_invalid_archive_does_not_reach_the_import_dialog(gui, slot_errors, tmp_path):
-    archive = tmp_path / 'broken.sviz'
-    archive.write_bytes(b'')
-
-    gui['win'].open_path(str(archive))
-
-    assert slot_errors == []
-    assert not main_window_module.ImportWorkspaceDialog.opened
-
-
 def test_open_dispatches_a_workspace_config_to_a_switch(gui, slot_errors):
     gui['win'].open_path(str(gui['other'].path / 'workspace.yml'))
 
@@ -384,13 +418,34 @@ def test_open_dispatches_a_workspace_directory_to_a_switch(gui, slot_errors):
     assert gui['registry'].active == str(gui['other'].path)
 
 
-def test_opening_an_unknown_workspace_with_a_taken_name_is_refused(gui, slot_errors, tmp_path):
+def test_opening_an_unknown_workspace_with_a_taken_name_asks_for_another(gui, slot_errors, tmp_path):
     clash = Workspace.create(tmp_path / 'clash', name='Other')
 
     gui['win'].open_path(str(clash.path))
 
     assert slot_errors == []
+    assert main_window_module.OpenWorkspaceDialog.opened
+    # the fixture's stub reports "cancelled"
     assert not gui['restarts']
+
+
+def test_the_open_dialog_proposes_a_free_name_and_renames_on_accept(gui, tmp_path):
+    from specvizitor.widgets.WorkspaceDialogs import OpenWorkspaceDialog
+
+    clash = Workspace.create(tmp_path / 'clash', name='Other')
+
+    dialog = OpenWorkspaceDialog(gui['registry'], clash)
+    renamed = _emitted(dialog.workspace_renamed)
+    assert dialog._name_edit.text() == 'Other (2)'
+
+    dialog._name_edit.setText('Other')
+    dialog.accept()
+    assert renamed == [], "the taken name should be refused"
+
+    dialog._name_edit.setText('Other (2)')
+    dialog.accept()
+    assert renamed == ['Other (2)']
+    assert Workspace.name_at(clash.path) == 'Other (2)'
 
 
 def test_open_dispatches_anything_else_to_the_inspection_file_reader(gui, slot_errors, monkeypatch):
@@ -410,13 +465,13 @@ def test_the_import_dialog_describes_a_preselected_archive(gui, tmp_path):
     The dispatch tests above see a stubbed dialog, which is exactly what let an ordering bug in
     the real one (contents described before the label existed) through.
     """
-    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace, inspect_archive
     from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
 
     archive = tmp_path / 'shared.sviz'
     assert export_workspace(gui['other'], str(archive), ExportOptions())
 
-    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive), contents=inspect_archive(archive))
 
     assert 'workspace.yml' in dialog._contents_label.text()
 
@@ -497,7 +552,8 @@ def test_exporting_onto_an_existing_archive_is_refused(gui, tmp_path):
     dialog._destination._line_edit.setText(str(tmp_path / 'taken.sviz'))
     dialog.accept()
 
-    assert dialog.destination is None
+    assert dialog.result() == 0
+    assert (tmp_path / 'taken.sviz').read_bytes() == b''
 
 
 def test_exporting_is_refused_even_when_the_extension_is_left_off(gui, tmp_path):
@@ -511,7 +567,8 @@ def test_exporting_is_refused_even_when_the_extension_is_left_off(gui, tmp_path)
     dialog._destination._line_edit.setText(str(tmp_path / 'taken'))
     dialog.accept()
 
-    assert dialog.destination is None
+    assert dialog.result() == 0
+    assert (tmp_path / 'taken.sviz').read_bytes() == b''
 
 
 def test_exporting_to_a_free_path_is_accepted(gui, tmp_path):
@@ -521,17 +578,18 @@ def test_exporting_to_a_free_path_is_accepted(gui, tmp_path):
     dialog._destination._line_edit.setText(str(tmp_path / 'fresh'))
     dialog.accept()
 
-    assert dialog.destination == tmp_path / 'fresh.sviz'
+    assert dialog.result() == 1
+    assert zipfile.is_zipfile(tmp_path / 'fresh.sviz')
 
 
 def test_the_import_dialog_names_the_archive_but_does_not_offer_to_change_it(gui, tmp_path):
-    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace, inspect_archive
     from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
 
     archive = tmp_path / 'shared.sviz'
     assert export_workspace(gui['other'], str(archive), ExportOptions())
 
-    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive), contents=inspect_archive(archive))
 
     # the archive was chosen in `File -> Open...`, so it is stated rather than browsed for
     assert dialog._archive_label.text() == 'shared.sviz'
@@ -542,35 +600,80 @@ def test_the_import_dialog_names_the_archive_but_does_not_offer_to_change_it(gui
     assert dialog._name_edit.isEnabled()
 
 
-def test_the_import_dialog_derives_the_directory_from_the_name(gui, tmp_path):
-    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
-    from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
+def test_the_import_dialog_imports_into_a_directory_derived_from_the_name(gui, tmp_path, monkeypatch):
+    import specvizitor.widgets.WorkspaceDialogs as dialogs_module
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace, inspect_archive
 
     archive = tmp_path / 'shared.sviz'
     assert export_workspace(gui['other'], str(archive), ExportOptions())
+    # the archive leaves the data paths unset, which asks for them once it is imported
+    monkeypatch.setattr(dialogs_module, 'ResolvePathsDialog',
+                        type('ResolvePathsDialog', (_StubDialog,), {'opened': []}))
 
-    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+    dialog = dialogs_module.ImportWorkspaceDialog(gui['registry'], archive=str(archive), contents=inspect_archive(archive))
+    created = _emitted(dialog.workspace_created)
     dialog._name_edit.setText('JADES DR3')
     dialog._location._line_edit.setText(str(tmp_path))
     dialog.accept()
 
-    assert dialog.workspace_name == 'JADES DR3'
-    assert dialog.workspace_path == tmp_path / 'JADES_DR3'
+    assert created == [str(tmp_path / 'JADES_DR3')]
+    assert Workspace.open(tmp_path / 'JADES_DR3').name == 'JADES DR3'
+    assert dialogs_module.ResolvePathsDialog.opened
 
 
 def test_the_import_dialog_refuses_a_name_already_taken(gui, tmp_path):
-    from specvizitor.io.workspace_archive import ExportOptions, export_workspace
+    from specvizitor.io.workspace_archive import ExportOptions, export_workspace, inspect_archive
     from specvizitor.widgets.WorkspaceDialogs import ImportWorkspaceDialog
 
     archive = tmp_path / 'shared.sviz'
     assert export_workspace(gui['other'], str(archive), ExportOptions())
 
-    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive))
+    dialog = ImportWorkspaceDialog(gui['registry'], archive=str(archive), contents=inspect_archive(archive))
+    created = _emitted(dialog.workspace_created)
     dialog._name_edit.setText('Active')
     dialog._location._line_edit.setText(str(tmp_path))
     dialog.accept()
 
-    assert dialog.workspace_path is None
+    assert created == []
+    assert not (tmp_path / 'Active').exists()
+
+
+@pytest.fixture
+def shown(monkeypatch):
+    """Collect the messages that would pop up, instead of showing them.
+    """
+    import specvizitor.utils.logs as logs_module
+    messages = []
+    monkeypatch.setattr(logs_module, 'LogMessageBox', lambda level, message, parent=None: messages.append(message))
+    return messages
+
+
+def test_an_invalid_archive_is_reported_instead_of_opening_the_import_dialog(gui, shown, slot_errors, tmp_path):
+    archive = tmp_path / 'broken.sviz'
+    archive.write_bytes(b'')
+
+    gui['win'].open_path(str(archive))
+
+    assert slot_errors == []
+    assert len(shown) == 1 and shown[0].startswith('Failed to read the archive')
+    assert not main_window_module.ImportWorkspaceDialog.opened
+
+
+def test_a_workspace_that_fails_to_open_is_reported(gui, shown, slot_errors, tmp_path, monkeypatch):
+    from specvizitor.config.workspace import WorkspaceConfig
+
+    clash = Workspace.create(tmp_path / 'clash', name='Other')
+
+    def denied(*args, **kwargs):
+        raise PermissionError('Permission denied')
+
+    monkeypatch.setattr(WorkspaceConfig, 'read_user_params', denied)
+
+    gui['win'].open_path(str(clash.path))
+
+    assert slot_errors == []
+    assert len(shown) == 1 and shown[0].startswith('Failed to open the workspace: Permission denied')
+    assert not main_window_module.OpenWorkspaceDialog.opened
 
 
 def test_the_resolve_dialog_sets_the_filled_paths_only(gui, tmp_path):
@@ -605,3 +708,27 @@ def test_the_forget_dialog_defaults_to_keeping_the_workspace(gui, tmp_path):
 
     assert dialog._button_box.button(QtWidgets.QDialogButtonBox.Cancel).isDefault()
     assert dialog._button_box.button(QtWidgets.QDialogButtonBox.Ok).text() == 'Forget Workspace'
+
+
+def test_object_loading_errors_after_open_stay_in_the_console(gui, tmp_path, monkeypatch, caplog):
+    import specvizitor.utils.logs as logs_module
+    from specvizitor.io.catalog import Catalog
+    from specvizitor.io.inspection_data import InspectionData
+
+    path = tmp_path / 'inspection.csv'
+    InspectionData.create([1, 2]).write(path)
+
+    win = gui['win']
+    win.ad.cat = Catalog.create([99])
+
+    shown = []
+    monkeypatch.setattr(logs_module, 'LogMessageBox', lambda level, message, parent=None: shown.append(message))
+    monkeypatch.setattr(qtpy.compat, 'getopenfilename', lambda *a, **kw: (str(path), ''))
+
+    with caplog.at_level('ERROR'):
+        next(a for a in _menu_entries(win) if a.text() == '&Open...').trigger()
+        gui['app'].processEvents()
+
+    assert caplog.text.count('Object not found in the catalog (ID: 1)') == 1
+    assert shown == []
+

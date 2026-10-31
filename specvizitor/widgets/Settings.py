@@ -535,6 +535,7 @@ class Settings(QtWidgets.QDialog):
     spectral_lines_changed = QtCore.Signal()
     unit_aliases_changed = QtCore.Signal()
 
+    reload_requested = QtCore.Signal()
     restart_requested = QtCore.Signal()
 
     def __init__(self, cat: Catalog, cfg: config.Config, ws_cfg: WorkspaceConfig,
@@ -640,3 +641,5 @@ class Settings(QtWidgets.QDialog):
 
         if restart:
             self.restart_requested.emit()
+        else:
+            self.reload_requested.emit()

@@ -42,7 +42,8 @@ def app():
 
 
 def _apply(inspection_data, fields, is_deleted):
-    window = SimpleNamespace(ad=SimpleNamespace(inspection_data=inspection_data))
+    window = SimpleNamespace(ad=SimpleNamespace(inspection_data=inspection_data, j=0),
+                             inspection_fields_updated=SimpleNamespace(emit=lambda *args: None))
     MainWindow.update_inspection_fields(window, fields, is_deleted, set_as_default=False)
 
 

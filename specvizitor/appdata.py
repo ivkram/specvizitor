@@ -16,6 +16,7 @@ class AppData:
     inspection_data: InspectionData | None = None
 
     j: int = None  # the index of the current object
+    cat_entry: Catalog | None = None  # the catalog entry of the current object
 
     def create(self, **kwargs):
         """ Initialize the inspection data object.
@@ -47,3 +48,9 @@ class AppData:
 
         if self.inspection_data.write(self.inspection_file):
             logger.info(f"Inspection file saved (path: {self.inspection_file})")
+
+    def select(self, j: int):
+        """ Make the object at index `j` the current one.
+        """
+        self.j = j
+        self.cat_entry = self.cat.get_cat_entry(self.inspection_data.get_id(j, full=True))

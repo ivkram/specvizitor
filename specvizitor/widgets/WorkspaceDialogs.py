@@ -6,7 +6,7 @@ import pathlib
 from ..config import WORKSPACES_DIR
 from ..config.workspace import Workspace, WorkspaceRegistry
 from ..io.workspace_archive import (ARCHIVE_EXTENSION, ARCHIVE_FILTER, ExportOptions, archive_workspace_name,
-                                    inspect_archive, unset_paths)
+                                    export_workspace, import_workspace, unset_paths)
 from ..utils.logs import qlog
 from ..utils.paths import absolute_path
 from ..utils.widgets import FileBrowser, cat_browser, data_browser
@@ -17,6 +17,7 @@ __all__ = [
     "NewWorkspaceDialog",
     "CloneWorkspaceDialog",
     "RenameWorkspaceDialog",
+    "OpenWorkspaceDialog",
     "ForgetWorkspaceDialog",
     "ImportWorkspaceDialog",
     "ExportWorkspaceDialog",
@@ -36,6 +37,8 @@ def _button_box(dialog: QtWidgets.QDialog) -> QtWidgets.QDialogButtonBox:
 
 
 class NewWorkspaceDialog(QtWidgets.QDialog):
+    workspace_created = QtCore.Signal(str)
+
     def __init__(self, registry: WorkspaceRegistry, default_name: str = 'Untitled',
                  default_location=WORKSPACES_DIR, parent=None):
         self._registry = registry
@@ -46,9 +49,6 @@ class NewWorkspaceDialog(QtWidgets.QDialog):
         self._location: FileBrowser | None = None
         self._info_label: QtWidgets.QLabel | None = None
         self._button_box: QtWidgets.QDialogButtonBox | None = None
-
-        self.workspace_path: pathlib.Path | None = None
-        self.workspace_name: str | None = None
 
         super().__init__(parent)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -82,6 +82,10 @@ class NewWorkspaceDialog(QtWidgets.QDialog):
         self.layout().addRow(self._info_label)
         self.layout().addRow(self._button_box)
 
+    @property
+    def _name(self) -> str:
+        return self._name_edit.text().strip()
+
     def _target_path(self) -> pathlib.Path | None:
         name = _safe_directory_name(self._name_edit.text())
         location = self._location.path.strip()
@@ -96,7 +100,7 @@ class NewWorkspaceDialog(QtWidgets.QDialog):
 
     @qlog
     def validate(self) -> bool:
-        if not self._registry.validate_name(self._name_edit.text().strip()):
+        if not self._registry.validate_name(self._name):
             return False
 
         target = self._target_path()
@@ -110,33 +114,46 @@ class NewWorkspaceDialog(QtWidgets.QDialog):
 
         return True
 
+    @qlog
+    def create_workspace(self) -> Workspace | None:
+        return Workspace.create(self._target_path(), name=self._name)
+
     def accept(self):
         if not self.validate():
             return
 
-        self.workspace_path = self._target_path()
-        self.workspace_name = self._name_edit.text().strip()
+        workspace = self.create_workspace()
+        if workspace is None:
+            return
+
         super().accept()
+        self.workspace_created.emit(str(workspace.path))
 
 
 class CloneWorkspaceDialog(NewWorkspaceDialog):
     def __init__(self, registry: WorkspaceRegistry, source: Workspace, parent=None):
+        self._source = source
+
         super().__init__(registry,
                          default_name=registry.unique_name(source.name),
                          default_location=source.path.parent,
                          parent=parent)
         self.setWindowTitle("Clone Workspace")
 
+    @qlog
+    def create_workspace(self) -> Workspace | None:
+        return self._source.copy(self._target_path(), name=self._name)
+
 
 class RenameWorkspaceDialog(QtWidgets.QDialog):
+    workspace_renamed = QtCore.Signal(str)
+
     def __init__(self, registry: WorkspaceRegistry, workspace: Workspace, parent=None):
         self._registry = registry
         self._workspace = workspace
 
         self._name_edit: QtWidgets.QLineEdit | None = None
         self._button_box: QtWidgets.QDialogButtonBox | None = None
-
-        self.workspace_name: str | None = None
 
         super().__init__(parent)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -146,8 +163,12 @@ class RenameWorkspaceDialog(QtWidgets.QDialog):
         self.set_layout()
         self.populate()
 
+    @property
+    def _default_name(self) -> str:
+        return self._workspace.name
+
     def init_ui(self):
-        self._name_edit = QtWidgets.QLineEdit(self._workspace.name, self)
+        self._name_edit = QtWidgets.QLineEdit(self._default_name, self)
         self._name_edit.selectAll()
 
         self._button_box = _button_box(self)
@@ -159,20 +180,54 @@ class RenameWorkspaceDialog(QtWidgets.QDialog):
         self.layout().addRow("Name:", self._name_edit)
         self.layout().addRow(self._button_box)
 
+    @property
+    def _name(self) -> str:
+        return self._name_edit.text().strip()
+
     @qlog
     def validate(self) -> bool:
-        name = self._name_edit.text().strip()
-        return name == self._workspace.name or self._registry.validate_name(name)
+        return self._registry.validate_name(self._name, path=self._workspace.path)
 
     def accept(self):
         if not self.validate():
             return
 
-        self.workspace_name = self._name_edit.text().strip()
+        name = self._name
+        renamed = name != self._workspace.name
+        if renamed:
+            self._workspace.rename(name)
+
         super().accept()
+        if renamed:
+            self.workspace_renamed.emit(name)
 
 
-# not a QMessageBox, which on Wayland is first shown in the corner of the screen
+class OpenWorkspaceDialog(RenameWorkspaceDialog):
+    """ Asks for another name for a workspace being opened, when its own is already taken by a known workspace.
+    """
+    def __init__(self, registry: WorkspaceRegistry, workspace: Workspace, parent=None):
+        self._info_label: QtWidgets.QLabel | None = None
+
+        super().__init__(registry, workspace, parent=parent)
+        self.setWindowTitle("Open Workspace")
+
+    @property
+    def _default_name(self) -> str:
+        return self._registry.unique_name(self._workspace.name)
+
+    def init_ui(self):
+        super().init_ui()
+
+        self._info_label = QtWidgets.QLabel(
+            f"Another workspace is already called `{self._workspace.name}`. Choose a different name for this one.",
+            self)
+        self._info_label.setWordWrap(True)
+
+    def populate(self):
+        self.layout().addRow(self._info_label)
+        super().populate()
+
+
 class ForgetWorkspaceDialog(QtWidgets.QDialog):
     def __init__(self, path: str, parent=None):
         self._path = path
@@ -207,8 +262,9 @@ class ForgetWorkspaceDialog(QtWidgets.QDialog):
 
 
 class ImportWorkspaceDialog(NewWorkspaceDialog):
-    def __init__(self, registry: WorkspaceRegistry, archive, parent=None):
+    def __init__(self, registry: WorkspaceRegistry, archive, contents: list[str], parent=None):
         self._archive = pathlib.Path(archive)
+        self._contents = contents
 
         self._archive_label: QtWidgets.QLabel | None = None
         self._contents_label: QtWidgets.QLabel | None = None
@@ -223,14 +279,24 @@ class ImportWorkspaceDialog(NewWorkspaceDialog):
         self._archive_label = QtWidgets.QLabel(self._archive.name, self)
         self._archive_label.setToolTip(str(self._archive))
 
-        # the archive is checked before the dialog is opened
-        self._contents_label = QtWidgets.QLabel(", ".join(sorted(inspect_archive(self._archive))), self)
+        self._contents_label = QtWidgets.QLabel(", ".join(sorted(self._contents)), self)
         self._contents_label.setWordWrap(True)
 
     def populate(self):
         self.layout().addRow("Archive:", self._archive_label)
         self.layout().addRow("Contains:", self._contents_label)
         super().populate()
+
+    @qlog
+    def create_workspace(self) -> Workspace | None:
+        workspace = import_workspace(self._archive, self._target_path())
+        if workspace is None:
+            return None
+
+        workspace.rename(self._name)
+        if unset_paths(workspace.config):
+            ResolvePathsDialog(workspace, parent=self).exec()
+        return workspace
 
 
 class ExportWorkspaceDialog(QtWidgets.QDialog):
@@ -240,9 +306,6 @@ class ExportWorkspaceDialog(QtWidgets.QDialog):
         self._checkboxes: dict[str, QtWidgets.QCheckBox] = {}
         self._destination: FileBrowser | None = None
         self._button_box: QtWidgets.QDialogButtonBox | None = None
-
-        self.options: ExportOptions | None = None
-        self.destination: pathlib.Path | None = None
 
         super().__init__(parent)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -300,12 +363,15 @@ class ExportWorkspaceDialog(QtWidgets.QDialog):
 
         return True
 
+    @qlog
+    def export(self) -> bool:
+        options = ExportOptions(**{attr: box.isChecked() for attr, box in self._checkboxes.items()})
+        return export_workspace(self._workspace, self._destination_path(), options)
+
     def accept(self):
-        if not self.validate():
+        if not self.validate() or not self.export():
             return
 
-        self.options = ExportOptions(**{attr: box.isChecked() for attr, box in self._checkboxes.items()})
-        self.destination = self._destination_path()
         super().accept()
 
 

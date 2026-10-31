@@ -91,6 +91,8 @@ class InspectionFieldEditor(QtWidgets.QDialog):
             if ans == QtWidgets.QMessageBox.No:
                 accept = False
 
-        if accept:
-            self.inspection_fields_updated.emit(self._new_fields, self._is_deleted, self._set_as_default_checkbox.isChecked())
-            super().accept()
+        if not accept:
+            return
+
+        super().accept()
+        self.inspection_fields_updated.emit(self._new_fields, self._is_deleted, self._set_as_default_checkbox.isChecked())
