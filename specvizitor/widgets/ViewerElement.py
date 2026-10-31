@@ -392,8 +392,7 @@ class ViewerElement(AbstractWidget):
                 if not np.isclose(redshift, REDSHIFT_FILL_VALUE):
                     s.set_default_value(redshift)
 
-    @QtCore.Slot(float)
-    def _register_slider_invocation(self, sname: SliderItem):
+    def _register_slider_invocation(self, sname: SliderItem, value: float):
         self._invoked_sliders.add(sname)
 
     def set_default_range(self, xrange: tuple[float, float] | None = None, yrange: tuple[float, float] | None = None,
