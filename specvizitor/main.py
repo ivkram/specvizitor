@@ -1,5 +1,6 @@
-import pyqtgraph as pg
+# qtpy first: pyqtgraph picks up the binding that is already loaded, so that both follow QT_API
 from qtpy import QtCore, QtWidgets
+import pyqtgraph as pg
 
 import argparse
 import gc

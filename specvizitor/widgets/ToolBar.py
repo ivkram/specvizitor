@@ -6,14 +6,13 @@ import pathlib
 
 from ..config import config
 from ..io.inspection_data import InspectionData
-from ..utils.widgets import AbstractWidget
 
 from .NavigationAction import NavigationAction
 
 logger = logging.getLogger(__name__)
 
 
-class ToolBar(QtWidgets.QToolBar, AbstractWidget):
+class ToolBar(QtWidgets.QToolBar):
     navigation_action_triggered = QtCore.Signal(NavigationAction)
     star_action_triggered = QtCore.Signal()
     reset_view_action_triggered = QtCore.Signal()
@@ -33,7 +32,10 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._spacer: QtWidgets.QWidget | None = None
         self._settings_action: QtWidgets.QAction | None = None
 
+        # not an AbstractWidget: both are QWidgets, and PySide6 refuses to initialize the shared base twice
         super().__init__(parent=parent)
+        self.init_ui()
+        self.populate()
         self.setWindowTitle("Commands Bar")
 
     @property
@@ -105,9 +107,6 @@ class ToolBar(QtWidgets.QToolBar, AbstractWidget):
         self._reset_layout_action.triggered.connect(self.reset_layout_action_triggered.emit)
         self._screenshot_action.triggered.connect(self.screenshot_action_triggered.emit)
         self._settings_action.triggered.connect(self.settings_action_triggered)
-
-    def set_layout(self):
-        pass
 
     def populate(self):
         for action in self._navigation_actions:

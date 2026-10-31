@@ -9,6 +9,7 @@ import pytest
 pytest.importorskip('qtpy')
 
 import pyqtgraph as pg
+import qtpy
 from qtpy import QtCore
 
 from specvizitor.config import config, data_widgets
@@ -18,6 +19,12 @@ from specvizitor.widgets.Plot1D import Plot1D
 
 class _Slider(QtCore.QObject):
     value_changed = QtCore.Signal(float)
+
+    def count_receivers(self) -> int:
+        # PySide6 only takes the signal by its signature
+        if qtpy.PYSIDE6:
+            return self.receivers(QtCore.SIGNAL('value_changed(double)'))
+        return self.receivers(self.value_changed)
 
 
 @pytest.fixture
@@ -46,7 +53,7 @@ def test_the_connections_of_an_item_follow_it(widget):
     assert line.value() == 2.0
 
     widget.remove_registered_items()
-    assert slider.receivers(slider.value_changed) == 0
+    assert slider.count_receivers() == 0
 
 
 def test_connections_do_not_pile_up_from_one_object_to_the_next(widget):
@@ -55,7 +62,7 @@ def test_connections_do_not_pile_up_from_one_object_to_the_next(widget):
         widget.remove_registered_items()  # what loading another object does
         line = _register_marker(widget, slider)
 
-    assert slider.receivers(slider.value_changed) == 1
+    assert slider.count_receivers() == 1
 
     slider.value_changed.emit(3.0)
     assert line.value() == 3.0

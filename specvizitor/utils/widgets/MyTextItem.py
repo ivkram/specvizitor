@@ -7,13 +7,9 @@ __all__ = [
 ]
 
 
-class MyTextItem(pg.TextItem, QtCore.QObject):
+class MyTextItem(pg.TextItem):
     clicked = QtCore.Signal()
     color_changed = QtCore.Signal(object)
-
-    def __init__(self, *args, **kwargs):
-        QtCore.QObject.__init__(self)
-        pg.TextItem.__init__(self, *args, **kwargs)
 
     def mousePressEvent(self, event):
         color = "r"
