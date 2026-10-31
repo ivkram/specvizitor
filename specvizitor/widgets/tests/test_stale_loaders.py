@@ -15,7 +15,8 @@ import pytest
 pytest.importorskip('qtpy')
 
 from specvizitor.config import data_widgets
-from specvizitor.widgets.ViewerDataLoader import LoaderState, ViewerDataLoader
+from specvizitor.widgets.Image2D import Image2D
+from specvizitor.widgets.ViewerDataLoader import LoadTask, LoaderState, ViewerDataLoader
 
 
 class _StubViewerData:
@@ -29,17 +30,13 @@ class _StubViewerData:
         self.calls.append(('reopen', filename))
 
 
-class _StubWidget:
-    def __init__(self, title='Spectrum', source=None):
-        self.title = title
-        self.cfg = data_widgets.Image(data=data_widgets.DataElement(source=source))
-
-    def set_data(self, *args):
-        pass
+def _task(title='Spectrum', source=None) -> LoadTask:
+    return LoadTask(title=title, cfg=data_widgets.Image(data=data_widgets.DataElement(source=source)),
+                    widget_type=Image2D)
 
 
-def _loader(state, viewer_data=None, widgets=None, j=0):
-    return ViewerDataLoader(widgets=widgets or {}, j=j, inspection_data=None, viewer_data=viewer_data,
+def _loader(state, viewer_data=None, tasks=None, j=0):
+    return ViewerDataLoader(tasks=tasks or [], j=j, inspection_data=None, viewer_data=viewer_data,
                             data_sources=None, cat_entry=None, t_grace=0, state=state)
 
 
@@ -47,7 +44,7 @@ def test_the_file_to_close_comes_from_the_loaders_not_the_widget():
     # the widget may not have received the data of a stale loader yet, so its data path can be out of date
     state, viewer_data = LoaderState(), _StubViewerData()
     state.open_files['Spectrum'] = 'spectrum_2.fits'
-    _loader(state, viewer_data)._free_resources(_StubWidget())
+    _loader(state, viewer_data)._free_resources(_task())
 
     assert viewer_data.calls == [('close', 'spectrum_2.fits')]
     assert 'Spectrum' not in state.open_files
@@ -56,21 +53,21 @@ def test_the_file_to_close_comes_from_the_loaders_not_the_widget():
 def test_a_shared_image_is_reopened_rather_than_closed():
     state, viewer_data = LoaderState(), _StubViewerData()
     state.open_files['Stamp'] = 'mosaic.fits'
-    _loader(state, viewer_data)._free_resources(_StubWidget('Stamp', source='Mosaic'))
+    _loader(state, viewer_data)._free_resources(_task('Stamp', source='Mosaic'))
 
     assert viewer_data.calls == [('reopen', 'mosaic.fits')]
 
 
 def test_nothing_is_freed_for_a_widget_without_data():
     viewer_data = _StubViewerData()
-    _loader(LoaderState(), viewer_data)._free_resources(_StubWidget())
+    _loader(LoaderState(), viewer_data)._free_resources(_task())
 
     assert viewer_data.calls == []
 
 
 def test_the_next_loader_waits_for_a_stale_one_in_its_own_thread():
     state, events = LoaderState(), []
-    widgets = {'A': _StubWidget('A'), 'B': _StubWidget('B')}
+    tasks = [_task('A'), _task('B')]
     entered = threading.Event()
 
     def slow_load(j):
@@ -81,13 +78,13 @@ def test_the_next_loader_waits_for_a_stale_one_in_its_own_thread():
             events.append(('end', j, w0.title))
         return _load_data
 
-    stale = _loader(state, widgets=widgets, j=1)
+    stale = _loader(state, tasks=tasks, j=1)
     stale._load_data = slow_load(1)
     stale.start()
     assert entered.wait(5)
     stale.abort()
 
-    successor = _loader(state, widgets=widgets, j=2)
+    successor = _loader(state, tasks=tasks, j=2)
     successor._load_data = slow_load(2)
     successor.start()
 

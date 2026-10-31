@@ -311,9 +311,10 @@ class ViewerElement(AbstractWidget):
         if self._object_loaded:
             self._destroy_object()
 
-    def prepare_data(self, data, meta: dict | Header | None) -> dict:
-        """ Precompute what the main thread would otherwise derive from the data. Runs in the loader thread, so no
-        Qt calls here; the result is passed on to set_data.
+    @classmethod
+    def prepare_data(cls, cfg: data_widgets.ViewerElement, data, meta: dict | Header | None) -> dict:
+        """ Precompute what the main thread would otherwise derive from the data. Runs in the loader thread, without
+        access to the widget; the result is passed on to set_data.
         """
         return {}
 

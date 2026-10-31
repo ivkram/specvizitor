@@ -19,7 +19,7 @@ from .ViewerElement import ViewerElement, LinkableItem, SliderItem
 from .Image2D import Image2D
 from .Plot1D import Plot1D
 from .SmartSlider import SmartSlider
-from .ViewerDataLoader import LoaderState, ViewerDataLoader
+from .ViewerDataLoader import LoadTask, LoaderState, ViewerDataLoader
 from .ItemLinker import ItemLinker, XAxisLinker, YAxisLinker, SliderLinker, ColorBarLinker
 
 logger = logging.getLogger(__name__)
@@ -60,6 +60,10 @@ class DataViewer(AbstractWidget):
 
         self._zen_mode_activated: bool = False
 
+        self._worker: ViewerDataLoader | None = None
+        self._stale_workers: list[ViewerDataLoader] = []
+        self._loader_state = LoaderState()
+
         self._data = ViewerData()
         self.open_images()
 
@@ -69,9 +73,6 @@ class DataViewer(AbstractWidget):
 
         self._cat: Catalog | None = None
 
-        self._worker: ViewerDataLoader | None = None
-        self._stale_workers: list[ViewerDataLoader] = []
-        self._loader_state = LoaderState()
         self._lock: bool = False
         self._t_worker_start = None
         self._t_old_worker_start = None
@@ -272,11 +273,15 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot(DataWidgets)
     def update_viewer_configuration(self, viewer_cfg: DataWidgets):
+        self._wait_for_loaders(abort=True)
+
         self._widget_cfg = viewer_cfg
         self.init_ui()
 
     @QtCore.Slot()
     def open_images(self):
+        self._wait_for_loaders(abort=False)
+
         if self._data_cfg.images is None:
             return
 
@@ -311,21 +316,39 @@ class DataViewer(AbstractWidget):
         t_grace = self._get_t_grace()
         self._t_old_worker_start = self._t_worker_start
 
-        self._worker = ViewerDataLoader(self.widgets, j, inspection_data, self._data, self._data_cfg, cat_entry,
+        tasks = [LoadTask(title=wt, cfg=w0.cfg, widget_type=type(w0)) for wt, w0 in self.widgets.items()]
+        self._worker = ViewerDataLoader(tasks, j, inspection_data, self._data, self._data_cfg, cat_entry,
                                         t_grace=t_grace, state=self._loader_state)
         self.loading_aborted.connect(self._worker.abort)
-        self._worker.finished.connect(self.finalize_loading)
+        self._worker.data_loaded.connect(self._set_widget_data)
+        self._worker.done.connect(self._loader_done)
         self._worker.start()
 
         if self._lock:
             self._worker.wait()
 
+    @QtCore.Slot(object, str, object, object, object, object)
+    def _set_widget_data(self, worker: ViewerDataLoader, wt: str, data, meta, data_path, prepared):
+        if worker is not self._worker or worker.aborted or wt not in self.widgets:
+            return
+        self.widgets[wt].set_data(data, meta, data_path, prepared)
+
+    @QtCore.Slot(object)
+    def _loader_done(self, worker: ViewerDataLoader):
+        if worker is self._worker and not worker.aborted:
+            self.finalize_loading()
+
     @QtCore.Slot()
     def abort_loading(self):
-        if self._worker and self._worker.isRunning():
-            self._worker.finished.disconnect(self.finalize_loading)
-
         self.loading_aborted.emit()
+
+    def _wait_for_loaders(self, abort: bool):
+        for w in self._stale_workers + [self._worker]:
+            if w is not None:
+                if abort:
+                    w.abort()
+                w.wait()
+        self._stale_workers = []
 
     def _get_t_grace(self):
         dt = 1000 if self._t_old_worker_start is None else self._t_worker_start - self._t_old_worker_start
@@ -429,12 +452,7 @@ class DataViewer(AbstractWidget):
 
     @QtCore.Slot()
     def free_resources(self):
-        # no loader may read a file once it is closed
-        for w in self._stale_workers + [self._worker]:
-            if w is not None:
-                w.abort()
-                w.wait()
-        self._stale_workers = []
+        self._wait_for_loaders(abort=True)
         self._loader_state.open_files.clear()
 
         self._data.close_all()

@@ -31,7 +31,7 @@ def make_image():
         widgets.append(widget)
         data = np.asarray(data, dtype=float)
         if prepared is None:  # as the loader does, in its thread
-            prepared = widget.prepare_data(data, meta)
+            prepared = Image2D.prepare_data(widget.cfg, data, meta)
         widget.set_data(data, meta, LocalPath('image.fits'), prepared)
         widget.load_object(0, INSPECTION_DATA, cat_entry, cat)
         return widget

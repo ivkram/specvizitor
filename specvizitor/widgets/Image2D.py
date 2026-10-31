@@ -175,8 +175,9 @@ class Image2D(ViewerElement):
         return (limits_cfg.min if limits_cfg.min is not None else np.nanmin(data),
                 limits_cfg.max if limits_cfg.max is not None else np.nanmax(data))
 
-    def prepare_data(self, data, meta) -> dict:
-        return {'levels': self._compute_default_levels(data, self.cfg.color_bar.limits)}
+    @classmethod
+    def prepare_data(cls, cfg: data_widgets.Image, data, meta) -> dict:
+        return {'levels': cls._compute_default_levels(data, cfg.color_bar.limits)}
 
     def setup_view(self, cat_entry: Catalog | None):
         self.set_qtransform(cat_entry)

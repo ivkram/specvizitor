@@ -17,7 +17,8 @@ from astropy.wcs import WCS
 
 from specvizitor.config import config as config_module
 from specvizitor.config import data_widgets
-from specvizitor.widgets.ViewerDataLoader import ViewerDataLoader
+from specvizitor.widgets.Image2D import Image2D
+from specvizitor.widgets.ViewerDataLoader import LoadTask, ViewerDataLoader
 
 AUTHORED_LOADER_PARAMS = {'extname': 'DSCI', 'cutout_size': 20}
 
@@ -47,10 +48,8 @@ class _StubCatalogEntry:
         return self._cols[name]
 
 
-class _StubWidget:
-    def __init__(self, cfg):
-        self.cfg = cfg
-        self.title = 'Cutout'
+def _task(cfg) -> LoadTask:
+    return LoadTask(title='Cutout', cfg=cfg, widget_type=Image2D)
 
 
 @pytest.fixture
@@ -59,7 +58,7 @@ def loader():
         dir='/data',
         images={'Mosaic': config_module.Image(filename='mosaic.fits')},
     )
-    return ViewerDataLoader(widgets={}, j=0, inspection_data=None, viewer_data=_StubViewerData(_wcs_header()),
+    return ViewerDataLoader(tasks=[], j=0, inspection_data=None, viewer_data=_StubViewerData(_wcs_header()),
                             data_sources=data_sources, cat_entry=_StubCatalogEntry(3.5, -30.4))
 
 
@@ -67,7 +66,7 @@ def loader():
 def widget():
     cfg = data_widgets.Image(data=data_widgets.DataElement(source='Mosaic',
                                                             loader_params=dict(AUTHORED_LOADER_PARAMS)))
-    return _StubWidget(cfg)
+    return _task(cfg)
 
 
 def test_the_cutout_centre_is_computed(loader, widget):
@@ -104,6 +103,6 @@ def test_repeated_loads_do_not_accumulate_parameters(loader, widget):
 def test_a_widget_without_a_source_passes_its_parameters_through(loader):
     cfg = data_widgets.Plot1D(data=data_widgets.DataElement(filename='spec.fits',
                                                              loader_params={'extname': 'F356W'}))
-    params = loader._get_loader_params(_StubWidget(cfg))
+    params = loader._get_loader_params(_task(cfg))
 
     assert params == {'extname': 'F356W'}
