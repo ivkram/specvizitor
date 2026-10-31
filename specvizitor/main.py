@@ -6,6 +6,7 @@ import argparse
 import gc
 import importlib
 import logging
+import os
 import pathlib
 import sys
 
@@ -41,6 +42,13 @@ def resolve_workspace(registry: WorkspaceRegistry) -> Workspace | None:
 
     logger.info("No workspace found, creating a default one")
     return Workspace.create(default_path, name=DEFAULT_WORKSPACE_NAME)
+
+
+def prefer_xwayland_on_gnome(environ=os.environ):
+    # on GNOME, Qt draws the title bar of Wayland windows itself, which is blurry and lags: use XWayland, as with Qt5
+    desktops = environ.get('XDG_CURRENT_DESKTOP', '').upper().split(':')
+    if environ.get('XDG_SESSION_TYPE') == 'wayland' and 'GNOME' in desktops:
+        environ.setdefault('QT_QPA_PLATFORM', 'xcb;wayland')
 
 
 def run_window(app: QtWidgets.QApplication, **window_kwargs) -> int:
@@ -101,6 +109,8 @@ def main():
             registry = WorkspaceRegistry.read_user_params(user_files['registry'])
             registry.set_active(migrated)
             registry.save()
+
+    prefer_xwayland_on_gnome()
 
     # one QApplication for the whole session: a restart only replaces the main window
     app = QtWidgets.QApplication(sys.argv)
