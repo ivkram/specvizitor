@@ -3,8 +3,11 @@ name = "specvizitor"
 version = "0.7.1"
 description = "Python GUI application for a visual inspection of astronomical spectroscopic data"
 authors = [
-    {name = "Ivan Kramarenko", email = "im.kramarenko@gmail.com"},
+    {name = "Ivan Kramarenko"},
     {name = "Josephine Kerutt"},
+]
+maintainers = [
+    {name = "Ivan Kramarenko", email = "im.kramarenko@gmail.com"},
 ]
 requires-python = ">=3.11"
 readme = "README.md"
