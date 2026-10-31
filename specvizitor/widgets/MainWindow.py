@@ -83,7 +83,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super().__init__(parent)
 
-        self.rd = AppData()
+        self.ad = AppData()
 
         self._config = config if config else Config()
         self._spectral_lines = spectral_lines if spectral_lines else SpectralLineData()
@@ -595,14 +595,14 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         dialog = NewFile(cfg=self._ws.config, parent=self)
         dialog.catalog_changed.connect(self.update_catalog)
-        dialog.output_path_selected.connect(self.update_output_path)
+        dialog.inspection_file_selected.connect(self.update_inspection_file)
         if dialog.exec():
-            self.rd.create(flags=self._ws.config.inspection_results.default_flags)
-            if self.rd.inspection_data is not None:
+            self.ad.create(flags=self._ws.config.inspection_results.default_flags)
+            if self.ad.inspection_data is not None:
                 self.load_inspection_data()
             else:
                 self.update_catalog(None)
-                self.update_output_path(None)
+                self.update_inspection_file(None)
 
     @QtCore.Slot()
     @qlog
@@ -635,9 +635,9 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         path = pathlib.Path(path)
         if path.exists():
-            self.update_output_path(path)
-            self.rd.read()
-            if self.rd.cat is None:
+            self.update_inspection_file(path)
+            self.ad.read()
+            if self.ad.cat is None:
                 self.update_catalog(None)  # in case the catalog hasn't been initialized before
             self.load_inspection_data(cached_index)
         else:
@@ -649,11 +649,11 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in (self._export, self._redshift_menu, self._star_object, self._edit_inspection_fields, self._reset_view,
                   self._reset_dock_layout, self._inspect_subset):
             w.setEnabled(True)
-        self.update_navigation_actions(self.rd.inspection_data.has_data("starred"))
+        self.update_navigation_actions(self.ad.inspection_data.has_data("starred"))
 
-        self.inspection_data_loaded.emit(self.rd.inspection_data)
+        self.inspection_data_loaded.emit(self.ad.inspection_data)
 
-        if j is None or (j < 0 or j >= self.rd.inspection_data.n_objects):
+        if j is None or (j < 0 or j >= self.ad.inspection_data.n_objects):
             j = 0
 
         self._object_loaded = False
@@ -672,7 +672,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._object_loaded = False
         self._t_load_object_start = time.perf_counter()
 
-        self.rd.j = j
+        self.ad.j = j
 
         self._load_object(self._data_viewer)
         self._update_window_title()
@@ -681,10 +681,10 @@ class MainWindow(QtWidgets.QMainWindow):
         for w in widgets:
             self.object_loaded.connect(w.load_object)
 
-        obj_id = self.rd.inspection_data.get_id(self.rd.j, full=True)
-        cat_entry = self.rd.cat.get_cat_entry(obj_id)
+        obj_id = self.ad.inspection_data.get_id(self.ad.j, full=True)
+        cat_entry = self.ad.cat.get_cat_entry(obj_id)
 
-        self.object_loaded.emit(self.rd.j, self.rd.inspection_data, cat_entry)
+        self.object_loaded.emit(self.ad.j, self.ad.inspection_data, cat_entry)
         for w in widgets:
             self.object_loaded.disconnect(w.load_object)
 
@@ -693,28 +693,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self._load_object(self._commands_bar, self._inspection_res,self._subsets, self._object_info)
         self._object_loaded = True
 
-        self._ws.state.last_object_index = self.rd.j
+        self._ws.state.last_object_index = self.ad.j
         self._ws.state.save()
 
-        logger.info(f"Object loaded (ID: {self.rd.inspection_data.get_id(self.rd.j)}, loading time: {time.perf_counter()-self._t_load_object_start:.3f} s)")
+        logger.info(f"Object loaded (ID: {self.ad.inspection_data.get_id(self.ad.j)}, loading time: {time.perf_counter()-self._t_load_object_start:.3f} s)")
 
     @QtCore.Slot(NavigationAction)
     def switch_object(self, action: NavigationAction):
-        if action.starred_only and not self.rd.inspection_data.has_data("starred"):
+        if action.starred_only and not self.ad.inspection_data.has_data("starred"):
             logger.error("No starred objects found")
             return
 
-        j_upd = self._update_index(self.rd.j, action.direction)
+        j_upd = self._update_index(self.ad.j, action.direction)
         subset_only = self._subset_cat and not self._subset_inspection_paused
 
         while True:
             update_index = False
 
-            if action.starred_only and not self.rd.inspection_data.get_value(j_upd, 'starred'):
+            if action.starred_only and not self.ad.inspection_data.get_value(j_upd, 'starred'):
                 update_index = True
 
             if subset_only:
-                subset_entry = self._subset_cat.get_cat_entry(self.rd.inspection_data.get_id(j_upd, full=True),
+                subset_entry = self._subset_cat.get_cat_entry(self.ad.inspection_data.get_id(j_upd, full=True),
                                                               ignore_missing=True)
                 if subset_entry is None:
                     update_index = True
@@ -723,7 +723,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 break
 
             j_upd = self._update_index(j_upd, action.direction)
-            if j_upd == self.rd.j:  # did the full cycle
+            if j_upd == self.ad.j:  # did the full cycle
                 logger.warning(f"No (other) objects with requested properties found (starred: {action.starred_only}, "
                                f"included in the subset: {subset_only})")
                 break
@@ -738,34 +738,34 @@ class MainWindow(QtWidgets.QMainWindow):
         elif command is Direction.PREVIOUS:
             j_upd -= 1
 
-        j_upd = j_upd % self.rd.inspection_data.n_objects
+        j_upd = j_upd % self.ad.inspection_data.n_objects
         return j_upd
 
     @QtCore.Slot(str)
     def load_by_id(self, obj_id: str):
-        if self.rd.inspection_data.validate_id(obj_id):
+        if self.ad.inspection_data.validate_id(obj_id):
             self.setFocus()
-            self.load_object(self.rd.inspection_data.get_id_loc(obj_id))
+            self.load_object(self.ad.inspection_data.get_id_loc(obj_id))
 
     @QtCore.Slot(int)
     def load_by_index(self, index: int):
-        if self.rd.inspection_data.validate_index(index):
+        if self.ad.inspection_data.validate_index(index):
             self.setFocus()
             self.load_object(index - 1)
 
     def _reload(self):
-        if self.rd.j is not None:
-            self.load_object(self.rd.j)
+        if self.ad.j is not None:
+            self.load_object(self.ad.j)
 
     def _update_window_title(self):
         title = ''
-        if self.rd.output_path is not None:
-            title += f'{self.rd.output_path.name} – '
-        if self.rd.j is not None:
-            obj_id = self.rd.inspection_data.get_id(self.rd.j, full=True)
+        if self.ad.inspection_file is not None:
+            title += f'{self.ad.inspection_file.name} – '
+        if self.ad.j is not None:
+            obj_id = self.ad.inspection_data.get_id(self.ad.j, full=True)
             obj_id = obj_id if isinstance(obj_id, tuple) else (obj_id,)
             id_str = ', '.join(map(str, obj_id))
-            title += f"ID {id_str} [#{self.rd.j + 1}/{self.rd.inspection_data.n_objects}] – "
+            title += f"ID {id_str} [#{self.ad.j + 1}/{self.ad.inspection_data.n_objects}] – "
         title += APPLICATION
         if self._ws is not None and self._ws.name:
             title += f' [{self._ws.name}]'
@@ -773,11 +773,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _export_action(self):
         path = qtpy.compat.getsavefilename(self, caption='Export To FITS',
-                                           basedir=str(self.rd.output_path.with_suffix('.fits')),
+                                           basedir=str(self.ad.inspection_file.with_suffix('.fits')),
                                            filters='FITS Files (*.fits)')[0]
 
         if path:
-            self.rd.inspection_data.write(path, 'fits')
+            self.ad.inspection_data.write(path, 'fits')
 
     @QtCore.Slot(bool)
     def star_object(self, starred: bool):
@@ -836,10 +836,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showMaximized()
 
     def _edit_inspection_fields_action(self):
-        dialog = InspectionFieldEditor(inspection_data=self.rd.inspection_data, parent=self)
+        dialog = InspectionFieldEditor(inspection_data=self.ad.inspection_data, parent=self)
         dialog.inspection_fields_updated.connect(self.update_inspection_fields)
         if dialog.exec():
-            self.inspection_fields_updated.emit(self.rd.j, self.rd.inspection_data)
+            self.inspection_fields_updated.emit(self.ad.j, self.ad.inspection_data)
 
     @QtCore.Slot()
     def inspect_subset_action(self):
@@ -848,7 +848,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._load_subset(path)
 
     def _load_subset(self, path: str, reset_index=True):
-        if self.rd.inspection_data is None:
+        if self.ad.inspection_data is None:
             self._clear_last_subset_file()
             return
 
@@ -888,8 +888,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot()
     def screenshot_action(self):
-        obj_id = self.rd.inspection_data.get_id(self.rd.j)
-        default_filename = f'{self.rd.output_path.stem.replace(" ", "_")}_ID{obj_id}.png'
+        obj_id = self.ad.inspection_data.get_id(self.ad.j)
+        default_filename = f'{self.ad.inspection_file.stem.replace(" ", "_")}_ID{obj_id}.png'
         screenshot_location = self._config.data_viewer.default_screenshot_location
         basedir = str(absolute_path(screenshot_location if screenshot_location is not None else "") / default_filename)
         path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=basedir, filters='Images (*.png)')
@@ -900,7 +900,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def settings_action(self):
         self._restart_requested = False
 
-        dialog = Settings(self.rd.cat, self._config, self._ws.config, self._spectral_lines, parent=self)
+        dialog = Settings(self.ad.cat, self._config, self._ws.config, self._spectral_lines, parent=self)
 
         dialog.appearance_changed.connect(self.update_appearance)
         dialog.catalog_changed.connect(self.update_catalog)
@@ -925,18 +925,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(object)
     def update_catalog(self, cat: Catalog | None):
-        if cat is None and self.rd.inspection_data is not None:
-            self.rd.cat = Catalog.create(self.rd.inspection_data.ids_full)
+        if cat is None and self.ad.inspection_data is not None:
+            self.ad.cat = Catalog.create(self.ad.inspection_data.ids_full)
         else:
-            self.rd.cat = cat
-        self.catalog_updated.emit(self.rd.cat)
+            self.ad.cat = cat
+        self.catalog_updated.emit(self.ad.cat)
 
     @QtCore.Slot(pathlib.Path)
-    def update_output_path(self, path: pathlib.Path | None):
+    def update_inspection_file(self, path: pathlib.Path | None):
         if self._object_loaded:
             self.data_requested.emit()
 
-        self.rd.output_path = path
+        self.ad.inspection_file = path
         self._ws.state.last_inspection_file = None if path is None else str(path)
         self._ws.state.save()
         self._update_window_title()
@@ -944,21 +944,21 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot(list, list, bool)
     def update_inspection_fields(self, fields: list[tuple[str, str]], is_deleted: list[bool], set_as_default: bool):
         # the editor lists every field, in this order, followed by the new ones
-        old_columns = list(self.rd.inspection_data.fields)
+        old_columns = list(self.ad.inspection_data.fields)
         new_names = {}
         for i, old_name in enumerate(old_columns):
             new_name = fields[i][0]
             if is_deleted[i]:
-                self.rd.inspection_data.delete_column(column_name=old_name)
+                self.ad.inspection_data.delete_column(column_name=old_name)
             elif old_name != new_name:
                 new_names[old_name] = new_name
-        self.rd.inspection_data.rename_columns(new_names)
+        self.ad.inspection_data.rename_columns(new_names)
 
         for new_name, new_type in fields[len(old_columns):]:
-            self.rd.inspection_data.add_field(new_name, FieldType(new_type))
+            self.ad.inspection_data.add_field(new_name, FieldType(new_type))
 
         if set_as_default:
-            default_flags = self.rd.inspection_data.flag_columns
+            default_flags = self.ad.inspection_data.flag_columns
             self._ws.config.inspection_results.default_flags = default_flags
             self._ws.config.save()
 
@@ -978,7 +978,7 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.about(self, f"About {package_name.capitalize()}", f"<p>{'<br>'.join(msg)}</p>")
 
     def closeEvent(self, a0):
-        if self.rd.j is not None:
+        if self.ad.j is not None:
             self.data_requested.emit()
 
         self.window_closed.emit()
@@ -998,12 +998,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(bool, float, str, dict)
     def save_inspection_data(self, starred: bool, redshift: float, comments: str, checkboxes: dict[str, bool]):
-        self.rd.inspection_data.update_value(self.rd.j, "starred", starred)
-        self.rd.inspection_data.update_value(self.rd.j, "z_sviz", redshift)
-        self.rd.inspection_data.update_value(self.rd.j, "comment", comments)
+        self.ad.inspection_data.update_value(self.ad.j, "starred", starred)
+        self.ad.inspection_data.update_value(self.ad.j, "z_sviz", redshift)
+        self.ad.inspection_data.update_value(self.ad.j, "comment", comments)
         for cname, is_checked in checkboxes.items():
-            self.rd.inspection_data.update_value(self.rd.j, cname, is_checked)
-        self.rd.save()
+            self.ad.inspection_data.update_value(self.ad.j, cname, is_checked)
+        self.ad.save()
 
     @QtCore.Slot()
     def restart(self):

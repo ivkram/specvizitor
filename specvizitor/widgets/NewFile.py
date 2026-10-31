@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class NewFile(QtWidgets.QDialog):
-    output_path_selected = QtCore.Signal(pathlib.Path)
+    inspection_file_selected = QtCore.Signal(pathlib.Path)
     catalog_changed = QtCore.Signal(object)
 
     def __init__(self, cfg: WorkspaceConfig, parent=None):
@@ -42,11 +42,11 @@ class NewFile(QtWidgets.QDialog):
         self.setFixedWidth(self.layout().sizeHint().width())
 
     def init_ui(self):
-        width = 135
+        width = 145
         self._browsers = {
-            'output': FileBrowser(filename_extensions='CSV Files (*.csv)',
-                                  mode=FileBrowser.SaveFile, default_path=absolute_path("Untitled.csv"),
-                                  title="Output File", title_width=width, parent=self),
+            'inspection_file': FileBrowser(filename_extensions='CSV Files (*.csv)',
+                                           mode=FileBrowser.SaveFile, default_path=absolute_path("Untitled.csv"),
+                                           title="Inspection File", title_width=width, parent=self),
             'data': data_browser(self.cfg.data.dir, title="Data Source", title_width=width, parent=self),
             'cat': cat_browser(self.cfg.catalog.filename, title="Catalog", title_width=width, parent=self)
         }
@@ -73,7 +73,6 @@ class NewFile(QtWidgets.QDialog):
         self._id_pattern_label.setToolTip('A regular expression used to match the object IDs during the scan of '
                                           'the data directory. If more than\none ID is matched to the pattern for a '
                                           'given filename, only the longest match will be returned.')
-        self._id_pattern_label.setFixedWidth(120)
         self._id_pattern_label.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
         self._id_pattern = QtWidgets.QLineEdit(self.cfg.data.id_pattern, self)
@@ -95,7 +94,7 @@ class NewFile(QtWidgets.QDialog):
         self.setFixedHeight(450)
 
     def populate(self):
-        self.layout().addWidget(self._browsers['output'])
+        self.layout().addWidget(self._browsers['inspection_file'])
 
         self.layout().addWidget(self._browsers['data'])
 
@@ -153,7 +152,7 @@ class NewFile(QtWidgets.QDialog):
             return
 
         self.catalog_changed.emit(cat)
-        self.output_path_selected.emit(pathlib.Path(self._browsers['output'].path))
+        self.inspection_file_selected.emit(pathlib.Path(self._browsers['inspection_file'].path))
 
         self.cfg.data.dir = self._browsers['data'].path
         if not self._browsers['cat'].isHidden():

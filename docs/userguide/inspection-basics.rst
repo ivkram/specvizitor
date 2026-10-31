@@ -8,7 +8,7 @@ Every round of inspections starts with creating a new *inspection file*. To get 
 
 .. figure:: ../screenshots/new_file.png
 
-**First**, specify the name of the output file which specvizitor will use to store the results of inspections (redshifts, for example). This file will always have at least the following columns:
+**First**, specify the name of the inspection file, which specvizitor will use to store the results of inspections (redshifts, for example). This file will always have at least the following columns:
 
 .. list-table::
     :header-rows: 1
@@ -27,7 +27,7 @@ Every round of inspections starts with creating a new *inspection file*. To get 
 
 
 
-The output file (also known as the *inspection file*) is stored in the comma-separated values (CSV) format, enabling a quick access to inspection results from any text editor. Optionally, you can export inspection results as a FITS table (see :ref:`export-fits-table`).
+The inspection file is stored in the comma-separated values (CSV) format, enabling a quick access to inspection results from any text editor. Optionally, you can export inspection results as a FITS table (see :ref:`export-fits-table`).
 
 **Second**, specify the path to the data directory. The files stored in the data directory must respect the filename format defined in the widget configuration (see :doc:`data-viewer`). By default, specvizitor assumes the Grizli filename format (``{root}_{id:05d}.*.fits``).
 
@@ -72,7 +72,7 @@ Click :guilabel:`OK` (twice). The new field will appear in :guilabel:`Inspection
 .. figure:: ../screenshots/new_inspection_field.png
     :width: 10 cm
 
-This field will also appear as a boolean column in the output file (``*.csv``).
+This field will also appear as a boolean column in the inspection file (``*.csv``).
 
 .. note::
     At any time, inspection fields can be renamed or deleted using the same editor. If you attempt to delete an inspection field that has some data, you will be prompted to confirm this action.

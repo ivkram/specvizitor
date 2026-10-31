@@ -78,7 +78,7 @@ In this demo, we will be using data from the JWST Cycle 2 program "`ALT <https:/
 
 #. Save the redshift of the last object and close the window.
 
-#. Finally, check the contents of the output file (also known as the *inspection file*):
+#. Finally, check the contents of the inspection file:
 
    .. csv-table:: demo.csv
 
