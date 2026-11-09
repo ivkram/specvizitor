@@ -3,9 +3,6 @@ import pathlib
 
 from qtpy import QtCore, QtWidgets
 
-from astropy.table import Table
-
-from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..utils.widgets import AbstractWidget
 
@@ -23,7 +20,7 @@ class Subsets(AbstractWidget):
         self._stop_inspecting: QtWidgets.QPushButton | None = None
         self._subset_info: QtWidgets.QLabel | None = None
 
-        self._subset_cat: Catalog | None = None
+        self._subset_positions: dict[int, int] | None = None  # object index -> position in the subset
         self._subset_name: str | None = None
 
         super().__init__(parent=parent)
@@ -71,8 +68,8 @@ class Subsets(AbstractWidget):
         self.setEnabled(True)
 
     @QtCore.Slot(str, object)
-    def load_subset(self, subset_path: str, subset: Table):
-        self._subset_cat = subset
+    def load_subset(self, subset_path: str, subset_positions: dict[int, int]):
+        self._subset_positions = subset_positions
         self._subset_name = pathlib.Path(subset_path).name
 
         self._pause_inspecting.setEnabled(True)
@@ -84,18 +81,14 @@ class Subsets(AbstractWidget):
     def set_subset_info(self, obj_str: str | None = None):
         if obj_str is None:
             obj_str = '--'
-        self._subset_info.setText(f"Subset: {self._subset_name}\nObject: {obj_str}/{len(self._subset_cat)}")
+        self._subset_info.setText(f"Subset: {self._subset_name}\nObject: {obj_str}/{len(self._subset_positions)}")
         self._subset_info.setToolTip(self._subset_name)
 
     @QtCore.Slot(int, InspectionData)
     def load_object(self, j: int, inspection_data: InspectionData):
-        if self._subset_cat:
-            subset_entry = self._subset_cat.get_cat_entry(inspection_data.get_id(j, full=True), ignore_missing=True)
-            if subset_entry is None:
-                self.set_subset_info()
-            else:
-                j_subset = subset_entry.get_col('__index__')
-                self.set_subset_info(str(j_subset + 1))
+        if self._subset_positions is not None:
+            k = self._subset_positions.get(j)
+            self.set_subset_info(None if k is None else str(k + 1))
 
     @QtCore.Slot(bool)
     def pause_subset_inspection(self, is_paused: bool):
@@ -104,7 +97,7 @@ class Subsets(AbstractWidget):
 
     @QtCore.Slot()
     def stop_subset_inspection(self):
-        self._subset_cat = None
+        self._subset_positions = None
         self._subset_name = None
         self._pause_inspecting.setText('Pause')
 

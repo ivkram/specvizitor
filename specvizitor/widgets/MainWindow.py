@@ -9,8 +9,6 @@ from typing import ClassVar
 import qtpy.compat
 from qtpy import QtCore, QtGui, QtWidgets
 
-import numpy as np
-
 from .. import APPLICATION
 from ..appdata import AppData
 from ..config import Config, DataWidgets, SpectralLineData, Workspace, WorkspaceRegistry
@@ -110,6 +108,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._was_maximized: bool = False
 
         self._subset_cat: Catalog | None = None
+        self._subset_path: str | None = None
+        self._subset_positions: dict[int, int] = {}  # object index -> position in the subset
         self._subset_inspection_paused: bool = False
 
         self._navigation_cfg: tuple[NavigationAction, ...]
@@ -636,6 +636,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_navigation_actions(self.ad.inspection_data.has_data("starred"))
 
         self.inspection_data_loaded.emit(self.ad.inspection_data)
+        if self._subset_cat is not None:
+            self._locate_subset()  # the new inspection file might order the objects differently
 
         if j is None or (j < 0 or j >= self.ad.inspection_data.n_objects):
             j = 0
@@ -694,11 +696,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if action.starred_only and not self.ad.inspection_data.get_value(j_upd, 'starred'):
                 update_index = True
 
-            if subset_only:
-                subset_entry = self._subset_cat.get_cat_entry(self.ad.inspection_data.get_id(j_upd, full=True),
-                                                              ignore_missing=True)
-                if subset_entry is None:
-                    update_index = True
+            if subset_only and j_upd not in self._subset_positions:
+                update_index = True
 
             if not update_index:
                 break
@@ -853,15 +852,31 @@ class MainWindow(QtWidgets.QMainWindow):
             self._clear_last_subset_file()
             return
 
-        subset.add_column(np.arange(len(subset)), name='__index__', index=0)
-
         self._subset_cat = subset
+        self._subset_path = path
+        if not self._locate_subset():
+            self.stop_subset_inspection()
+            return
+
         self._ws.state.last_subset_file = path
         self._ws.state.save()
-        self.subset_loaded.emit(path, subset)
 
         if reset_index:
-            self.load_by_id(self._subset_cat.get_col('id')[0])
+            self.load_object(min(self._subset_positions))
+
+    def _locate_subset(self) -> bool:
+        """ Number the subset objects in the order of the inspection file, which the subset catalog need not follow.
+        """
+        rows = self.ad.inspection_data.rows_in(self._subset_cat)
+        self._subset_positions = {int(j): k for k, j in enumerate(rows)}
+
+        if len(rows) == 0:
+            logger.error("None of the subset objects are in the inspection file")
+        elif len(rows) < len(self._subset_cat):
+            logger.warning(f"{len(self._subset_cat) - len(rows)} subset object(s) not found in the inspection file")
+
+        self.subset_loaded.emit(self._subset_path, self._subset_positions)
+        return len(rows) > 0
 
     @QtCore.Slot()
     def pause_subset_inspection(self):
@@ -871,6 +886,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.Slot()
     def stop_subset_inspection(self):
         self._subset_cat = None
+        self._subset_positions = {}
         self._subset_inspection_paused = False
 
         self._clear_last_subset_file()

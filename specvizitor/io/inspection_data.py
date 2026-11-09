@@ -271,6 +271,23 @@ class InspectionData:
 
         return int(j)
 
+    def rows_in(self, cat) -> np.ndarray:
+        """ Find the objects that a catalog lists.
+        @param cat: the catalog, indexed by the same ID columns as the inspection data
+        @return: the indices of the matching objects, in the order of the inspection file
+        """
+        n_levels = self.df.index.nlevels
+        if len(cat.indices) < n_levels:
+            return np.array([], dtype=int)
+
+        cols = []
+        for cname in cat.indices[:n_levels]:
+            col = np.asarray(cat.table[cname])
+            cols.append(np.char.decode(col) if col.dtype.kind == 'S' else col)  # FITS strings are read as bytes
+
+        keys = cols[0] if n_levels == 1 else pd.MultiIndex.from_arrays(cols)
+        return np.flatnonzero(self.df.index.isin(keys))
+
     def update_value(self, j: int, cname: str, value):
         self.df.iat[j, self.df.columns.get_loc(cname)] = value
 

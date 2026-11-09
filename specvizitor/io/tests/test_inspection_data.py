@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 import pytest
+from astropy.table import Table
 
+from specvizitor.io.catalog import Catalog
 from specvizitor.io.inspection_data import FieldType, InspectionData
 
 
@@ -90,3 +92,25 @@ def test_a_file_with_secondary_ids_is_read_with_a_multi_index(tmp_path):
 
     assert inspection_data.indices == ['id', 'id2']
     assert inspection_data.get_id(1, full=True) == (1, 11)
+
+
+def test_a_catalog_is_located_in_the_order_of_the_inspection_file():
+    inspection_data = InspectionData.create([5, 3, 8, 1])
+
+    rows = inspection_data.rows_in(Catalog.create([1, 9, 5, 8]))  # 9 is not under inspection
+
+    assert list(rows) == [0, 2, 3]
+
+
+def test_a_catalog_is_located_by_secondary_ids_too():
+    inspection_data = InspectionData.create([1, 1, 2], [10, 11, 10])
+
+    assert list(inspection_data.rows_in(Catalog.create([(2, 10), (1, 11)]))) == [1, 2]
+    assert len(inspection_data.rows_in(Catalog.create([1, 2]))) == 0  # the secondary IDs are missing
+
+
+def test_a_catalog_with_string_ids_from_a_fits_file_is_located(tmp_path):
+    path = tmp_path / 'subset.fits'
+    Table({'id': ['b', 'x', 'a']}).write(path)
+
+    assert list(InspectionData.create(['a', 'b', 'c']).rows_in(Catalog.read(str(path)))) == [0, 1]
