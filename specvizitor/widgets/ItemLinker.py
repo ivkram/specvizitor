@@ -1,16 +1,15 @@
 import abc
 import logging
 
-from .ViewerElement import ViewerElement, SliderItem
 from .Image2D import Image2D
-
+from .ViewerElement import SliderItem, ViewerElement
 
 __all__ = [
+    "ColorBarLinker",
     "ItemLinker",
-    "XAxisLinker",
-    "YAxisLinker",
     "SliderLinker",
-    "ColorBarLinker"
+    "XAxisLinker",
+    "YAxisLinker"
 ]
 
 logger = logging.getLogger(__name__)
@@ -20,9 +19,7 @@ class ItemLinker(abc.ABC):
     allowed_widget_type: type[ViewerElement] = ViewerElement
 
     def _validate(self, *args):
-        if any(not isinstance(a, self.allowed_widget_type) for a in args):
-            return False
-        return True
+        return all(isinstance(a, self.allowed_widget_type) for a in args)
 
     @abc.abstractmethod
     def _get_link_from_cfg(self, w1: ViewerElement) -> str:
@@ -35,7 +32,7 @@ class ItemLinker(abc.ABC):
     def link(self, w1: ViewerElement, w2: ViewerElement, links: dict):
         if not self._validate(w1, w2):
             return
-        if not self._get_link_from_cfg(w1) == w2.title:
+        if self._get_link_from_cfg(w1) != w2.title:
             return
 
         if w1.title == w2.title:
@@ -51,7 +48,7 @@ class ItemLinker(abc.ABC):
         pass
 
     def unlink(self, w1: ViewerElement, w2: ViewerElement, links: dict):
-        if not links.get(w1.title) == w2.title:
+        if links.get(w1.title) != w2.title:
             return
 
         self._unlink(w1, w2)

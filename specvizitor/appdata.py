@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 import logging
 import pathlib
+from dataclasses import dataclass
 
 from .io.catalog import Catalog
 from .io.inspection_data import InspectionData

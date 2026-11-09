@@ -8,9 +8,10 @@ import pytest
 
 pytest.importorskip('qtpy')
 
-import pyqtgraph as pg
 import qtpy
 from qtpy import QtCore
+
+import pyqtgraph as pg
 
 from specvizitor.config import config, data_widgets
 from specvizitor.config.spectral_lines import SpectralLineData

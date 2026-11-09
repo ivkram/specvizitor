@@ -1,4 +1,4 @@
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 
 class Section(QtWidgets.QWidget):
@@ -52,7 +52,7 @@ class Section(QtWidgets.QWidget):
         self.contentArea.setLayout(content_layout)
         collapsed_height = self.sizeHint().height() - self.contentArea.maximumHeight()
         content_height = content_layout.sizeHint().height()
-        for i in range(0, self.toggleAnimation.animationCount() - 1):
+        for i in range(self.toggleAnimation.animationCount() - 1):
             section_animation = self.toggleAnimation.animationAt(i)
             section_animation.setDuration(self.animationDuration)
             section_animation.setStartValue(collapsed_height)

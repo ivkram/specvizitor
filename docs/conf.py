@@ -1,6 +1,6 @@
-from datetime import UTC, datetime
 import pathlib
 import tomllib
+from datetime import UTC, datetime
 
 # Configuration file for the Sphinx documentation builder.
 #

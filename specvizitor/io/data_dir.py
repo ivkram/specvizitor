@@ -1,9 +1,8 @@
-import numpy as np
-
 import logging
 import pathlib
 import re
 
+import numpy as np
 
 __all__ = [
     "get_ids_from_dir"

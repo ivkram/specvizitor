@@ -1,6 +1,6 @@
-from qtpy import QtWidgets, QtCore, QtGui
-
 import logging
+
+from qtpy import QtCore, QtGui, QtWidgets
 
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData

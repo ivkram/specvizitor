@@ -1,7 +1,7 @@
-from qtpy import QtCore, QtWidgets
-
-from functools import partial
 import re
+from functools import partial
+
+from qtpy import QtCore, QtWidgets
 
 from .FileBrowser import FileBrowser
 
@@ -79,9 +79,8 @@ class TableRowEditor(QtWidgets.QDialog):
                     item_editor.setCurrentIndex(item_choices.index(item_value))
             else:
                 item_editor = QtWidgets.QLineEdit(item_value if item_value else "", self)
-            if self._regex_pattern or self._filter_list:
-                if hasattr(item_editor, 'textChanged'):
-                    item_editor.textChanged.connect(self.validate_text)
+            if (self._regex_pattern or self._filter_list) and hasattr(item_editor, 'textChanged'):
+                item_editor.textChanged.connect(self.validate_text)
             item_editor.setFixedWidth(editor_width)
             self._row_items.append((label, item_editor))
 

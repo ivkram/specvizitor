@@ -1,7 +1,7 @@
 from qtpy import QtCore, QtGui, QtWidgets
 
 from ..config import config
-from ..io.inspection_data import FieldType, InspectionData, REDSHIFT_FILL_VALUE
+from ..io.inspection_data import REDSHIFT_FILL_VALUE, FieldType, InspectionData
 from ..utils.widgets import AbstractWidget, MyQTextEdit
 
 

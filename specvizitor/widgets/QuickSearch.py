@@ -1,9 +1,8 @@
-from qtpy import QtWidgets, QtCore
-
 import logging
 
-from ..utils.widgets import AbstractWidget
+from qtpy import QtCore, QtWidgets
 
+from ..utils.widgets import AbstractWidget
 
 logger = logging.getLogger(__name__)
 

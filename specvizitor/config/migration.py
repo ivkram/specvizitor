@@ -4,15 +4,15 @@ import logging
 import pathlib
 import shutil
 
-from . import DEFAULT_WORKSPACE_NAME
 from ..utils.params import read_yaml, save_yaml
 from ..utils.paths import absolute_path
+from . import DEFAULT_WORKSPACE_NAME
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "needs_migration",
-    "migrate_legacy_config"
+    "migrate_legacy_config",
+    "needs_migration"
 ]
 
 # keys of the legacy config.yml that belong to a workspace rather than to the user (`catalogue` has since been
@@ -55,8 +55,12 @@ def _archive(path: pathlib.Path) -> None:
 
 def migrate_legacy_config(config_dir, cache_dir, workspaces_dir, cache_filename: str) -> str | None:
     """Return the path to the new workspace, or None if nothing was migrated."""
-    from .workspace import (WORKSPACE_CONFIG_FILENAME, WORKSPACE_LAYOUT_FILENAME, WORKSPACE_STATE_FILENAME,
-                            WORKSPACE_WIDGETS_FILENAME)
+    from .workspace import (
+        WORKSPACE_CONFIG_FILENAME,
+        WORKSPACE_LAYOUT_FILENAME,
+        WORKSPACE_STATE_FILENAME,
+        WORKSPACE_WIDGETS_FILENAME,
+    )
 
     config_dir = pathlib.Path(config_dir)
     workspace_dir = pathlib.Path(workspaces_dir) / DEFAULT_WORKSPACE_NAME

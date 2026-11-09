@@ -1,7 +1,7 @@
-from qtpy import QtWidgets, QtCore
-
 import logging
 import pathlib
+
+from qtpy import QtCore, QtWidgets
 
 from ..config.workspace import WorkspaceConfig
 from ..io.catalog import Catalog
@@ -127,10 +127,10 @@ class NewFile(QtWidgets.QDialog):
     @qlog
     def get_catalog(self):
         data_dir = self._browsers['data'].path
-        kwargs = dict(
-            id_pattern=self._id_pattern.text(),
-            recursive=True
-        )
+        kwargs = {
+            "id_pattern": self._id_pattern.text(),
+            "recursive": True
+        }
 
         if self._browsers['cat'].isHidden():
             ids = get_ids_from_dir(data_dir, **kwargs)

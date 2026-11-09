@@ -1,24 +1,23 @@
-from astropy.io.fits.header import Header
-import astropy.units as u
-from astropy.units import Quantity, UnitConversionError
-import numpy as np
-from qtpy import QtGui, QtCore, QtWidgets
-import pyqtgraph as pg
-
 import abc
+import logging
+from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
 from functools import partial
-import logging
-from typing import Callable, Iterable
 
-from ..config import config, data_widgets
-from ..config import SpectralLineData
+from qtpy import QtCore, QtGui, QtWidgets
+
+import astropy.units as u
+import numpy as np
+import pyqtgraph as pg
+from astropy.io.fits.header import Header
+from astropy.units import Quantity, UnitConversionError
+
+from ..config import SpectralLineData, config, data_widgets
 from ..io.catalog import Catalog
-from ..io.inspection_data import InspectionData, REDSHIFT_FILL_VALUE
+from ..io.inspection_data import REDSHIFT_FILL_VALUE, InspectionData
 from ..io.viewer_data import DataPath
 from ..utils.widgets import AbstractWidget, MyViewBox
-
 from .SmartSlider import SmartSlider
 
 logger = logging.getLogger(__name__)
@@ -202,7 +201,7 @@ class ViewerElement(AbstractWidget):
                 line_color = (175.68072, 220.68924, 46.59488)
         line_pen = pg.mkPen(color=line_color, width=1)
 
-        for line_name, lambda0 in self._spectral_lines.wavelengths.items():
+        for line_name in self._spectral_lines.wavelengths:
             line = pg.InfiniteLine(pen=line_pen)
             line.setZValue(10)
 
@@ -213,7 +212,7 @@ class ViewerElement(AbstractWidget):
 
     def _add_line_artists(self):
         if self.cfg.spectral_lines.visible:
-            for line_name, line_artist in self._spectral_line_artists.items():
+            for line_artist in self._spectral_line_artists.values():
                 self.container.addItem(line_artist[0], ignoreBounds=True)
                 self.container.addItem(line_artist[1])
 
@@ -444,7 +443,7 @@ class ViewerElement(AbstractWidget):
         label_height = y_max - (y_max - y_min) * 0.03
 
         line_waves = np.array([self._spectral_lines.wavelengths[line_name]
-                               for line_name in self._spectral_line_artists.keys()]) * scale0
+                               for line_name in self._spectral_line_artists]) * scale0
         line_waves = self.apply_xdata_transform(line_waves * line_unit)
         if isinstance(line_waves, Quantity):
             line_waves = line_waves.value
@@ -469,10 +468,10 @@ class ViewerElement(AbstractWidget):
         if self.data is None:
             return
         if widget_links is None:
-            widget_links = dict()
+            widget_links = {}
 
         self.reset_range(widget_links.get(LinkableItem.X_AXIS), widget_links.get(LinkableItem.Y_AXIS))
-        if self.title not in widget_links.get(LinkableItem.S_REDSHIFT, dict()):
+        if self.title not in widget_links.get(LinkableItem.S_REDSHIFT, {}):
             self.redshift_slider.reset()
 
         for sname, s in self.sliders.items():

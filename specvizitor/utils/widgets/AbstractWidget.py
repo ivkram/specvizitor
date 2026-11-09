@@ -1,6 +1,6 @@
-from qtpy import QtWidgets
-
 import abc
+
+from qtpy import QtWidgets
 
 from ..qt_tools import get_widgets
 

@@ -1,6 +1,6 @@
-from astropy.table import MaskedColumn, Table
 import numpy as np
 import pytest
+from astropy.table import MaskedColumn, Table
 
 from specvizitor.io.catalog import Catalog
 

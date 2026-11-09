@@ -2,11 +2,16 @@ import zipfile
 
 import pytest
 
-from specvizitor.config.migration import migrate_legacy_config, needs_migration
 from specvizitor.config.config import Image
+from specvizitor.config.migration import migrate_legacy_config, needs_migration
 from specvizitor.config.workspace import WORKSPACE_CONFIG_FILENAME, Workspace, WorkspaceConfig, WorkspaceRegistry
-from specvizitor.io.workspace_archive import (ExportOptions, export_workspace, import_workspace,
-                                              inspect_archive, unset_paths)
+from specvizitor.io.workspace_archive import (
+    ExportOptions,
+    export_workspace,
+    import_workspace,
+    inspect_archive,
+    unset_paths,
+)
 from specvizitor.utils.params import read_yaml, save_yaml
 
 

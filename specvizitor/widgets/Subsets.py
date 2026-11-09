@@ -1,13 +1,13 @@
-from astropy.table import Table
-from qtpy import QtWidgets, QtCore
-
 import logging
 import pathlib
+
+from qtpy import QtCore, QtWidgets
+
+from astropy.table import Table
 
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
 from ..utils.widgets import AbstractWidget
-
 
 logger = logging.getLogger(__name__)
 

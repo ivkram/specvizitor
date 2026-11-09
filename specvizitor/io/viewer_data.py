@@ -1,29 +1,28 @@
-from astropy.io import fits
-from astropy.table import Table
-import astropy.units as u
-from astropy.utils.exceptions import AstropyWarning
-from astropy.wcs import WCS
-import numpy as np
-from PIL import Image, ImageOps
-import rasterio
-
 import abc
-from collections import OrderedDict
 import logging
 import pathlib
+import warnings
+from collections import OrderedDict
 from string import Formatter
 from typing import Any
-import warnings
 
-from .catalog import Catalog
+import astropy.units as u
+import numpy as np
+import rasterio
+from astropy.io import fits
+from astropy.table import Table
+from astropy.utils.exceptions import AstropyWarning
+from astropy.wcs import WCS
+from PIL import Image, ImageOps
+
 from ..utils.errors import error_message
 from ..utils.paths import absolute_path
-
+from .catalog import Catalog
 
 __all__ = [
-    "ViewerData",
     "DataPath",
     "LocalPath",
+    "ViewerData",
     "get_wcs",
     "set_unit_aliases"
 ]
@@ -92,7 +91,8 @@ class GenericFITSLoader(BaseLoader):
     def _open(self, filename: str, **kwargs):
         self._dataset = fits.open(filename, **kwargs)
 
-    def _load(self, extname: str = None, extver: str = None, extver_index: int = None, create_cutout=False, **kwargs):
+    def _load(self, extname: str | None = None, extver: str | None = None, extver_index: int | None = None,
+              create_cutout=False, **kwargs):
         hdul = self._dataset
 
         if extname is not None and extver is not None:
@@ -159,7 +159,7 @@ class RasterIOLoader(BaseLoader):
 
     def _load(self, create_cutout=False, **kwargs):
         if create_cutout:
-            (x1, x2, y1, y2), cutout_size = self.get_cutout_params(self._dataset.shape, **kwargs)
+            (x1, _x2, _y1, y2), cutout_size = self.get_cutout_params(self._dataset.shape, **kwargs)
             data = self._create_cutout(x1, y2, cutout_size)
         else:
             data = self._dataset.read()
@@ -228,9 +228,8 @@ class ViewerData:
             self.open(wcs_source)
 
     def load(self, filename: str, allowed_dtypes=None, silent: bool = False, lazy: bool = False, **kwargs):
-        if not self._loaders.get(filename):
-            if not self.open(filename, **kwargs):
-                return None, None
+        if not self._loaders.get(filename) and not self.open(filename, **kwargs):
+            return None, None
 
         loader = self._loaders.get(filename)
         if lazy and loader.last_data is not None:
@@ -262,9 +261,7 @@ class ViewerData:
 
     @staticmethod
     def _validate_dtype(data, allowed_dtypes: tuple[type, ...]) -> bool:
-        if not any(isinstance(data, t) for t in allowed_dtypes):
-            return False
-        return True
+        return any(isinstance(data, t) for t in allowed_dtypes)
 
 
 class DataPath(abc.ABC):
@@ -279,7 +276,7 @@ class DataPath(abc.ABC):
         return self._path
 
     def resolve(self, obj_id: str | int, cat_entry: Catalog | None):
-        field_values = dict(id=obj_id)
+        field_values = {"id": obj_id}
         field_names = [fn for _, fn, _, _ in Formatter().parse(self._path) if fn is not None]
 
         if "id" in field_names:

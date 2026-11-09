@@ -1,5 +1,6 @@
-from functools import wraps
 import logging
+from functools import wraps
+from typing import ClassVar
 
 from qtpy import QtCore, QtWidgets
 
@@ -27,7 +28,7 @@ _open_message_boxes: set = set()
 class LogMessageBox(QtWidgets.QMessageBox):
     PACKAGE = __package__.split('.')[0].capitalize()  # the name of the top-level package
 
-    LOGGING_LEVELS = {
+    LOGGING_LEVELS: ClassVar[dict[int, QtWidgets.QMessageBox.Icon]] = {
         logging.INFO: QtWidgets.QMessageBox.Icon.Information,
         logging.WARNING: QtWidgets.QMessageBox.Icon.Warning,
         logging.ERROR: QtWidgets.QMessageBox.Icon.Warning,
@@ -35,7 +36,7 @@ class LogMessageBox(QtWidgets.QMessageBox):
     }
 
     def __init__(self, level: int, message: str, parent=None):
-        super().__init__(self.LOGGING_LEVELS[level], '{} Message'.format(self.PACKAGE), message, parent=parent)
+        super().__init__(self.LOGGING_LEVELS[level], f'{self.PACKAGE} Message', message, parent=parent)
         # closing only hides a box, which would then stay alive as a child of its parent until
         # the parent itself is destroyed -- delete it right away instead
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)

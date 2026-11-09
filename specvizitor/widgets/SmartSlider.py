@@ -1,7 +1,8 @@
-import numpy as np
-from qtpy import QtWidgets, QtCore
-
 import logging
+
+from qtpy import QtCore, QtWidgets
+
+import numpy as np
 
 from ..io.catalog import Catalog
 from ..utils.widgets import AbstractWidget

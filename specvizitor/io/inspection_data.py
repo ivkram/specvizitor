@@ -1,12 +1,12 @@
-from astropy.table import Table
-import numpy as np
-import pandas as pd
-
+import logging
+import pathlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
-import pathlib
+
+import numpy as np
+import pandas as pd
+from astropy.table import Table
 
 from ..utils.paths import atomic_write
 

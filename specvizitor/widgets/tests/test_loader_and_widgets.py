@@ -12,9 +12,9 @@ import sys
 import threading
 import time
 
-from astropy.io import fits
 import numpy as np
 import pytest
+from astropy.io import fits
 
 pytest.importorskip('qtpy')
 

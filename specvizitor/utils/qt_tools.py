@@ -1,6 +1,7 @@
-from astropy.wcs import WCS
-import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
+
+import numpy as np
+from astropy.wcs import WCS
 
 
 def get_widgets(layout: QtWidgets.QLayout) -> list[QtWidgets.QWidget]:

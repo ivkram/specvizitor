@@ -1,6 +1,6 @@
 from qtpy import QtCore
-import pyqtgraph as pg
 
+import pyqtgraph as pg
 
 __all__ = [
     "MyTextItem"

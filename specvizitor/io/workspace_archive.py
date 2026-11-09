@@ -1,13 +1,19 @@
-from dataclasses import dataclass
 import copy
 import logging
 import pathlib
 import shutil
-import yaml
 import zipfile
+from dataclasses import dataclass
 
-from ..config.workspace import (WORKSPACE_CONFIG_FILENAME, WORKSPACE_LAYOUT_FILENAME, WORKSPACE_WIDGETS_FILENAME,
-                                Workspace, WorkspaceConfig)
+import yaml
+
+from ..config.workspace import (
+    WORKSPACE_CONFIG_FILENAME,
+    WORKSPACE_LAYOUT_FILENAME,
+    WORKSPACE_WIDGETS_FILENAME,
+    Workspace,
+    WorkspaceConfig,
+)
 from ..utils.paths import atomic_write
 
 logger = logging.getLogger(__name__)
@@ -16,11 +22,11 @@ __all__ = [
     "ARCHIVE_EXTENSION",
     "ARCHIVE_FILTER",
     "ExportOptions",
-    "unset_paths",
-    "export_workspace",
-    "inspect_archive",
     "archive_workspace_name",
-    "import_workspace"
+    "export_workspace",
+    "import_workspace",
+    "inspect_archive",
+    "unset_paths"
 ]
 
 ARCHIVE_EXTENSION = '.sviz'
@@ -133,9 +139,8 @@ def inspect_archive(path) -> list[str] | None:
 
 def archive_workspace_name(path) -> str | None:
     try:
-        with zipfile.ZipFile(path) as archive:
-            with archive.open(WORKSPACE_CONFIG_FILENAME) as f:
-                cfg = yaml.safe_load(f)
+        with zipfile.ZipFile(path) as archive, archive.open(WORKSPACE_CONFIG_FILENAME) as f:
+            cfg = yaml.safe_load(f)
     except (OSError, KeyError, zipfile.BadZipFile, yaml.YAMLError):
         return None
 

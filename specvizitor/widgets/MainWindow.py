@@ -1,18 +1,20 @@
-import qtpy.compat
-from qtpy import QtWidgets, QtCore, QtGui
-import numpy as np
-
-from datetime import date
-from functools import partial
-from importlib import metadata
 import logging
 import pathlib
 import time
+from datetime import date
+from functools import partial
+from importlib import metadata
+from typing import ClassVar
+
+import qtpy.compat
+from qtpy import QtCore, QtGui, QtWidgets
+
+import numpy as np
 
 from .. import APPLICATION
 from ..appdata import AppData
-from ..config.appearance import setup_appearance
 from ..config import Config, DataWidgets, SpectralLineData, Workspace, WorkspaceRegistry
+from ..config.appearance import setup_appearance
 from ..config.workspace import WORKSPACE_CONFIG_FILENAME
 from ..io.catalog import Catalog
 from ..io.inspection_data import FieldType, InspectionData
@@ -22,20 +24,25 @@ from ..plugins.plugin_core import PluginCore
 from ..utils.logs import qlog
 from ..utils.params import save_yaml
 from ..utils.paths import absolute_path
-
 from .DataViewer import DataViewer
+from .InspectionFieldEditor import InspectionFieldEditor
+from .InspectionResults import InspectionResults
 from .NavigationAction import Direction, NavigationAction
 from .NewFile import NewFile
 from .ObjectInfo import ObjectInfo
 from .QuickSearch import QuickSearch
-from .InspectionResults import InspectionResults
-from .InspectionFieldEditor import InspectionFieldEditor
-from .Subsets import Subsets
 from .Settings import Settings
+from .Subsets import Subsets
 from .ToolBar import ToolBar
-from .WorkspaceDialogs import (CloneWorkspaceDialog, ExportWorkspaceDialog, ForgetWorkspaceDialog,
-                               ImportWorkspaceDialog, NewWorkspaceDialog, OpenWorkspaceDialog,
-                               RenameWorkspaceDialog)
+from .WorkspaceDialogs import (
+    CloneWorkspaceDialog,
+    ExportWorkspaceDialog,
+    ForgetWorkspaceDialog,
+    ImportWorkspaceDialog,
+    NewWorkspaceDialog,
+    OpenWorkspaceDialog,
+    RenameWorkspaceDialog,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
     ))
 
     # what `File -> Export Inspection Results...` writes, as {filter: format}
-    EXPORT_FILTERS = {
+    EXPORT_FILTERS: ClassVar[dict[str, str]] = {
         'FITS Files (*.fits)': 'fits',
         'CSV Files (*.csv)': 'csv',
     }
@@ -618,7 +625,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.update_catalog(None)  # in case the catalog hasn't been initialized before
             self.load_inspection_data(cached_index)
         else:
-            logger.warning('Inspection file not found (path: {})'.format(path))
+            logger.warning(f'Inspection file not found (path: {path})')
 
     def load_inspection_data(self, j: int | None = None):
         """ Update the state of the main window and activate the central widget after loading inspection data.
@@ -816,7 +823,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._enter_fullscreen()
 
     def _enter_fullscreen(self):
-        self._was_maximized = True if self.isMaximized() else False
+        self._was_maximized = bool(self.isMaximized())
         self.showFullScreen()
 
     def _exit_fullscreen(self):
@@ -880,7 +887,7 @@ class MainWindow(QtWidgets.QMainWindow):
         default_filename = f'{self.ad.inspection_file.stem.replace(" ", "_")}_ID{obj_id}.png'
         screenshot_location = self._config.data_viewer.default_screenshot_location
         basedir = str(absolute_path(screenshot_location if screenshot_location is not None else "") / default_filename)
-        path, extension = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=basedir, filters='Images (*.png)')
+        path, _ = qtpy.compat.getsavefilename(self, caption='Save/Save As', basedir=basedir, filters='Images (*.png)')
         if path:
             self.screenshot_path_selected.emit(path)
 

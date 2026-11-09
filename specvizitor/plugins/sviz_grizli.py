@@ -1,19 +1,19 @@
+import logging
+from functools import partial
+
+from qtpy import QtGui
+
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Container import StackedWidget
 from pyqtgraph.dockarea.Dock import Dock
-from qtpy import QtGui
-
-from functools import partial
-import logging
 
 from specvizitor.io.catalog import Catalog
 from specvizitor.plugins.plugin_core import PluginCore
-
-from specvizitor.widgets.ViewerElement import ViewerElement
 from specvizitor.widgets.Image2D import Image2D
 from specvizitor.widgets.Plot1D import Plot1D
+from specvizitor.widgets.ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
 

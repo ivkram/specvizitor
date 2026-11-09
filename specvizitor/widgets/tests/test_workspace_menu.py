@@ -18,13 +18,14 @@ os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
 import sys
 import zipfile
+from typing import ClassVar
 
 import pytest
 
 pytest.importorskip('qtpy')
 
-from qtpy import QtWidgets
 import qtpy.compat
+from qtpy import QtWidgets
 
 import specvizitor.widgets.MainWindow as main_window_module
 from specvizitor.config import Config, WorkspaceRegistry
@@ -51,7 +52,7 @@ class _StubSignal:
 class _StubDialog:
     """Stands in for a modal dialog: records that it was opened, then reports "cancelled".
     """
-    opened: list = []
+    opened: ClassVar[list] = []
 
     def __init__(self, *args, **kwargs):
         type(self).opened.append(self)
@@ -92,7 +93,7 @@ def gui(tmp_path_factory):
 
     win = MainWindow(config=Config(), workspace=active, registry=registry, plugins=[])
 
-    yield dict(win=win, registry=registry, active=active, other=other, restarts=restarts, app=app)
+    yield {'win': win, 'registry': registry, 'active': active, 'other': other, 'restarts': restarts, 'app': app}
 
     patch.undo()
 
@@ -236,7 +237,7 @@ def _accepting_rename(name):
     """A stand-in for the rename dialog that renames the workspace to `name`, as accepting it does.
     """
     class _Rename(_StubDialog):
-        opened: list = []
+        opened: ClassVar[list] = []
 
         def __init__(self, registry, workspace, parent=None):
             super().__init__()

@@ -1,7 +1,7 @@
+from abc import ABC, abstractmethod
+
 from pyqtgraph.dockarea.Container import StackedWidget
 from pyqtgraph.dockarea.Dock import Dock
-
-from abc import ABC, abstractmethod
 
 from specvizitor.io.catalog import Catalog
 from specvizitor.widgets.ViewerElement import ViewerElement

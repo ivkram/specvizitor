@@ -1,6 +1,6 @@
+import logging
 from dataclasses import dataclass, field
 from typing import ClassVar
-import logging
 
 from specvizitor.utils.params import LocalFile, Params, read_yaml, save_yaml
 

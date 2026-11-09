@@ -1,27 +1,26 @@
-from dataclasses import dataclass, field
-from typing import ClassVar
 import logging
 import pathlib
 import shutil
+from dataclasses import dataclass, field
+from typing import ClassVar
 
 from ..utils.params import LocalFile, Params, read_yaml
 from ..utils.paths import absolute_path
-
 from .config import Catalog, DataSources, InspectionResults
 from .data_widgets import DataWidgets
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "WorkspaceConfig",
-    "WorkspaceLayout",
-    "WorkspaceState",
-    "WorkspaceRegistry",
-    "Workspace",
     "WORKSPACE_CONFIG_FILENAME",
     "WORKSPACE_LAYOUT_FILENAME",
     "WORKSPACE_STATE_FILENAME",
     "WORKSPACE_WIDGETS_FILENAME",
+    "Workspace",
+    "WorkspaceConfig",
+    "WorkspaceLayout",
+    "WorkspaceRegistry",
+    "WorkspaceState",
 ]
 
 # a directory is a workspace if it contains this file

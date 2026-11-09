@@ -1,19 +1,18 @@
-from astropy.coordinates import SkyCoord
-from qtpy import QtCore
-
-from dataclasses import dataclass
 import logging
 import pathlib
 import threading
 import time
+from dataclasses import dataclass
+
+from qtpy import QtCore
+
+from astropy.coordinates import SkyCoord
 
 from ..config import config, data_widgets
 from ..io.catalog import Catalog
 from ..io.inspection_data import InspectionData
-from ..io.viewer_data import ViewerData, get_wcs, LocalPath
-
+from ..io.viewer_data import LocalPath, ViewerData, get_wcs
 from .ViewerElement import ViewerElement
-
 
 __all__ = [
     "LoadTask",
@@ -216,7 +215,7 @@ class ViewerDataLoader(QtCore.QThread):
         return params
 
     def _get_cutout_params(self, wcs_source: str) -> dict | None:
-        params = dict(create_cutout=True)
+        params = {"create_cutout": True}
 
         try:
             ra = self.cat_entry.get_col("ra")

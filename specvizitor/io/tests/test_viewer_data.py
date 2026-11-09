@@ -1,5 +1,5 @@
-import pytest
 import astropy.units as u
+import pytest
 
 from specvizitor.io.viewer_data import set_unit_aliases
 
@@ -43,8 +43,8 @@ def teardown_module():
 
 @pytest.fixture
 def fits_file(tmp_path):
-    from astropy.io import fits
     import numpy as np
+    from astropy.io import fits
 
     path = tmp_path / 'data.fits'
     hdus = [fits.PrimaryHDU()] + [fits.ImageHDU(np.full((2, 2), i), name='LINE', ver=i + 1) for i in range(2)]

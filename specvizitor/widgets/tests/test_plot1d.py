@@ -1,9 +1,9 @@
 import gc
 
-from astropy.table import Table
 import astropy.units as u
 import numpy as np
 import pytest
+from astropy.table import Table
 
 pytest.importorskip('qtpy')
 

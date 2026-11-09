@@ -3,10 +3,6 @@ import os
 # qtpy prefers PyQt5 whenever it is installed, e.g. left over from an upgrade: default to the declared binding
 os.environ.setdefault('QT_API', 'pyqt6')
 
-# qtpy first: pyqtgraph picks up the binding that is already loaded, so that both follow QT_API
-from qtpy import QtCore, QtWidgets
-import pyqtgraph as pg
-
 import argparse
 import gc
 import importlib
@@ -14,16 +10,29 @@ import logging
 import pathlib
 import sys
 
-from . import ORGANIZATION, APPLICATION
+# qtpy first: pyqtgraph picks up the binding that is already loaded, so that both follow QT_API
+from qtpy import QtCore, QtWidgets
+
+import pyqtgraph as pg
+
+from . import APPLICATION, ORGANIZATION
+from .config import (
+    CACHE_DIR,
+    CONFIG_DIR,
+    DEFAULT_WORKSPACE_NAME,
+    REGISTRY_FILENAME,
+    SPECTRAL_LINES_FILENAME,
+    WORKSPACES_DIR,
+    Config,
+    SpectralLineData,
+    Workspace,
+    WorkspaceRegistry,
+)
 from .config.appearance import setup_appearance
-from .config import Config, SpectralLineData, WorkspaceRegistry, Workspace
-from .config import (CACHE_DIR, CONFIG_DIR, DEFAULT_WORKSPACE_NAME, WORKSPACES_DIR, REGISTRY_FILENAME,
-                     SPECTRAL_LINES_FILENAME)
 from .config.migration import migrate_legacy_config, needs_migration
 from .io.viewer_data import set_unit_aliases
 from .plugins import available_plugins
 from .utils.params import LocalFile
-
 from .widgets.MainWindow import MainWindow
 
 logger = logging.getLogger(__name__)

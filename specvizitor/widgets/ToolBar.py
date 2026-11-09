@@ -1,12 +1,11 @@
-from qtpy import QtGui, QtCore, QtWidgets
-
-from functools import partial
 import logging
 import pathlib
+from functools import partial
+
+from qtpy import QtCore, QtGui, QtWidgets
 
 from ..config import config
 from ..io.inspection_data import InspectionData
-
 from .NavigationAction import NavigationAction
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
+import numpy as np
 import pyqtgraph as pg
 from pgcolorbar.colorlegend import ColorLegendItem
-import numpy as np
 
 from .MyViewBox import MyViewBox
 

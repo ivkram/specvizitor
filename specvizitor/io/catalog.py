@@ -1,8 +1,8 @@
-from astropy.table import Table, Row, MaskedColumn
-import numpy as np
-
-from dataclasses import dataclass, field
 import logging
+from dataclasses import dataclass, field
+
+import numpy as np
+from astropy.table import MaskedColumn, Row, Table
 
 from .data_dir import get_ids_from_dir
 
@@ -31,7 +31,7 @@ class Catalog:
     def create(cls, ids):
         colnames = ['id']
         if isinstance(ids[0], tuple):
-            colnames += list(f'id{i + 1}' for i in range(1, len(ids[0])))
+            colnames += [f'id{i + 1}' for i in range(1, len(ids[0]))]
             table_data = list(zip(*ids))
         else:
             table_data = [ids]
@@ -147,7 +147,7 @@ class Catalog:
         self.table.add_column(data, **kwargs)
 
     def _loc_full_base(self, t: Table, indices: list, obj_id: str | int | tuple):
-        if isinstance(obj_id, str) or isinstance(obj_id, int):
+        if isinstance(obj_id, (str, int)):
             # name the ID column explicitly: `t.loc[obj_id]` would search the table's first index, which is still
             # the old ID column after `update_translate` has picked a different one
             return _loc(t, indices[0], obj_id)

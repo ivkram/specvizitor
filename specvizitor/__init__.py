@@ -1,6 +1,6 @@
 __all__ = [
-    "ORGANIZATION",
-    "APPLICATION"
+    "APPLICATION",
+    "ORGANIZATION"
 ]
 
 ORGANIZATION = "FRESCO"

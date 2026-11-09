@@ -4,10 +4,11 @@ import sys
 
 import pandas as pd
 import pytest
+import yaml
 
 from specvizitor.io.inspection_data import InspectionData
-from specvizitor.utils.paths import atomic_write
 from specvizitor.utils.params import save_yaml
+from specvizitor.utils.paths import atomic_write
 
 
 def test_atomic_write_creates_the_file_and_leaves_nothing_else(tmp_path):
@@ -23,10 +24,9 @@ def test_atomic_write_keeps_the_old_file_on_error(tmp_path):
     path = tmp_path / 'out.txt'
     path.write_text('old')
 
-    with pytest.raises(RuntimeError):
-        with atomic_write(path) as tmp:
-            tmp.write_text('half')
-            raise RuntimeError
+    with pytest.raises(RuntimeError), atomic_write(path) as tmp:
+        tmp.write_text('half')
+        raise RuntimeError
 
     assert path.read_text() == 'old'
     assert os.listdir(tmp_path) == ['out.txt']
@@ -74,7 +74,7 @@ def test_a_failed_yaml_save_keeps_the_file(tmp_path):
     save_yaml(path, {'a': 1})
     before = path.read_text()
 
-    with pytest.raises(Exception):
+    with pytest.raises(yaml.YAMLError):
         save_yaml(path, {'a': object()})
 
     assert path.read_text() == before

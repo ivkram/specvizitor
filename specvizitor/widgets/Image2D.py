@@ -1,26 +1,25 @@
-from astropy.convolution import convolve_fft, Gaussian2DKernel
-from astropy.coordinates import SkyCoord
-from astropy.visualization import ZScaleInterval
-from astropy.wcs import WCS, FITSFixedWarning
-import numpy as np
-import pyqtgraph as pg
-from qtpy import QtCore, QtGui, QtWidgets
-
-from dataclasses import dataclass
-from enum import Enum, auto
-from functools import partial
 import logging
 import math
 import warnings
+from dataclasses import dataclass
+from enum import Enum, auto
+from functools import partial
+
+from qtpy import QtCore, QtGui, QtWidgets
+
+import numpy as np
+import pyqtgraph as pg
+from astropy.convolution import Gaussian2DKernel, convolve_fft
+from astropy.coordinates import SkyCoord
+from astropy.visualization import ZScaleInterval
+from astropy.wcs import WCS, FITSFixedWarning
 
 from ..config import data_widgets
 from ..io.catalog import Catalog
 from ..io.viewer_data import get_wcs
 from ..utils.qt_tools import get_qtransform_from_wcs
 from ..utils.widgets import ColorBar, MyTextItem
-
-from .ViewerElement import ViewerElement, LinkableItem
-
+from .ViewerElement import LinkableItem, ViewerElement
 
 __all__ = [
     "Image2D"
@@ -83,9 +82,9 @@ class Image2D(ViewerElement):
         nx, ny = self.data.shape[1], self.data.shape[0]
 
         if axis is CentralAxis.X:
-            self.register_item((pg.PlotCurveItem([0, nx], [ny / 2, ny / 2], pen=pen)))
+            self.register_item(pg.PlotCurveItem([0, nx], [ny / 2, ny / 2], pen=pen))
         elif axis is CentralAxis.Y:
-            self.register_item((pg.PlotCurveItem([nx / 2, nx / 2], [0, ny], pen=pen)))
+            self.register_item(pg.PlotCurveItem([nx / 2, nx / 2], [0, ny], pen=pen))
 
     def _add_central_crosshair(self):
         pen = pg.mkPen('w', width=1, style=QtCore.Qt.PenStyle.DashLine)
@@ -253,9 +252,9 @@ class Image2D(ViewerElement):
         super().reset_view(widget_links=widget_links)
 
         if widget_links is None:
-            widget_links = dict()
+            widget_links = {}
 
-        if self.title not in widget_links.get(LinkableItem.COLORBAR, dict()):
+        if self.title not in widget_links.get(LinkableItem.COLORBAR, {}):
             self.reset_levels()
 
     def _enter_zen_mode(self):

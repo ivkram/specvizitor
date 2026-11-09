@@ -1,8 +1,8 @@
-import qtpy.compat
-from qtpy import QtCore, QtWidgets
-
 import logging
 import pathlib
+
+import qtpy.compat
+from qtpy import QtCore, QtWidgets
 
 from ..paths import absolute_path
 from .AbstractWidget import AbstractWidget
@@ -112,8 +112,8 @@ class FileBrowser(AbstractWidget):
             path = qtpy.compat.getexistingdirectory(self, caption="Choose Directory", basedir=self._default_path)
 
         elif self._browser_mode == FileBrowser.SaveFile:
-            path, extension = qtpy.compat.getsavefilename(self, caption="Save/Save As", basedir=self._default_path,
-                                                          filters=self._filter)
+            path, _ = qtpy.compat.getsavefilename(self, caption="Save/Save As", basedir=self._default_path,
+                                                  filters=self._filter)
 
         if path:
             self._line_edit.setText(path)

@@ -1,11 +1,10 @@
-from qtpy import QtCore, QtWidgets
-
 import logging
 import re
 
+from qtpy import QtCore, QtWidgets
+
 from ..io.inspection_data import InspectionData
 from ..utils.widgets import ParamTable
-
 from .InspectionResults import InspectionResults
 
 logger = logging.getLogger(__name__)

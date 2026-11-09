@@ -1,16 +1,14 @@
+import logging
+
 import numpy as np
+import pyqtgraph as pg
 from astropy.table import Table
 from astropy.units import Quantity
-import pyqtgraph as pg
 from scipy.ndimage import gaussian_filter1d
-
-import logging
 
 from ..config import data_widgets
 from ..io.catalog import Catalog
-
 from .ViewerElement import ViewerElement
-
 
 __all__ = ["Plot1D"]
 
@@ -79,7 +77,7 @@ class Plot1D(ViewerElement):
 
     def setup_view(self, cat_entry: Catalog | None):
         xlim, ylim = None, None
-        for label, plot_data_item in self.plot_data_items.items():
+        for plot_data_item in self.plot_data_items.values():
             x_data, y_data = plot_data_item.getData()
             xlim = self.calc_axis_lims(xlim, x_data)
             ylim = self.calc_axis_lims(ylim, y_data)

@@ -16,7 +16,7 @@ pytest.importorskip('qtpy')
 
 from specvizitor.config import data_widgets
 from specvizitor.widgets.Image2D import Image2D
-from specvizitor.widgets.ViewerDataLoader import LoadTask, LoaderState, ViewerDataLoader
+from specvizitor.widgets.ViewerDataLoader import LoaderState, LoadTask, ViewerDataLoader
 
 
 class _StubViewerData:

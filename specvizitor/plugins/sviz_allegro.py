@@ -1,16 +1,16 @@
+import logging
+
+from qtpy import QtCore
+
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.dockarea.Container import StackedWidget
 from pyqtgraph.dockarea.Dock import Dock
-from qtpy import QtCore
-
-import logging
 
 from specvizitor.io.catalog import Catalog
 from specvizitor.plugins.plugin_core import PluginCore
-
-from specvizitor.widgets.ViewerElement import ViewerElement
 from specvizitor.widgets.Image2D import Image2D
+from specvizitor.widgets.ViewerElement import ViewerElement
 
 logger = logging.getLogger(__name__)
 
@@ -57,13 +57,13 @@ class Plugin(PluginCore):
         coords = self.get_emline_coords(cat_entry)
         for i, c in enumerate(coords):
             # add "-0.5" assuming that X_IMAGE and Y_IMAGE are calculated from Source-Extractor
-            self.mark_emline_in_spec_2d(c[0]-0.5, c[1]-0.5, spec_2d_arr, zoom=True if i == 0 else False,
+            self.mark_emline_in_spec_2d(c[0]-0.5, c[1]-0.5, spec_2d_arr, zoom=i == 0,
                                         color='r' if i == 0 else 'white')
 
     @staticmethod
     def get_emline_coords(cat_entry: Catalog) -> list[tuple[float, float]]:
         coords_array = []
-        coord_colnames = [("X_IMAGE", "Y_IMAGE")] + list((f"X_IMAGE_{i}", f"Y_IMAGE_{i}") for i in range(2, 11))
+        coord_colnames = [("X_IMAGE", "Y_IMAGE")] + [(f"X_IMAGE_{i}", f"Y_IMAGE_{i}") for i in range(2, 11)]
 
         for i, cname_pair in enumerate(coord_colnames):
             try:

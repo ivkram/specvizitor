@@ -1,10 +1,11 @@
-from pyqtgraph.dockarea.Dock import Dock
-from pyqtgraph.dockarea.DockArea import DockArea
-from qtpy import QtWidgets, QtCore, QtGui
-
-from functools import partial
 import logging
 import time
+from functools import partial
+
+from qtpy import QtCore, QtGui, QtWidgets
+
+from pyqtgraph.dockarea.Dock import Dock
+from pyqtgraph.dockarea.DockArea import DockArea
 
 from ..config import config, data_widgets
 from ..config.data_widgets import DataWidgets
@@ -14,13 +15,12 @@ from ..io.inspection_data import InspectionData
 from ..io.viewer_data import ViewerData
 from ..plugins.plugin_core import PluginCore
 from ..utils.widgets import AbstractWidget
-
-from .ViewerElement import ViewerElement, LinkableItem, SliderItem
 from .Image2D import Image2D
+from .ItemLinker import ColorBarLinker, ItemLinker, SliderLinker, XAxisLinker, YAxisLinker
 from .Plot1D import Plot1D
 from .SmartSlider import SmartSlider
-from .ViewerDataLoader import LoadTask, LoaderState, ViewerDataLoader
-from .ItemLinker import ItemLinker, XAxisLinker, YAxisLinker, SliderLinker, ColorBarLinker
+from .ViewerDataLoader import LoaderState, LoadTask, ViewerDataLoader
+from .ViewerElement import LinkableItem, SliderItem, ViewerElement
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +67,8 @@ class DataViewer(AbstractWidget):
         self._data = ViewerData()
         self.open_images()
 
-        self._widget_links: dict[LinkableItem, dict] = {item: dict() for item in LinkableItem}
-        self._widget_linkers: dict[LinkableItem, ItemLinker] = dict()
+        self._widget_links: dict[LinkableItem, dict] = {item: {} for item in LinkableItem}
+        self._widget_linkers: dict[LinkableItem, ItemLinker] = {}
         self._create_widget_linkers()
 
         self._cat: Catalog | None = None
@@ -107,11 +107,11 @@ class DataViewer(AbstractWidget):
             logger.error(f"Unknown widget configuration type: {type(cfg)}")
             return
 
-        kwargs = dict(
-            appearance=self._appearance,
-            spectral_lines=self._spectral_lines,
-            parent=self
-        )
+        kwargs = {
+            'appearance': self._appearance,
+            'spectral_lines': self._spectral_lines,
+            'parent': self
+        }
 
         self.widgets[wt] = constructor(cfg=cfg, title=wt, **kwargs)
         self._connect_widget(wt)

@@ -95,13 +95,13 @@ def test_changing_the_unit_aliases_applies_in_place(settings):
 
 
 def test_enabling_a_plugin_requires_a_restart(settings):
-    dialog, _, workspace = settings
+    dialog, _, _ = settings
     checkboxes = dialog._tabs['Plugins']._checkboxes
     if not checkboxes:
         pytest.skip('no plugins available')
 
     # flip whichever plugin is currently enabled
-    name, box = next(iter(checkboxes.items()))
+    _, box = next(iter(checkboxes.items()))
     box.setChecked(not box.isChecked())
 
     assert _accept(dialog) is True

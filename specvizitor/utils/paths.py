@@ -1,8 +1,8 @@
-from contextlib import contextmanager
 import os
 import pathlib
 import secrets
 import shutil
+from contextlib import contextmanager
 
 
 def absolute_path(path) -> pathlib.Path:

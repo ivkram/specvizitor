@@ -1,12 +1,19 @@
-from qtpy import QtCore, QtWidgets
-
 import logging
 import pathlib
 
+from qtpy import QtCore, QtWidgets
+
 from ..config import WORKSPACES_DIR
 from ..config.workspace import Workspace, WorkspaceRegistry
-from ..io.workspace_archive import (ARCHIVE_EXTENSION, ARCHIVE_FILTER, ExportOptions, archive_workspace_name,
-                                    export_workspace, import_workspace, unset_paths)
+from ..io.workspace_archive import (
+    ARCHIVE_EXTENSION,
+    ARCHIVE_FILTER,
+    ExportOptions,
+    archive_workspace_name,
+    export_workspace,
+    import_workspace,
+    unset_paths,
+)
 from ..utils.logs import qlog
 from ..utils.paths import absolute_path
 from ..utils.widgets import FileBrowser, cat_browser, data_browser
@@ -14,13 +21,13 @@ from ..utils.widgets import FileBrowser, cat_browser, data_browser
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "NewWorkspaceDialog",
     "CloneWorkspaceDialog",
-    "RenameWorkspaceDialog",
-    "OpenWorkspaceDialog",
+    "ExportWorkspaceDialog",
     "ForgetWorkspaceDialog",
     "ImportWorkspaceDialog",
-    "ExportWorkspaceDialog",
+    "NewWorkspaceDialog",
+    "OpenWorkspaceDialog",
+    "RenameWorkspaceDialog",
     "ResolvePathsDialog"
 ]
 

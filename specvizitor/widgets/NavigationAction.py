@@ -1,6 +1,5 @@
-from enum import Enum, auto
 from dataclasses import dataclass
-
+from enum import Enum, auto
 
 __all__ = [
     "Direction",

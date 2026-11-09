@@ -1,8 +1,8 @@
 import pathlib
 
-from astropy.table import Table
 import pandas as pd
 import pytest
+from astropy.table import Table
 
 from specvizitor.io.inspection_data import InspectionData
 from specvizitor.widgets.MainWindow import MainWindow

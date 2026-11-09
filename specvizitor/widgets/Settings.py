@@ -1,17 +1,18 @@
-import astropy.units as u
-from qtpy import QtWidgets, QtCore
-
-from abc import abstractmethod
 import logging
 import pathlib
+from abc import abstractmethod
 
-from ..config import config, CONFIG_DIR
-from ..config.workspace import WorkspaceConfig
+from qtpy import QtCore, QtWidgets
+
+import astropy.units as u
+
+from ..config import CONFIG_DIR, config
 from ..config.spectral_lines import SpectralLineData
+from ..config.workspace import WorkspaceConfig
 from ..io.catalog import Catalog
 from ..plugins import available_plugins
 from ..utils.logs import qlog
-from ..utils.widgets import AbstractWidget, FileBrowser, Section, ParamTable, cat_browser, data_browser
+from ..utils.widgets import AbstractWidget, FileBrowser, ParamTable, Section, cat_browser, data_browser
 
 logger = logging.getLogger(__name__)
 

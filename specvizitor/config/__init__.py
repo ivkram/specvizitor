@@ -1,16 +1,20 @@
-from platformdirs import user_config_dir, user_cache_dir
-
 import pathlib
 
-from .. import APPLICATION
+from platformdirs import user_cache_dir, user_config_dir
 
+from .. import APPLICATION
 from .config import Config
 from .data_widgets import DataWidgets
 from .spectral_lines import SpectralLineData
 from .workspace import Workspace, WorkspaceConfig, WorkspaceLayout, WorkspaceRegistry, WorkspaceState
 
-
 __all__ = [
+    "CACHE_DIR",
+    "CONFIG_DIR",
+    "DEFAULT_WORKSPACE_NAME",
+    "REGISTRY_FILENAME",
+    "SPECTRAL_LINES_FILENAME",
+    "WORKSPACES_DIR",
     "Config",
     "DataWidgets",
     "SpectralLineData",
@@ -18,13 +22,7 @@ __all__ = [
     "WorkspaceConfig",
     "WorkspaceLayout",
     "WorkspaceRegistry",
-    "WorkspaceState",
-    "CONFIG_DIR",
-    "CACHE_DIR",
-    "WORKSPACES_DIR",
-    "DEFAULT_WORKSPACE_NAME",
-    "REGISTRY_FILENAME",
-    "SPECTRAL_LINES_FILENAME"
+    "WorkspaceState"
 ]
 
 

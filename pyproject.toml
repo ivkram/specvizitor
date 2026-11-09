@@ -62,6 +62,21 @@ default-groups = "all"
 
 [tool.ruff]
 extend-exclude = ["specvizitor/config/appearance"]
+line-length = 120
+
+[tool.ruff.lint]
+ignore = [
+    # the GUI catches any error from reading user files and third-party loaders, logs it and carries on
+    "BLE001",
+    # CamelCase module names (MainWindow.py, ...) are the project's convention
+    "N999",
+]
+
+[tool.ruff.lint.isort]
+# qtpy before any other third-party import: pyqtgraph picks up the Qt binding that is already loaded, so that
+# both follow QT_API
+sections = { qt = ["qtpy"] }
+section-order = ["future", "standard-library", "qt", "third-party", "first-party", "local-folder"]
 
 [tool.hatch.build.targets.wheel]
 exclude = ["**/tests"]

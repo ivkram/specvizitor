@@ -1,6 +1,6 @@
-from dataclasses import fields, is_dataclass
 import pathlib
 import re
+from dataclasses import fields, is_dataclass
 from typing import get_args, get_type_hints
 
 import pytest

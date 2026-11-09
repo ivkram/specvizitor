@@ -1,11 +1,12 @@
-import dacite
-
-from dataclasses import asdict, dataclass, fields, is_dataclass
-from functools import wraps
-from typing import Callable, ClassVar, get_args, get_origin, get_type_hints
 import logging
 import pathlib
 import shutil
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, fields, is_dataclass
+from functools import wraps
+from typing import ClassVar, get_args, get_origin, get_type_hints
+
+import dacite
 import yaml
 
 from .paths import absolute_path, atomic_write
@@ -118,7 +119,8 @@ class Params:
     @classmethod
     def _pop_schema_version(cls, data) -> int:
         if not isinstance(data, dict):
-            raise ValueError("Expected a mapping of keys to values")
+            # a ValueError, like any other malformed file, so that the callers fall back to the defaults
+            raise ValueError("Expected a mapping of keys to values")  # noqa: TRY004
 
         # before schema versions, files recorded the package version instead
         data.pop('config_version', None)
